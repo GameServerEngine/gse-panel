@@ -145,9 +145,7 @@ if( !isset( $_POST['start_server'] ) )
 	$display_ip = checkDisplayPublicIP($server_home['display_public_ip'],$server_home['ip'] != $server_home['agent_ip'] ? $server_home['ip'] : $server_home['agent_ip']);
 	echo "<tr><td class='right'>". get_lang("ip_and_port") .
 		":</td><td class='left'>".$display_ip . ":" . $server_home['port']."<input name='ip_port' type='hidden' value='".$server_home['ip'] . ":" . $server_home['port']."'/></td></tr>";
-	if (!empty($server_home['ftp_login'])) {
-		echo "<tr><td class='right'>FTP:</td><td class='left'>" . htmlspecialchars($server_home['ftp_login']) . ":" . htmlspecialchars($server_home['ftp_password']) . "&nbsp;&nbsp;" . htmlspecialchars($display_ip) . ":" . $server_home['port'] . "</td></tr>\n";
-	}
+
 
 	list($list_type,) = explode(":", $server_xml->map_list);
 
