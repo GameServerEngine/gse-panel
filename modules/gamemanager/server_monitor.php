@@ -639,7 +639,7 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 			//Echo them all
 			$ftp_row = "";
 			if (!empty($server_home['ftp_login'])) {
-				$ftp_row = "<tr class='ftp-row'><td colspan='7' style='text-align:left'><b>FTP:</b> " . htmlentities($server_home['ftp_login']) . ":" . htmlentities($server_home['ftp_password']) . "&nbsp;&nbsp;" . htmlentities($server_home['ip']) . ":" . $server_home['port'] . "</td></tr>";
+				$ftp_row = "<tr class='ftp-row'><td colspan='7' style='text-align:left;padding:10px 14px;line-height:2'><b>FTP</b>&nbsp;&nbsp;&nbsp;&nbsp;<b>IP:Port</b> " . htmlentities($server_home['ip']) . ":21&nbsp;&nbsp;&nbsp;&nbsp;<b>User ID:</b> " . htmlentities($server_home['ftp_login']) . "&nbsp;&nbsp;&nbsp;&nbsp;<b>Password:</b> " . htmlentities($server_home['ftp_password']) . "</td></tr>";
 			}
 			echo "$first$ftp_row$second";
 		}
