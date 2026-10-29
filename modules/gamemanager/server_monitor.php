@@ -637,7 +637,11 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 					$second .= "<td class='operations' >$ts3opt</td>";
 			$second .= "</tr>";
 			//Echo them all
-			echo "$first$second";
+			$ftp_row = "";
+			if (!empty($server_home['ftp_login'])) {
+				$ftp_row = "<tr class='ftp-row'><td colspan='7' style='text-align:left'><b>FTP:</b> " . htmlentities($server_home['ftp_login']) . ":" . htmlentities($server_home['ftp_password']) . "&nbsp;&nbsp;" . htmlentities($server_home['ip']) . ":" . $server_home['port'] . "</td></tr>";
+			}
+			echo "$first$ftp_row$second";
 		}
 		$j++;
 	}
