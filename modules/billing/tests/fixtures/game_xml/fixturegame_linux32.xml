@@ -1,0 +1,40 @@
+<game_config>
+  <game_key>fixturegame_linux32</game_key>
+  <installer>steamcmd</installer>
+  <game_name>Fixture Game</game_name>
+  <server_exec_name>FixtureServer</server_exec_name>
+  <cli_template>%MAP%%PORT%%QUERY_PORT%</cli_template>
+  <cli_params>
+    <cli_param id="MAP" cli_string="" />
+    <cli_param id="PORT" cli_string="-port=" />
+  </cli_params>
+  <reserve_ports>
+    <port type="add" id="QUERY_PORT" cli_string="-queryport=">1</port>
+  </reserve_ports>
+  <exe_location>Binaries/Linux32</exe_location>
+  <max_user_amount>32</max_user_amount>
+  <mods>
+    <mod key="default">
+      <name>None</name>
+      <installer_name>123456</installer_name>
+    </mod>
+  </mods>
+  <server_params>
+    <param key="-cheats" type="checkbox_key_value" id="CHEATS">
+      <desc>Enable cheats.</desc>
+    </param>
+  </server_params>
+  <custom_fields>
+    <field key="sv_rate" type="text">
+      <default>sv_rate.*</default>
+      <default_value>0</default_value>
+      <var>sv_rate</var>
+      <filepath>server.cfg</filepath>
+      <options>s</options>
+      <desc>Bandwidth rate.</desc>
+    </field>
+  </custom_fields>
+  <configuration_files>
+    <file description="Main config">server.cfg</file>
+  </configuration_files>
+</game_config>

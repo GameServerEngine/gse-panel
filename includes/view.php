@@ -1,0 +1,360 @@
+<?php
+/*
+ *
+ * GSP - GameServer Panel
+ * Copyright (C) 2008 - 2018 The GSP Development Team
+ *
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ */
+
+define("DEFAULT_REFRESH_TIME","2");
+
+class GSPView {
+
+    private string $meta = '';
+    private string $title = 'Gameserver Engine Panel';
+    private string $header_code = '';
+
+    private $refreshTime;
+    private $refreshUrl;
+
+    public string $logo = 'home.php?m=dashboard&p=dashboard';
+    public string $bg_wrapper = '';
+    public string $charset = 'utf-8';
+    public string $time_zone = 'America/Chicago';
+
+    function __construct() {
+        ob_start();
+        $this->refreshTime = DEFAULT_REFRESH_TIME;
+    }
+
+    function __destruct() {
+
+    }
+
+	function menu(){}
+
+    function printView($cleared = false, $dataType = "html") {
+        global $db, $GSPLangPre;
+
+        if ( is_object($db) && array_key_exists( "GSPDatabase", class_parents($db) ) ) {
+            $panel_settings = $db->getSettings();
+        }
+
+        // Our global CSS goes first so that themes can override
+        $this->header_code = '<link rel="stylesheet" href="css/global.css">' . "\n";
+		if(function_exists("getThemePath")){
+			$path = getThemePath();
+		}else{
+			$path = 'themes/Revolution/';
+		}
+
+		$page = file_get_contents($path.'layout.html');
+		@$top = file_get_contents($path.'top.html');
+		@$bottom = file_get_contents($path.'bottom.html');
+		@$topbody = file_get_contents($path.'topbody.html');
+		@$botbody = file_get_contents($path.'botbody.html');
+
+		if ( isset($panel_settings['logo_link']) &&
+            !empty($panel_settings['logo_link']))
+            $this->logo = $panel_settings['logo_link'];
+
+		if ( isset($panel_settings['bg_wrapper']) &&
+            !empty($panel_settings['bg_wrapper']))
+            $this->bg_wrapper = $panel_settings['bg_wrapper'];
+
+
+		if ( isset($panel_settings['time_zone']) &&
+            !empty($panel_settings['time_zone']))
+        {
+            $this->time_zone = $panel_settings['time_zone'];
+			ini_set('date.timezone', $panel_settings['time_zone']);
+        }
+
+		if ( isset($panel_settings['panel_name']) &&
+            !empty($panel_settings['panel_name']))
+			$this->title = $panel_settings['panel_name'];
+
+		if ( isset($panel_settings['header_code']) &&
+            !empty($panel_settings['header_code']))
+			$this->header_code .= $panel_settings['header_code']."\n";
+
+		$module_name = isset($_GET['m']) ? get_lang($_GET['m']) : "";
+		$page_name = isset($_GET['p']) ? get_lang($_GET['p']) : "";
+		$title = $page_name == "" ? $module_name : "$module_name - $page_name";
+		$title = str_replace("_", " ", $title);
+		$this->title = $title == "" ? $this->title : $this->title . " [$title]";
+
+		// Dump defined constants to json (for language javascript)
+		$jsonStrConsts = getGSPLangConstantsJSON();
+		if($jsonStrConsts !== false){
+			$this->header_code .= '<script type="text/javascript">var langConsts = ' . $jsonStrConsts . ';' . "\n" . 'var langConstPrefix = "' . $GSPLangPre . '";</script>' . "\n";
+		}
+
+		// Include jQuery, jQuery UI, and our global CSS file in the header code
+		$stylesheet = '<link rel="stylesheet" href="js/jquery/ui/jquery-ui.min.css">' . "\n";
+		$javascript = '<script type="text/javascript" src="js/jquery/jquery.min.js"></script>' . "\n" .
+					  '<script type="text/javascript" src="js/jquery/ui/jquery-ui.min.js"></script>' . "\n";
+
+		// Include magnific popup
+		$javascript .= '<script type="text/javascript" src="js/magnific/magnific.js"></script>' . "\n";
+		$stylesheet .= '<link rel="stylesheet" href="js/magnific/magnific.css">' . "\n";
+
+		// Include tablesorter, table collapse, and quick search
+		$javascript .= '<script type="text/javascript" src="js/jquery/plugins/jquery.tablesorter.collapsible.js"></script>' . "\n" .
+					   '<script type="text/javascript" src="js/jquery/plugins/jquery.tablesorter.min.js"></script>' . "\n" .
+					   '<script type="text/javascript" src="js/jquery/plugins/jquery.quicksearch.js"></script>' . "\n";
+
+		// Include our global JS
+		$javascript .= '<script type="text/javascript" src="js/global.js"></script>' . "\n";
+
+		// Set some useful variables
+		$javascript .= '<script type="text/javascript">';
+		if(array_key_exists("users_api_key", (array)$_SESSION) && !empty($_SESSION['users_api_key'])){
+			$javascript .= 'var userAPIKey = "' . $_SESSION['users_api_key'] . '";';
+		}
+		$javascript .= '</script>' . "\n";
+
+		// Include global JS for modules
+		if(is_object($db) && array_key_exists("GSPDatabase", class_parents($db))){
+			foreach($db->getInstalledModules() as $m)
+			{
+				$global_js_file = 'js/' . MODULES . "{$m['folder']}_global.js";
+				if(is_readable($path . $global_js_file)) // Priority to the theme's js
+					$javascript .= "<script type=\"text/javascript\" src=\"{$path}{$global_js_file}\"></script>\n";
+				elseif(is_readable($global_js_file))
+					$javascript .= "<script type=\"text/javascript\" src=\"{$global_js_file}\"></script>\n";
+			}
+		}
+
+		// Include CSS and JS for the current module page
+		if(isset($_GET['m']) and !empty($_GET['m']))
+		{
+			$subpage = (isset($_GET['p']) and !empty($_GET['p']))?$_GET['p']:$_GET['m'];
+			$fc = array(
+				$path . MODULES . "{$_GET['m']}/{$subpage}.css",
+				$path . MODULES . "{$_GET['m']}/{$_GET['m']}.css",
+				MODULES . "{$_GET['m']}/{$subpage}.css",
+				MODULES . "{$_GET['m']}/{$_GET['m']}.css"
+			);
+
+			foreach ((array)$fc as $file_check){
+				if(is_readable($file_check)){
+					$stylesheet .= "<link rel=\"stylesheet\" href=\"{$file_check}\">\n";
+					break;
+				}
+			}
+
+			$fc = array(
+				$path . MODULES . "{$_GET['m']}/{$subpage}.js",
+				$path . MODULES . "{$_GET['m']}/{$_GET['m']}.js"
+			);
+
+			foreach ((array)$fc as $file_check){
+				if(is_readable($file_check)){
+					$javascript .= "<script type=\"text/javascript\" src=\"{$file_check}\"></script>\n";
+					break;
+				}
+			}
+		}
+
+		$this->header_code .= $stylesheet.$javascript;
+
+        $buffer = ob_get_contents();
+        ob_end_clean();
+
+		if ( !empty($this->refreshUrl) )
+        {
+            if ( $panel_settings['page_auto_refresh'] == "1" )
+            {
+                $topbody .= "<div id='refresh-manual'>";
+                if($this->refreshUrl != "{CURRENT_PAGE}"){
+					$topbody .= "<a href='".$this->refreshUrl."' class='redirectLink'>".get_lang('redirecting_in')." ".$this->refreshTime."s.</a>";
+				}else{
+					$url =  "//{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
+					$escaped_url = htmlspecialchars( $url, ENT_QUOTES, 'UTF-8' );
+					$topbody .= "<a href='" . $escaped_url . "' class='redirectLink'>".get_lang('redirecting_in')." ".$this->refreshTime."s.</a>";
+				}
+				$topbody .= "</div>";
+
+				$this->meta .= "<meta http-equiv='refresh' content='".$this->refreshTime.";";
+				if($this->refreshUrl != "{CURRENT_PAGE}"){
+					$this->meta .= "url=".$this->refreshUrl;
+				}
+				$this->meta .= "' />";
+            }
+            else
+            {
+                $topbody .= "<div id='refresh-manual'>";
+
+				if($this->refreshUrl != "{CURRENT_PAGE}"){
+					$topbody .= "<a href='" . $this->refreshUrl . "'>".get_lang('refresh_page')."</a>";
+				}else{
+					$url =  "//{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
+					$escaped_url = htmlspecialchars( $url, ENT_QUOTES, 'UTF-8' );
+					$topbody .= "<a href='" . $escaped_url . "'>".get_lang('refresh_page')."</a>";
+				}
+				 $topbody .= "</div>";
+            }
+        }
+
+        $footer = "";
+
+        if ( is_object($db) && array_key_exists( "GSPDatabase", class_parents($db) ) ) {
+            $footer .= "<div class=\"footer center\">";
+            $footer .= get_lang_f('cur_theme', !empty($_SESSION['users_theme']) ? $_SESSION['users_theme'] : @$panel_settings['theme']) . " - " . $db->getNbOfQueries()." ".get_lang('queries_executed');
+            $footer .= "<br />".get_lang('copyright')." &copy; <a href=\"\">Gameserver Engine</a> " . date("Y") . " - ".get_lang('all_rights_reserved')." - <span class='versionInfo'>".get_lang('show_version')."</span><br /><div class='inline-block GSPVersionArea'><span class='version hide'>" . get_lang('version') . ":</span>&nbsp; <span class='hide versionNumber'>".@$panel_settings['gsp_version']."</span> <span class='copyVersionResult' lang='" . get_lang('copied') . "'></span></div></div>";
+        }
+        else
+        {
+            $footer .= "<div class='footer center'>".get_lang('copyright')." &copy; <a href=\"\">Gameserver Engine</a> " . date("Y") . " - ".get_lang('all_rights_reserved').".</div>";
+        }
+
+        // Add our magnific popup holder to the page (hidden element):
+        $footer .= '<div class="mangificWrapper hide"><div class="white-popup"><div class="magnificTitle"></div><div class="magnificSubTitle"></div><div class="magnificContentsDiv"></div><button title="Close (Esc)" type="button" class="mfp-close">&times;</button></div></div>';
+
+		// GSP version descriptor (reads version.json written by the update system)
+		$gsp_vfile = dirname(__FILE__) . '/../version.json';
+		if (file_exists($gsp_vfile)) {
+			$gsp_vdata = json_decode(file_get_contents($gsp_vfile), true);
+			if (is_array($gsp_vdata)) {
+				$_vtype   = $gsp_vdata['installed_type']   ?? 'unknown';
+				$_vsource = $gsp_vdata['installed_source'] ?? '';
+				$_vcommit = $gsp_vdata['installed_commit'] ?? '';
+				if ($_vtype === 'cutting-edge')    $type_label = 'Cutting Edge';
+				elseif ($_vtype === 'development') $type_label = 'Development';
+				elseif ($_vtype === 'release')     $type_label = 'Release';
+				else                               $type_label = 'Unknown';
+				$_vdesc = 'GSP Panel: ' . $type_label;
+				if ($_vsource) $_vdesc .= ' - ' . htmlspecialchars($_vsource);
+				if ($_vcommit) $_vdesc .= ' - commit ' . htmlspecialchars(substr($_vcommit, 0, 7));
+			} else {
+				$_vdesc = 'GSP Panel: Unknown Version';
+			}
+		} else {
+			$_vdesc = 'GSP Panel: Unknown Version';
+		}
+		$footer .= '<div class="gsp-version-footer">' . $_vdesc . '</div>';
+
+		if (!isset($_GET['action']))
+		{
+			$filename = 'install.php';
+			if ( !empty($_SESSION['users_theme']) ) $theme = $_SESSION['users_theme'];
+			else $theme = $panel_settings['theme'];
+
+			$panel_already_installed = false;
+			if(is_object($db)){
+				$admins = $db->getAdmins();
+				$panel_already_installed = is_array($admins) && !empty($admins);
+				if (is_readable($filename) && $panel_already_installed) {
+					@unlink($filename);
+				}
+			}
+
+			if (is_readable($filename) && !$panel_already_installed)
+			{
+				if (is_readable($filename) AND $theme == "Modern")
+				{
+					$top = "<h4 class='failure'>".get_lang('remove_install')."</h4>".$top;
+				}
+				else
+				{
+					$topbody = "<h4 class='failure'>".get_lang('remove_install')."</h4>".$topbody;
+				}
+			}
+		}
+
+		if ( isset($panel_settings['maintenance_mode']) && $panel_settings['maintenance_mode'] == "1" )
+		{
+			if ( !empty($_SESSION['users_theme']) ) $theme = $_SESSION['users_theme'];
+			else $theme = $panel_settings['theme'];
+
+			if (@$_SESSION['users_role'] == "admin" AND $theme == "Modern")
+			{
+				$top = "<h4 class='failure'>".get_lang('maintenance_mode_on')."!</b></h4>".$top;
+			}
+			elseif (@$_SESSION['users_role'] == "admin")
+			{
+				$topbody = "<h4 class='failure'>".get_lang('maintenance_mode_on')."!</b></h4>".$topbody;
+			}
+		}
+
+		if($cleared){
+			$page = $buffer;
+		}
+		else
+		{
+			$page = str_replace("%meta%",$this->meta,$page);
+			$top = str_replace("%logo%",$this->logo,$top);
+			$topbody = str_replace("%bg_wrapper%",$this->bg_wrapper,$topbody);
+			if ( !empty($_SESSION['users_theme']) )
+				$theme = $_SESSION['users_theme'];
+			else
+				$theme = @$panel_settings['theme'];
+
+			$page = str_replace("%bg_wrapper%",$this->bg_wrapper,$page);
+        	$page = str_replace("%title%",$this->title,$page);
+        	$page = str_replace("%header_code%",$this->header_code,$page);
+			$page = str_replace("%charset%",$this->charset,$page);
+        	$page = str_replace("%body%",$buffer,$page);
+			$page = str_replace("%top%",(string)$top,$page);
+			$page = str_replace("%topbody%",(string)$topbody,$page);
+			$page = str_replace("%botbody%",(string)$botbody,$page);
+			$page = str_replace("%bottom%",(string)$bottom,$page);
+			$page = str_replace("%footer%",(string)($footer ?? ''),$page);
+			$page = str_replace("%notifications%",(string)($notifications ?? ''),$page);
+		}
+
+		// Set the content-type header as this is needed by older browsers
+        if($dataType == "html"){
+			header("Content-type: text/html; charset=" . $this->charset);
+		}else if($dataType == "json"){
+			header("Content-type: application/json; charset=" . $this->charset);
+		}
+
+		// Print everything for the template.
+        print $page;
+    }
+
+    function refresh($url,$time = "")
+    {
+        if ( !empty($time) || $time === 0 )
+            $this->refreshTime = $time;
+        $this->refreshUrl = $url;
+    }
+
+    function setTitle($title)
+    {
+        $this->title = $title;
+    }
+
+	function setCharset($charset)
+    {
+        $this->charset = $charset;
+		ini_set('default_charset', $charset);
+    }
+
+	function setTimeZone($time_zone)
+    {
+		$time_zone = (!isset($time_zone) or $time_zone == "") ? "America/Chicago" : $time_zone;
+		$this->time_zone = $time_zone;
+		ini_set('date.timezone', $time_zone);
+		$_SESSION['time_zone'] = $time_zone;
+    }
+}
+?>

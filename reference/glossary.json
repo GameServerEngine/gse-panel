@@ -1,0 +1,95 @@
+{
+  "_source": "docs/deployment/xml-notes.md",
+  "_note": "Meaning of each XML tag and cli_param/server_param/custom_field option, taken from the notes above. Anything not described there is marked undocumented rather than guessed.",
+  "tags": {
+    "game_config": "Root element. There can only be one per file; every other element is contained within it.",
+    "game_key": "Unique identifier for the game server definition. Alphanumeric and underscores only. Should end with a platform suffix (_win32, _win64, _linux32, _linux64; _win and _linux also work but are discouraged) so the Panel knows which OS it applies to.",
+    "protocol": "Query protocol used by the Panel. Known values: lgsl, gameq, rcon (rcon2/lcon mentioned as undocumented alternates).",
+    "lgsl_query_name": "Key referencing this game server in the LGSL protocol file, used to query the server.",
+    "gameq_query_name": "Key referencing this game server in the GameQ protocol files, used to query the server.",
+    "installer": "Install method for the game server, e.g. steamcmd.",
+    "game_name": "Display name shown in the Panel's game list.",
+    "server_exec_name": "Server executable name used when building the start command line.",
+    "query_port": "Offset between the server port (%PORT%) and the query port (%QUERY_PORT%). type is add or subtract.",
+    "cli_template": "Template for the command line placed after the server executable name. Built-in variables (used between % characters): GAME_TYPE, HOSTNAME, IP, MAP, PID_FILE, PLAYERS, PORT, QUERY_PORT, BASE_PATH, HOME_PATH, SAVE_PATH, OUTPUT_PATH, CONTROL_PASSWORD. Custom variables can also be defined via cli_params/server_params.",
+    "cli_params": "Defines the known variables used in cli_template.",
+    "cli_param": "One variable definition: id is the %VAR% name, cli_string is what replaces it, options controls formatting (see cli_param_options).",
+    "reserve_ports": "Reserves additional ports for use in the generated start command line and in firewall management.",
+    "port": "One reserved port entry: type is add or subtract (offset from the game server's port), id is the %VAR% name, cli_string is the flag text, the element's own value is the offset amount.",
+    "cli_allow_chars": "Special characters to allow in the command line in addition to the default-escaped set (\\ \" ' | & ; > < ` $ ( ) [ ]).",
+    "maps_location": "Path to the maps folder, used to generate a selectable map list for %MAP%.",
+    "map_list": "Path to a text file (one map per line) used to generate a selectable map list for %MAP%.",
+    "console_log": "Path to the log file shown on the server's LOG page. Mostly needed on Windows.",
+    "exe_location": "Path to the server executable when it is not in the root folder.",
+    "max_user_amount": "Maximum player count selectable when creating the game server.",
+    "control_protocol": "Protocol used for remote control: rcon, rcon2, or lcon (legacy). rcon can also carry control_protocol_type of old or new.",
+    "control_protocol_type": "Sub-type for control_protocol rcon: old or new.",
+    "mods": "Defines the selectable mods/variants for this game server.",
+    "mod": "One mod entry: key identifies it (the default one is the base game itself), installer_name is the Steam appID used to install/update it, installer_login the SteamCMD login to use (anonymous unless noted).",
+    "replace_texts": "Defines text replacements applied to config files on server start, driven by Panel-generated values.",
+    "text": "One replace-text entry: default is the regex matched at line start, var is the key kept when replacing, filepath is the file modified, options controls formatting (see text_options).",
+    "server_params": "Defines selectable/togglable startup parameters shown on the game server's configuration page.",
+    "param": "One server param: id is the %VAR% name used in cli_template, key is the flag/text inserted, type is text, select, or checkbox_key_value (see param_types), options controls formatting (see param_options).",
+    "custom_fields": "Defines custom fields (Custom Fields button) applied to config files on every server start.",
+    "field": "One custom field: key/var/filepath identify what line to replace in which file, default is the regex matched, default_value is what the UI pre-fills, options controls formatting (see custom_field_options).",
+    "list_players_command": "Command sent to list players on the server when using control_protocol.",
+    "player_info_regex": "Regex used to parse player info when using control_protocol.",
+    "player_info": "Maps regex capture group indexes to named fields (e.g. userid, Name) for control_protocol.",
+    "player_commands": "Defines admin commands (kick/ban/rename, etc.) available when using control_protocol.",
+    "command": "One player command: type is hidden, select, or text; string is the control-protocol command template with %input%/%userid%/%Name% placeholders.",
+    "pre_install": "Script executed before installing/updating the game server.",
+    "post_install": "Script executed after installing/updating the game server. XML special characters in the script must be escaped (e.g. &quot;, &gt;).",
+    "pre_start": "Script executed just before the server starts (batch on Windows, bash on Linux). Runs with the server's home directory as the working directory.",
+    "environment_variables": "Environment variables to set before starting the server. {GSP_HOME_DIR} is replaced with the server's home directory.",
+    "lock_files": "Additional files to protect (chattr +i on Linux) after install/update, before the server starts. Relative paths are relative to the server's home directory.",
+    "configuration_files": "Files directly editable from the Panel without server file access (requires the EditConfigFiles module).",
+    "file": "One editable config file entry under configuration_files; description is optional UI text."
+  },
+  "cli_param_options": {
+    "_undocumented_default": "no options = no quotes or spacing added",
+    "q": "quotes wrapped around the value",
+    "s": "space added before the value",
+    "sq": "space and quotes both added"
+  },
+  "text_options": {
+    "_applies_to": "replace_texts/text",
+    "": "value placed as-is",
+    "s": "space separated",
+    "q": "quoted",
+    "sq": "space and quotes",
+    "sc": "space, ends with a comma",
+    "sqc": "space, quoted, ends with a comma"
+  },
+  "param_types": {
+    "_applies_to": "server_params/param",
+    "text": "Free text box; value replaces the %VAR% in cli_template using key as the prefix. Empty input removes the variable entirely rather than replacing it.",
+    "select": "Dropdown of fixed options; the chosen option's value replaces the %VAR% using key as the prefix.",
+    "checkbox_key_value": "Checkbox; when ticked, adds key verbatim to the command line."
+  },
+  "param_options": {
+    "_applies_to": "server_params/param",
+    "ns": "no space between key and value",
+    "q": "quotes wrapped around the value after key (no space)",
+    "s": "space added after key before value (no quotes)",
+    "_other": "space after key and quotes around the value (any other/undocumented option value)"
+  },
+  "custom_field_options": {
+    "_applies_to": "custom_fields/field",
+    "_note": "No dedicated options table is given in xml-notes.md; the field reuses the same style of options seen on replace_texts/text (s/q/sq/sc/sqc) and server_params/param (ns). Treat any specific value not already listed in those tables as undocumented.",
+    "s": "space separated"
+  },
+  "reserve_port_types": {
+    "add": "Offset is added to the game server's port.",
+    "subtract": "Offset is subtracted from the game server's port."
+  },
+  "control_protocol_values": {
+    "rcon": "RCON protocol; can carry control_protocol_type old or new.",
+    "rcon2": "RCON2 protocol.",
+    "lcon": "Legacy control protocol (marked legacy in the notes)."
+  },
+  "protocol_values": {
+    "lgsl": "LAN/game server listing query library.",
+    "gameq": "GameQ query library.",
+    "rcon": "Query via RCON. Also listed with unconfirmed variants rcon2/lcon in the notes (marked undocumented there)."
+  }
+}

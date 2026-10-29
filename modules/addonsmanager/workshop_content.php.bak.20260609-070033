@@ -1,0 +1,319 @@
+<?php
+/*
+ *
+ * GSP - Server Content Workshop page
+ *
+ * Users enter Steam Workshop IDs or URLs to install on their server.
+ * Game-specific Workshop behavior comes from the game XML workshop_support block.
+ *
+ */
+
+require_once(dirname(__FILE__) . '/server_content_helpers.php');
+require_once(dirname(__FILE__) . '/workshop_action.php');
+
+function exec_gsp_module() {
+	global $db;
+
+	$user_id = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+	$home_id = isset($_REQUEST['home_id']) ? (int)$_REQUEST['home_id'] : 0;
+	$mod_id  = isset($_REQUEST['mod_id']) ? (int)$_REQUEST['mod_id'] : 0;
+	$ip      = isset($_REQUEST['ip']) ? (string)$_REQUEST['ip'] : '';
+	$port    = isset($_REQUEST['port']) ? (string)$_REQUEST['port'] : '';
+	$addon_id = isset($_REQUEST['addon_id']) ? (int)$_REQUEST['addon_id'] : 0;
+
+	if ($home_id <= 0 || $user_id <= 0) {
+		print_failure(get_lang('no_rights'));
+		echo create_back_button("addonsmanager","user_addons");
+		return;
+	}
+
+	$home_info = scm_get_home_for_user($db, $home_id, $user_id);
+	if ($home_info === false) {
+		print_failure(get_lang('no_rights'));
+		echo create_back_button("addonsmanager","user_addons");
+		return;
+	}
+
+	if (!scm_ensure_workshop_schema($db)) {
+		print_failure('Failed to initialize Workshop Content storage.');
+		return;
+	}
+	scm_ensure_phase2_schema($db);
+	$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file']);
+	if ($server_xml === false || !scm_workshop_is_supported($server_xml)) {
+		print_failure('Steam Workshop is not enabled for this game XML. Add a valid workshop_support block before using Workshop management.');
+		echo create_back_button("addonsmanager","user_addons");
+		return;
+	}
+
+	// Template records are optional and used only as labels/history anchors.
+	$addon_template = null;
+	if ($addon_id > 0) {
+		$template_rows = $db->resultQuery(
+			"SELECT addon_id, name, description
+			   FROM `" . GSP_DB_PREFIX . "addons`
+			  WHERE addon_id=" . $addon_id . " AND install_method='steam_workshop'"
+		);
+		if (is_array($template_rows) && !empty($template_rows)) {
+			$addon_template = $template_rows[0];
+		}
+	}
+
+	$message = '';
+	$is_error = false;
+	$entered_ids = '';
+	$catalog_sort = isset($_REQUEST['catalog_sort']) ? (string)$_REQUEST['catalog_sort'] : 'last_installed';
+	$catalog_query = isset($_REQUEST['workshop_search']) ? trim((string)$_REQUEST['workshop_search']) : '';
+	$catalog_tag = isset($_REQUEST['workshop_tag']) ? trim((string)$_REQUEST['workshop_tag']) : '';
+
+	if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+		$posted_home_id = isset($_POST['home_id']) ? (int)$_POST['home_id'] : 0;
+		$csrf_token = isset($_POST['workshop_csrf']) ? (string)$_POST['workshop_csrf'] : '';
+		$entered_ids = isset($_POST['workshop_ids']) ? (string)$_POST['workshop_ids'] : '';
+		$selected_ids = isset($_POST['selected_ids']) ? $_POST['selected_ids'] : array();
+		$action = isset($_POST['workshop_action']) ? (string)$_POST['workshop_action'] : '';
+		$posted_addon_id = isset($_POST['addon_id']) ? (int)$_POST['addon_id'] : 0;
+		$options = array(
+			'update_policy' => isset($_POST['update_policy']) ? (string)$_POST['update_policy'] : 'manual',
+		);
+
+		if ($posted_home_id !== $home_id) {
+			$is_error = true;
+			$message = 'Invalid server context for workshop action.';
+		}
+		elseif (!scm_validate_csrf_token($csrf_token)) {
+			$is_error = true;
+			$message = 'Invalid CSRF token for workshop action.';
+		}
+		else {
+			scm_workshop_handle_action($db, $home_info, $user_id, $action, $entered_ids, (array)$selected_ids, $message, $is_error, $posted_addon_id > 0 ? $posted_addon_id : $addon_id, $options);
+		}
+	}
+
+	$catalog_app_id = ($server_xml !== false) ? scm_extract_workshop_app_id($server_xml) : '';
+	$steam_app_id = ($server_xml !== false) ? scm_extract_workshop_steam_app_id($server_xml) : '';
+	$install_strategy = ($server_xml !== false) ? scm_detect_workshop_install_strategy($home_info, $server_xml) : '';
+	$rows = scm_get_workshop_rows($db, $home_id);
+	$catalog_rows = scm_get_workshop_catalog_rows($db, $catalog_app_id, $catalog_sort, 50, $catalog_query, $catalog_tag);
+	$game_search_rows = scm_get_workshop_enabled_games($catalog_query, $catalog_tag);
+	$csrf_token = scm_get_csrf_token();
+	$base_query = 'm=addonsmanager&p=workshop_content&home_id=' . (int)$home_id .
+		'&mod_id=' . (int)$mod_id . '&ip=' . urlencode($ip) . '&port=' . urlencode($port) .
+		'&addon_id=' . (int)$addon_id .
+		'&workshop_search=' . urlencode($catalog_query) . '&workshop_tag=' . urlencode($catalog_tag);
+
+	echo "<h2>Workshop Mods: " . scm_h($home_info['home_name']) . "</h2>";
+	if ($addon_template !== null) {
+		echo "<p class='info'>Content template: <strong>" . scm_h($addon_template['name']) . "</strong>";
+		if (!empty($addon_template['description'])) {
+			echo " – " . scm_h($addon_template['description']);
+		}
+		echo "</p>";
+	}
+	echo "<p class='info'>Enter a Steam Workshop URL or numeric item ID. GSP stores only the numeric Workshop ID. App IDs, install paths, mod folder strategy, key-copy behavior, and launch parameter format come from this game's XML.</p>";
+
+	if ($message !== '') {
+		if ($is_error) {
+			print_failure($message);
+		} else {
+			print_success($message);
+		}
+	}
+	?>
+	<table class='center'>
+		<tr><td align='right'><strong>Server Name:</strong></td><td align='left'><?php echo scm_h($home_info['home_name']); ?></td></tr>
+		<tr><td align='right'><strong>Game Name:</strong></td><td align='left'><?php echo scm_h($home_info['game_name']); ?></td></tr>
+		<tr><td align='right'><strong>Workshop App ID:</strong></td><td align='left'><?php echo scm_h($catalog_app_id); ?></td></tr>
+		<tr><td align='right'><strong>Steam App ID:</strong></td><td align='left'><?php echo scm_h($steam_app_id); ?></td></tr>
+		<tr><td align='right'><strong>Install Strategy:</strong></td><td align='left'><?php echo scm_h($install_strategy); ?></td></tr>
+	</table>
+
+	<h3>Search Workshop</h3>
+	<form method='get' action=''>
+		<input type='hidden' name='m' value='addonsmanager' />
+		<input type='hidden' name='p' value='workshop_content' />
+		<input type='hidden' name='home_id' value='<?php echo (int)$home_id; ?>' />
+		<input type='hidden' name='mod_id' value='<?php echo (int)$mod_id; ?>' />
+		<input type='hidden' name='ip' value='<?php echo scm_h($ip); ?>' />
+		<input type='hidden' name='port' value='<?php echo scm_h($port); ?>' />
+		<input type='hidden' name='addon_id' value='<?php echo (int)$addon_id; ?>' />
+		<table class='center'>
+			<tr>
+				<td align='right'><strong>Keyword / ID / URL</strong></td>
+				<td align='left'><input type='text' name='workshop_search' size='42' value='<?php echo scm_h($catalog_query); ?>' placeholder='ACE, CBA, Zombies, Maps, or Workshop ID' /></td>
+				<td align='right'><strong>Tag</strong></td>
+				<td align='left'><input type='text' name='workshop_tag' size='24' value='<?php echo scm_h($catalog_tag); ?>' placeholder='Weapons, Missions, Maps' /></td>
+				<td><button type='submit'>Search</button></td>
+			</tr>
+			<?php if ($catalog_app_id !== '' && ($catalog_query !== '' || $catalog_tag !== '')): ?>
+				<tr>
+					<td></td>
+					<td colspan='4' class='info'>
+						<a target='_blank' rel='noopener' href='https://steamcommunity.com/workshop/browse/?appid=<?php echo scm_h($catalog_app_id); ?>&amp;searchtext=<?php echo scm_h(urlencode(trim($catalog_query . ' ' . $catalog_tag))); ?>'>Open matching Steam Workshop search</a>
+					</td>
+				</tr>
+			<?php endif; ?>
+		</table>
+	</form>
+
+	<?php if ($catalog_query !== '' || $catalog_tag !== ''): ?>
+		<h3>Workshop-Enabled Games</h3>
+		<table class='center'>
+			<tr><th>Game</th><th>Config</th><th>Workshop App ID</th><th>Strategy</th></tr>
+			<?php if (empty($game_search_rows)): ?>
+				<tr><td colspan='4' class='info'>No Workshop-enabled game XML files matched this search.</td></tr>
+			<?php else: ?>
+				<?php foreach ((array)$game_search_rows as $game_row): ?>
+					<tr>
+						<td><?php echo scm_h($game_row['game_name']); ?></td>
+						<td><?php echo scm_h($game_row['config_file']); ?></td>
+						<td><?php echo scm_h($game_row['workshop_app_id']); ?></td>
+						<td><?php echo scm_h($game_row['install_strategy']); ?></td>
+					</tr>
+				<?php endforeach; ?>
+			<?php endif; ?>
+		</table>
+	<?php endif; ?>
+
+	<form method='post' action=''>
+		<input type='hidden' name='m' value='addonsmanager' />
+		<input type='hidden' name='p' value='workshop_content' />
+		<input type='hidden' name='home_id' value='<?php echo (int)$home_id; ?>' />
+		<input type='hidden' name='mod_id' value='<?php echo (int)$mod_id; ?>' />
+		<input type='hidden' name='ip' value='<?php echo scm_h($ip); ?>' />
+		<input type='hidden' name='port' value='<?php echo scm_h($port); ?>' />
+		<input type='hidden' name='addon_id' value='<?php echo (int)$addon_id; ?>' />
+		<input type='hidden' name='workshop_csrf' value='<?php echo scm_h($csrf_token); ?>' />
+
+		<table class='center'>
+			<tr>
+				<td align='right'><strong>Workshop URLs / IDs</strong></td>
+				<td align='left'>
+					<textarea name='workshop_ids' rows='4' cols='72' placeholder='https://steamcommunity.com/sharedfiles/filedetails/?id=450814997&#10;463939057'><?php echo scm_h($entered_ids); ?></textarea>
+					<br><small style="color:#666;">Enter one or more Steam Workshop URLs or numeric IDs, one per line, comma-separated, or space-separated.<br>Example for Arma 3 CBA_A3: <code>https://steamcommunity.com/sharedfiles/filedetails/?id=450814997</code></small>
+				</td>
+				<td align='left' style='vertical-align:top;padding-top:4px;'>
+					<button type='submit' name='workshop_action' value='install_new'>Install / Queue</button>
+				</td>
+			</tr>
+		</table>
+
+		<br>
+		<table class='center'>
+			<tr>
+				<th></th>
+				<th>Workshop ID</th>
+				<th>Title</th>
+				<th>Enabled</th>
+				<th>Order</th>
+				<th>Update Policy</th>
+				<th>State</th>
+				<th>Install Path</th>
+				<th>Last Installed</th>
+				<th>Last Updated</th>
+				<th>Last Error</th>
+			</tr>
+			<?php if (empty($rows)): ?>
+				<tr><td colspan='11' class='info'>No Workshop items saved for this server yet.</td></tr>
+			<?php else: ?>
+				<?php foreach ((array)$rows as $row): ?>
+					<tr>
+						<td><input type='checkbox' name='selected_ids[]' value='<?php echo scm_h($row['workshop_item_id']); ?>'></td>
+						<td><?php echo scm_h($row['workshop_item_id']); ?></td>
+						<td><?php echo scm_h($row['title']); ?></td>
+						<td><?php echo !empty($row['enabled']) ? 'Yes' : 'No'; ?></td>
+						<td><?php echo scm_h(isset($row['load_order']) ? $row['load_order'] : ''); ?></td>
+						<td><?php echo scm_h(isset($row['update_policy']) ? $row['update_policy'] : 'manual'); ?></td>
+						<td><?php echo scm_h($row['install_state']); ?></td>
+						<td><small><?php echo scm_h(isset($row['install_path']) ? $row['install_path'] : ''); ?></small></td>
+						<td><?php echo scm_h($row['last_installed_at']); ?></td>
+						<td><?php echo scm_h($row['last_updated_at']); ?></td>
+						<td><?php echo scm_h($row['last_error']); ?></td>
+					</tr>
+				<?php endforeach; ?>
+			<?php endif; ?>
+		</table>
+		<br>
+		<table class='center'>
+			<tr>
+				<td>
+					<select name='update_policy'>
+						<?php foreach (scm_get_workshop_update_policies() as $policy_key => $policy_label): ?>
+							<option value='<?php echo scm_h($policy_key); ?>'><?php echo scm_h($policy_label); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</td>
+				<td><button type='submit' name='workshop_action' value='save_update_policy'>Save Policy</button></td>
+				<td><button type='submit' name='workshop_action' value='update_selected'>Update Selected</button></td>
+				<td><button type='submit' name='workshop_action' value='download_selected'>Download Selected</button></td>
+				<td><button type='submit' name='workshop_action' value='remove_selected'>Remove Selected</button></td>
+				<td><button type='submit' name='workshop_action' value='enable_selected'>Enable Selected</button></td>
+				<td><button type='submit' name='workshop_action' value='disable_selected'>Disable Selected</button></td>
+				<td><button type='submit' name='workshop_action' value='update_all'>Update All</button></td>
+			</tr>
+		</table>
+	</form>
+
+	<h3>Known Workshop Items</h3>
+	<p class='info'>These are Workshop items previously installed through Server Content Manager. The catalog grows automatically from real installs. Metadata is optional; direct ID or URL install remains available even when Steam metadata has not been fetched yet.</p>
+	<table class='center'>
+		<tr>
+			<th>Workshop ID</th>
+			<th><a href='?<?php echo scm_h($base_query); ?>&amp;catalog_sort=name'>Name</a></th>
+			<th>Author</th>
+			<th>Thumbnail</th>
+			<th><a href='?<?php echo scm_h($base_query); ?>&amp;catalog_sort=install_count'>Install Count</a></th>
+			<th><a href='?<?php echo scm_h($base_query); ?>&amp;catalog_sort=published_date'>Published</a></th>
+			<th><a href='?<?php echo scm_h($base_query); ?>&amp;catalog_sort=last_updated'>Last Updated</a></th>
+			<th><a href='?<?php echo scm_h($base_query); ?>&amp;catalog_sort=last_installed'>Last Installed</a></th>
+			<th><a href='?<?php echo scm_h($base_query); ?>&amp;catalog_sort=workshop_id'>Sort ID</a></th>
+			<th>Action</th>
+		</tr>
+		<?php if (empty($catalog_rows)): ?>
+			<tr><td colspan='10' class='info'>No known Workshop items have been installed for this app yet.</td></tr>
+		<?php else: ?>
+			<?php foreach ((array)$catalog_rows as $catalog_row): ?>
+				<tr>
+					<td><?php echo scm_h($catalog_row['workshop_id']); ?></td>
+					<td><?php echo scm_h($catalog_row['title']); ?></td>
+					<td><?php echo scm_h(isset($catalog_row['author']) ? $catalog_row['author'] : ''); ?></td>
+					<td>
+						<?php if (!empty($catalog_row['thumbnail_url'])): ?>
+							<img src='<?php echo scm_h($catalog_row['thumbnail_url']); ?>' alt='' style='max-width:72px;max-height:48px;' />
+						<?php endif; ?>
+					</td>
+					<td><?php echo scm_h($catalog_row['install_count']); ?></td>
+					<td><?php echo scm_h($catalog_row['published_date']); ?></td>
+					<td><?php echo scm_h($catalog_row['last_updated']); ?></td>
+					<td><?php echo scm_h($catalog_row['last_installed']); ?></td>
+					<td><?php echo scm_h($catalog_row['workshop_id']); ?></td>
+					<td>
+						<form method='post' action='' style='margin:0;'>
+							<input type='hidden' name='m' value='addonsmanager' />
+							<input type='hidden' name='p' value='workshop_content' />
+							<input type='hidden' name='home_id' value='<?php echo (int)$home_id; ?>' />
+							<input type='hidden' name='mod_id' value='<?php echo (int)$mod_id; ?>' />
+							<input type='hidden' name='ip' value='<?php echo scm_h($ip); ?>' />
+							<input type='hidden' name='port' value='<?php echo scm_h($port); ?>' />
+							<input type='hidden' name='addon_id' value='<?php echo (int)$addon_id; ?>' />
+							<input type='hidden' name='workshop_csrf' value='<?php echo scm_h($csrf_token); ?>' />
+							<input type='hidden' name='workshop_ids' value='<?php echo scm_h($catalog_row['workshop_id']); ?>' />
+							<button type='submit' name='workshop_action' value='install_new'>Install</button>
+						</form>
+					</td>
+				</tr>
+			<?php endforeach; ?>
+		<?php endif; ?>
+	</table>
+
+	<form method='get' action=''>
+		<input type='hidden' name='m' value='addonsmanager' />
+		<input type='hidden' name='p' value='user_addons' />
+		<input type='hidden' name='home_id' value='<?php echo (int)$home_id; ?>' />
+		<input type='hidden' name='mod_id' value='<?php echo (int)$mod_id; ?>' />
+		<input type='hidden' name='ip' value='<?php echo scm_h($ip); ?>' />
+		<input type='hidden' name='port' value='<?php echo scm_h($port); ?>' />
+		<input type='submit' value='Back to Server Content' />
+	</form>
+	<?php
+}

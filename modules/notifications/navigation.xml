@@ -1,0 +1,3 @@
+<navigation>
+  <page key="my_notifications" file="my_notifications.php" access="user,admin" />
+</navigation>

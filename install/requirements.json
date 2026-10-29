@@ -1,0 +1,149 @@
+{
+    "_comment": "Single source of truth for GSE Panel install-time dependencies. check.php reads this file directly; shell scripts read it via 'php install/read-requirements.php --list=<name>'. Do not hardcode these lists anywhere else.",
+    "schema_version": 1,
+    "php": {
+        "min_version": "8.3.0",
+        "install_hint": "sudo apt install php php-cli libapache2-mod-php -y"
+    },
+    "php_extensions": {
+        "mysqli": {
+            "description": "Database connectivity",
+            "apt_package": "php-mysql"
+        },
+        "curl": {
+            "description": "Remote HTTP requests",
+            "apt_package": "php-curl"
+        },
+        "gd": {
+            "description": "Image processing",
+            "apt_package": "php-gd"
+        },
+        "mbstring": {
+            "description": "Multi-byte string handling",
+            "apt_package": "php-mbstring"
+        },
+        "zip": {
+            "description": "Archive extraction",
+            "apt_package": "php-zip"
+        },
+        "xml": {
+            "description": "XML parsing (game configs)",
+            "apt_package": "php-xml"
+        },
+        "json": {
+            "description": "JSON encoding/decoding",
+            "apt_package": "php-json"
+        },
+        "openssl": {
+            "description": "Encrypted connections",
+            "apt_package": "php-openssl"
+        },
+        "fileinfo": {
+            "description": "MIME type detection",
+            "apt_package": "php-fileinfo"
+        },
+        "session": {
+            "description": "Session management",
+            "apt_package": "php-common"
+        },
+        "xmlrpc": {
+            "description": "Panel-to-Agent XML-RPC transport used by includes/lib_remote.php. Packaged separately on modern Debian/Ubuntu. A planned transport replacement does not remove this current requirement.",
+            "apt_package": "php-xmlrpc"
+        }
+    },
+    "php_libraries": {
+        "PEAR": {
+            "include_file": "PEAR.php",
+            "description": "Crypt/XXTEA.php requires PEAR.php for current agent encryption support.",
+            "apt_package": "php-pear"
+        }
+    },
+    "commands": {
+        "unzip": {
+            "apt_package": "unzip",
+            "missing_status": "missing",
+            "description": "Required for archive extraction"
+        },
+        "tar": {
+            "apt_package": "tar",
+            "missing_status": "missing",
+            "description": "Required for archive extraction"
+        },
+        "screen": {
+            "apt_package": "screen",
+            "missing_status": "missing",
+            "description": "Required for game server process management"
+        },
+        "sudo": {
+            "apt_package": "sudo",
+            "missing_status": "missing",
+            "description": "Required by management scripts and permission repair"
+        },
+        "git": {
+            "apt_package": "git",
+            "missing_status": "warning",
+            "description": "Optional for developer Git workflows and some legacy game-management tasks; normal Panel install/update uses release ZIP archives"
+        },
+        "rsync": {
+            "apt_package": "rsync",
+            "missing_status": "missing",
+            "description": "Required for file synchronization workflows"
+        },
+        "mysql": {
+            "apt_package": "mysql-client",
+            "missing_status": "missing",
+            "description": "Required for command-line database setup and diagnostics"
+        },
+        "curl": {
+            "apt_package": "curl",
+            "missing_status": "missing",
+            "description": "Required to download release archives"
+        }
+    },
+    "apt_packages": {
+        "always": [
+            "ca-certificates",
+            "curl",
+            "git",
+            "unzip",
+            "tar",
+            "screen",
+            "sudo",
+            "rsync",
+            "mysql-client",
+            "php",
+            "php-cli",
+            "php-common",
+            "php-mysql",
+            "php-gd",
+            "php-curl",
+            "php-mbstring",
+            "php-zip",
+            "php-xml",
+            "php-xmlrpc",
+            "php-pear"
+        ],
+        "apache_mod_php": [
+            "libapache2-mod-php"
+        ],
+        "webserver_optional": [
+            "apache2"
+        ],
+        "database_server_optional": [
+            "mysql-server"
+        ],
+        "https_optional": [
+            "certbot",
+            "python3-certbot-apache"
+        ]
+    },
+    "apache_modules": {
+        "required": [
+            "rewrite",
+            "headers"
+        ],
+        "https_required": [
+            "ssl"
+        ]
+    }
+}

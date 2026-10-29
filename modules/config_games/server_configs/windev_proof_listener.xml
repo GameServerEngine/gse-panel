@@ -1,0 +1,14 @@
+<game_config>
+  <game_key>windev_proof_listener</game_key>
+  <game_name>WinDev Proof Listener (test only)</game_name>
+  <server_exec_name>windev_proof_listener.bat</server_exec_name>
+  <cli_template>%PORT%</cli_template>
+  <cli_params>
+    <cli_param id="PORT" cli_string="" options="s" />
+  </cli_params>
+  <mods>
+    <mod key="server">
+      <name>Server</name>
+    </mod>
+  </mods>
+</game_config>

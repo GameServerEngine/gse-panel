@@ -1,0 +1,26 @@
+{
+    "docs_folder_count": 151,
+    "xml_game_count": 147,
+    "docs_with_no_xml": [
+        "amxmodx",
+        "b3",
+        "common-issues",
+        "garrysmod",
+        "getting-started",
+        "metamodsource",
+        "oxide",
+        "roadkill",
+        "smashball",
+        "synergy",
+        "wolfrtcw_1-4"
+    ],
+    "xml_with_no_docs": [
+        "GarrysMod",
+        "Smashball",
+        "Synergy",
+        "bigbrotherbot",
+        "dayz_arma2co",
+        "testing_app",
+        "wolfrtcw_1.4"
+    ]
+}

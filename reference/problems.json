@@ -1,0 +1,66 @@
+[
+    {
+        "source_file": "arkse_win64.xml",
+        "issue": "game_name mismatch across platforms for arkse: 'ARK:SE' vs 'ARK: Survival Evolved'"
+    },
+    {
+        "source_file": "arma-reforger_win64.xml",
+        "issue": "duplicate_platform: arma-reforger/linux64 already defined by arma-reforger_linux64.xml"
+    },
+    {
+        "source_file": "arma2oa_win32.xml",
+        "issue": "duplicate_platform: arma2oa/win32 already defined by arma2_win32.xml"
+    },
+    {
+        "source_file": "counterstrike_source_linux.xml",
+        "issue": "duplicate_platform: css/linux32 already defined by counterstrike_source.xml"
+    },
+    {
+        "source_file": "csgo_linux.xml",
+        "issue": "duplicate_platform: csgo/linux32 already defined by csgo128_linux.xml"
+    },
+    {
+        "source_file": "csgo_win.xml",
+        "issue": "game_name mismatch across platforms for csgo: 'Counter Strike Global Offensive 128tick' vs 'Counter Strike Global Offensive'"
+    },
+    {
+        "source_file": "cstrike_linux.xml",
+        "issue": "duplicate_platform: cstrike/linux32 already defined by cstrike.xml"
+    },
+    {
+        "source_file": "epochmod_win32.xml",
+        "issue": "duplicate_platform: epochmod/win32 already defined by dayz_epoch_mod_win32.xml"
+    },
+    {
+        "source_file": "harsh_win64.xml.bak.xml",
+        "issue": "skipped_backup_file"
+    },
+    {
+        "source_file": "jcmp_win32.xml",
+        "issue": "game_name mismatch across platforms for jcmp: 'Just Cause 2 Multiplayer' vs 'Just Cause 2 Multiplayer (Windows)'"
+    },
+    {
+        "source_file": "left_4_dead2_linux.xml",
+        "issue": "duplicate_platform: left4dead2/linux32 already defined by left4dead2_linux32.xml"
+    },
+    {
+        "source_file": "left_4_dead_linux.xml",
+        "issue": "duplicate_platform: left4dead/linux32 already defined by left4dead_linux32.xml"
+    },
+    {
+        "source_file": "mohaa_win.xml",
+        "issue": "game_name mismatch across platforms for mohaa: 'Medal Of Honor: Allied Assault' vs 'Medal Of Honor: Allied Assault (Windows)'"
+    },
+    {
+        "source_file": "mohsp_win.xml",
+        "issue": "game_name mismatch across platforms for mohsp: 'Medal Of Honor: Spearhead' vs 'Medal Of Honor: Spearhead (Windows)'"
+    },
+    {
+        "source_file": "nuclear_dawn_win.xml",
+        "issue": "game_name mismatch across platforms for nucleardawn: 'Nuclear Dawn (Linux)' vs 'Nuclear Dawn'"
+    },
+    {
+        "source_file": "valheim_mods_linux64.xml",
+        "issue": "duplicate_platform: valheim/linux already defined by valheim_linux64.xml"
+    }
+]

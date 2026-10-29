@@ -1,0 +1,46 @@
+# Ignore database configuration files with sensitive credentials
+includes/config.inc.php
+modules/billing/includes/config.inc.php
+modules/billing/site_config.local.php
+status/api/config.php
+status_api_local.php
+
+# Ignore logs
+logs/
+modules/billing/logs/*.log
+modules/billing/logs/*.txt
+
+# Ignore data directory (payment JSONs)
+modules/billing/data/*.json
+!modules/billing/data/.gitkeep
+
+# Ignore backup files
+*.backup
+*.bak
+*~
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore temporary files
+/tmp/
+*.tmp
+modules/billing/data/*.log
+tools/__pycache__/
+scripts/__pycache__/
+
+.devplus/
+
+# Run logs (may contain commands or credentials; never commit)
+.devplus/shell-runs/
+.devplus/command-runs/
+.devplus/leroy-runs/
+.devplus/operations/
+.devplus/inspections/

@@ -1,0 +1,18 @@
+<game_config>
+  <game_key>testing_app_linux64</game_key>
+  <game_name>Testing App</game_name>
+  <server_exec_name>spt-amd64.sh</server_exec_name>
+  <cli_template>--server %IP% %PORT%</cli_template>
+  <cli_params>
+    <cli_param id="IP" cli_string="--ip" options="s" />
+    <cli_param id="PORT" cli_string="--port" options="s" />
+  </cli_params>
+  <mods>
+    <mod key="server">
+      <name>Server</name>
+    </mod>
+  </mods>
+  <pre_install>
+   wget 
+</pre_install>
+</game_config>

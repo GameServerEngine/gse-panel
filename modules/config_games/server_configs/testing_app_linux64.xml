@@ -1,0 +1,27 @@
+<game_config>
+  <game_key>testing_app_linux64</game_key>
+  <game_name>Testing App</game_name>
+  <server_exec_name>server-port-test-linux-amd64.sh</server_exec_name>
+  <cli_template>%GAME_TYPE% %IP% %PORT%</cli_template>
+  <cli_params>
+    <cli_param id="GAME_TYPE" cli_string="--" />
+    <cli_param id="IP" cli_string="--ip" options="s" />
+    <cli_param id="PORT" cli_string="--port" options="s" />
+  </cli_params>
+  <mods>
+    <mod key="server">
+      <name>Server</name>
+    </mod>
+  </mods>
+  <pre_install><![CDATA[
+# TODO: Replace this placeholder with the final server-port-test release endpoint.
+SERVER_PORT_TEST_RELEASE_BASE="${SERVER_PORT_TEST_RELEASE_BASE:-https://example.invalid/runlevel/server-port-test/releases/latest/download}"
+rm -f server-port-test-linux-amd64.sh
+if command -v curl >/dev/null 2>&1; then
+  curl -fL -o server-port-test-linux-amd64.sh "$SERVER_PORT_TEST_RELEASE_BASE/server-port-test-linux-amd64.sh"
+else
+  wget -O server-port-test-linux-amd64.sh "$SERVER_PORT_TEST_RELEASE_BASE/server-port-test-linux-amd64.sh"
+fi
+chmod +x server-port-test-linux-amd64.sh
+]]></pre_install>
+</game_config>

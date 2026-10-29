@@ -1,0 +1,1234 @@
+#!/usr/bin/env python3
+"""
+Comprehensive Game Server Documentation Generator for GSP
+
+This script generates PHP documentation files for game servers in the GSP billing module.
+
+USAGE:
+    # Generate docs for all incomplete games:
+    python3 generate_game_docs.py
+    
+    # Generate docs for specific game(s):
+    python3 generate_game_docs.py --games minecraft csgo rust
+    
+    # Regenerate docs (overwrite existing):
+    python3 generate_game_docs.py --games minecraft --force
+    
+    # Process all "todo" category games:
+    python3 generate_game_docs.py --todo-only
+
+OPTIONS:
+    --games GAME1 GAME2 ...  Generate docs for specific game folder names
+    --force                  Overwrite existing documentation files
+    --todo-only              Only process games with category="todo"
+    --help                   Show this help message
+
+The generator extracts information from:
+- XML configurations (modules/config_games/server_configs/*.xml)
+- YAML knowledgepack (modules/billing/docs/gameserver_knowledgepack_v2.yaml)
+- Existing metadata.json files
+
+Generated documentation includes:
+- Quick info (ports, RAM, Steam App ID)
+- Network ports and firewall configuration
+- Installation steps with SteamCMD commands
+- Server configuration files and settings
+- Detailed startup parameters from XML
+- Comprehensive troubleshooting guide
+- Performance optimization tips
+- Security best practices
+"""
+
+import os
+import sys
+import json
+import yaml
+import re
+import argparse
+import html
+from pathlib import Path
+from datetime import datetime
+import xml.etree.ElementTree as ET
+
+class GameDocGenerator:
+    def __init__(self, docs_dir, config_dir, knowledgepack_path):
+        self.docs_dir = Path(docs_dir)
+        self.config_dir = Path(config_dir)
+        self.knowledgepack_path = Path(knowledgepack_path)
+        self.knowledgepack_data = None
+        self.xml_configs = {}
+        
+    def load_knowledgepack(self):
+        """Load the YAML knowledgepack with game information"""
+        try:
+            with open(self.knowledgepack_path, 'r', encoding='utf-8') as f:
+                data = yaml.safe_load(f)
+                self.knowledgepack_data = data.get('games', [])
+                print(f"Loaded knowledgepack with {len(self.knowledgepack_data)} games")
+                return True
+        except Exception as e:
+            print(f"Error loading knowledgepack: {e}")
+            return False
+    
+    def load_xml_configs(self):
+        """Load all XML configuration files"""
+        xml_files = list(self.config_dir.glob("*.xml"))
+        for xml_file in xml_files:
+            try:
+                tree = ET.parse(xml_file)
+                root = tree.getroot()
+                game_key = root.find('game_key')
+                if game_key is not None and game_key.text:
+                    self.xml_configs[game_key.text] = {
+                        'file': xml_file.name,
+                        'tree': root
+                    }
+            except Exception as e:
+                print(f"Error parsing {xml_file}: {e}")
+        print(f"Loaded {len(self.xml_configs)} XML configurations")
+    
+    def get_game_info_from_knowledgepack(self, game_name):
+        """Find game info in knowledgepack by name"""
+        if not self.knowledgepack_data:
+            return None
+        
+        # Try exact match first
+        for game in self.knowledgepack_data:
+            if game.get('name', '').lower() == game_name.lower():
+                return game
+        
+        # Try partial match
+        for game in self.knowledgepack_data:
+            if game_name.lower() in game.get('name', '').lower():
+                return game
+        
+        return None
+    
+    def get_xml_config(self, folder_name):
+        """Find matching XML config for a folder"""
+        # Try exact match
+        for key, config in self.xml_configs.items():
+            if key.lower() == folder_name.lower() or key.lower().replace('_', '') == folder_name.lower():
+                return config['tree']
+        
+        # Try partial match
+        for key, config in self.xml_configs.items():
+            if folder_name.lower() in key.lower() or key.lower() in folder_name.lower():
+                return config['tree']
+        
+        return None
+    
+    def extract_ports_from_xml(self, xml_root):
+        """Extract port information from XML config"""
+        ports = []
+        
+        # Look for replace_texts with port keys
+        replace_texts = xml_root.find('replace_texts')
+        if replace_texts is not None:
+            for text in replace_texts.findall('text'):
+                key = text.get('key', '')
+                if 'port' in key.lower():
+                    filepath = text.find('filepath')
+                    if filepath is not None:
+                        ports.append({
+                            'key': key,
+                            'file': filepath.text
+                        })
+        
+        # Look for custom_fields with port information
+        custom_fields = xml_root.find('custom_fields')
+        if custom_fields is not None:
+            for field in custom_fields.findall('field'):
+                key = field.get('key', '')
+                if 'port' in key.lower():
+                    default_value = field.find('default_value')
+                    desc = field.find('desc')
+                    ports.append({
+                        'key': key,
+                        'default': default_value.text if default_value is not None else None,
+                        'description': desc.text if desc is not None else None
+                    })
+        
+        return ports
+    
+    def extract_startup_parameters_from_xml(self, xml_root):
+        """Extract detailed startup parameters from XML server_params section"""
+        startup_params = []
+        
+        # Get CLI template and params
+        cli_template = xml_root.find('cli_template')
+        cli_template_text = cli_template.text if cli_template is not None else ""
+        
+        cli_params_elem = xml_root.find('cli_params')
+        cli_params_info = {}
+        if cli_params_elem is not None:
+            for param in cli_params_elem.findall('cli_param'):
+                param_id = param.get('id', '')
+                cli_string = param.get('cli_string', '')
+                options = param.get('options', '')
+                if param_id:
+                    cli_params_info[param_id] = {
+                        'cli_string': cli_string,
+                        'options': options
+                    }
+        
+        # Extract server_params - these are the configurable startup parameters
+        server_params = xml_root.find('server_params')
+        if server_params is not None:
+            for param in server_params.findall('param'):
+                param_key = param.get('key', '')
+                param_id = param.get('id', '')
+                param_type = param.get('type', 'text')
+                
+                # Get caption and description
+                caption_elem = param.find('caption')
+                desc_elem = param.find('desc')
+                default_elem = param.find('default')
+                
+                # Handle empty captions by falling back to param_key
+                caption = caption_elem.text if (caption_elem is not None and caption_elem.text) else param_key
+                description = desc_elem.text if (desc_elem is not None and desc_elem.text) else "No description available"
+                default_value = default_elem.text if default_elem is not None else None
+                
+                # For select type, get options
+                options = []
+                if param_type == 'select':
+                    for option in param.findall('option'):
+                        opt_value = option.get('value', '')
+                        opt_text = option.text if option.text is not None else opt_value
+                        options.append({'value': opt_value, 'text': opt_text})
+                
+                startup_params.append({
+                    'key': param_key,
+                    'id': param_id,
+                    'type': param_type,
+                    'caption': caption,
+                    'description': description,
+                    'default': default_value,
+                    'options': options
+                })
+        
+        return {
+            'cli_template': cli_template_text,
+            'cli_params': cli_params_info,
+            'server_params': startup_params
+        }
+    
+    def extract_config_files_from_xml(self, xml_root):
+        """Extract configuration file paths from XML"""
+        config_files = []
+        
+        config_files_elem = xml_root.find('configuration_files')
+        if config_files_elem is not None:
+            for file_elem in config_files_elem.findall('file'):
+                desc = file_elem.get('description', 'Configuration file')
+                path = file_elem.text if file_elem.text else ''
+                config_files.append({
+                    'description': desc,
+                    'path': path
+                })
+        
+        return config_files
+    
+    def generate_php_doc(self, folder_name, metadata):
+        """Generate comprehensive PHP documentation for a game"""
+        game_name = metadata.get('name', folder_name.replace('_', ' ').title())
+        
+        # Get additional data
+        kb_info = self.get_game_info_from_knowledgepack(game_name)
+        xml_config = self.get_xml_config(folder_name)
+        
+        # Extract ports, configs, and startup parameters
+        ports_info = []
+        config_files = []
+        startup_params_data = {}
+        if xml_config is not None:
+            ports_info = self.extract_ports_from_xml(xml_config)
+            config_files = self.extract_config_files_from_xml(xml_config)
+            startup_params_data = self.extract_startup_parameters_from_xml(xml_config)
+        
+        # Build the PHP document
+        php_content = self.build_php_content(game_name, folder_name, kb_info, xml_config, ports_info, config_files, startup_params_data)
+        
+        return php_content
+    
+    def get_steam_app_id(self, game_name, folder_name):
+        """Get Steam App ID for a game"""
+        # Common Steam App IDs
+        app_ids = {
+            '7daystodie': '294420', 'ark': '376030', 'arkse': '376030',
+            'arma3': '233780', 'arma2oa': '33930', 'csgo': '740', 'css': '232330',
+            'dayz': '221100', 'garrysmod': '4020', 'gmod': '4020',
+            'killingfloor': '215350', 'killingfloor2': '232130',
+            'left4dead': '222840', 'left4dead2': '222860',
+            'rust': '258550', 'squad': '403240', 'tf2': '232250',
+            'terraria': '105600', 'theforest': '556450',
+            'unturned': '1110390', 'valheim': '896660',
+            'insurgency': '237410', 'insurgencysandstorm': '581320',
+            'conanexiles': '443030', 'dontstarvetogether': '343050',
+            'lifeisfeudal': '320850', 'mordhau': '629760',
+        }
+        
+        # Try folder name
+        if folder_name.lower() in app_ids:
+            return app_ids[folder_name.lower()]
+        
+        # Try game name
+        game_lower = game_name.lower().replace(' ', '').replace(':', '').replace('-', '')
+        for key, appid in app_ids.items():
+            if key in game_lower or game_lower in key:
+                return appid
+        
+        return 'N/A'
+    
+    def build_php_content(self, game_name, folder_name, kb_info, xml_config, ports_info, config_files, startup_params_data):
+        """Build the complete PHP documentation content"""
+        
+        # Extract data from various sources
+        default_port = "Varies (see configuration)"
+        protocol = "TCP/UDP"
+        min_ram = "1GB"
+        engine = "Various"
+        startup_cmd = ""
+        app_id = self.get_steam_app_id(game_name, folder_name)
+        
+        # Try to get port from XML first
+        if xml_config is not None:
+            # Check for default port in mods section
+            mods = xml_config.find('mods')
+            if mods is not None:
+                mod = mods.find('mod')
+                if mod is not None:
+                    installer_name = mod.find('installer_name')
+                    if installer_name is not None and installer_name.text and app_id == 'N/A':
+                        app_id = installer_name.text
+        
+        if kb_info:
+            network = kb_info.get('network', {})
+            default_ports = network.get('default_ports', [])
+            if default_ports:
+                port_info = default_ports[0]
+                port_str = port_info.get('port', '')
+                if '/' in port_str:
+                    default_port = port_str.split('/')[0]
+                    protocol = port_str.split('/')[1].upper()
+                else:
+                    default_port = port_str
+            
+            requirements = kb_info.get('requirements', {})
+            min_ram = requirements.get('ram', '1GB')
+            engine = kb_info.get('engine', 'Various')
+            
+            startup = kb_info.get('typical_startup', {})
+            startup_cmd = startup.get('linux', '') or startup.get('windows', '')
+        
+        php_doc = '''<?php
+/**
+ * ''' + game_name + ''' Server Documentation - Comprehensive Guide
+ * General game server hosting information (not platform-specific)
+ */
+?>
+<div style="background: #1e3a5f; padding: 20px; border-left: 4px solid #3b82f6; margin: 20px 0; border-radius: 4px;">
+    <h3 style="color: #ffffff; margin-top: 0;">📚 Quick Navigation</h3>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <a href="#quick-info" style="background: #0f172a; padding: 8px 16px; border-radius: 4px; color: #a5b4fc; text-decoration: none;">Quick Info</a>
+        <a href="#ports" style="background: #0f172a; padding: 8px 16px; border-radius: 4px; color: #a5b4fc; text-decoration: none;">🔌 Ports</a>
+        <a href="#installation" style="background: #0f172a; padding: 8px 16px; border-radius: 4px; color: #a5b4fc; text-decoration: none;">Installation</a>
+        <a href="#configuration" style="background: #0f172a; padding: 8px 16px; border-radius: 4px; color: #a5b4fc; text-decoration: none;">Configuration</a>
+        <a href="#parameters" style="background: #0f172a; padding: 8px 16px; border-radius: 4px; color: #a5b4fc; text-decoration: none;">⚙️ Startup Parameters</a>
+        <a href="#troubleshooting" style="background: #0f172a; padding: 8px 16px; border-radius: 4px; color: #a5b4fc; text-decoration: none;">🔧 Troubleshooting</a>
+        <a href="#performance" style="background: #0f172a; padding: 8px 16px; border-radius: 4px; color: #a5b4fc; text-decoration: none;">Performance</a>
+        <a href="#security" style="background: #0f172a; padding: 8px 16px; border-radius: 4px; color: #a5b4fc; text-decoration: none;">Security</a>
+    </div>
+</div>
+
+<h1>''' + game_name + ''' Server Hosting Guide</h1>
+
+<h2>Overview</h2>
+<p>''' + game_name + ''' is a multiplayer game server that can be hosted on a VPS or dedicated server. This comprehensive guide covers everything you need to know about hosting a ''' + game_name + ''' server for your community.</p>
+
+<h2 id="quick-info">Quick Info</h2>
+<div style="background: #1e3a5f; padding: 20px; border-left: 4px solid #3b82f6; margin: 20px 0; border-radius: 4px;">
+    <ul style="color: #e5e7eb; line-height: 1.8; margin: 0;">
+        <li><strong style="color: #ffffff;">Default Port:</strong> <code style="background: #0f172a; padding: 2px 6px; border-radius: 3px; color: #a5b4fc;">''' + default_port + '''</code></li>
+        <li><strong style="color: #ffffff;">Protocol:</strong> ''' + protocol + '''</li>
+        <li><strong style="color: #ffffff;">Minimum RAM:</strong> ''' + min_ram + '''</li>
+        <li><strong style="color: #ffffff;">Engine:</strong> ''' + engine + '''</li>
+        <li><strong style="color: #ffffff;">Steam App ID:</strong> <code style="background: #0f172a; padding: 2px 6px; border-radius: 3px; color: #a5b4fc;">''' + app_id + '''</code></li>
+        <li><strong style="color: #ffffff;">Recommended OS:</strong> Linux (Ubuntu/Debian) or Windows Server</li>
+'''
+
+        # Add config files if available
+        if config_files:
+            php_doc += '        <li><strong style="color: #ffffff;">Configuration Files:</strong><ul style="margin-top: 8px;">\n'
+            for cf in config_files:
+                php_doc += f'            <li><code style="background: #0f172a; padding: 2px 6px; border-radius: 3px; color: #a5b4fc;">{cf["path"]}</code> - {cf["description"]}</li>\n'
+            php_doc += '        </ul></li>\n'
+        
+        php_doc += '''    </ul>
+</div>
+
+<h2 id="ports">🔌 Network Ports</h2>
+<div style="background: #1e3a5f; padding: 20px; border-left: 4px solid #3b82f6; margin: 20px 0; border-radius: 4px;">
+    <h3 style="color: #ffffff; margin-top: 0;">Required Ports</h3>
+'''
+
+        # Add port information
+        if kb_info and kb_info.get('network', {}).get('default_ports'):
+            php_doc += '''    <table style="width: 100%; color: #e5e7eb; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #0f172a;">
+                <th style="padding: 10px; text-align: left; color: #ffffff;">Port</th>
+                <th style="padding: 10px; text-align: left; color: #ffffff;">Protocol</th>
+                <th style="padding: 10px; text-align: left; color: #ffffff;">Purpose</th>
+            </tr>
+        </thead>
+        <tbody>
+'''
+            for port_info in kb_info['network']['default_ports']:
+                port_str = port_info.get('port', '')
+                purpose = port_info.get('purpose', 'Game server')
+                port_num = port_str.split('/')[0] if '/' in port_str else port_str
+                proto = port_str.split('/')[1].upper() if '/' in port_str else 'TCP/UDP'
+                
+                php_doc += f'''            <tr style="border-bottom: 1px solid #374151;">
+                <td style="padding: 10px;"><code style="background: #0f172a; padding: 2px 6px; border-radius: 3px;">{port_num}</code></td>
+                <td style="padding: 10px;">{proto}</td>
+                <td style="padding: 10px;">{purpose}</td>
+            </tr>
+'''
+            
+            # Add additional ports if available
+            additional_ports = kb_info['network'].get('additional_ports', [])
+            for port_info in additional_ports:
+                port_str = port_info.get('port', '')
+                purpose = port_info.get('purpose', 'Additional functionality')
+                port_num = port_str.split('/')[0] if '/' in port_str else port_str
+                proto = port_str.split('/')[1].upper() if '/' in port_str else 'TCP/UDP'
+                
+                php_doc += f'''            <tr style="border-bottom: 1px solid #374151;">
+                <td style="padding: 10px;"><code style="background: #0f172a; padding: 2px 6px; border-radius: 3px;">{port_num}</code></td>
+                <td style="padding: 10px;">{proto}</td>
+                <td style="padding: 10px;">{purpose} <span style="color: #f59e0b;">(Optional)</span></td>
+            </tr>
+'''
+            
+            php_doc += '''        </tbody>
+    </table>
+'''
+        else:
+            php_doc += '''    <p style="color: #e5e7eb;">The ''' + game_name + ''' server typically uses a configurable port. Check your server configuration files for the specific port settings.</p>
+'''
+        
+        php_doc += '''    
+    <h3 style="color: #ffffff; margin-top: 20px;">Firewall Configuration</h3>
+    <p style="color: #e5e7eb;">Allow server ports through your firewall:</p>
+    <pre><code style="color: #a5b4fc;"># UFW (Ubuntu/Debian)
+sudo ufw allow [PORT]/tcp
+sudo ufw allow [PORT]/udp
+sudo ufw reload
+
+# FirewallD (CentOS/RHEL)
+sudo firewall-cmd --permanent --add-port=[PORT]/tcp
+sudo firewall-cmd --permanent --add-port=[PORT]/udp
+sudo firewall-cmd --reload
+
+# Windows Firewall
+netsh advfirewall firewall add rule name="''' + game_name + ''' Server" dir=in action=allow protocol=TCP localport=[PORT]
+netsh advfirewall firewall add rule name="''' + game_name + ''' Server" dir=in action=allow protocol=UDP localport=[PORT]
+</code></pre>
+
+    <h3 style="color: #ffffff; margin-top: 20px;">⚠️ Port Security Notes</h3>
+    <ul style="color: #fef3c7; line-height: 1.8;">
+        <li>Only open ports that are necessary for the game server to function</li>
+        <li>Consider using non-standard ports to reduce automated attacks</li>
+        <li>If using cloud hosting, configure security groups properly</li>
+        <li>Monitor connection attempts and unusual traffic patterns</li>
+    </ul>
+</div>
+
+<h2 id="installation">Installation & Setup</h2>
+
+<h3>System Requirements</h3>
+<ul>
+    <li><strong>OS:</strong> Linux (Ubuntu 20.04+ or Debian 11+ recommended) or Windows Server 2019+</li>
+    <li><strong>CPU:</strong> 2+ cores recommended (single-threaded performance important for most game servers)</li>
+    <li><strong>RAM:</strong> ''' + min_ram + ''' minimum (more for larger player counts)</li>
+    <li><strong>Storage:</strong> 5GB+ for server files (SSD recommended for better performance)</li>
+    <li><strong>Network:</strong> Stable internet connection with low latency</li>
+</ul>
+'''
+
+        # Add dependencies if available
+        if kb_info and kb_info.get('requirements', {}).get('dependencies'):
+            dependencies = kb_info['requirements']['dependencies']
+            php_doc += '''
+<h3>Required Dependencies</h3>
+<ul>
+'''
+            for dep in dependencies:
+                php_doc += f'    <li>{dep}</li>\n'
+            php_doc += '''</ul>
+'''
+
+        php_doc += '''
+<h3>Installation Steps</h3>
+
+<h4>Linux (Ubuntu/Debian)</h4>
+<pre><code># Update system packages
+sudo apt update && sudo apt upgrade -y
+
+# Create server directory
+mkdir -p ~/gameserver
+cd ~/gameserver
+
+# Download server files (method varies by game)
+# Check official documentation for download links
+</code></pre>
+'''
+
+        if startup_cmd:
+            php_doc += f'''
+<h4>Starting the Server</h4>
+<pre><code>{startup_cmd}
+</code></pre>
+'''
+
+        php_doc += '''
+<h4>Windows Server</h4>
+<p>Download the server files from the official game website or through Steam (if applicable). Extract to a dedicated folder and run the server executable.</p>
+'''
+        
+        # Add SteamCMD section with actual App ID
+        if app_id != 'N/A':
+            php_doc += f'''
+<h3>Using SteamCMD - RECOMMENDED METHOD</h3>
+<p><strong>This game can be installed via SteamCMD using App ID: {app_id}</strong></p>
+
+<h4>Install SteamCMD (Ubuntu/Debian)</h4>
+<pre><code># Update package list
+sudo apt update
+
+# Enable 32-bit architecture
+sudo dpkg --add-architecture i386
+sudo apt update
+
+# Install SteamCMD
+sudo apt install -y lib32gcc-s1 steamcmd
+</code></pre>
+
+<h4>Download Server Files</h4>
+<pre><code># Create directory for game server
+mkdir -p ~/gameservers/{folder_name}
+
+# Run SteamCMD and download
+steamcmd +login anonymous \\
+         +force_install_dir ~/gameservers/{folder_name} \\
+         +app_update {app_id} validate \\
+         +quit
+
+# Server files are now in ~/gameservers/{folder_name}/
+cd ~/gameservers/{folder_name}
+ls -la
+</code></pre>
+
+<h4>Windows Installation with SteamCMD</h4>
+<ol>
+    <li>Download SteamCMD from: <a href="https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip" target="_blank">https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip</a></li>
+    <li>Extract to <code>C:\\steamcmd\\</code></li>
+    <li>Open Command Prompt and run:</li>
+</ol>
+<pre><code>cd C:\\steamcmd
+steamcmd.exe +login anonymous ^
+             +force_install_dir C:\\gameservers\\{folder_name} ^
+             +app_update {app_id} validate ^
+             +quit
+</code></pre>
+'''
+        else:
+            php_doc += '''
+<h3>Manual Installation</h3>
+<p>This game requires manual download. Check the official game website or Steam store page for dedicated server downloads.</p>
+'''
+        
+        php_doc += '''
+
+<h2 id="configuration">Server Configuration</h2>
+
+<p>After installation, you'll need to configure your server. Here's where to find the configuration files and what settings you can change.</p>
+
+<h3>Essential Settings</h3>
+<ul>
+    <li><strong>Server Name:</strong> Set a descriptive name for your server</li>
+    <li><strong>Max Players:</strong> Configure based on your server's resources</li>
+    <li><strong>Password:</strong> Optional password protection for private servers</li>
+    <li><strong>Admin/RCON Password:</strong> Set a strong password for remote administration</li>
+    <li><strong>Game Mode:</strong> Configure game-specific modes and settings</li>
+</ul>
+'''
+
+        # Add config files section if available
+        if config_files:
+            php_doc += '''
+<h3>Configuration Files</h3>
+<p>Important configuration files for this server:</p>
+<ul>
+'''
+            for cf in config_files:
+                php_doc += f'    <li><strong><code>{cf["path"]}</code></strong> - {cf["description"]}</li>\n'
+            php_doc += '''</ul>
+'''
+
+        php_doc += '''
+<h3>Server Commands</h3>
+<p>Common administrative commands (access via console or RCON):</p>
+<pre><code># Kick player
+kick [player_name]
+
+# Ban player
+ban [player_name]
+
+# Change map/level (syntax varies by game)
+changelevel [map_name]
+
+# Set admin password (if supported)
+setadminpassword [password]
+</code></pre>
+
+<h2 id="parameters">⚙️ Startup Parameters</h2>
+'''
+
+        # Add detailed startup parameters from XML if available
+        if startup_params_data and startup_params_data.get('server_params'):
+            server_params = startup_params_data['server_params']
+            cli_template = startup_params_data.get('cli_template', '')
+            
+            if cli_template:
+                php_doc += f'''
+<h3>Command Line Template</h3>
+<p>The server uses the following command line template:</p>
+<pre><code>{cli_template}</code></pre>
+'''
+            
+            php_doc += '''
+<h3>Available Startup Parameters</h3>
+<p>The following parameters can be configured when starting the server:</p>
+
+<div style="background: #1e3a5f; padding: 20px; border-left: 4px solid #3b82f6; margin: 20px 0; border-radius: 4px;">
+'''
+            for param in server_params:
+                param_key = param['key']
+                caption = param['caption']
+                description = param['description']
+                param_type = param['type']
+                default = param.get('default')
+                options = param.get('options', [])
+                
+                # Clean HTML from description - unescape HTML entities, remove tags, then re-escape for output
+                if description:
+                    description_clean = html.unescape(description)
+                    # Remove HTML tags (simple but effective for our use case)
+                    description_clean = re.sub(r'<[^<>]+>', '', description_clean)
+                else:
+                    description_clean = "No description available"
+                
+                # Escape all values for HTML output to prevent XSS
+                param_key_escaped = html.escape(param_key, quote=True)
+                caption_escaped = html.escape(caption, quote=True)
+                description_escaped = html.escape(description_clean, quote=True)
+                
+                php_doc += f'''
+    <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #374151;">
+        <h4 style="color: #ffffff; margin-top: 0;">
+            <code style="background: #0f172a; padding: 4px 8px; border-radius: 3px; color: #a5b4fc;">{param_key_escaped}</code>
+            <span style="color: #e5e7eb; font-weight: normal; font-size: 0.9em;"> - {caption_escaped}</span>
+        </h4>
+        <p style="color: #e5e7eb; margin: 10px 0;">{description_escaped}</p>
+'''
+                
+                if param_type == 'select' and options:
+                    php_doc += '''        <p style="color: #e5e7eb;"><strong>Options:</strong></p>
+        <ul style="color: #e5e7eb; margin-left: 20px;">
+'''
+                    for opt in options:
+                        opt_value_escaped = html.escape(opt['value'], quote=True)
+                        opt_text_escaped = html.escape(opt['text'], quote=True)
+                        php_doc += f'''            <li><code style="background: #0f172a; padding: 2px 6px; border-radius: 3px; color: #a5b4fc;">{opt_value_escaped}</code> - {opt_text_escaped}</li>\n'''
+                    php_doc += '''        </ul>
+'''
+                
+                if default:
+                    default_escaped = html.escape(str(default), quote=True)
+                    php_doc += f'''        <p style="color: #fbbf24;"><strong>Default:</strong> <code style="background: #0f172a; padding: 2px 6px; border-radius: 3px;">{default_escaped}</code></p>
+'''
+                
+                php_doc += '''    </div>
+'''
+            
+            php_doc += '''</div>
+'''
+        else:
+            # Fallback to generic parameters if no XML data
+            php_doc += '''
+<h3>Basic Startup</h3>
+'''
+
+            if startup_cmd:
+                php_doc += f'''<pre><code>{startup_cmd}
+</code></pre>
+'''
+            else:
+                php_doc += '''<pre><code># Generic startup command structure
+./server_executable [parameters]
+</code></pre>
+'''
+
+            php_doc += '''
+<h3>Common Parameters</h3>
+<ul>
+    <li><code>-port [number]</code> - Set the server port</li>
+    <li><code>-maxplayers [number]</code> - Maximum player slots</li>
+    <li><code>-map [name]</code> - Starting map/level</li>
+    <li><code>-console</code> - Enable console output</li>
+    <li><code>-nographics</code> - Run without graphics (headless mode)</li>
+</ul>
+'''
+
+        # Common sections for all games (whether they have XML params or not)
+        php_doc += '''
+<h3>Creating a Start Script</h3>
+
+<p><strong>Linux (start.sh):</strong></p>
+<pre><code>#!/bin/bash
+cd /path/to/server
+./server_executable [parameters] 2>&1 | tee server.log
+</code></pre>
+<pre><code>chmod +x start.sh
+./start.sh
+</code></pre>
+
+<p><strong>Windows (start.bat):</strong></p>
+<pre><code>@echo off
+cd /d "%~dp0"
+server_executable.exe [parameters]
+pause
+</code></pre>
+
+<h3>Running as a Service</h3>
+
+<p><strong>Linux (systemd):</strong></p>
+<pre><code># Create service file: /etc/systemd/system/gameserver.service
+[Unit]
+Description=''' + game_name + ''' Server
+After=network.target
+
+[Service]
+Type=simple
+User=gameserver
+WorkingDirectory=/home/gameserver/server
+ExecStart=/home/gameserver/server/start.sh
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+</code></pre>
+
+<pre><code># Enable and start service
+sudo systemctl daemon-reload
+sudo systemctl enable gameserver
+sudo systemctl start gameserver
+sudo systemctl status gameserver
+</code></pre>
+
+<h2 id="troubleshooting">🔧 Troubleshooting</h2>
+
+<h3>Server Won't Start</h3>
+'''
+
+        # Add troubleshooting from knowledgepack if available
+        if kb_info and kb_info.get('troubleshooting', {}).get('common_issues'):
+            issues = kb_info['troubleshooting']['common_issues']
+            for issue_item in issues:
+                issue = issue_item.get('issue', '')
+                fix = issue_item.get('fix', '')
+                php_doc += f'''
+<h4>{issue}</h4>
+<p>{fix}</p>
+'''
+        else:
+            php_doc += '''
+<h4>Check Server Logs</h4>
+<pre><code># View recent log entries
+tail -f server.log
+
+# Or check system logs
+journalctl -u gameserver -f
+</code></pre>
+
+<h4>Port Already in Use</h4>
+<pre><code># Find what's using the port
+sudo lsof -i :[PORT]
+sudo netstat -tulpn | grep [PORT]
+
+# Kill the process or change server port
+</code></pre>
+
+<h4>Missing Dependencies</h4>
+<p>Ensure all required dependencies are installed. Check the error messages for missing libraries or packages.</p>
+'''
+
+        php_doc += '''
+<h3>Connection Issues</h3>
+
+<h4>Can't Connect to Server</h4>
+<ol>
+    <li><strong>Verify server is running:</strong> <code>ps aux | grep server</code></li>
+    <li><strong>Check port is listening:</strong> <code>netstat -an | grep [PORT]</code></li>
+    <li><strong>Verify firewall rules</strong> (see Ports section above)</li>
+    <li><strong>Check server IP:</strong> Use external IP, not localhost</li>
+    <li><strong>Router/NAT:</strong> Ensure port forwarding is configured</li>
+</ol>
+
+<h4>High Latency/Lag</h4>
+<ul>
+    <li>Check server resource usage (CPU, RAM, disk I/O)</li>
+    <li>Verify network bandwidth is adequate</li>
+    <li>Consider server location relative to players</li>
+    <li>Check for background processes consuming resources</li>
+</ul>
+
+<h3>Performance Issues</h3>
+
+<h4>Server Lag</h4>
+<ol>
+    <li><strong>Monitor resources:</strong> Use <code>htop</code> or <code>top</code></li>
+    <li><strong>Check disk I/O:</strong> Use <code>iotop</code></li>
+    <li><strong>Review server logs</strong> for errors or warnings</li>
+    <li><strong>Reduce player count</strong> or increase server resources</li>
+    <li><strong>Optimize configuration</strong> based on server capacity</li>
+</ol>
+
+<h4>Memory Leaks</h4>
+<pre><code># Monitor memory usage
+free -h
+top -p $(pgrep -f server)
+
+# Restart server regularly via cron if needed
+0 4 * * * /home/gameserver/restart.sh
+</code></pre>
+
+<h2 id="performance">Performance Optimization</h2>
+
+<h3>Server Tuning</h3>
+<ul>
+    <li><strong>CPU:</strong> Ensure adequate CPU allocation; most game servers are single-threaded</li>
+    <li><strong>RAM:</strong> Allocate sufficient memory; monitor usage and adjust as needed</li>
+    <li><strong>Disk:</strong> Use SSD storage for better I/O performance</li>
+    <li><strong>Network:</strong> Ensure stable, low-latency connection</li>
+</ul>
+
+<h3>Operating System Optimization</h3>
+<pre><code># Increase file descriptor limits
+echo "* soft nofile 65536" >> /etc/security/limits.conf
+echo "* hard nofile 65536" >> /etc/security/limits.conf
+
+# Network tuning
+sysctl -w net.core.rmem_max=16777216
+sysctl -w net.core.wmem_max=16777216
+sysctl -w net.ipv4.tcp_rmem="4096 87380 16777216"
+sysctl -w net.ipv4.tcp_wmem="4096 87380 16777216"
+</code></pre>
+
+<h3>Monitoring</h3>
+<p>Set up monitoring to track server health:</p>
+<ul>
+    <li>CPU and memory usage</li>
+    <li>Network traffic and latency</li>
+    <li>Player count and activity</li>
+    <li>Error rates and crash logs</li>
+</ul>
+
+<h3>Backup Strategy</h3>
+<pre><code>#!/bin/bash
+# backup.sh - Run via cron
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR="/backups/gameserver"
+SERVER_DIR="/home/gameserver/server"
+
+# Create backup
+tar -czf $BACKUP_DIR/backup_$DATE.tar.gz -C $SERVER_DIR .
+
+# Keep only last 7 days
+find $BACKUP_DIR -name "backup_*.tar.gz" -mtime +7 -delete
+</code></pre>
+
+<h2 id="security">Security Best Practices</h2>
+
+<h3>Firewall Configuration</h3>
+<pre><code># Minimal firewall - only allow necessary ports
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow [SERVER_PORT]/tcp
+sudo ufw allow [SERVER_PORT]/udp
+sudo ufw allow 22/tcp  # SSH
+sudo ufw enable
+</code></pre>
+
+<h3>Strong Passwords</h3>
+<ul>
+    <li>Use strong, unique passwords for admin/RCON access</li>
+    <li>Never use default passwords</li>
+    <li>Change passwords regularly</li>
+    <li>Don't share admin credentials unnecessarily</li>
+</ul>
+
+<h3>Regular Updates</h3>
+<ul>
+    <li>Keep server software updated to the latest stable version</li>
+    <li>Update operating system and dependencies regularly</li>
+    <li>Subscribe to security advisories for your game</li>
+    <li>Test updates on a staging server before production deployment</li>
+</ul>
+
+<h3>Access Control</h3>
+<ul>
+    <li>Limit SSH access to specific IPs if possible</li>
+    <li>Use SSH keys instead of passwords</li>
+    <li>Disable root login via SSH</li>
+    <li>Implement fail2ban or similar intrusion prevention</li>
+</ul>
+
+<h3>DDoS Protection</h3>
+<ul>
+    <li>Consider DDoS protection services (Cloudflare, OVH, etc.)</li>
+    <li>Implement rate limiting where supported</li>
+    <li>Monitor for unusual traffic patterns</li>
+    <li>Have an incident response plan</li>
+</ul>
+
+<h2>Additional Resources</h2>
+<ul>
+    <li>Official ''' + game_name + ''' documentation and forums</li>
+    <li>Community wikis and guides</li>
+    <li>Game-specific Discord or Reddit communities</li>
+    <li>Server hosting provider documentation</li>
+</ul>
+'''
+
+        # Add references from knowledgepack if available
+        if kb_info and kb_info.get('references'):
+            php_doc += '''
+<h3>External References</h3>
+<ul>
+'''
+            for ref in kb_info['references']:
+                php_doc += f'    <li><a href="{ref}" target="_blank">{ref}</a></li>\n'
+            php_doc += '''</ul>
+'''
+
+        php_doc += '''
+<div style="background: #78350f; padding: 20px; border-left: 4px solid #f59e0b; margin: 20px 0; border-radius: 4px;">
+    <h3 style="color: #ffffff; margin-top: 0;"><i class="fas fa-exclamation-triangle" style="color: #fbbf24; margin-right: 8px;"></i>Important Notes</h3>
+    <ul style="color: #fef3c7; line-height: 1.8; margin: 0;">
+        <li>Always make backups before making configuration changes</li>
+        <li>Keep your server and dependencies updated</li>
+        <li>Monitor server resources and player activity</li>
+        <li>Follow the game's End User License Agreement (EULA) and Terms of Service</li>
+        <li>Join community forums for support and best practices</li>
+    </ul>
+</div>
+
+<p style="text-align: center; margin-top: 30px; color: #666;">
+    <em>Last updated: ''' + datetime.now().strftime("%B %Y") + ''' | For ''' + game_name + ''' server hosting</em>
+</p>
+'''
+
+        return php_doc
+    
+    def process_incomplete_games(self):
+        """Process all games with complete=false or generic text"""
+        processed = 0
+        errors = []
+        skipped = 0
+        
+        # Find all game folders
+        for folder in self.docs_dir.iterdir():
+            if not folder.is_dir():
+                continue
+            
+            # Skip special folders
+            if folder.name.startswith('.') or folder.name.startswith('_') or folder.name in ['common-issues', 'getting-started']:
+                continue
+            
+            metadata_file = folder / 'metadata.json'
+            index_file = folder / 'index.php'
+            
+            if not metadata_file.exists():
+                continue
+            
+            try:
+                # Read metadata
+                with open(metadata_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    # Remove BOM if present
+                    content = content.lstrip('\ufeff')
+                    metadata = json.loads(content)
+                
+                # Skip if already complete (unless it has generic text)
+                is_complete = metadata.get('complete', False)
+                has_generic_text = False
+                
+                if index_file.exists():
+                    with open(index_file, 'r', encoding='utf-8') as f:
+                        index_content = f.read()
+                        if 'Check server configuration' in index_content or 'check your server configuration' in index_content.lower():
+                            has_generic_text = True
+                
+                if is_complete and not has_generic_text:
+                    skipped += 1
+                    continue
+                
+                print(f"Processing: {folder.name} (complete={is_complete}, has_generic={has_generic_text})")
+                
+                # Generate new documentation
+                php_content = self.generate_php_doc(folder.name, metadata)
+                
+                # Write the new index.php
+                with open(index_file, 'w', encoding='utf-8') as f:
+                    f.write(php_content)
+                
+                # Update metadata category from 'todo' to 'game' if needed
+                if metadata.get('category', '').lower() == 'todo':
+                    metadata['category'] = 'game'
+                
+                # Mark as complete
+                metadata['complete'] = True
+                
+                with open(metadata_file, 'w', encoding='utf-8') as f:
+                    json.dump(metadata, f, indent=4, ensure_ascii=False)
+                
+                processed += 1
+                print(f"  ✓ Generated comprehensive documentation")
+                
+            except Exception as e:
+                error_msg = f"Error processing {folder.name}: {e}"
+                print(f"  ✗ {error_msg}")
+                errors.append(error_msg)
+        
+        return processed, skipped, errors
+    
+    def process_todo_folders(self):
+        """Process all folders with category 'todo' """
+        processed = 0
+        errors = []
+        
+        # Find all todo folders
+        for folder in self.docs_dir.iterdir():
+            if not folder.is_dir():
+                continue
+            
+            metadata_file = folder / 'metadata.json'
+            index_file = folder / 'index.php'
+            
+            if not metadata_file.exists():
+                continue
+            
+            try:
+                # Read metadata
+                with open(metadata_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    # Remove BOM if present
+                    content = content.lstrip('\ufeff')
+                    metadata = json.loads(content)
+                
+                # Check if it's a todo category
+                if metadata.get('category', '').lower() != 'todo':
+                    continue
+                
+                print(f"Processing: {folder.name}")
+                
+                # Generate new documentation
+                php_content = self.generate_php_doc(folder.name, metadata)
+                
+                # Write the new index.php
+                with open(index_file, 'w', encoding='utf-8') as f:
+                    f.write(php_content)
+                
+                # Update metadata category from 'todo' to 'game'
+                metadata['category'] = 'game'
+                with open(metadata_file, 'w', encoding='utf-8') as f:
+                    json.dump(metadata, f, indent=4, ensure_ascii=False)
+                
+                processed += 1
+                print(f"  ✓ Generated documentation for {folder.name}")
+                
+            except Exception as e:
+                error_msg = f"Error processing {folder.name}: {e}"
+                print(f"  ✗ {error_msg}")
+                errors.append(error_msg)
+        
+        return processed, errors
+    
+    def process_specific_games(self, game_names, force_overwrite=False):
+        """Process specific game folders by name"""
+        processed = 0
+        skipped = 0
+        errors = []
+        
+        for game_name in game_names:
+            folder = self.docs_dir / game_name
+            
+            if not folder.is_dir():
+                error_msg = f"Game folder not found: {game_name}"
+                print(f"  ✗ {error_msg}")
+                errors.append(error_msg)
+                continue
+            
+            metadata_file = folder / 'metadata.json'
+            index_file = folder / 'index.php'
+            
+            if not metadata_file.exists():
+                error_msg = f"metadata.json not found for {game_name}"
+                print(f"  ✗ {error_msg}")
+                errors.append(error_msg)
+                continue
+            
+            try:
+                # Read metadata
+                with open(metadata_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    content = content.lstrip('\ufeff')
+                    metadata = json.loads(content)
+                
+                # Check if we should skip
+                if index_file.exists() and not force_overwrite:
+                    print(f"Skipping {game_name} (file exists, use --force to overwrite)")
+                    skipped += 1
+                    continue
+                
+                print(f"Processing: {game_name}")
+                
+                # Generate new documentation
+                php_content = self.generate_php_doc(folder.name, metadata)
+                
+                # Write the new index.php
+                with open(index_file, 'w', encoding='utf-8') as f:
+                    f.write(php_content)
+                
+                # Update metadata if it was todo
+                if metadata.get('category', '').lower() == 'todo':
+                    metadata['category'] = 'game'
+                
+                # Mark as complete
+                metadata['complete'] = True
+                
+                with open(metadata_file, 'w', encoding='utf-8') as f:
+                    json.dump(metadata, f, indent=4, ensure_ascii=False)
+                
+                processed += 1
+                print(f"  ✓ Generated documentation for {game_name}")
+                
+            except Exception as e:
+                error_msg = f"Error processing {game_name}: {e}"
+                print(f"  ✗ {error_msg}")
+                errors.append(error_msg)
+        
+        return processed, skipped, errors
+
+def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description='Generate comprehensive game server documentation for GSP',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Generate docs for all incomplete games:
+  python3 generate_game_docs.py
+  
+  # Generate docs for specific game(s):
+  python3 generate_game_docs.py --games minecraft csgo rust
+  
+  # Regenerate docs (overwrite existing):
+  python3 generate_game_docs.py --games minecraft --force
+  
+  # Process all "todo" category games:
+  python3 generate_game_docs.py --todo-only
+        """
+    )
+    
+    parser.add_argument('--games', nargs='+', metavar='GAME',
+                        help='Generate docs for specific game folder names')
+    parser.add_argument('--force', action='store_true',
+                        help='Overwrite existing documentation files')
+    parser.add_argument('--todo-only', action='store_true',
+                        help='Only process games with category="todo"')
+    
+    args = parser.parse_args()
+    
+    docs_dir = "/home/runner/work/GSP/GSP/modules/billing/docs"
+    config_dir = "/home/runner/work/GSP/GSP/modules/config_games/server_configs"
+    knowledgepack = "/home/runner/work/GSP/GSP/modules/billing/docs/gameserver_knowledgepack_v2.yaml"
+    
+    generator = GameDocGenerator(docs_dir, config_dir, knowledgepack)
+    
+    print("="*70)
+    print("COMPREHENSIVE GAME SERVER DOCUMENTATION GENERATOR")
+    print("="*70)
+    print()
+    print("Loading data sources...")
+    generator.load_knowledgepack()
+    generator.load_xml_configs()
+    
+    processed = 0
+    skipped = 0
+    errors = []
+    
+    # Determine which mode to run
+    if args.games:
+        # Process specific games
+        print("\n" + "="*70)
+        print(f"Processing {len(args.games)} specified game(s)...")
+        if args.force:
+            print("FORCE mode: Will overwrite existing files")
+        print("="*70)
+        processed, skipped, errors = generator.process_specific_games(args.games, args.force)
+    elif args.todo_only:
+        # Process only todo category games
+        print("\n" + "="*70)
+        print("Processing TODO category games...")
+        print("="*70)
+        processed, errors = generator.process_todo_folders()
+    else:
+        # Process incomplete games (default)
+        print("\n" + "="*70)
+        print("Processing INCOMPLETE game documentation...")
+        print("="*70)
+        processed, skipped, errors = generator.process_incomplete_games()
+    
+    print(f"\n{'='*70}")
+    print(f"Documentation generation complete!")
+    print(f"  ✓ Processed: {processed}")
+    if skipped > 0:
+        print(f"  → Skipped: {skipped}")
+    print(f"  ✗ Errors: {len(errors)}")
+    
+    if errors:
+        print("\nErrors encountered:")
+        for error in errors[:10]:  # Show first 10 errors
+            print(f"  - {error}")
+        if len(errors) > 10:
+            print(f"  ... and {len(errors) - 10} more")
+    
+    print(f"\nGenerated documentation includes:")
+    print(f"  • Actual port information from XML configs")
+    print(f"  • Steam App IDs and exact SteamCMD commands")
+    print(f"  • Configuration file details from XML configs")
+    print(f"  • DETAILED startup parameters extracted from XML")
+    print(f"  • Comprehensive troubleshooting sections")
+    print("="*70)
+    
+    return 0 if not errors else 1
+
+if __name__ == "__main__":
+    sys.exit(main())

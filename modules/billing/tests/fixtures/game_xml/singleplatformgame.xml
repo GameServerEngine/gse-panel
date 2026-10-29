@@ -1,0 +1,11 @@
+<game_config>
+  <game_key>singleplatformgame</game_key>
+  <installer>steamcmd</installer>
+  <game_name>Single Platform Game</game_name>
+  <server_exec_name>run.sh</server_exec_name>
+  <cli_template>%PORT%</cli_template>
+  <cli_params>
+    <cli_param id="PORT" cli_string="--port=" />
+  </cli_params>
+  <query_port type="add">1</query_port>
+</game_config>
