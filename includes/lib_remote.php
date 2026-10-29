@@ -169,7 +169,7 @@ class GSPRemoteLibrary
 		return array(
 			'success' => ((int)$response === 0) ? 1 : 0,
 			'status' => ((int)$response === 0) ? 'stopped' : 'stop_failed',
-			'message' => ((int)$response === 0) ? 'Stop verified by legacy agent response.' : 'Stop failed or did not verify on the agent.',
+			'message' => ((int)$response === 0) ? 'Server stopped.' : 'Stop failed or did not verify on the agent.',
 			'raw_response' => $response,
 		);
 	}

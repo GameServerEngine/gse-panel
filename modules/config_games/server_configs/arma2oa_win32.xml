@@ -25,7 +25,7 @@
     <text key="max_players">
       <default>(maxPlayers\s*=\s*)(.*)(;)</default>
       <var>maxPlayers = "%key%";</var>
-      <filepath>gamefiles/cfg/server.cfg</filepath>
+      <filepath>cfg/server.cfg</filepath>
       <options>key-regex</options>
     </text>
   </replace_texts> 
