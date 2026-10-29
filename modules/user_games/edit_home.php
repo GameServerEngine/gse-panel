@@ -714,7 +714,7 @@ function exec_gsp_module()
 	echo "<tr><td class='right'>". get_lang("game_control_password") .":</td><td class='left'>";
 	echo "<form action='?m=user_games&p=edit&home_id=".$home_id."' method='post'>";
 	echo "<input type='hidden' name='home_id' value=\"$home_id\" />\n";
-	echo "<input type='text' size='30' name='control_password' value=\"".str_replace('"', "&quot;", $home_info['control_password'])."\" />";
+	echo "<input type='text' size='30' name='control_password' value=\"".str_replace('"', "&quot;", (string)$home_info['control_password'])."\" />";
 	echo "<button type='button' class='copy-credential-btn' data-copy-field='control_password' aria-label=\"".str_replace('"', "&quot;", get_lang("copy")." ".get_lang("game_control_password"))."\">". get_lang("copy") ."</button>";
 	echo "<input type='submit' name='change_control_password' value='". get_lang("change_control_password") ."' />";
 	echo "</form></td></tr>";
