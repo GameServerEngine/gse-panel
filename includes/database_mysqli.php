@@ -2722,6 +2722,19 @@ class GSPDatabaseMySQL extends GSPDatabase
 		return $game_home;
 	}
 
+	public function getFtpAccountsText()
+	{
+		// Accounts come from the panel database (server_homes), one line per server: login TAB game folder.
+		$query = "SELECT `ftp_login`, `home_path` FROM `" . $this->table_prefix . "server_homes` WHERE `ftp_login` IS NOT NULL AND `ftp_login` <> ''";
+		$rows = $this->listQuery($query);
+		$out = "";
+		foreach ((array)$rows as $row)
+		{
+			$out .= $row['ftp_login'] . "\t" . rtrim($row['home_path'], "/\\") . "\\gamefiles\n";
+		}
+		return $out;
+	}
+
 	public function getHomeByFtpLogin($remote_server_id,$ftp_login) {
 		$query = sprintf('SELECT *
 			FROM `%1$sremote_servers`

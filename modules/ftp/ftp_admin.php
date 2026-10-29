@@ -51,7 +51,7 @@ function exec_gsp_module()
 			$success = false;
 		}
 
-		$ftp_accounts_list = $remote->ftp_mgr("list");
+		$ftp_accounts_list = $db->getFtpAccountsText();
 		$ftp_accounts = explode("\n",$ftp_accounts_list);
 		$user_exists = FALSE;
 		foreach ((array)$ftp_accounts as $ftp_account)
@@ -155,7 +155,7 @@ function exec_gsp_module()
 
 			if( $host_stat === 1)
 			{
-				$ftp_accounts_list = $remote->ftp_mgr("list");
+				$ftp_accounts_list = $db->getFtpAccountsText();
 				$ftp_accounts = explode("\n", $ftp_accounts_list);
 				foreach ((array)$ftp_accounts as $ftp_account)
 				{
