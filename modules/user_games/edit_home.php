@@ -40,6 +40,9 @@ function exec_gsp_module()
 
 	$submit = isset($_REQUEST['submit']) ? $_REQUEST['submit'] : "";
 
+	if (isset($_GET['expert_mode'])) {
+		$db->setHomeExpertMode($home_id, $_GET['expert_mode'] === '1');
+	}
 	$home_info = $db->getGameHomeWithoutMods($home_id);
 	$servers_with_same_path = $db->getGameServersWithSamePath($home_info['remote_server_id'], $home_info['home_path']);
 	$servers_with_same_path = (is_array($servers_with_same_path) ? count((array)$servers_with_same_path) : 0);
@@ -711,6 +714,7 @@ function exec_gsp_module()
 	echo "</form></td></tr>";
 	echo "<tr><td colspan='2' class='info'>". get_lang("change_name_info") ."</td></tr>";
 	// Form to edit control password
+	if (!empty($home_info['expert_mode'])) {
 	echo "<tr><td class='right'>". get_lang("game_control_password") .":</td><td class='left'>";
 	echo "<form action='?m=user_games&p=edit&home_id=".$home_id."' method='post'>";
 	echo "<input type='hidden' name='home_id' value=\"$home_id\" />\n";
@@ -719,6 +723,8 @@ function exec_gsp_module()
 	echo "<input type='submit' name='change_control_password' value='". get_lang("change_control_password") ."' />";
 	echo "</form></td></tr>";
 	echo "<tr><td colspan='2' class='info'>". get_lang("change_control_password_info") ."</td></tr>";
+	}
+	echo "<tr><td class='right'>" . get_lang("expert_mode") . ":</td><td class='left'>" . (!empty($home_info['expert_mode']) ? "ON - configure in the config files" : "OFF - configure in the panel") . " <a href='?m=user_games&amp;p=edit&amp;home_id=" . $home_id . "&amp;expert_mode=" . (!empty($home_info['expert_mode']) ? "0" : "1") . "'>" . (!empty($home_info['expert_mode']) ? "Turn expert mode off" : "Turn expert mode on") . "</a></td></tr>";
 	if ( $isAdmin && $ftp_installed )
 	{
 		// Forms to enable/disable ftp account

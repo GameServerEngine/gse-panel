@@ -2735,6 +2735,12 @@ class GSPDatabaseMySQL extends GSPDatabase
 		return $out;
 	}
 
+	public function setHomeExpertMode($home_id, $on)
+	{
+		$query = sprintf('UPDATE `%sserver_homes` SET `expert_mode` = %d WHERE `home_id` = %d', $this->table_prefix, intval($on) ? 1 : 0, intval($home_id));
+		return $this->query($query);
+	}
+
 	public function getHomeByFtpLogin($remote_server_id,$ftp_login) {
 		$query = sprintf('SELECT *
 			FROM `%1$sremote_servers`
