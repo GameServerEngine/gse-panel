@@ -119,14 +119,12 @@ function litefm_safe_join_home_path($homePath, $relativePath)
 
 function litefm_display_home_path($homePath, $relativePath)
 {
+	// Shown relative to the jailed game folder: nothing at the root, /AddOns for a subfolder.
 	$normalizedRel = litefm_normalize_relative_path($relativePath);
 	if ($normalizedRel === false) {
 		return false;
 	}
-	if ($normalizedRel === '') {
-		return clean_path((string)$homePath);
-	}
-	return clean_path(rtrim((string)$homePath, '/') . '/' . $normalizedRel);
+	return $normalizedRel === '' ? '' : '/' . $normalizedRel;
 }
 
 function litefm_parent_relative_path($relativePath)

@@ -515,7 +515,7 @@ function exec_gsp_module()
 		{
 			echo "<table class='center' style='width:100%;' ><tr>\n".
 				 "<td colspan='3' ><h3>".
-				 get_lang_f('currently_viewing',$show_path)."</h3></td>".
+				 ($show_path === '' ? '' : get_lang_f('currently_viewing',$show_path))."</h3></td>".
 				 "</tr></table>\n";
 			echo "<div class='file-operations' >\n";
 			foreach ((array)$fo_keys as $key)
