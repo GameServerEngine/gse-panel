@@ -154,3 +154,59 @@ Unstable code may exist for:
 ### Reinstalling
 
 A completed install blocks anonymous access to `install.php`. Reinstalling requires an admin session and the maintenance gate. A fresh server with no completed install lets the first visitor run the installer.
+
+## Features
+
+**Server control**
+- Start, stop and restart game servers from the Game Monitor, with accurate status: `STOPPED`, `STARTING`, `RUNNING`, `CRASHED`.
+- Status comes only from the agent's status file for each server. The panel does not check processes or screens itself.
+- Game and bot are monitored by the agent scheduler. The game is `RUNNING` only when its process is alive and its game port is answering.
+- Crashes are reported with a reason, restarted automatically, and stop after a restart limit.
+- Bots (for example BattlEye/BEC) start once the game is running and stop when it stops.
+
+**Configuration**
+- Expert mode (per server, on by default): configure the server in its config files. When it is off, the game's options appear in the panel as checkboxes, text boxes and dropdowns, and are written to the config files at start.
+- Edit configuration files and startup parameters from the panel.
+- Extra startup parameters, CPU priority, and pre-start, post-start, pre-install and post-install commands.
+
+**Files and FTP**
+- File manager limited to each server's game folder. Paths are shown relative to that folder.
+- FTP over explicit TLS (FTPES), one account per game server, restricted to that server's folder.
+- The Game Monitor shows the FTP login under each server, next to its IP and port.
+
+**Content**
+- Server content: install mods, add-ons and DLC from Steam, and configure them after install.
+- Installs and updates run in a screen session so they survive failures.
+
+**Scheduling**
+- Scheduled tasks (cron) for start, stop, restart and update actions.
+
+## Changelog
+
+### Unreleased (2026-10-22 to 2026-10-29)
+
+**Added**
+- Game manager on the Windows agent: states, crash restarts with a restart limit, and bot lifecycle.
+- Expert mode per server, with the control password hidden unless expert mode is off.
+- FTP login and password shown in the Game Monitor, and an FTP users page reading from the panel database.
+- FTP over TLS on the Windows agent, with one account per game server.
+- File manager jailed to the game folder, with relative paths.
+- A feature and todo list in `docs/FEATURES_TODO.md`.
+
+**Changed**
+- Games no longer run in screen. Installs and updates still do.
+- Game status now comes only from the agent's status file.
+- Arma 2 OA log path and config paths are relative to the game folder.
+- The control password is no longer shown in the server settings page.
+
+**Fixed**
+- Start failing with "Server already running" because of stale screen sessions.
+- Stopped servers showing as running after a stop.
+- Log view saying "not running" for a running server.
+- Scheduler dropping the game monitor when a task was changed, and running it every 5 minutes instead of every 5 seconds.
+- Null-value deprecation warnings on the edit page and the control password field.
+
+**Known issues**
+- Bots on some servers can exit and restart repeatedly; under investigation.
+- The DayZ mod needs its own key files and the correct Steam app ID on each server.
+- Restarting a server from the panel can show "not running" while it restarts.
