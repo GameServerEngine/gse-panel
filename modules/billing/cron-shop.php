@@ -106,6 +106,7 @@ $due_for_invoice = $db->resultQuery("
            sh.next_invoice_date, sh.server_expiration_date,
            bo.price, bo.invoice_duration, bo.qty, bo.order_id, bo.service_id,
            COALESCE(bs.price_monthly, 0) AS svc_price_monthly,
+           COALESCE(bs.price_year, 0) AS svc_price_year,
            u.users_email,
            CONCAT(COALESCE(u.users_fname,''), ' ', COALESCE(u.users_lname,'')) AS customer_name
     FROM {$table_prefix}server_homes sh
@@ -137,11 +138,10 @@ if (is_array($due_for_invoice)) {
         $rate_map = ['day' => 'daily', 'month' => 'monthly', 'year' => 'yearly'];
         $rate_type = $rate_map[$raw_rate] ?? $raw_rate;
 
-        // price_per_player is retained for legacy schema compatibility; renewal pricing is locked to the order/service snapshot.
-        $price_per_player = floatval($srv['svc_price_monthly'] ?? 0);
+        // price_per_player is legacy configuration and is not used for renewals.
+        $price_per_player = 0.0;
         $player_slots     = max(0, intval($srv['qty'] ?? 0));
-        $subtotal = floatval($srv['price'] ?? 0);
-        if ($subtotal <= 0) $subtotal = $price_per_player * max(1, $player_slots);
+        $subtotal = ($raw_rate === 'year') ? (float)($srv['svc_price_year'] ?? 0) : (float)($srv['svc_price_monthly'] ?? 0);
         $total_due = $subtotal;
 
         // Renewal is due on the current service expiration date.

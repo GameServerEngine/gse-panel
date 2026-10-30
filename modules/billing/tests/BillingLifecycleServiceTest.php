@@ -299,11 +299,12 @@ $badRefund = $svc->adminUpdateInvoicePayment(8801, 'refunded', null, []);
 assertSameValue(false, $badRefund['success'], 'unpaid invoice cannot be refunded');
 
 // Approved service-term extension synchronizes server home, order compatibility, and latest paid invoice period.
-$term = $svc->adminChangeServiceTerm(880, '2026-10-01 00:00:00', ['admin_user_id' => 1]);
+$relativeTerm = date('Y-m-d H:i:s', strtotime('+30 days'));
+$term = $svc->adminChangeServiceTerm(880, $relativeTerm, ['admin_user_id' => 1]);
 assertTrueValue($term['success'], 'admin service-term extension succeeds');
-assertSameValue('2026-10-01 00:00:00', $repo->orders[880]['end_date'], 'order end_date synchronized as compatibility field');
-assertSameValue('2026-10-01 00:00:00', $repo->homes[88]['server_expiration_date'], 'server expiration synchronized');
-assertSameValue('2026-10-01 00:00:00', $repo->invoices[8800]['period_end'], 'latest paid invoice period_end synchronized');
+assertSameValue($relativeTerm, $repo->orders[880]['end_date'], 'order end_date synchronized as compatibility field');
+assertSameValue($relativeTerm, $repo->homes[88]['server_expiration_date'], 'server expiration synchronized');
+assertSameValue($relativeTerm, $repo->invoices[8800]['period_end'], 'latest paid invoice period_end synchronized');
 
 $badChronology = $svc->adminChangeServiceTerm(880, '2026-07-01 00:00:00', ['admin_user_id' => 1]);
 assertSameValue(false, $badChronology['success'], 'end date before invoice period rejected');

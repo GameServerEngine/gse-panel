@@ -24,6 +24,12 @@ class PayPalGateway implements PaymentGatewayInterface
      */
     public static function fromConfig(): self
     {
+        if (function_exists('billing_get_paypal_db_config')) {
+            $db = billing_get_paypal_db_config();
+            if (!empty($db['paypal_client_id']) && !empty($db['paypal_client_secret'])) {
+                return new self((string)$db['paypal_client_id'], (string)$db['paypal_client_secret'], ($db['paypal_mode'] ?? 'sandbox') !== 'live');
+            }
+        }
         if (function_exists('gsp_paypal_get_client_id')) {
             $clientId     = gsp_paypal_get_client_id();
             $clientSecret = gsp_paypal_get_client_secret();

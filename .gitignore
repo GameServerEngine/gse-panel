@@ -32,6 +32,8 @@ Thumbs.db
 # Ignore temporary files
 /tmp/
 *.tmp
+modules/billing/paypal-key*
+modules/billing/includes/paypal-key*
 modules/billing/data/*.log
 tools/__pycache__/
 scripts/__pycache__/

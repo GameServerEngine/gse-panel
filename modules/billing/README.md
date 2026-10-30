@@ -171,12 +171,6 @@ When game documentation is finished:
 - All database operations use native mysqli functions
 - Never use panel-specific functions
 
-### Standalone Design
-- Module must work on external hosting
-- No dependencies on panel files
-- All paths use `__DIR__` relative references
-- MySQL connection direct (not through panel)
-
 ## Support & Resources
 - Main project: GameServer Engine Panel (`GSE/Panel`)
 - Branch: unstable
