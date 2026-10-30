@@ -15,6 +15,7 @@ require_once(__DIR__ . '/includes/login_required.php');
 require_once(__DIR__ . '/bootstrap.php');
 require_once(__DIR__ . '/includes/action_security.php');
 require_once(__DIR__ . '/includes/container_poc.php');
+require_once(__DIR__ . '/classes/BillingRepository.php');
 
 // Variables from config.inc.php (helps IDEs understand scope)
 /** @var string $db_host Database host */
@@ -37,6 +38,22 @@ include(__DIR__ . '/includes/menu.php');
 // Get user ID from session
 $user_id = intval($_SESSION['website_user_id']);
 $renew_csrf = billing_action_csrf_token('billing_renew_csrf');
+$cancel_csrf = billing_action_csrf_token('billing_cancel_csrf');
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'request_cancellation') {
+    if (!billing_action_validate_csrf($_POST['csrf'] ?? '', 'billing_cancel_csrf') || empty($_POST['confirm'])) {
+        $_SESSION['billing_cancel_error'] = 'Please confirm the cancellation and try again.';
+    } else {
+        $homeId=(int)($_POST['home_id']??0); $orderId=(int)($_POST['order_id']??0); $mode=$_POST['mode']??'';
+        if (in_array($mode,['immediate','end_of_term'],true) && $homeId>0 && $orderId>0) {
+            $stmt=$db->prepare("SELECT request_id FROM {$table_prefix}billing_cancellation_requests WHERE home_id=? AND status='pending' LIMIT 1");
+            $stmt->bind_param('i',$homeId); $stmt->execute(); $exists=$stmt->get_result()->fetch_assoc(); $stmt->close();
+            if ($exists) $_SESSION['billing_cancel_error']='A cancellation request is already pending.';
+            else { $stmt=$db->prepare("INSERT INTO {$table_prefix}billing_cancellation_requests (home_id,order_id,user_id,mode) VALUES (?,?,?,?)"); $stmt->bind_param('iiis',$homeId,$orderId,$user_id,$mode); $stmt->execute(); $stmt->close(); $_SESSION['billing_cancel_message']='Cancellation request submitted for admin approval.'; }
+        }
+    }
+    header('Location: my_servers.php'); exit;
+}
 
 // Fetch user's active servers
 // We'll look for homes assigned to this user
@@ -72,6 +89,9 @@ $query = "SELECT
           ORDER BY h.home_id DESC";
 
 $result = mysqli_query($db, $query);
+$pending_cancellations = [];
+$pending_result = mysqli_query($db, "SELECT home_id, mode FROM {$table_prefix}billing_cancellation_requests WHERE user_id={$user_id} AND status='pending'");
+if ($pending_result) while ($pending = mysqli_fetch_assoc($pending_result)) $pending_cancellations[(int)$pending['home_id']] = $pending['mode'];
 $container_csrf = billing_action_csrf_token('container_lifecycle_csrf');
 $containers = container_poc_fetch_all($db, "SELECT c.*, a.name AS application_name, ag.name AS agent_name FROM `" . container_poc_table('managed_containers') . "` c LEFT JOIN `" . container_poc_table('container_applications') . "` a ON c.application_id = a.application_id LEFT JOIN `" . container_poc_table('container_agents') . "` ag ON c.agent_id = ag.agent_id WHERE c.user_id = {$user_id} ORDER BY c.container_id DESC");
 $access_flash = $_SESSION['container_access_flash'] ?? null;
@@ -221,6 +241,18 @@ unset($_SESSION['container_access_flash']);
 	                                </form>
 	                            <?php else: ?>
                                 <span class="muted">N/A</span>
+                            <?php endif; ?>
+                            <?php if (isset($pending_cancellations[(int)$server['home_id']])): ?>
+                                <div class="muted">Cancellation pending (<?php echo htmlspecialchars($pending_cancellations[(int)$server['home_id']]); ?>)</div>
+                            <?php elseif ($server['order_id'] && in_array($billing_status, ['Active','Invoiced'], true)): ?>
+                                <form method="post" style="margin-top:10px;padding-top:8px;border-top:1px solid #ddd">
+                                    <strong>Cancel service</strong><br>
+                                    <label><input type="radio" name="mode" value="immediate" required> Cancel now and request a refund</label><br>
+                                    <label><input type="radio" name="mode" value="end_of_term"> Cancel at the end of the current term</label><br>
+                                    <label><input type="checkbox" name="confirm" value="1" required> I confirm this cancellation request</label><br>
+                                    <input type="hidden" name="action" value="request_cancellation"><input type="hidden" name="home_id" value="<?php echo (int)$server['home_id']; ?>"><input type="hidden" name="order_id" value="<?php echo (int)$server['order_id']; ?>"><input type="hidden" name="csrf" value="<?php echo htmlspecialchars($cancel_csrf, ENT_QUOTES, 'UTF-8'); ?>">
+                                    <button type="submit" class="gsw-btn">Submit cancellation</button>
+                                </form>
                             <?php endif; ?>
                         </td>
                     </tr>

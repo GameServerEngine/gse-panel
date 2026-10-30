@@ -1,4 +1,5 @@
 <?php
+if (!function_exists('gsp_agent_start_failure_text')) {
 function gsp_agent_start_failure_text($code)
 {
 	$code = (int)$code;
@@ -6,6 +7,7 @@ function gsp_agent_start_failure_text($code)
 	if ($code === -15) return 'The server configuration is invalid. Please contact an administrator.';
 	if ($code === -12) return 'The server could not find its game executable. Please contact an administrator to check the server files.';
 	return 'The server could not be started. An administrator can review the agent log for details.';
+}
 }
 
 /*

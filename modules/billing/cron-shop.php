@@ -91,7 +91,6 @@ $global_cfg           = is_array($cfg_rows) && !empty($cfg_rows) ? $cfg_rows[0] 
 $grace_days           = intval($global_cfg['grace_days']                ?? 0);
 $delete_after_days    = intval($global_cfg['delete_after_expired_days'] ?? 7);
 $default_rate_type    = $global_cfg['rate_type']                        ?? 'monthly';
-$default_price_player = floatval($global_cfg['price_per_player']        ?? 0.00);
 
 $db->logger("BILLING-CRON: Config => grace_days={$grace_days}, delete_after={$delete_after_days}, rate={$default_rate_type}");
 
@@ -118,6 +117,7 @@ $due_for_invoice = $db->resultQuery("
       AND sh.billing_status  = 'Active'
       AND sh.next_invoice_date IS NOT NULL
       AND sh.next_invoice_date <= NOW()
+      AND COALESCE(sh.cancel_at_expiry, 0) = 0
       AND NOT EXISTS (
           SELECT 1 FROM {$table_prefix}billing_invoices inv
           WHERE inv.home_id = sh.home_id AND inv.billing_status = 'Invoiced'
@@ -137,18 +137,16 @@ if (is_array($due_for_invoice)) {
         $rate_map = ['day' => 'daily', 'month' => 'monthly', 'year' => 'yearly'];
         $rate_type = $rate_map[$raw_rate] ?? $raw_rate;
 
-        // Pricing: billing_config > billing_orders flat price
-        $price_per_player = $default_price_player;
+        // price_per_player is retained for legacy schema compatibility; renewal pricing is locked to the order/service snapshot.
+        $price_per_player = floatval($srv['svc_price_monthly'] ?? 0);
         $player_slots     = max(0, intval($srv['qty'] ?? 0));
-        $subtotal         = $price_per_player * max(1, $player_slots);
-        if ($subtotal == 0.00 && floatval($srv['price'] ?? 0) > 0) {
-            $subtotal = floatval($srv['price']);
-        }
+        $subtotal = floatval($srv['price'] ?? 0);
+        if ($subtotal <= 0) $subtotal = $price_per_player * max(1, $player_slots);
         $total_due = $subtotal;
 
-        // Calculate due_date: now + 1 billing period
+        // Renewal is due on the current service expiration date.
         $period_map = ['daily' => '+1 day', 'monthly' => '+1 month', 'yearly' => '+1 year'];
-        $due_date_ts = strtotime($period_map[$rate_type], time());
+        $due_date_ts = strtotime((string)($srv['server_expiration_date'] ?? $srv['next_invoice_date'] ?? $rundate));
         $due_date    = date('Y-m-d H:i:s', $due_date_ts);
 
         // Guard: skip if an invoice for this exact period already exists
@@ -171,7 +169,7 @@ if (is_array($due_for_invoice)) {
             'home_id' => $home_id,
             'home_name' => $home_name,
             'user_id' => $user_id,
-            'next_invoice_date' => $srv['next_invoice_date'] ?? $rundate,
+            'next_invoice_date' => $srv['server_expiration_date'] ?? $srv['next_invoice_date'] ?? $rundate,
         ], [
             'order_id' => intval($srv['order_id'] ?? 0),
             'service_id' => intval($srv['service_id'] ?? 0),

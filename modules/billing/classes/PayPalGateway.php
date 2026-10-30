@@ -193,6 +193,19 @@ class PayPalGateway implements PaymentGatewayInterface
         ];
     }
 
+    public function refund(array $params): array
+    {
+        $captureId = preg_replace('/[^A-Za-z0-9_.-]/', '', (string)($params['capture_id'] ?? $params['transaction_id'] ?? ''));
+        if ($captureId === '') return ['success'=>false, 'error'=>'missing_capture_id'];
+        $token=$this->getAccessToken(); if (!$token) return ['success'=>false,'error'=>'paypal_oauth_failed'];
+        $body=['amount'=>['value'=>number_format(max(0,(float)($params['amount']??0)),2,'.',''),'currency_code'=>(string)($params['currency']??'USD')]];
+        $ch=curl_init("{$this->apiBase}/v2/payments/captures/{$captureId}/refund");
+        curl_setopt_array($ch,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_POST=>true,CURLOPT_POSTFIELDS=>json_encode($body),CURLOPT_HTTPHEADER=>['Content-Type: application/json', 'PayPal-Request-Id: '.$this->requestId($params,'refund-'.$captureId), "Authorization: Bearer {$token}"]]);
+        $res=curl_exec($ch); $code=curl_getinfo($ch,CURLINFO_HTTP_CODE); curl_close($ch); $data=json_decode((string)$res,true);
+        if (($code!==200 && $code!==201) || !is_array($data)) return ['success'=>false,'status'=>'failed','error'=>'paypal_refund_failed','http_code'=>$code];
+        return ['success'=>true,'status'=>'refunded','transaction_id'=>$data['id']??null,'raw_response'=>$data];
+    }
+
     public function verifyPayment(array $payload): bool
     {
         // For REST API flow (JS SDK capture), verification is done by the capture response itself.

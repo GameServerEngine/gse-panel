@@ -3,7 +3,7 @@
 ## Overview
 The billing module is the canonical Gameservers.World customer-facing hosting storefront inside the GameServer Engine (GSE) Panel repository. It sells hosted game servers and supports account, cart, payment, support, documentation, and control-panel entry workflows.
 
-It can be deployed on the same machine as the Panel management console or on a separate external web host. It is not a separate top-level repository and is not the whole Panel.
+It can be served on a separate virtual host (vhost) advertised as its own website, but its code lives in `modules/billing` in this Panel repository.
 
 ## Runtime location and portability
 
@@ -12,17 +12,7 @@ It can be deployed on the same machine as the Panel management console or on a s
 - Canonical human-facing timestamp source: `modules/billing/timestamp.txt`
 - Runtime timestamp file: `modules/billing/timestamp.txt` (synced from the canonical file at runtime)
 
-### Standalone configuration values
-
-Set one of the following (priority top-to-bottom) when running billing outside the panel tree:
-
-1. Environment variables:
-   - `GSP_PANEL_PATH` (or `BILLING_PANEL_PATH`) for the Panel root; the `GSP` variable name is retained for deployment compatibility
-   - `BILLING_BASE_PATH` for storefront URL base (e.g. `/billing`)
-2. `modules/billing/site_config.local.php` overrides (git-ignored)
-3. `modules/billing/site_config.php` defaults
-
-`site_config.example.php` documents the expected keys and examples.
+The billing module is a panel module and uses the panel runtime, configuration, authentication, database, and communication layers. A vhost may route requests to it, but the module is not designed as a standalone copy without panel files.
 
 ## Documentation System
 

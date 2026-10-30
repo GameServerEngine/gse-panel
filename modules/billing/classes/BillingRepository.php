@@ -577,7 +577,7 @@ class BillingRepository
             "SELECT home_id, home_name, user_id_main, billing_status, billing_expires_at,
                     billing_price, billing_rate_type, billing_players, billing_enabled,
                     next_invoice_date, server_expiration_date, billing_invoice_sent_at,
-                    last_invoice_id
+                    last_invoice_id, cancel_at_expiry
              FROM `{$this->prefix}server_homes`
              WHERE home_id = ? LIMIT 1"
         );
@@ -596,7 +596,7 @@ class BillingRepository
             'billing_status', 'billing_expires_at', 'billing_price',
             'billing_rate_type', 'billing_players', 'billing_enabled',
             'next_invoice_date', 'server_expiration_date', 'billing_invoice_sent_at',
-            'last_invoice_id',
+            'last_invoice_id', 'cancel_at_expiry',
         ];
         $set    = [];
         $params = [];
@@ -674,6 +674,17 @@ class BillingRepository
         $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
         return $row ?: null;
+    }
+
+    public function hasPendingCancellation(int $homeId): bool
+    {
+        $stmt=$this->db->prepare("SELECT request_id FROM `{$this->prefix}billing_cancellation_requests` WHERE home_id=? AND status='pending' LIMIT 1");
+        if (!$stmt) return false; $stmt->bind_param('i',$homeId); $stmt->execute(); $ok=(bool)$stmt->get_result()->fetch_assoc(); $stmt->close(); return $ok;
+    }
+
+    public function cancelInvoice(int $invoiceId): bool
+    {
+        return $this->updateInvoiceFields($invoiceId, ['billing_status'=>'Cancelled','status'=>'cancelled','payment_status'=>'cancelled']);
     }
 
     /** Extend an existing order's end_date. */

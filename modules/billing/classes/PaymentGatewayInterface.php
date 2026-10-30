@@ -18,6 +18,7 @@ interface PaymentGatewayInterface
      * @return array { success: bool, transaction_id: string, amount: float, status: string, raw_response: array, error?: string }
      */
     public function handleCallback(array $params): array;
+    public function refund(array $params): array;
 
     /**
      * Verify that a payment/webhook is authentic.

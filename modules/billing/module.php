@@ -25,14 +25,16 @@
 // Module general information
 $module_title = "billing";
 $module_version = "3.6";
-$db_version = 8;
+$db_version = 9;
 $module_required = FALSE;
 // Module description
-$module_description = "Billing storefront / provisioning integration. Public ordering runs as a standalone site; panel pages provide provisioning and admin order management.";
+$module_description = "Billing storefront / provisioning integration.";
 
 // No panel menu entries – billing runs as a standalone website, not panel pages.
 // Install/uninstall/update DB logic below is still active.
-$module_menus = array();
+$module_menus = array(
+    array('title' => 'Billing Cancellations', 'page' => 'admin_cancellations.php', 'access' => 'admin'),
+);
 
 $install_queries = array();
 
@@ -448,6 +450,24 @@ $install_queries[8] = array(
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
         return (bool)$db->query("ALTER TABLE `GSP_DB_PREFIXserver_homes` ADD INDEX `idx_server_homes_last_invoice_id` (`last_invoice_id`)");
     },
+);
+
+// db_version 9 — cancellation requests, refund policy, and expiry cancellation.
+$install_queries[9] = array(
+    "CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXbilling_cancellation_requests` (
+        `request_id` INT(11) NOT NULL AUTO_INCREMENT,
+        `home_id` INT(11) NOT NULL, `order_id` INT(11) NOT NULL, `user_id` INT(11) NOT NULL,
+        `mode` ENUM('immediate','end_of_term') NOT NULL,
+        `status` ENUM('pending','approved','rejected','completed','failed') NOT NULL DEFAULT 'pending',
+        `requested_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, `decided_at` DATETIME NULL,
+        `decided_by` INT(11) NULL, `refund_amount` DECIMAL(10,2) NULL,
+        `refund_currency` VARCHAR(3) NOT NULL DEFAULT 'USD',
+        `refund_status` ENUM('none','pending','refunded','manual_required','failed') NOT NULL DEFAULT 'none',
+        `refund_txid` VARCHAR(255) NULL, `note` TEXT NULL,
+        PRIMARY KEY (`request_id`), KEY `idx_cancel_home_status` (`home_id`,`status`), KEY `idx_cancel_status` (`status`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+    function($db) { $r=$db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='GSP_DB_PREFIXbilling_config' AND COLUMN_NAME='refund_full_days'"); return ($r && (int)$r[0]['cnt']>0) || (bool)$db->query("ALTER TABLE `GSP_DB_PREFIXbilling_config` ADD `refund_full_days` INT(11) NOT NULL DEFAULT 30"); },
+    function($db) { $r=$db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='GSP_DB_PREFIXserver_homes' AND COLUMN_NAME='cancel_at_expiry'"); return ($r && (int)$r[0]['cnt']>0) || (bool)$db->query("ALTER TABLE `GSP_DB_PREFIXserver_homes` ADD `cancel_at_expiry` TINYINT(1) NOT NULL DEFAULT 0"); }
 );
 
 ?>

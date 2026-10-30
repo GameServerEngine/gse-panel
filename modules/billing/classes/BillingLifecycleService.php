@@ -311,6 +311,7 @@ class BillingLifecycleService
         if ($homeId <= 0) {
             return ['success' => false, 'error' => 'missing_home_id'];
         }
+        if (!empty($server['cancel_at_expiry'])) return ['success'=>false,'error'=>'cancel_at_expiry'];
 
         $this->begin();
         try {

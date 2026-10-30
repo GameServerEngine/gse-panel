@@ -26,6 +26,7 @@ class ManualGateway implements PaymentGatewayInterface
             'raw_response'   => $params,
         ];
     }
+    public function refund(array $params): array { return ['success'=>true, 'status'=>'manual_required', 'transaction_id'=>null]; }
 
     public function verifyPayment(array $payload): bool { return true; }
 
