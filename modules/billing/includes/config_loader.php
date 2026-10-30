@@ -46,6 +46,7 @@ if (is_readable($billing_site_cfg_local)) {
         $billing_runtime_site_config = array_merge($billing_runtime_site_config, $tmp);
     }
 }
+require_once __DIR__ . '/paypal_credentials.php';
 
 // ---------------------------------------------------------------------------
 // Helper: extract DB variable values from a PHP config file without including it.
@@ -328,6 +329,10 @@ define('BILLING_CONFIG_LOADED', true);
 if (!function_exists('gsp_paypal_get_mode')) {
     function gsp_paypal_get_mode(): string
     {
+        if (function_exists('billing_get_paypal_db_config')) {
+            $db = billing_get_paypal_db_config();
+            if (($db['paypal_mode'] ?? '') !== '') return $db['paypal_mode'] === 'live' ? 'live' : 'sandbox';
+        }
         return $GLOBALS['paypal_mode'] === 'live' ? 'live' : 'sandbox';
     }
 }
@@ -342,6 +347,8 @@ if (!function_exists('gsp_paypal_is_sandbox')) {
 if (!function_exists('gsp_paypal_get_client_id')) {
     function gsp_paypal_get_client_id(): string
     {
+        $db = function_exists('billing_get_paypal_db_config') ? billing_get_paypal_db_config() : [];
+        if (!empty($db['paypal_client_id'])) return (string)$db['paypal_client_id'];
         if (gsp_paypal_is_sandbox()) {
             return (string)($GLOBALS['paypal_sandbox_client_id'] ?? '');
         }
@@ -352,6 +359,8 @@ if (!function_exists('gsp_paypal_get_client_id')) {
 if (!function_exists('gsp_paypal_get_client_secret')) {
     function gsp_paypal_get_client_secret(): string
     {
+        $db = function_exists('billing_get_paypal_db_config') ? billing_get_paypal_db_config() : [];
+        if (!empty($db['paypal_client_secret'])) return (string)$db['paypal_client_secret'];
         if (gsp_paypal_is_sandbox()) {
             return (string)($GLOBALS['paypal_sandbox_client_secret'] ?? '');
         }
@@ -362,6 +371,8 @@ if (!function_exists('gsp_paypal_get_client_secret')) {
 if (!function_exists('gsp_paypal_get_webhook_id')) {
     function gsp_paypal_get_webhook_id(): string
     {
+        $db = function_exists('billing_get_paypal_db_config') ? billing_get_paypal_db_config() : [];
+        if (!empty($db['paypal_webhook_id'])) return (string)$db['paypal_webhook_id'];
         if (gsp_paypal_is_sandbox()) {
             return (string)($GLOBALS['paypal_sandbox_webhook_id'] ?? '');
         }

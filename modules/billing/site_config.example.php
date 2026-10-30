@@ -11,4 +11,7 @@ return [
     // Optional canonical timestamp source file.
     // Example: '/var/www/html/GSP/modules/billing/timestamp.txt'
     'legacy_timestamp_path' => '',
+
+    // Absolute path outside the repository containing the PayPal encryption key.
+    'paypal_key_file' => '',
 ];

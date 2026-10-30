@@ -17,6 +17,7 @@
 
 require_once(__DIR__ . '/includes/admin_auth.php');
 require_once(__DIR__ . '/includes/config_loader.php');
+require_once(__DIR__ . '/includes/action_security.php');
 include(__DIR__ . '/includes/top.php');
 include(__DIR__ . '/includes/menu.php');
 
@@ -211,6 +212,38 @@ $panelCfgPath  = $panelMode ? BILLING_PANEL_CONFIG_PATH : null;
 
 $status = '';
 $statusType = 'info';   // 'success' | 'error' | 'info'
+$paypalDb = billing_get_paypal_db_config();
+$paypalCsrf = billing_action_csrf_token('billing_paypal_config_csrf');
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['paypal_save', 'paypal_test'], true)) {
+    if (!billing_action_validate_csrf($_POST['csrf'] ?? '', 'billing_paypal_config_csrf')) {
+        $status = 'Invalid CSRF token.'; $statusType = 'error';
+    } else {
+        $mode = ($_POST['paypal_mode'] ?? 'sandbox') === 'live' ? 'live' : 'sandbox';
+        $id = trim((string)($_POST['paypal_client_id'] ?? ''));
+        $webhook = trim((string)($_POST['paypal_webhook_id'] ?? ''));
+        $secret = trim((string)($_POST['paypal_client_secret'] ?? ''));
+        if (($_POST['action'] ?? '') === 'paypal_test') {
+            $testSecret = $secret !== '' ? $secret : billing_paypal_decrypt_secret((string)($paypalDb['paypal_client_secret_enc'] ?? ''), billing_paypal_read_key());
+            $code = ($id !== '' && $testSecret !== '') ? billing_paypal_test_connection($mode, $id, $testSecret) : 0;
+            $status = $code > 0 ? 'PayPal connection HTTP status: ' . $code : 'PayPal connection could not be tested because credentials are incomplete.'; $statusType = ($code === 200) ? 'success' : 'error';
+        } elseif ($secret !== '' && billing_paypal_read_key() === '') {
+            $path = billing_paypal_key_path() ?: 'the path configured by BILLING_PAYPAL_KEY_FILE';
+            $status = 'Cannot save secret: create the external encryption key file at ' . $path . '.'; $statusType = 'error';
+        } else {
+            global $db_host, $db_user, $db_pass, $db_name, $db_port, $table_prefix;
+            $db = @mysqli_connect($db_host, $db_user, $db_pass, $db_name, isset($db_port) ? (int)$db_port : 0);
+            $enc = $secret !== '' ? billing_paypal_encrypt_secret($secret, billing_paypal_read_key()) : (string)($paypalDb['paypal_client_secret_enc'] ?? '');
+            $sql = $paypalDb['config_id'] ?? null
+                ? "UPDATE `{$table_prefix}billing_config` SET paypal_mode='" . mysqli_real_escape_string($db, $mode) . "', paypal_client_id='" . mysqli_real_escape_string($db, $id) . "', paypal_client_secret_enc='" . mysqli_real_escape_string($db, $enc) . "', paypal_webhook_id='" . mysqli_real_escape_string($db, $webhook) . "' WHERE config_id=" . (int)$paypalDb['config_id']
+                : "INSERT INTO `{$table_prefix}billing_config` (game_key, paypal_mode, paypal_client_id, paypal_client_secret_enc, paypal_webhook_id) VALUES ('__global__','" . mysqli_real_escape_string($db, $mode) . "','" . mysqli_real_escape_string($db, $id) . "','" . mysqli_real_escape_string($db, $enc) . "','" . mysqli_real_escape_string($db, $webhook) . "')";
+            if ($db && mysqli_query($db, $sql)) {
+                $status = 'PayPal credentials saved.'; $statusType = 'success';
+            } else { $status = 'Could not save PayPal credentials.'; $statusType = 'error'; }
+            if ($db) mysqli_close($db);
+        }
+    }
+}
 
 // ---------------------------------------------------------------------------
 // POST: Save interactive form
@@ -240,10 +273,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
 
         // Client secrets: only update if a non-blank value was submitted (never erase existing).
         $sbSecPost = trim($_POST['paypal_sandbox_client_secret'] ?? '');
-        $formVals['paypal_sandbox_client_secret'] = ($sbSecPost !== '') ? $sbSecPost : ($cfgVals['paypal_sandbox_client_secret'] ?? '');
+        $formVals['paypal_sandbox_client_secret'] = '';
 
         $lvSecPost = trim($_POST['paypal_live_client_secret'] ?? '');
-        $formVals['paypal_live_client_secret'] = ($lvSecPost !== '') ? $lvSecPost : ($cfgVals['paypal_live_client_secret'] ?? '');
+        $formVals['paypal_live_client_secret'] = '';
 
         // Validate
         $validationError = '';
@@ -425,6 +458,18 @@ rsort($bakFiles); // newest first
         <div class="field-help">Managed by the panel config. Edit the panel's <code>includes/config.inc.php</code> to change.</div>
         <input type="text" class="readonly-field" value="<?php echo h((string)($db_host ?? '')); ?>" readonly>
       </div>
+
+      <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+      <h3 style="margin-top:0;color:#333;">PayPal</h3>
+        <input type="hidden" name="csrf" value="<?php echo h($paypalCsrf); ?>">
+        <input type="hidden" name="action" value="paypal_save">
+        <div class="field-group"><label for="paypal_mode">Mode</label>
+          <select id="paypal_mode" name="paypal_mode"><option value="sandbox" <?php echo (($paypalDb['paypal_mode'] ?? 'sandbox') === 'sandbox') ? 'selected' : ''; ?>>Sandbox</option><option value="live" <?php echo (($paypalDb['paypal_mode'] ?? '') === 'live') ? 'selected' : ''; ?>>Live</option></select></div>
+        <div class="field-group"><label for="paypal_client_id">Client ID</label><input id="paypal_client_id" name="paypal_client_id" type="text" value="<?php echo h((string)($paypalDb['paypal_client_id'] ?? '')); ?>"></div>
+        <div class="field-group"><label for="paypal_client_secret">Client secret</label><input id="paypal_client_secret" name="paypal_client_secret" type="password" autocomplete="new-password" placeholder="<?php echo h(billing_paypal_secret_input_placeholder(!empty($paypalDb['paypal_client_secret_enc']))); ?>"></div>
+        <div class="field-group"><label for="paypal_webhook_id">Webhook ID (optional)</label><input id="paypal_webhook_id" name="paypal_webhook_id" type="text" value="<?php echo h((string)($paypalDb['paypal_webhook_id'] ?? '')); ?>"></div>
+        <button type="submit">Save PayPal credentials</button>
+        <button type="submit" name="action" value="paypal_test">Test connection</button>
       <div class="field-group">
         <label>Database Name</label>
         <input type="text" class="readonly-field" value="<?php echo h((string)($db_name ?? '')); ?>" readonly>
