@@ -152,6 +152,8 @@ define('LANG_trusted_host_or_proxy_addresses_or_cidr', "Trusted Hosts or Proxies
 define('LANG_trusted_forwarded_ip_addresses_or_cidr', "Trusted Forwarded IPs (IPv4/IPv6 Addresses or CIDR)");
 define('LANG_reset_game_server_order', "Reset Game Server Ordering");
 define('LANG_reset_game_server_order_info', "Resets game server ordering back to the default of using the server ID");
+define('LANG_server_content_cache_mode', "Server content cache mode");
+define('LANG_server_content_cache_mode_info', "Controls whether game content is reused between game servers instead of always installing from source. Default is disabled.");
 
 
 
