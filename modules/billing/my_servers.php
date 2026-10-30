@@ -46,8 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'reque
     } else {
         $homeId=(int)($_POST['home_id']??0); $orderId=(int)($_POST['order_id']??0); $mode=$_POST['mode']??'';
         if (in_array($mode,['immediate','end_of_term'],true) && $homeId>0 && $orderId>0) {
-            $stmt=$db->prepare("SELECT request_id FROM {$table_prefix}billing_cancellation_requests WHERE home_id=? AND status='pending' LIMIT 1");
-            $stmt->bind_param('i',$homeId); $stmt->execute(); $exists=$stmt->get_result()->fetch_assoc(); $stmt->close();
+            $stmt=$db->prepare("SELECT request_id FROM {$table_prefix}billing_cancellation_requests WHERE home_id=? AND user_id=? AND status='pending' LIMIT 1");
+            $stmt->bind_param('ii',$homeId,$user_id); $stmt->execute(); $exists=$stmt->get_result()->fetch_assoc(); $stmt->close();
             if ($exists) $_SESSION['billing_cancel_error']='A cancellation request is already pending.';
             else { $stmt=$db->prepare("INSERT INTO {$table_prefix}billing_cancellation_requests (home_id,order_id,user_id,mode) VALUES (?,?,?,?)"); $stmt->bind_param('iiis',$homeId,$orderId,$user_id,$mode); $stmt->execute(); $stmt->close(); $_SESSION['billing_cancel_message']='Cancellation request submitted for admin approval.'; }
         }
