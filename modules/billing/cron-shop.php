@@ -119,6 +119,7 @@ $due_for_invoice = $db->resultQuery("
       AND sh.next_invoice_date IS NOT NULL
       AND sh.next_invoice_date <= NOW()
       AND COALESCE(sh.cancel_at_expiry, 0) = 0
+      AND bo.order_id IS NOT NULL
       AND NOT EXISTS (
           SELECT 1 FROM {$table_prefix}billing_invoices inv
           WHERE inv.home_id = sh.home_id AND inv.billing_status = 'Invoiced'
@@ -225,6 +226,7 @@ $past_due = $db->resultQuery("
       AND sh.billing_status       = 'Invoiced'
       AND sh.server_expiration_date IS NOT NULL
       AND DATE(sh.server_expiration_date) < DATE_SUB(CURDATE(), INTERVAL {$grace_days} DAY)
+      AND EXISTS (SELECT 1 FROM {$table_prefix}billing_orders bo_g WHERE bo_g.home_id = sh.home_id)
       AND (
           sh.last_invoice_id IS NULL
           OR EXISTS (
@@ -286,6 +288,7 @@ $to_delete = $db->resultQuery("
       AND sh.billing_status        = 'Expired'
       AND sh.server_expiration_date IS NOT NULL
       AND DATE(sh.server_expiration_date) < DATE_SUB(CURDATE(), INTERVAL {$delete_after_days} DAY)
+      AND EXISTS (SELECT 1 FROM {$table_prefix}billing_orders bo_g WHERE bo_g.home_id = sh.home_id)
     ORDER BY sh.home_id ASC
 ");
 
