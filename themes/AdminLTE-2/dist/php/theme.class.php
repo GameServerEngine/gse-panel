@@ -650,7 +650,7 @@ class Theme
 		require_once($this->absolutePath."/modules/config_games/server_config_parser.php");
 
 		// load home config file
-		$serverConfig = simplexml_load_file($this->absolutePath."/".SERVER_CONFIG_LOCATION.$serverObject['home_cfg_file']);
+		$serverConfig = read_server_config($this->absolutePath."/".SERVER_CONFIG_LOCATION.$serverObject['home_cfg_file'], gsp_os_for_install_row($serverObject));
 		if($serverConfig)
 		{
 			// get protocol query name

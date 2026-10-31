@@ -85,7 +85,7 @@ if($_GET['p'] != 'create_token')
 		return;
 	}
 
-	if($game_home['home_cfg_file'] != 'terraria_win64.xml')
+	if($game_home['home_cfg_file'] != 'terraria.xml')
 	{
 		print_failure( "The given address is not for Terraria" );
 		$continue = False;
