@@ -521,6 +521,18 @@ $install_queries[11] = array(
         PRIMARY KEY (`service_id`, `remote_server_id`),
         KEY `idx_bsa_remote` (`remote_server_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+    function($db) {
+        $rows = $db->resultQuery("SELECT service_id, remote_server_id FROM `GSP_DB_PREFIXbilling_services` WHERE remote_server_id <> ''");
+        foreach ((array)$rows as $row) {
+            foreach (preg_split('/[\s,]+/', trim((string)$row['remote_server_id'])) as $rsid) {
+                $rsid = (int)$rsid;
+                if ($rsid > 0) {
+                    $db->query("INSERT IGNORE INTO `GSP_DB_PREFIXbilling_service_agents` (service_id, remote_server_id) VALUES (" . (int)$row['service_id'] . ", " . $rsid . ")");
+                }
+            }
+        }
+        return true;
+    },
     function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_services', 'pricing_mode', "VARCHAR(16) NOT NULL DEFAULT 'per_slot'"); },
     function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_services', 'base_slots', 'INT(11) NOT NULL DEFAULT 0'); },
     function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_services', 'per_slot_price_monthly', 'FLOAT(15,4) NOT NULL DEFAULT 0'); },
