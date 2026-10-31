@@ -148,18 +148,6 @@ CREATE TABLE `gsp_ban_list` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `gsp_billing_config` (
-  `config_id` int(11) NOT NULL AUTO_INCREMENT,
-  `game_key` varchar(100) DEFAULT NULL,
-  `enabled` tinyint(1) NOT NULL DEFAULT 1,
-  `grace_days` int(11) NOT NULL DEFAULT 0,
-  `delete_after_expired_days` int(11) NOT NULL DEFAULT 7,
-  `rate_type` enum('daily','monthly','yearly') NOT NULL DEFAULT 'monthly',
-  `price_per_player` decimal(10,4) NOT NULL DEFAULT 0.0000,
-  PRIMARY KEY (`config_id`),
-  KEY `game_key` (`game_key`),
-  KEY `enabled` (`enabled`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -302,27 +290,6 @@ CREATE TABLE `gsp_billing_paypal_webhook_events` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `gsp_billing_services` (
-  `service_id` int(11) NOT NULL AUTO_INCREMENT,
-  `home_cfg_id` int(11) NOT NULL,
-  `mod_cfg_id` int(11) NOT NULL,
-  `service_name` varchar(255) NOT NULL,
-  `remote_server_id` varchar(255) NOT NULL,
-  `out_of_stock` varchar(255) NOT NULL,
-  `slot_max_qty` int(11) NOT NULL,
-  `slot_min_qty` int(11) NOT NULL,
-  `price_daily` float(15,4) NOT NULL,
-  `price_monthly` float(15,4) NOT NULL,
-  `price_year` float(15,4) NOT NULL,
-  `description` varchar(1000) NOT NULL,
-  `img_url` varchar(255) NOT NULL,
-  `ftp` varchar(255) NOT NULL,
-  `install_method` varchar(255) NOT NULL,
-  `manual_url` varchar(255) NOT NULL,
-  `access_rights` varchar(255) NOT NULL,
-  `enabled` int(11) NOT NULL,
-  PRIMARY KEY (`service_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -1259,3 +1226,104 @@ CREATE TABLE `gsp_widgets_users` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+CREATE TABLE `gsp_billing_services` (
+  `service_id` int(11) NOT NULL AUTO_INCREMENT,
+  `home_cfg_id` int(11) NOT NULL,
+  `mod_cfg_id` int(11) NOT NULL,
+  `service_name` varchar(255) NOT NULL,
+  `remote_server_id` varchar(255) NOT NULL,
+  `out_of_stock` varchar(255) NOT NULL,
+  `slot_max_qty` int(11) NOT NULL,
+  `slot_min_qty` int(11) NOT NULL,
+  `price_daily` float(15,4) NOT NULL,
+  `price_monthly` float(15,4) NOT NULL,
+  `price_year` float(15,4) NOT NULL,
+  `description` varchar(1000) NOT NULL,
+  `img_url` varchar(255) NOT NULL,
+  `ftp` varchar(255) NOT NULL,
+  `install_method` varchar(255) NOT NULL,
+  `manual_url` varchar(255) NOT NULL,
+  `access_rights` varchar(255) NOT NULL,
+  `enabled` int(11) NOT NULL,
+  `pricing_mode` varchar(16) NOT NULL DEFAULT 'per_slot',
+  `base_slots` int(11) NOT NULL DEFAULT '0',
+  `per_slot_price_monthly` float(15,4) NOT NULL DEFAULT '0.0000',
+  `base_price_monthly` float(15,4) NOT NULL DEFAULT '0.0000',
+  `extra_price_per_slot_monthly` float(15,4) NOT NULL DEFAULT '0.0000',
+  PRIMARY KEY (`service_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `gsp_billing_config` (
+  `config_id` int(11) NOT NULL AUTO_INCREMENT,
+  `game_key` varchar(100) DEFAULT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT '1',
+  `grace_days` int(11) NOT NULL DEFAULT '0',
+  `delete_after_expired_days` int(11) NOT NULL DEFAULT '7',
+  `rate_type` enum('daily','monthly','yearly') NOT NULL DEFAULT 'monthly',
+  `price_per_player` decimal(10,4) NOT NULL DEFAULT '0.0000',
+  `refund_full_days` int(11) NOT NULL DEFAULT '30',
+  `headroom_cpu_pct` tinyint(4) NOT NULL DEFAULT '70',
+  `headroom_ram_pct` tinyint(4) NOT NULL DEFAULT '70',
+  `headroom_disk_pct` tinyint(4) NOT NULL DEFAULT '85',
+  `paypal_mode` enum('sandbox','live') NOT NULL DEFAULT 'sandbox',
+  `paypal_client_id` varchar(255) DEFAULT NULL,
+  `paypal_client_secret_enc` text,
+  `paypal_webhook_id` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`config_id`),
+  KEY `game_key` (`game_key`),
+  KEY `enabled` (`enabled`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `gsp_billing_locations` (
+  `location_id` int(11) NOT NULL AUTO_INCREMENT,
+  `parent_id` int(11) DEFAULT NULL,
+  `kind` varchar(32) NOT NULL DEFAULT 'region',
+  `name` varchar(120) NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`location_id`),
+  KEY `idx_loc_parent` (`parent_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `gsp_billing_service_requirements` (
+  `home_cfg_id` int(11) NOT NULL,
+  `min_cpu_cores` decimal(6,2) NOT NULL DEFAULT '0.00',
+  `min_ram_mb` int(11) NOT NULL DEFAULT '0',
+  `min_disk_gb` int(11) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`home_cfg_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `gsp_billing_cancellation_requests` (
+  `request_id` int(11) NOT NULL AUTO_INCREMENT,
+  `home_id` int(11) NOT NULL,
+  `order_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `mode` enum('immediate','end_of_term') NOT NULL,
+  `status` enum('pending','approved','rejected','completed','failed') NOT NULL DEFAULT 'pending',
+  `requested_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `decided_at` datetime DEFAULT NULL,
+  `decided_by` int(11) DEFAULT NULL,
+  `refund_amount` decimal(10,2) DEFAULT NULL,
+  `refund_currency` varchar(3) NOT NULL DEFAULT 'USD',
+  `refund_status` enum('none','pending','refunded','manual_required','failed') NOT NULL DEFAULT 'none',
+  `refund_txid` varchar(255) DEFAULT NULL,
+  `note` text,
+  PRIMARY KEY (`request_id`),
+  KEY `idx_cancel_home_status` (`home_id`,`status`),
+  KEY `idx_cancel_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `gsp_billing_service_agents` (
+  `service_id` int(11) NOT NULL,
+  `remote_server_id` int(11) NOT NULL,
+  PRIMARY KEY (`service_id`,`remote_server_id`),
+  KEY `idx_bsa_remote` (`remote_server_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `gsp_billing_service_tiers` (
+  `service_id` int(11) NOT NULL,
+  `tier_key` varchar(16) NOT NULL,
+  `slot_count` int(11) NOT NULL DEFAULT '0',
+  `price_monthly` float(15,4) NOT NULL DEFAULT '0.0000',
+  PRIMARY KEY (`service_id`,`tier_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
