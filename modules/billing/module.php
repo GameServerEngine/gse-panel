@@ -25,7 +25,7 @@
 // Module general information
 $module_title = "billing";
 $module_version = "3.6";
-$db_version = 9;
+$db_version = 10;
 $module_required = FALSE;
 // Module description
 $module_description = "Billing storefront / provisioning integration.";
@@ -34,6 +34,7 @@ $module_description = "Billing storefront / provisioning integration.";
 // Install/uninstall/update DB logic below is still active.
 $module_menus = array(
     array('title' => 'Billing Cancellations', 'page' => 'admin_cancellations.php', 'access' => 'admin'),
+    array('title' => 'Billing Locations', 'page' => 'admin_locations.php', 'access' => 'admin'),
 );
 
 $install_queries = array();
@@ -468,6 +469,46 @@ $install_queries[9] = array(
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
     function($db) { $r=$db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='GSP_DB_PREFIXbilling_config' AND COLUMN_NAME='refund_full_days'"); return ($r && (int)$r[0]['cnt']>0) || (bool)$db->query("ALTER TABLE `GSP_DB_PREFIXbilling_config` ADD `refund_full_days` INT(11) NOT NULL DEFAULT 30"); },
     function($db) { $r=$db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='GSP_DB_PREFIXserver_homes' AND COLUMN_NAME='cancel_at_expiry'"); return ($r && (int)$r[0]['cnt']>0) || (bool)$db->query("ALTER TABLE `GSP_DB_PREFIXserver_homes` ADD `cancel_at_expiry` TINYINT(1) NOT NULL DEFAULT 0"); }
+);
+
+
+// -----------------------------------------------------------------------
+// db_version 10 - locations (regions and cities), machine location and install
+// toggle, per-game minimum resources, placement headroom, and PayPal credential
+// columns (previously added by sql/010_paypal_credentials.sql).
+if (!function_exists('gsp_billing_add_column_if_missing')) {
+    function gsp_billing_add_column_if_missing($db, $table, $column, $definition)
+    {
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '" . $table . "' AND COLUMN_NAME = '" . $column . "'");
+        if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
+        return (bool)$db->query("ALTER TABLE `" . $table . "` ADD `" . $column . "` " . $definition);
+    }
+}
+$install_queries[10] = array(
+    "CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXbilling_locations` (
+        `location_id` INT(11) NOT NULL AUTO_INCREMENT,
+        `parent_id` INT(11) NULL,
+        `kind` ENUM('region','city') NOT NULL,
+        `name` VARCHAR(120) NOT NULL,
+        `enabled` TINYINT(1) NOT NULL DEFAULT 1,
+        PRIMARY KEY (`location_id`), KEY `idx_loc_parent` (`parent_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+    function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXremote_servers', 'location_id', 'INT(11) NULL'); },
+    function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXremote_servers', 'install_enabled', 'TINYINT(1) NOT NULL DEFAULT 1'); },
+    "CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXbilling_service_requirements` (
+        `home_cfg_id` INT(11) NOT NULL,
+        `min_cpu_cores` DECIMAL(6,2) NOT NULL DEFAULT 0,
+        `min_ram_mb` INT(11) NOT NULL DEFAULT 0,
+        `min_disk_gb` INT(11) NOT NULL DEFAULT 0,
+        PRIMARY KEY (`home_cfg_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+    function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_config', 'headroom_cpu_pct', 'TINYINT NOT NULL DEFAULT 70'); },
+    function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_config', 'headroom_ram_pct', 'TINYINT NOT NULL DEFAULT 70'); },
+    function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_config', 'headroom_disk_pct', 'TINYINT NOT NULL DEFAULT 85'); },
+    function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_config', 'paypal_mode', "ENUM('sandbox','live') NOT NULL DEFAULT 'sandbox'"); },
+    function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_config', 'paypal_client_id', 'VARCHAR(255) NULL'); },
+    function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_config', 'paypal_client_secret_enc', 'TEXT NULL'); },
+    function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_config', 'paypal_webhook_id', 'VARCHAR(255) NULL'); }
 );
 
 ?>

@@ -21,6 +21,7 @@ These pages are accessible within the panel for server provisioning and manageme
 		<menu>Manage All Orders</menu>
 	</page>
 	<page key="admin_cancellations" file="admin_cancellations.php" access="admin"><menu>Billing Cancellations</menu></page>
+	<page key="admin_locations" file="admin_locations.php" access="admin"><menu>Billing Locations</menu></page>
 	
 	<page key="test_integration" file="test_integration.php" access="admin,user">
 		<menu>Test Integration</menu>
