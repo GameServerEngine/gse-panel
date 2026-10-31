@@ -25,7 +25,7 @@
 // Module general information
 $module_title = "billing";
 $module_version = "3.6";
-$db_version = 10;
+$db_version = 11;
 $module_required = FALSE;
 // Module description
 $module_description = "Billing storefront / provisioning integration.";
@@ -509,6 +509,30 @@ $install_queries[10] = array(
     function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_config', 'paypal_client_id', 'VARCHAR(255) NULL'); },
     function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_config', 'paypal_client_secret_enc', 'TEXT NULL'); },
     function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_config', 'paypal_webhook_id', 'VARCHAR(255) NULL'); }
+);
+
+// db_version 11 - game catalog on billing_services: one row per game, pricing modes on the game,
+// agents allowed per game, and a location tree of any depth (billing_locations.kind is a free label).
+$install_queries[11] = array(
+    "ALTER TABLE `GSP_DB_PREFIXbilling_locations` MODIFY `kind` VARCHAR(32) NOT NULL DEFAULT 'region'",
+    "CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXbilling_service_agents` (
+        `service_id` INT(11) NOT NULL,
+        `remote_server_id` INT(11) NOT NULL,
+        PRIMARY KEY (`service_id`, `remote_server_id`),
+        KEY `idx_bsa_remote` (`remote_server_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+    function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_services', 'pricing_mode', "VARCHAR(16) NOT NULL DEFAULT 'per_slot'"); },
+    function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_services', 'base_slots', 'INT(11) NOT NULL DEFAULT 0'); },
+    function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_services', 'per_slot_price_monthly', 'FLOAT(15,4) NOT NULL DEFAULT 0'); },
+    function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_services', 'base_price_monthly', 'FLOAT(15,4) NOT NULL DEFAULT 0'); },
+    function($db) { return gsp_billing_add_column_if_missing($db, 'GSP_DB_PREFIXbilling_services', 'extra_price_per_slot_monthly', 'FLOAT(15,4) NOT NULL DEFAULT 0'); },
+    "CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXbilling_service_tiers` (
+        `service_id` INT(11) NOT NULL,
+        `tier_key` VARCHAR(16) NOT NULL,
+        `slot_count` INT(11) NOT NULL DEFAULT 0,
+        `price_monthly` FLOAT(15,4) NOT NULL DEFAULT 0,
+        PRIMARY KEY (`service_id`, `tier_key`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
 );
 
 ?>
