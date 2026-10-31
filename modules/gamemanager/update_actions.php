@@ -146,7 +146,7 @@ if (!function_exists('gamemanager_trigger_update_install')) {
 			$lockFiles = (isset($server_xml->lock_files) && !empty($server_xml->lock_files)) ? trim((string)$server_xml->lock_files) : "";
 			$steam_out = $remote->steam_cmd($home_id, $home_info['game_root'], $installer_name, $modname,
 											 $betaname, $betapwd, $login, $pass, $settings['steam_guard'] ?? '',
-											 $exec_folder_path, $exec_path, $precmd, $postcmd, $cfg_os, $lockFiles, $arch);
+											 $exec_folder_path, $exec_path, $precmd, $postcmd, $cfg_os, $lockFiles, $arch, "", (string)($options['steam_mode'] ?? ''));
 			if ($steam_out === 0) {
 				return $resultBase + array('ok' => false, 'pending' => true, 'message' => 'Failed to start SteamCMD update.', 'output' => $steam_out);
 			}

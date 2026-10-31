@@ -431,9 +431,9 @@ class GSPRemoteLibrary
 	/// \return 1 If update started successfully
 	/// \return 0 If error
 	/// \return -1 In case of connection error.
-	public function steam_cmd($home_id,$game_home,$mod,$modname,$betaname,$betapwd,$user,$pass,$guard,$exec_folder_path,$exec_path,$precmd,$postcmd,$cfg_os,$lockFiles,$archBits)
+	public function steam_cmd($home_id,$game_home,$mod,$modname,$betaname,$betapwd,$user,$pass,$guard,$exec_folder_path,$exec_path,$precmd,$postcmd,$cfg_os,$lockFiles,$archBits,$gameKey = "",$mode = "")
 	{
-		$params = $this->encrypt_params($home_id,$game_home,$mod,$modname,$betaname,$betapwd,$user,$pass,$guard,$exec_folder_path,$exec_path,$precmd,$postcmd,$cfg_os,$lockFiles,$archBits);
+		$params = $this->encrypt_params($home_id,$game_home,$mod,$modname,$betaname,$betapwd,$user,$pass,$guard,$exec_folder_path,$exec_path,$precmd,$postcmd,$cfg_os,$lockFiles,$archBits,$gameKey,$mode);
 		$this->add_enc_chk($params);
 		$request = xmlrpc_encode_request("steam_cmd", $params);
 		$response = $this->sendRequest($request);
