@@ -186,7 +186,7 @@ function gspHome()
 			require_once("modules/config_games/server_config_parser.php");
 			foreach ((array)$servers_by_game_name as $game_name => $server_homes )
 			{
-				$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_homes[0]['home_cfg_file']);
+				$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_homes[0]['home_cfg_file'], gsp_os_for_install_row($server_homes[0]));
 				if ($server_xml === FALSE)
 				{
 					// Bad XML – skip this game from the navigation list; error is

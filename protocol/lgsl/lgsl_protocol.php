@@ -4062,7 +4062,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		$port = $server['b']['c_port'];
 		$home_info = $server_home = $db->getGameHomeByIP($ip, $port);
 		$remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file']);
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
 		$data = "";
 		$home_id = sprintf('%09d', $home_info['home_id']);
 		$screenlog = "screenlog.GSP_HOME_".$home_id;

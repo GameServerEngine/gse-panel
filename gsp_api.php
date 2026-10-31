@@ -956,7 +956,7 @@ function api_gamemanager()
 		$access_rights = $game_home['access_rights'];
 	}
 
-	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file']);
+	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
 
 	if($server_xml === FALSE)
 		return array("status" => '305', "message" => "No game configuration found for this server.");
@@ -1344,7 +1344,7 @@ function api_litefm()
 	if(!strstr($access_rights,'f'))
 		return array("status" => '351', "message" => "You don't have access right for file management in server at $ip:$port.");
 
-    $server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file']);
+    $server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
 
     if($server_xml === FALSE)
 		return array("status" => '305', "message" => "No game configuration found for home_cfg_id #" . $home_cfg_id . ".");
@@ -1451,7 +1451,7 @@ function api_addonsmanager()
 		if(!$isAdmin and $db->getUserGameHome($user_info['user_id'], $home_info['home_id']) === FALSE)
 			return array("status" => '329', "message" => "The given address ($ip:$port) does not belong to your account.");
 
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file']);
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
 
 		if($server_xml === FALSE)
 			return array("status" => '305', "message" => "No game configuration found for home_cfg_id #" . $home_cfg_id . ".");
@@ -1674,7 +1674,7 @@ function api_steam_workshop()
 		if(!$isAdmin and $db->getUserGameHome($user_info['user_id'], $home_info['home_id']) === FALSE)
 			return array("status" => '329', "message" => "The given address ($ip:$port) does not belong to your account.");
 
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file']);
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
 
 		if($server_xml === FALSE)
 			return array("status" => '305', "message" => "No game configuration found for home_cfg_id #" . $home_cfg_id . ".");
