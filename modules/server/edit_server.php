@@ -124,6 +124,7 @@ function exec_gsp_module() {
         print_success(get_lang_f('remote_server_settings_changed',$remote_server['remote_server_name']));
         $view->refresh("?m=server&amp;p=edit&amp;rhost_id=".$rhost_id."&amp;edit");
     }
+    require_once(__DIR__ . '/location_path.php');
     if ( isset($_POST['save_placement']) )
     {
         global $table_prefix;
@@ -135,7 +136,7 @@ function exec_gsp_module() {
         }
         else
         {
-            $locationId = (int)($_POST['location_id'] ?? 0);
+            $locationId = gsp_resolve_location_path($db, $table_prefix, (string)($_POST['location_path'] ?? ''));
             $osIn = (string)($_POST['server_os'] ?? 'linux');
             $os = in_array($osIn, array('linux', 'windows', 'any'), true) ? $osIn : 'linux';
             $install = isset($_POST['install_enabled']) ? 1 : 0;
@@ -169,7 +170,8 @@ function exec_gsp_module() {
         $ft->end_form();
         echo create_back_button('server');
         if ( empty($_SESSION['placement_csrf']) ) { $_SESSION['placement_csrf'] = bin2hex(random_bytes(16)); }
-        $cityRows = $db->resultQuery('SELECT location_id, name FROM ' . $table_prefix . 'billing_locations WHERE kind = ' . chr(39) . 'city' . chr(39) . ' AND enabled = 1 ORDER BY name');
+        $pathRows = gsp_location_tree_rows($db, $table_prefix);
+        $pathMap = gsp_location_paths((array)$pathRows);
         $curLoc = (int)($remote_server['location_id'] ?? 0);
         $curOs = (string)($remote_server['server_os'] ?? 'linux');
         $curInstall = (int)($remote_server['install_enabled'] ?? 1);
@@ -177,9 +179,11 @@ function exec_gsp_module() {
         echo '<form method="post" action="?m=server&amp;p=edit&amp;rhost_id=' . $rhost_id . '&amp;edit">';
         echo '<input type="hidden" name="save_placement" value="1">';
         echo '<input type="hidden" name="placement_csrf" value="' . htmlspecialchars((string)$_SESSION['placement_csrf']) . '">';
-        echo 'City: <select name="location_id"><option value="0">(not assigned)</option>';
-        foreach ((array)$cityRows as $c) { echo '<option value="' . (int)$c['location_id'] . '"' . ((int)$c['location_id'] === $curLoc ? ' selected' : '') . '>' . htmlspecialchars((string)$c['name']) . '</option>'; }
-        echo '</select> OS: <select name="server_os">';
+        $curPath = isset($pathMap[$curLoc]) ? $pathMap[$curLoc] : '';
+        echo 'Location: <input type="text" name="location_path" list="loc-paths" size="40" value="' . htmlspecialchars($curPath) . '" placeholder="USA / Central / Kansas City"> <datalist id="loc-paths">';
+        foreach ($pathMap as $pid => $pp) { echo '<option value="' . htmlspecialchars($pp) . '">'; }
+        echo '</datalist>';
+        echo ' OS: <select name="server_os">';
         foreach (array('linux', 'windows', 'any') as $o) { echo '<option value="' . $o . '"' . ($o === $curOs ? ' selected' : '') . '>' . $o . '</option>'; }
         echo '</select> <label><input type="checkbox" name="install_enabled" value="1"' . ($curInstall === 1 ? ' checked' : '') . '> Accept new installs</label> ';
         echo '<input type="submit" value="Save placement"></form>';

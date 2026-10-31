@@ -88,6 +88,9 @@ function exec_gsp_module() {
 		$snapshot = gsp_agent_get_snapshot($db, $server_row['remote_server_id']);
 		$home_count = gsp_agent_count_homes($db, $server_row['remote_server_id']);
 		$os = gsp_agent_snapshot_field($snapshot, 'os', '');
+		if ($os === '' || strtolower((string)$os) === 'unknown') {
+			$os = (string)($server_row['server_os'] ?? '');
+		}
 		$version = gsp_agent_snapshot_field($snapshot, 'agent_version', '');
 		$cpu_percent = gsp_agent_snapshot_field($snapshot, 'cpu_percent', '');
 		$ram_percent = gsp_agent_snapshot_field($snapshot, 'ram_percent', '');
