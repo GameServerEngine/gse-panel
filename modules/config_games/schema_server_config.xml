@@ -349,7 +349,7 @@
       <xs:element name="installer" type="nonEmptyString" minOccurs="0" />
       <xs:element name="game_name" type="nonEmptyString" />
       <xs:element name="workshop_support" type="workshop_support_type" minOccurs="0" />
-      <xs:element name="server_exec_name" type="nonEmptyString" />
+      <xs:element name="server_exec_name" type="nonEmptyString" minOccurs="0" />
       <xs:element name="os" type="os_type" minOccurs="0" />
       <xs:element name="query_port" type="query_port_type" minOccurs="0" />
       <xs:element name="cli_template" type="nonEmptyString" minOccurs="0" />
@@ -363,7 +363,7 @@
       <xs:element name="max_user_amount" type="xs:positiveInteger" minOccurs="0" />
       <xs:element name="control_protocol" type="control_protocol_type" minOccurs="0" />
       <xs:element name="control_protocol_type" type="control_protocol_type_type" minOccurs="0" />
-      <xs:element name="mods" type="mods_type" />
+      <xs:element name="mods" type="mods_type" minOccurs="0" />
       <xs:element name="replace_texts" type="replace_texts_type" minOccurs="0" />
       <xs:element name="server_params" type="server_params_type" minOccurs="0" />
       <xs:element name="custom_fields" type="custom_fields_type" minOccurs="0" />
@@ -389,15 +389,41 @@
   <!-- One block per operating system the game can run on. A child is present only when the game
   supports that OS. exe is required; the other children are optional and add more options as needed. -->
   <xs:complexType name="os_platform_type">
-    <xs:sequence>
+    <xs:all>
       <xs:element name="exe" type="nonEmptyString" />
-      <xs:element name="exe_location" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="protocol" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="lgsl_query_name" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="gameq_query_name" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="installer" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="workshop_support" type="workshop_support_type" minOccurs="0" />
+      <xs:element name="query_port" type="query_port_type" minOccurs="0" />
       <xs:element name="cli_template" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="cli_params" type="cli_params_type" minOccurs="0" />
+      <xs:element name="reserve_ports" type="reserve_ports_type" minOccurs="0" />
+      <xs:element name="cli_allow_chars" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="maps_location" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="map_list" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="console_log" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="exe_location" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="max_user_amount" type="xs:positiveInteger" minOccurs="0" />
+      <xs:element name="control_protocol" type="control_protocol_type" minOccurs="0" />
+      <xs:element name="control_protocol_type" type="control_protocol_type_type" minOccurs="0" />
+      <xs:element name="mods" type="mods_type" minOccurs="0" />
+      <xs:element name="replace_texts" type="replace_texts_type" minOccurs="0" />
+      <xs:element name="server_params" type="server_params_type" minOccurs="0" />
+      <xs:element name="custom_fields" type="custom_fields_type" minOccurs="0" />
+      <xs:element name="list_players_command" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="player_info_regex" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="player_info" type="player_info_type" minOccurs="0" />
+      <xs:element name="player_commands" type="player_commands_type" minOccurs="0" />
       <xs:element name="pre_install" type="nonEmptyString" minOccurs="0" />
       <xs:element name="post_install" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="pre_start" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="post_start" type="nonEmptyString" minOccurs="0" />
       <xs:element name="environment_variables" type="nonEmptyString" minOccurs="0" />
       <xs:element name="lock_files" type="nonEmptyString" minOccurs="0" />
-    </xs:sequence>
+      <xs:element name="configuration_files" type="configuration_files_type" minOccurs="0" />
+    </xs:all>
     <xs:attribute name="arch" type="os_arch_type" use="optional" default="x64" />
   </xs:complexType>
   <xs:complexType name="os_type">

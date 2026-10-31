@@ -137,7 +137,79 @@ if (!function_exists('gsp_ensure_xml_support')) {
 
 /// \return FALSE in case of failure in parsing.
 /// \return array containing the elements on success.
-function read_server_config( $filename )
+/* OS blocks: a game file may hold <os><windows> and/or <os><linux> blocks. The chosen OS's
+ * values are copied to the top level so callers that read top-level tags keep working. */
+function gsp_config_os_names(DOMDocument $dom)
+{
+	$names = array();
+	foreach ($dom->documentElement->childNodes as $c) {
+		if ($c->nodeType === XML_ELEMENT_NODE && $c->nodeName === 'os') {
+			foreach ($c->childNodes as $p) {
+				if ($p->nodeType === XML_ELEMENT_NODE) {
+					$names[] = $p->nodeName;
+				}
+			}
+		}
+	}
+	return $names;
+}
+
+function gsp_resolve_config_os(DOMDocument $dom, $os)
+{
+	$names = gsp_config_os_names($dom);
+	if ($os !== null) {
+		return in_array($os, $names, true) ? $os : null;
+	}
+	if (count($names) === 1) {
+		return $names[0];
+	}
+	return in_array('linux', $names, true) ? 'linux' : null;
+}
+
+function gsp_apply_os_block(DOMDocument $dom, $os)
+{
+	if ($os === null) {
+		return;
+	}
+	$root = $dom->documentElement;
+	$osEl = null;
+	foreach ($root->childNodes as $c) {
+		if ($c->nodeType === XML_ELEMENT_NODE && $c->nodeName === 'os') {
+			$osEl = $c;
+		}
+	}
+	if ($osEl === null) {
+		return;
+	}
+	$plat = null;
+	foreach ($osEl->childNodes as $p) {
+		if ($p->nodeType === XML_ELEMENT_NODE && $p->nodeName === $os) {
+			$plat = $p;
+		}
+	}
+	if ($plat === null) {
+		return;
+	}
+	foreach (iterator_to_array($plat->childNodes) as $child) {
+		if ($child->nodeType !== XML_ELEMENT_NODE) {
+			continue;
+		}
+		$target = ($child->nodeName === 'exe') ? 'server_exec_name' : $child->nodeName;
+		foreach (iterator_to_array($root->childNodes) as $existing) {
+			if ($existing->nodeType === XML_ELEMENT_NODE && $existing->nodeName === $target) {
+				$root->removeChild($existing);
+			}
+		}
+		if ($child->nodeName === 'exe') {
+			$el = $dom->createElement('server_exec_name');
+			$el->appendChild($dom->createTextNode(trim($child->textContent)));
+			$root->appendChild($el);
+		} else {
+			$root->appendChild($dom->importNode($child, true));
+		}
+	}
+}
+function read_server_config( $filename, $os = null )
 {
 	gsp_ensure_xml_support();
 
@@ -174,6 +246,8 @@ function read_server_config( $filename )
 		return FALSE;
 	}
 
+	$resolvedOs = gsp_resolve_config_os($dom, $os);
+	gsp_apply_os_block($dom, $resolvedOs);
 	$xml = simplexml_import_dom($dom);
 	if($xml === false){
 		gsp_collect_xml_error(
