@@ -124,6 +124,27 @@ function exec_gsp_module() {
         print_success(get_lang_f('remote_server_settings_changed',$remote_server['remote_server_name']));
         $view->refresh("?m=server&amp;p=edit&amp;rhost_id=".$rhost_id."&amp;edit");
     }
+    if ( isset($_POST['save_placement']) )
+    {
+        global $table_prefix;
+        $token = isset($_SESSION['placement_csrf']) ? (string)$_SESSION['placement_csrf'] : '';
+        $given = isset($_POST['placement_csrf']) ? (string)$_POST['placement_csrf'] : '';
+        if ( $token === '' || !hash_equals($token, $given) )
+        {
+            print_failure('Invalid security token. Reload the page and try again.');
+        }
+        else
+        {
+            $locationId = (int)($_POST['location_id'] ?? 0);
+            $osIn = (string)($_POST['server_os'] ?? 'linux');
+            $os = in_array($osIn, array('linux', 'windows', 'any'), true) ? $osIn : 'linux';
+            $install = isset($_POST['install_enabled']) ? 1 : 0;
+            $locSql = $locationId > 0 ? (string)$locationId : 'NULL';
+            $db->query('UPDATE ' . $table_prefix . 'remote_servers SET location_id = ' . $locSql . ', server_os = ' . chr(39) . $os . chr(39) . ', install_enabled = ' . $install . ' WHERE remote_server_id = ' . (int)$rhost_id);
+            print_success('Placement settings saved.');
+        }
+        $view->refresh('?m=server&amp;p=edit&amp;rhost_id=' . $rhost_id . '&amp;edit');
+    }
     if ( isset($_REQUEST['edit']) )
     {
 		$remote_server = $db->getRemoteServer($rhost_id);
@@ -147,6 +168,21 @@ function exec_gsp_module() {
         $ft->add_button('submit','save_settings', get_lang("save_settings") );
         $ft->end_form();
         echo create_back_button('server');
+        if ( empty($_SESSION['placement_csrf']) ) { $_SESSION['placement_csrf'] = bin2hex(random_bytes(16)); }
+        $cityRows = $db->resultQuery('SELECT location_id, name FROM ' . $table_prefix . 'billing_locations WHERE kind = ' . chr(39) . 'city' . chr(39) . ' AND enabled = 1 ORDER BY name');
+        $curLoc = (int)($remote_server['location_id'] ?? 0);
+        $curOs = (string)($remote_server['server_os'] ?? 'linux');
+        $curInstall = (int)($remote_server['install_enabled'] ?? 1);
+        echo '<h2>Placement</h2>';
+        echo '<form method="post" action="?m=server&amp;p=edit&amp;rhost_id=' . $rhost_id . '&amp;edit">';
+        echo '<input type="hidden" name="save_placement" value="1">';
+        echo '<input type="hidden" name="placement_csrf" value="' . htmlspecialchars((string)$_SESSION['placement_csrf']) . '">';
+        echo 'City: <select name="location_id"><option value="0">(not assigned)</option>';
+        foreach ((array)$cityRows as $c) { echo '<option value="' . (int)$c['location_id'] . '"' . ((int)$c['location_id'] === $curLoc ? ' selected' : '') . '>' . htmlspecialchars((string)$c['name']) . '</option>'; }
+        echo '</select> OS: <select name="server_os">';
+        foreach (array('linux', 'windows', 'any') as $o) { echo '<option value="' . $o . '"' . ($o === $curOs ? ' selected' : '') . '>' . $o . '</option>'; }
+        echo '</select> <label><input type="checkbox" name="install_enabled" value="1"' . ($curInstall === 1 ? ' checked' : '') . '> Accept new installs</label> ';
+        echo '<input type="submit" value="Save placement"></form>';
 
         echo "<h2>".get_lang_f('remote_ips_for',$remote_server['remote_server_name'])."</h2>";
         echo "<p class='info'>". get_lang("hint") .": ". get_lang("add_more_ips") ."</p>";
