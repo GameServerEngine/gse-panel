@@ -4,9 +4,9 @@
   <installer>steamcmd</installer>
   <game_name>Outlaws of the Old West</game_name>
   <os>
-    <linux>
+    <windows arch="x64">
       <exe>OutlawsServer.exe</exe>
-    </linux>
+    </windows>
   </os>
   <cli_template>/Game/Maps/MainMap/MainMap -log %IP% %PORT% %QUERY_PORT% %HOSTNAME% %PLAYERS% %CONTROL_PASSWORD% %TYPE%</cli_template>
   <cli_params>

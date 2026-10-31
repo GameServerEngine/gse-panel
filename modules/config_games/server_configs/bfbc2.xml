@@ -4,9 +4,9 @@
   <gameq_query_name>bfbc2</gameq_query_name>
   <game_name>Battlefield Bad Company 2</game_name>
   <os>
-    <linux>
+    <windows arch="x86">
       <exe>Frost.Game.Main_Win32_Final.exe</exe>
-    </linux>
+    </windows>
   </os>
   <query_port type="add">29321</query_port>
   <cli_template>-serverInstancePath "Instance/" -mapPack2Enabled 1 %PORT% %QUERY_PORT% %PLAYERS% -region EU -runtimeLog 0 -displayErrors 0 -displayAsserts 0 -crashDumpAsserts 0 -serverAdminLogs 1 -plasmaServerLog 1 -revisionLevel 8 -revisionKey 7C0A303E-F4D2-985E-763D-E7C41B1E06A3 %GAMEMODEID%</cli_template>
