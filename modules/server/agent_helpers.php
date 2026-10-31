@@ -268,6 +268,23 @@ function gsp_agent_payload_line($key, $value)
 
 function gsp_agent_update_payload($db, $component, $os)
 {
+	// Windows agents accept only a release patch (patch_url + patch_sha256);
+	// the git-style fields below are ignored by them. When a patch URL is
+	// configured, send the patch payload for the Windows agent.
+	if ($component === 'windows_agent') {
+		$patch_url = trim((string)$db->getSetting('agent_update_windows_patch_url'));
+		if ($patch_url !== '') {
+			return implode("\n", array(
+				gsp_agent_payload_line('component', $component),
+				gsp_agent_payload_line('patch_url', $patch_url),
+				gsp_agent_payload_line('patch_sha256', strtolower(trim((string)$db->getSetting('agent_update_windows_patch_sha256')))),
+				gsp_agent_payload_line('target_version', trim((string)$db->getSetting('agent_update_windows_target_version'))),
+				gsp_agent_payload_line('timeout', 60),
+				gsp_agent_payload_line('requested_os', $os)
+			));
+		}
+	}
+
 	$repo = $db->getSetting('agent_update_repo_url');
 	$branch = $db->getSetting('agent_update_branch');
 	$linux_source = $db->getSetting('agent_update_linux_source_path');
