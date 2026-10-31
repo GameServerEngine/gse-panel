@@ -180,18 +180,30 @@ foreach ($offers as $offer) {
   <td align="right"><b>Location</b></td>
   <td align="left">
 <?php
+$locationGroups = storefront_build_location_groups($offers, storefront_load_enabled_cities($db, $table_prefix));
 $firstOffer = true;
-foreach ($offers as $offer):
-    $offerId = (int)$offer['offer_id'];
-    $mode = (string)$offer['pricing_mode'];
+foreach ($locationGroups as $group):
+?>
+  <div class="location-region"><b><?php echo order_e($group['region']); ?></b></div>
+<?php foreach ($group['cities'] as $cityEntry):
+    $cityOffer = $cityEntry['offer'];
+    if ($cityOffer === null):
+?>
+  <div class="location-option"><span class="muted"><?php echo order_e($cityEntry['name']); ?> &mdash; Unavailable</span></div>
+<?php
+        continue;
+    endif;
+    $offerId = (int)$cityOffer['offer_id'];
+    $mode = (string)$cityOffer['pricing_mode'];
     $checked = $firstOffer ? ' checked' : '';
     $firstOffer = false;
 ?>
   <div class="location-option">
     <input type="radio" name="offer_id" id="offer_<?php echo $offerId; ?>" value="<?php echo $offerId; ?>"
            data-mode="<?php echo order_e($mode); ?>" required<?php echo $checked; ?>>
-    <label for="offer_<?php echo $offerId; ?>"><?php echo order_e($offer['remote_server_name']); ?></label>
+    <label for="offer_<?php echo $offerId; ?>"><?php echo order_e($cityEntry['name']); ?></label>
   </div>
+<?php endforeach; ?>
 <?php endforeach; ?>
   </td>
 </tr>

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/storefront_locations.php';
 /**
  * Database-facing helpers for the panel-owned game catalog
  * (GSP_DB_PREFIXcatalog_offer / GSP_DB_PREFIXcatalog_tier). Pure pricing math
@@ -45,7 +46,7 @@ if (!function_exists('catalog_load_offers_for_game')) {
     function catalog_load_offers_for_game(mysqli $db, string $prefix, int $homeCfgId): array
     {
         $homeCfgId = (int)$homeCfgId;
-        $sql = "SELECT co.*, rs.remote_server_name
+        $sql = "SELECT co.*, rs.remote_server_name, rs.location_id AS city_location_id
                 FROM `{$prefix}catalog_offer` co
                 INNER JOIN `{$prefix}remote_servers` rs ON rs.remote_server_id = co.remote_server_id
                 WHERE co.enabled = 1 AND co.home_cfg_id = {$homeCfgId}

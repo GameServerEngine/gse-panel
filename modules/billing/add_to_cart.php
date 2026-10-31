@@ -154,6 +154,10 @@ if (!$offer || (int)$offer['home_cfg_id'] !== $home_cfg_id) {
     billing_fail_add_to_cart('Selected offer is not available', ['offer_id' => $offer_id, 'home_cfg_id' => $home_cfg_id], '/serverlist.php');
 }
 
+if (!storefront_offer_is_orderable($db, $table_prefix, $offer_id)) {
+    billing_fail_add_to_cart('That location is no longer available. Please choose another.', ['offer_id' => $offer_id], '/order.php?home_cfg_id=' . intval($home_cfg_id));
+}
+
 $tiers = ((string)$offer['pricing_mode'] === 'tiers') ? catalog_load_tiers_for_offer($db, $table_prefix, $offer_id) : [];
 
 $priceResult = catalog_calculate_price($offer, $period, $qty, [
