@@ -6,6 +6,29 @@ require_once __DIR__ . '/includes/action_security.php';
 
 function loc_h($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 
+/* Renders the location tree: each node is one row, indented by depth. */
+function loc_render_tree(array $children, int $parentId, int $depth, string $csrf)
+{
+    foreach (($children[$parentId] ?? array()) as $r) {
+        echo '<tr><td style="padding-left:' . (12 + 22 * $depth) . 'px">' . loc_h($r['name']) . '</td>';
+        echo '<td>' . loc_h($r['kind']) . '</td>';
+        echo '<td>' . ($r['enabled'] ? 'yes' : 'no') . '</td><td>';
+        $row = $r;
+        include __DIR__ . '/includes/location_row_actions.php';
+        echo '</td></tr>';
+        loc_render_tree($children, (int)$r['location_id'], $depth + 1, $csrf);
+    }
+}
+
+/* Parent picker: every node, indented to show where it sits. */
+function loc_parent_options(array $children, int $parentId, int $depth)
+{
+    foreach (($children[$parentId] ?? array()) as $r) {
+        echo '<option value="' . (int)$r['location_id'] . '">' . str_repeat('&nbsp;&nbsp;', $depth) . loc_h($r['name']) . ' (' . loc_h($r['kind']) . ')</option>';
+        loc_parent_options($children, (int)$r['location_id'], $depth + 1);
+    }
+}
+
 $db = mysqli_connect($db_host, $db_user, $db_pass, $db_name, isset($db_port) ? (int)$db_port : null);
 mysqli_set_charset($db, 'utf8mb4');
 $p = isset($table_prefix) ? $table_prefix : '';
@@ -20,17 +43,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $act = (string)($_POST['action'] ?? '');
         $id = (int)($_POST['location_id'] ?? 0);
         if ($act === 'add') {
-            $kind = (($_POST['kind'] ?? '') === 'city') ? 'city' : 'region';
             $name = trim((string)($_POST['name'] ?? ''));
+            $level = trim((string)($_POST['level'] ?? ''));
             $parent = (int)($_POST['parent_id'] ?? 0);
             if ($name === '') {
                 $msg = 'Name is required.';
-            } elseif ($kind === 'city' && $parent <= 0) {
-                $msg = 'A city must belong to a region.';
             } else {
+                $level = $level === '' ? 'area' : substr($level, 0, 32);
                 $pv = $parent > 0 ? $parent : null;
                 $s = $db->prepare('INSERT INTO ' . $p . 'billing_locations (parent_id, kind, name, enabled) VALUES (?, ?, ?, 1)');
-                $s->bind_param('iss', $pv, $kind, $name);
+                $s->bind_param('iss', $pv, $level, $name);
                 $s->execute();
                 $s->close();
                 $msg = 'Location added.';
@@ -61,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($children > 0) {
                 $msg = 'Delete refused: this location still has sub-locations.';
             } elseif ($agents > 0) {
-                $msg = 'Delete refused: a machine is still assigned to this city.';
+                $msg = 'Delete refused: an agent is still assigned to this location.';
             } else {
                 $s = $db->prepare('DELETE FROM ' . $p . 'billing_locations WHERE location_id = ?');
                 $s->bind_param('i', $id);
@@ -74,35 +96,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = billing_action_csrf_token($csrfKey);
 }
 
-$rows = [];
-$res = $db->query('SELECT location_id, parent_id, kind, name, enabled FROM ' . $p . 'billing_locations ORDER BY kind, name');
+$rows = array();
+$res = $db->query('SELECT location_id, parent_id, kind, name, enabled FROM ' . $p . 'billing_locations ORDER BY name');
 while ($res && ($r = $res->fetch_assoc())) { $rows[] = $r; }
-$regions = array_values(array_filter($rows, function ($r) { return $r['kind'] === 'region'; }));
-$children = [];
-foreach ($rows as $r) { if ($r['parent_id'] !== null) { $children[(int)$r['parent_id']][] = $r; } }
+$children = array();
+foreach ($rows as $r) {
+    $key = $r['parent_id'] === null ? 0 : (int)$r['parent_id'];
+    $children[$key][] = $r;
+}
 mysqli_close($db);
 ?>
 <h2>Locations</h2>
+<p class="muted">Build the location tree from any level: for example Continent, Country, State, then City. Each agent is assigned to one node, and the storefront shows every level above it.</p>
 <?php if ($msg !== '') { echo '<p><b>' . loc_h($msg) . '</b></p>'; } ?>
 <table>
-<tr><th>Location</th><th>Kind</th><th>Enabled</th><th>Actions</th></tr>
-<?php foreach ($regions as $reg): ?>
-<tr><td><b><?php echo loc_h($reg['name']); ?></b></td><td>region</td><td><?php echo $reg['enabled'] ? 'yes' : 'no'; ?></td>
-<td><?php $row = $reg; include __DIR__ . '/includes/location_row_actions.php'; ?></td></tr>
-<?php foreach (($children[(int)$reg['location_id']] ?? []) as $city): ?>
-<tr><td>&nbsp;&nbsp;&nbsp;<?php echo loc_h($city['name']); ?></td><td>city</td><td><?php echo $city['enabled'] ? 'yes' : 'no'; ?></td>
-<td><?php $row = $city; include __DIR__ . '/includes/location_row_actions.php'; ?></td></tr>
-<?php endforeach; ?>
-<?php endforeach; ?>
+<tr><th>Location</th><th>Level</th><th>Enabled</th><th>Actions</th></tr>
+<?php loc_render_tree($children, 0, 0, $csrf); ?>
 </table>
 <h3>Add location</h3>
 <form method="post">
 <input type="hidden" name="csrf" value="<?php echo loc_h($csrf); ?>">
 <input type="hidden" name="action" value="add">
-<select name="kind"><option value="region">Region</option><option value="city">City</option></select>
 <input type="text" name="name" placeholder="Name" required>
-<select name="parent_id"><option value="0">(no parent)</option>
-<?php foreach ($regions as $reg): ?><option value="<?php echo (int)$reg['location_id']; ?>"><?php echo loc_h($reg['name']); ?></option><?php endforeach; ?>
+<input type="text" name="level" list="loc-levels" placeholder="Level (Country, State, City...)">
+<datalist id="loc-levels"><option value="Continent"><option value="Country"><option value="State"><option value="Region"><option value="City"></datalist>
+<select name="parent_id"><option value="0">(top level)</option>
+<?php loc_parent_options($children, 0, 0); ?>
 </select>
 <button type="submit">Add</button>
 </form>
