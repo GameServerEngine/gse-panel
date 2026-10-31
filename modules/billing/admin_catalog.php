@@ -189,7 +189,25 @@ require_once(__DIR__ . '/bootstrap.php');
                 }
             }
         }
-    
+
+        $minCpuCores = max(0.0, (float)($_POST['min_cpu_cores'] ?? 0));
+        $minRamMb    = max(0, (int)($_POST['min_ram_mb'] ?? 0));
+        $minDiskGb   = max(0, (int)($_POST['min_disk_gb'] ?? 0));
+        $reqStmt = $db->prepare(
+            "INSERT INTO `{$table_prefix}billing_service_requirements`
+                (home_cfg_id, min_cpu_cores, min_ram_mb, min_disk_gb)
+             VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+                min_cpu_cores = VALUES(min_cpu_cores),
+                min_ram_mb = VALUES(min_ram_mb),
+                min_disk_gb = VALUES(min_disk_gb)"
+        );
+        if ($reqStmt) {
+            $reqStmt->bind_param('idii', $homeCfgId, $minCpuCores, $minRamMb, $minDiskGb);
+            $reqStmt->execute();
+            $reqStmt->close();
+        }
+
         $flash[] = "{$savedCount} location row(s) saved for this game.";
         $_SESSION['admin_catalog_flash'] = ['type' => 'ok', 'messages' => $flash];
         echo "<script>location.href='home.php?m=billing&p=game_catalog&home_cfg_id=" . (int)$homeCfgId . "';</script>";
@@ -234,6 +252,22 @@ require_once(__DIR__ . '/bootstrap.php');
         }
     }
     
+    $requirements = ['min_cpu_cores' => 0, 'min_ram_mb' => 0, 'min_disk_gb' => 0];
+    if ($homeCfgId > 0) {
+        $reqRes = $db->query(
+            "SELECT min_cpu_cores, min_ram_mb, min_disk_gb
+             FROM `{$table_prefix}billing_service_requirements`
+             WHERE home_cfg_id = {$homeCfgId}"
+        );
+        if ($reqRes && ($reqRow = $reqRes->fetch_assoc())) {
+            $requirements = [
+                'min_cpu_cores' => (float)$reqRow['min_cpu_cores'],
+                'min_ram_mb'    => (int)$reqRow['min_ram_mb'],
+                'min_disk_gb'   => (int)$reqRow['min_disk_gb'],
+            ];
+        }
+    }
+
     $currentGameName = '';
     foreach ($games as $g) {
         if ((int)$g['home_cfg_id'] === $homeCfgId) {
@@ -375,6 +409,18 @@ require_once(__DIR__ . '/bootstrap.php');
               <?php endforeach; ?>
               </tbody>
             </table>
+            </div>
+            <div style="margin-top:14px;">
+              <h4>Minimum System Requirements</h4>
+              <label>Min CPU cores
+                <input type="number" step="0.1" min="0" class="cat-slot-input" name="min_cpu_cores" value="<?php echo cat_h($requirements['min_cpu_cores']); ?>">
+              </label>
+              <label>Min RAM (MB)
+                <input type="number" step="1" min="0" class="cat-slot-input" name="min_ram_mb" value="<?php echo (int)$requirements['min_ram_mb']; ?>">
+              </label>
+              <label>Min Disk (GB)
+                <input type="number" step="1" min="0" class="cat-slot-input" name="min_disk_gb" value="<?php echo (int)$requirements['min_disk_gb']; ?>">
+              </label>
             </div>
             <div style="margin-top:14px;">
               <button type="submit" class="btn-save-all">Save Catalog</button>
