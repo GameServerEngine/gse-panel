@@ -4,7 +4,7 @@ Workspace reference: [`../../AGENTS.md`](../../AGENTS.md)
 
 This repository is the GameServer Engine (GSE) management console and control-plane repository. It owns the Panel, shared documentation, admin tooling, and modules that decide what actions should be taken for each hosted server.
 
-The local workspace container is `/home/dev/Projects/GSP`, but that folder is not a Git repository. Git operations for this repository must run in `/home/dev/Projects/GSP/Panel`.
+The local workspace container is `/home/dev/Projects`, but that folder is not a Git repository. Git operations for this repository must run in `/home/dev/Projects/GSE-Panel`.
 
 Gameservers.World is the customer-facing hosting storefront at `modules/billing`. It is part of this repository, but it is not the whole Panel and it is not a separate top-level repository.
 

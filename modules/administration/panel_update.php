@@ -1363,16 +1363,16 @@ $path = trim((string)$path);
 $stale = [
 '/var/www/html/panel',
 '/var/www/html/Panel',
-'/var/www/html/GSP/Panel',
-'/var/www/html/GSP/Panel/GSP/Panel',
-'/var/www/html/GSP/Panel/modules/billing',
+'/var/www/html/GSE/Panel',
+'/var/www/html/GSE/Panel/GSP/Panel',
+'/var/www/html/GSE/Panel/modules/billing',
 ];
 if (in_array($path, $stale, true)) {
 return true;
 }
 return (strpos($path, '/var/www/html/panel/') === 0
 || strpos($path, '/var/www/html/Panel/') === 0
-|| strpos($path, '/var/www/html/GSP/Panel/') === 0);
+|| strpos($path, '/var/www/html/GSE/Panel/') === 0);
 }
 
 function gsp_parse_apache_cert_error_line($line)

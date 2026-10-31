@@ -13,7 +13,7 @@ Configuration for the main Gameserver Engine Panel dashboard.
 ### 2. website.conf
 Configuration for the GameServers.World storefront website.
 - **Domain**: gameservers.world
-- **Document Root**: /var/www/html/GSP/Panel/modules/billing
+- **Document Root**: /var/www/html/GSE/Panel/modules/billing
 - **Purpose**: Customer-facing storefront for ordering game servers
 - **Features**:
   - Separate session handling

@@ -8,11 +8,11 @@ This repository contains the GameServer Engine (GSE) Panel: the management conso
 
 The surrounding workspace is a multi-repository container, not a single Git repository:
 
-- Workspace root: `/home/dev/Projects/GSP`
-- Panel/control-plane repository: `/home/dev/Projects/GSP/Panel`
-- Gameservers.World storefront: `/home/dev/Projects/GSP/Panel/modules/billing`
-- Linux agent repository: `/home/dev/Projects/GSP/GSP-Agent-Linux`
-- Windows agent repository: `/home/dev/Projects/GSP/GSP-Agent-Windows`
+- Workspace root: `/home/dev/Projects`
+- Panel/control-plane repository: `/home/dev/Projects/GSE-Panel`
+- Gameservers.World storefront: `/home/dev/Projects/GSE-Panel/modules/billing`
+- Linux agent repository: `/home/dev/Projects/GSE-Agent-Linux`
+- Windows agent repository: `/home/dev/Projects/GSE-Agent-Windows`
 
 `GSP` remains in local paths and repository names as a compatibility identifier.
 

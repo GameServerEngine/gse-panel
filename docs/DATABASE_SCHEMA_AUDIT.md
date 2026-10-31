@@ -2,7 +2,7 @@
 
 Audit date: Jul 11, 2026.
 
-Scope: documentation-only verification gate before Phase 2. Work was limited to `Panel` documentation. The live schema source was `/home/dev/Projects/GSP/panel.sql`; `Panel/panel.sql` was inspected only as the repository baseline.
+Scope: documentation-only verification gate before Phase 2. Work was limited to `Panel` documentation. The live schema source was `/home/dev/Projects/panel.sql`; `Panel/panel.sql` was inspected only as the repository baseline.
 
 ## Verification Status
 
@@ -12,7 +12,7 @@ The uploaded live dump is current enough for this verification gate: its phpMyAd
 
 ## Sources Inspected
 
-- `/home/dev/Projects/GSP/AGENTS.md`
+- `/home/dev/Projects/GSE-Panel/AGENTS.md`
 - `README.md`
 - `docs/ARCHITECTURE.md`
 - `docs/PANEL_ARCHITECTURE.md`
@@ -22,7 +22,7 @@ The uploaded live dump is current enough for this verification gate: its phpMyAd
 - `docs/UPDATE_POLICY.md`
 - `docs/modules/billing.md`
 - `docs/deployment/billing-cron.md`
-- `/home/dev/Projects/GSP/panel.sql`
+- `/home/dev/Projects/panel.sql`
 - `panel.sql`
 - `modules/billing/PHASE1_COMPLETE_SUMMARY.md`
 - `modules/billing/module.php`
@@ -203,12 +203,12 @@ These recommendations are based only on the verified live schema and PHP usage.
 
 ## Validation Performed
 
-- Parsed every `CREATE TABLE` and column from `/home/dev/Projects/GSP/panel.sql`.
+- Parsed every `CREATE TABLE` and column from `/home/dev/Projects/panel.sql`.
 - Compared live table list against `Panel/panel.sql`.
 - Inspected module install/update SQL definitions and one-off SQL repair scripts under `modules/`.
 - Inspected PHP references in billing, user_games, gamemanager, cron, includes, and entry-point files.
 - Confirmed referenced PHP paths in this document exist.
-- Confirmed referenced live table/column names in the schema reference exist in `/home/dev/Projects/GSP/panel.sql`.
+- Confirmed referenced live table/column names in the schema reference exist in `/home/dev/Projects/panel.sql`.
 - Reviewed `git status`, `git diff`, and recent commits.
 
 ## Machine-Readable Mapping

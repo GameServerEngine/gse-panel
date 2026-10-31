@@ -2,12 +2,12 @@
 
 Workspace reference: [`../../../AGENTS.md`](../../../AGENTS.md)
 
-This legacy-named document describes the current GameServer Engine (GSE) component boundary. The local workspace root is `/home/dev/Projects/GSP`, but that folder is a multi-repository container, not a Git repository.
+This legacy-named document describes the current GameServer Engine (GSE) component boundary. The local workspace root is `/home/dev/Projects`, but that folder is a multi-repository container, not a Git repository.
 
-- `/home/dev/Projects/GSP/Panel` - GameServer Engine Panel management console and control plane.
-- `/home/dev/Projects/GSP/Panel/modules/billing` - canonical Gameservers.World customer storefront.
-- `/home/dev/Projects/GSP/GSP-Agent-Linux` - Linux game server execution engine.
-- `/home/dev/Projects/GSP/GSP-Agent-Windows` - Windows/Cygwin game server execution engine.
+- `/home/dev/Projects/GSE-Panel` - GameServer Engine Panel management console and control plane.
+- `/home/dev/Projects/GSE-Panel/modules/billing` - canonical Gameservers.World customer storefront.
+- `/home/dev/Projects/GSE-Agent-Linux` - Linux game server execution engine.
+- `/home/dev/Projects/GSE-Agent-Windows` - Windows/Cygwin game server execution engine.
 
 `GSP` remains in some filenames, paths, service names, and protocol identifiers for compatibility. Do not rename those identifiers without a coordinated migration.
 

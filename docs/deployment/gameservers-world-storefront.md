@@ -37,7 +37,7 @@ Copied production assets:
 Apache should serve the storefront as its own virtual host with this document root:
 
 ```text
-/var/www/html/GSP/Panel/modules/billing
+/var/www/html/GSE/Panel/modules/billing
 ```
 
 Use `examples/apache/gameservers.world-billing-vhost.conf` as the vhost template.
@@ -67,7 +67,7 @@ Do not expose hostnames, IP addresses, node IDs, or other infrastructure interna
 From the live checkout root:
 
 ```bash
-cd /var/www/html/GSP
+cd /var/www/html/GSE
 git pull origin unstable
 ```
 
@@ -79,7 +79,7 @@ Do not use `sudo git pull` unless the checkout is intentionally owned by root. T
 Older deployments may still have an untracked sibling folder:
 
 ```bash
-rm -rf /var/www/html/GSP/Website
+rm -rf /var/www/html/GSE/Website
 ```
 
 The repository now keeps only `modules/billing` for the public storefront.

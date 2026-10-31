@@ -16,7 +16,7 @@
 # Configure settings via environment variables or by editing the defaults below.
 #
 # ENVIRONMENT VARIABLES:
-# - PANEL_DIR: Path to your GSP panel installation (default: /var/www/html/GSP)
+# - PANEL_DIR: Path to your GSP panel installation (default: /var/www/html/GSE)
 # - TOKEN_FILE: File containing GitHub Personal Access Token (default: ~/.github-token)
 # - GITHUB_TOKEN: GitHub token directly (used if TOKEN_FILE doesn't exist)
 # - UPSTREAM_REPO: Target GitHub mirror in "owner/repo" format (default: GSE/Panel)
@@ -49,7 +49,7 @@ set -Eeuo pipefail
 umask 022
 
 # ---------- CONFIGURABLE SETTINGS ----------
-PANEL_DIR="${PANEL_DIR:-/var/www/html/GSP}"
+PANEL_DIR="${PANEL_DIR:-/var/www/html/GSE}"
 TOKEN_FILE="${TOKEN_FILE:-$HOME/.github-token}"
 
 UPSTREAM_REPO="${UPSTREAM_REPO:-GSE/Panel}"              # owner/repo
