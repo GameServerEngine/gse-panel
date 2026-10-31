@@ -179,7 +179,7 @@ function exec_gsp_module() {
 			}
 
 			$control_type = isset($server_xml->control_protocol_type) ? $server_xml->control_protocol_type : "";
-			$run_dir = clean_path($home_info['game_key'] . "/" . (isset($server_xml->exe_location) ? (string)$server_xml->exe_location : ""));
+			$run_dir = clean_path(isset($server_xml->exe_location) ? (string)$server_xml->exe_location : "");
 
 			$start_cmd = get_start_cmd($remote, $server_xml, $home_info, $mod_id, $ip, $port, $db);
 			if ($start_cmd === false) {

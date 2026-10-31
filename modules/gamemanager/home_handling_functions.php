@@ -438,7 +438,7 @@ function exec_operation( $action, $home_id, $mod_id, $ip, $port, $override = fal
 	if ($home_info === false) {
 		return FALSE;
 	}
-	$game_run_dir = clean_path($home_info['game_key'] . "/" . (string)$server_xml->exe_location);
+	$game_run_dir = clean_path((string)$server_xml->exe_location);
 
 	require_once('includes/lib_remote.php');
 	$remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);

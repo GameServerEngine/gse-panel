@@ -6,6 +6,7 @@
   <os>
     <windows arch="x64">
       <exe>VNGame.exe</exe>
+      <exe_location>Binaries/Win64</exe_location>
     </windows>
   </os>
   <cli_template>%MAP%%PORT%%PLAYERS%%CONTROL_PASSWORD%?EnableWebAdmin=true%WEB_ADMIN_PORT% -log=ServerLog.log %IP% %QUERY_PORT% -UNATTENDED</cli_template>

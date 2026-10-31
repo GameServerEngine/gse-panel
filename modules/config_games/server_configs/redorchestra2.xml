@@ -6,6 +6,7 @@
   <os>
     <windows arch="x86">
       <exe>ROGame.exe</exe>
+      <exe_location>Binaries/Win32</exe_location>
     </windows>
   </os>
   <cli_template>TE-Apartments?%PORT%?%PLAYERS% -log=ServerLog.log %IP% -brewedloading</cli_template>

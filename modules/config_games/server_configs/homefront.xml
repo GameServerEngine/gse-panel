@@ -7,6 +7,7 @@
   <os>
     <windows arch="x86">
       <exe>HFDedicated.exe</exe>
+      <exe_location>Binaries</exe_location>
     </windows>
   </os>
   <cli_template>SERVER %PLAYERS% %IP% %PORT% %STEAM_PORT% %RCON1_PORT% %RCON2_PORT% -configsubdir=DedicatedProfile_DefaultProfile</cli_template>

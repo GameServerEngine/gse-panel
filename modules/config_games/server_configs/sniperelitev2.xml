@@ -6,6 +6,7 @@
   <os>
     <windows arch="x86">
       <exe>SniperEliteV2CLI.exe</exe>
+      <exe_location>bin</exe_location>
     </windows>
   </os>
   <query_port type="add">1</query_port>

@@ -460,7 +460,7 @@ function server_content_restart_home($home_id, $options = array())
 		$server_xml->control_protocol_type,
 		$home_info['home_path'],
 		$server_xml->server_exec_name,
-		clean_path($home_info['game_key'] . "/" . (string)$server_xml->exe_location),
+		clean_path((string)$server_xml->exe_location),
 		$start_cmd,
 		$home_info['mods'][$mod_id]['cpu_affinity'],
 		$home_info['mods'][$mod_id]['nice'],

@@ -5,10 +5,12 @@
   <os>
     <windows>
       <exe>server_windows.exe</exe>
+      <exe_location>tss2_rc2</exe_location>
     </windows>
     <linux>
       <exe>server_linux</exe>
       <max_user_amount>1</max_user_amount>
+      <exe_location>tss2_rc2</exe_location>
     </linux>
   </os>
   <exe_location>tss2_rc2</exe_location>

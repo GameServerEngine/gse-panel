@@ -6,6 +6,7 @@
   <os>
     <windows>
       <exe>SamHD_TSE_DedicatedServer.exe</exe>
+      <exe_location>Bin</exe_location>
     </windows>
   </os>
   <cli_template>%IP% %PORT% %PLAYERS% +logfile DedicatedServer</cli_template>

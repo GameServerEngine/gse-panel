@@ -6,6 +6,7 @@
   <os>
     <linux arch="x64">
       <exe>eurotrucks2_server</exe>
+      <exe_location>bin/linux_x64</exe_location>
     </linux>
   </os>
   <query_port type="add">1</query_port>

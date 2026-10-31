@@ -6,6 +6,7 @@
   <os>
     <linux arch="x64">
       <exe>InsurgencyServer-Linux-Shipping</exe>
+      <exe_location>Insurgency/Binaries/Linux/</exe_location>
     </linux>
   </os>
   <cli_template>%MAP%%SCENARIO%%PLAYERS%%PASSWORD% %PORT% %QUERY_PORT% %SERVERNAME% %MAPCYCLE% %CONTROL_PASSWORD% %RCON_PORT%</cli_template>

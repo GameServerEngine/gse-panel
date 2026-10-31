@@ -6,6 +6,7 @@
   <os>
     <linux arch="x86">
       <exe>ucc-bin</exe>
+      <exe_location>System</exe_location>
     </linux>
   </os>
   <cli_template>server %MAP%%GAME%%PLAYERS%%MUTATOR% %IP% %PORT% -log=../ut.log -nohomedir</cli_template>

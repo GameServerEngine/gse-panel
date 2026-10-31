@@ -6,6 +6,7 @@
   <os>
     <linux>
       <exe>srcds_run</exe>
+      <exe_location>esmod</exe_location>
     </linux>
   </os>
   <cli_template>%GAME_TYPE% %PID_FILE% %MAP% %IP% %PORT% %PLAYERS%</cli_template>

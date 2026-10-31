@@ -6,6 +6,7 @@
   <os>
     <linux arch="x86">
       <exe>dontstarve_dedicated_server_nullrenderer</exe>
+      <exe_location>bin</exe_location>
     </linux>
   </os>
   <cli_template>%IP% %PORT% -persistent_storage_root {GSP_HOME_DIR} -conf_dir config -cluster Server</cli_template>

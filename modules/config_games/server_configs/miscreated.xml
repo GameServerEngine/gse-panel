@@ -6,6 +6,7 @@
   <os>
     <windows arch="x64">
       <exe>MiscreatedServer.exe</exe>
+      <exe_location>Bin64_dedicated</exe_location>
     </windows>
   </os>
   <cli_template>%IP% %PORT% %HOSTNAME% %PLAYERS% +map islands %GAMESERVERID% %WHITELIST% %HTTPSERVER%</cli_template>

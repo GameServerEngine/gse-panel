@@ -6,6 +6,7 @@
   <os>
     <windows arch="x64">
       <exe>SpaceEngineersDedicated.exe</exe>
+      <exe_location>DedicatedServer64</exe_location>
     </windows>
   </os>
   <cli_template>-console %BASE_PATH% -ignorelastsession</cli_template>

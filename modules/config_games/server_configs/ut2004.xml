@@ -5,9 +5,11 @@
   <os>
     <windows>
       <exe>UCC.exe</exe>
+      <exe_location>System</exe_location>
     </windows>
     <linux>
       <exe>ucc-bin</exe>
+      <exe_location>System</exe_location>
     </linux>
   </os>
   <cli_template>server %MAP%%GAME_TYPE%%PLAYERS%%MUTATOR% %IP% %PORT% -log=../ut2004.log -nohomedir</cli_template>

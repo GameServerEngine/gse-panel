@@ -159,7 +159,7 @@ function gsp_lifecycle_sync_bot_definition($remote, array $home_info, $bot_defin
  */
 function gsp_lifecycle_start_payload($db, $remote, array $home_info, $server_xml, $mod_id, $server_ip, $server_port, $startup_cmd, $preStart, $envVars, $replace_text_results = array(), $restart_reason = '')
 {
-	$run_dir = clean_path($home_info['game_key'] . '/' . (isset($server_xml->exe_location) ? (string)$server_xml->exe_location : ''));
+	$run_dir = clean_path(isset($server_xml->exe_location) ? (string)$server_xml->exe_location : "");
 	$absolute_run_dir = clean_path(rtrim($home_info['game_root'], '/') . '/' . (isset($server_xml->exe_location) ? (string)$server_xml->exe_location : ''));
 	$last_param = json_decode(isset($home_info['last_param']) ? (string)$home_info['last_param'] : '', true);
 	$bot_definition = gsp_lifecycle_current_bot_definition($db, $home_info);

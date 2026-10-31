@@ -42,6 +42,7 @@
 		echo KF-ZedLanding &gt;&gt; maplist.txt
 		fi
 	</post_install>
+      <exe_location>Binaries/Win64</exe_location>
     </windows>
     <linux arch="x64">
       <exe>KFGameSteamServer.bin.x86_64</exe>
@@ -78,6 +79,7 @@
 		echo KF-ZedLanding &gt;&gt; maplist.txt
 		fi
 	</post_install>
+      <exe_location>Binaries/Win64</exe_location>
     </linux>
   </os>
   <cli_template>%MAP%%GAMEMODE%%DIFFICULTY%%GAMELENGTH%%PLAYERS% %PORT% %IP% %WEB_ADMIN_PORT% %QUERY_PORT%</cli_template>

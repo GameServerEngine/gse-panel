@@ -6,6 +6,7 @@
   <os>
     <linux arch="x64">
       <exe>MordhauServer-Linux-Shipping</exe>
+      <exe_location>Mordhau/Binaries/Linux</exe_location>
     </linux>
   </os>
   <cli_template>%MAP% -log %IP% %PORT% %BEACON_PORT% %QUERY_PORT%</cli_template>

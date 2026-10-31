@@ -964,7 +964,7 @@ function api_gamemanager()
 	$home_info = gsp_with_game_root($home_info, $server_xml, $path_error);
 	if ($home_info === false)
 		return array("status" => '422', "message" => "Invalid game directory for this server: " . $path_error);
-	$game_run_dir = clean_path($home_info['game_key'] . "/" . (string)$server_xml->exe_location);
+	$game_run_dir = clean_path((string)$server_xml->exe_location);
 
 	$remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
 	$host_stat = $remote->status_chk();

@@ -5,6 +5,7 @@
   <os>
     <linux>
       <exe>bfserver_linux</exe>
+      <exe_location>bin</exe_location>
     </linux>
   </os>
   <query_port type="add">1</query_port>

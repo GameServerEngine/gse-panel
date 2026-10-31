@@ -6,6 +6,7 @@
   <os>
     <windows arch="x64">
       <exe>PixARKServer.exe</exe>
+      <exe_location>ShooterGame/Binaries/Win64</exe_location>
     </windows>
   </os>
   <cli_template>%MAP%?listen%PLAYERS%%IP%%PORT%%QUERY_PORT%%CONTROL_PASSWORD% %DBE% %NHD% %CUBE_PORT% %CWN% %SEED% -nosteamclient -game -server -log</cli_template>

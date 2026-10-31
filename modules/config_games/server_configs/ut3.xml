@@ -126,6 +126,7 @@
           <desc>Players must know this password to connect.</desc>
         </param>
       </server_params>
+      <exe_location>Binaries</exe_location>
     </windows>
     <linux>
       <exe>ut3</exe>
@@ -243,6 +244,7 @@
       <post_install>
 wget -r -np -nH --cut-dirs=2  -R "index.html*" http://files.iaregamer.com/rsync/ut3/
  </post_install>
+      <exe_location>Binaries</exe_location>
     </linux>
   </os>
   <maps_location>UTGame/CookedPC/Maps</maps_location>

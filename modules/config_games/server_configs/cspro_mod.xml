@@ -22,6 +22,7 @@
           <caption>Disable master server communication</caption>
         </param>
       </server_params>
+      <exe_location>orangebox</exe_location>
     </windows>
     <linux>
       <exe>srcds_run</exe>
@@ -42,6 +43,7 @@
           <desc>Disables SourceTV and closes its port.</desc>
         </param>
       </server_params>
+      <exe_location>orangebox</exe_location>
     </linux>
   </os>
   <cli_template>%GAME_TYPE% %PID_FILE% %MAP% %IP% %PORT% %PLAYERS%</cli_template>

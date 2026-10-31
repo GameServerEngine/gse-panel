@@ -45,7 +45,7 @@ if ($server_home === false) {
 	print_failure('Invalid game directory for this server: ' . htmlentities($path_error));
 	return;
 }
-$game_run_dir = clean_path($server_home['game_key'] . "/" . (string)$server_xml->exe_location);
+$game_run_dir = clean_path((string)$server_xml->exe_location);
 
 if (!function_exists('processParamValue')) {
 	function processParamValue(&$param, &$server_xml, $paramKey, $paramValue, &$save_param, &$start_cmd){
