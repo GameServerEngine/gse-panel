@@ -4,7 +4,7 @@
 
 5) Panel API — per-host detail (optional)
 
-/var/www/html/panel/status/api/host.php?host_id=KC
+https://YOUR-PANEL/status/api/host.php?host_id=KC
 */
 $cfg = require __DIR__ . '/config.php';
 require __DIR__ . '/db.php';
@@ -42,4 +42,3 @@ echo json_encode([
       return $p;
     }, $plist),
 ]);
-

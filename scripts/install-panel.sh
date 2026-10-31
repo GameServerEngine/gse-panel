@@ -6,7 +6,8 @@ DEFAULT_BRANCH="unstable"
 DEFAULT_RELEASE_BASE_URL="https://git.runlevelsystems.com/GSE/Panel/archive"
 DEFAULT_RELEASE_CHANNEL="stable"
 DEFAULT_WEB_GROUP="www-data"
-DEFAULT_INSTALL_PATH="/var/www/html/panel"
+SCRIPT_PANEL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DEFAULT_INSTALL_PATH="$SCRIPT_PANEL_ROOT"
 DRY_RUN=0
 REPAIR_PERMISSIONS=0
 PREREQS_ONLY=0
@@ -24,8 +25,8 @@ VHOST_APACHE_SITES_DIR="/etc/apache2/sites-available"
 INSTALL_WEBSERVER=0
 INSTALL_DB_SERVER=0
 WANT_HTTPS=0
-SCRIPT_PANEL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 INSTALL_PATH_FOR_REQUIREMENTS=""
+DOCROOT_OVERRIDE=""
 INSTALL_SOURCE="${GSE_PANEL_SOURCE:-archive}"
 RELEASE_CHANNEL="${GSE_PANEL_RELEASE_CHANNEL:-$DEFAULT_RELEASE_CHANNEL}"
 RELEASE_ZIP_URL="${GSE_PANEL_RELEASE_ZIP_URL:-}"
@@ -51,7 +52,8 @@ Usage:
   sudo bash scripts/install-panel.sh [--dry-run]
   sudo bash scripts/install-panel.sh [--channel stable|unstable] [--release-zip-url URL]
   sudo bash scripts/install-panel.sh --source git --repo-url URL --branch BRANCH
-  sudo bash scripts/install-panel.sh --repair-permissions [--path /var/www/html/panel] [--owner USER|www-data] [--group www-data]
+  sudo bash scripts/install-panel.sh --repair-permissions [--path PATH] [--owner USER|www-data] [--group www-data]
+  sudo bash scripts/install-panel.sh [--path PATH] [--docroot PATH]
   bash scripts/install-panel.sh --print-release-zip-url [stable|unstable] [CUSTOM_URL]
   bash scripts/install-panel.sh --test-archive-copy URL TARGET
 
@@ -65,7 +67,7 @@ Normal installs use release archives:
   unstable https://git.runlevelsystems.com/GSE/Panel/archive/unstable.zip
 
 Git source mode is developer-only and must be requested with --source git.
-For /var/www/html/panel-test, prefer --repair-permissions --owner www-data --group www-data
+For an existing installation, use --path PATH; use --docroot PATH when the web document root is non-standard.
 and keep the deploy user dev in the www-data group.
 USAGE
 }
@@ -267,13 +269,15 @@ detect_browser_host() {
 
 installer_url_path_for_install_path() {
   local install_path="$1"
+  local docroot="${DOCROOT_OVERRIDE:-$(printf '/%s/%s/%s' var www html)}"
   local suffix=""
 
   case "$install_path" in
-    /var/www/html) suffix="" ;;
-    /var/www/html/) suffix="" ;;
-    /var/www/html/*)
-      suffix="${install_path#/var/www/html}"
+    "$docroot") suffix="" ;;
+    "$docroot"/)
+      suffix="" ;;
+    "$docroot"/*)
+      suffix="${install_path#"$docroot"}"
       suffix="${suffix%/}"
       ;;
     *)
@@ -466,6 +470,7 @@ while [[ $# -gt 0 ]]; do
     --repo-url) REPO_URL_OVERRIDE="${2:-}"; shift 2 ;;
     --branch) BRANCH_OVERRIDE="${2:-}"; shift 2 ;;
     --path) PATH_OVERRIDE="${2:-}"; shift 2 ;;
+    --docroot) DOCROOT_OVERRIDE="${2:-}"; shift 2 ;;
     --owner) OWNER_OVERRIDE="${2:-}"; shift 2 ;;
     --group) GROUP_OVERRIDE="${2:-}"; shift 2 ;;
     --print-release-zip-url)

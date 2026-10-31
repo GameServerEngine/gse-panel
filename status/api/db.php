@@ -35,7 +35,7 @@ function db_init(PDO $db): void {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       host_id TEXT,
       ts INTEGER,
-      server_id TEXT,   -- numeric folder name under /home/gameserver/
+      server_id TEXT,   -- numeric folder name under the game server root
       pid INTEGER,
       exe TEXT,
       cwd TEXT,
@@ -53,4 +53,3 @@ function db_init(PDO $db): void {
     CREATE INDEX idx_status ON statuses(host_id, ts);
   ");
 }
-

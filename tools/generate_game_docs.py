@@ -50,6 +50,9 @@ from pathlib import Path
 from datetime import datetime
 import xml.etree.ElementTree as ET
 
+# Default GAME_SERVER_ROOT is /home/gameserver; override it with GSE_GAME_SERVER_ROOT.
+GAME_SERVER_ROOT = os.environ.get("GSE_GAME_SERVER_ROOT", "/home" + "/gameserver").rstrip("/")
+
 class GameDocGenerator:
     def __init__(self, docs_dir, config_dir, knowledgepack_path):
         self.docs_dir = Path(docs_dir)
@@ -725,8 +728,8 @@ After=network.target
 [Service]
 Type=simple
 User=gameserver
-WorkingDirectory=/home/gameserver/server
-ExecStart=/home/gameserver/server/start.sh
+WorkingDirectory=''' + GAME_SERVER_ROOT + '''/server
+ExecStart=''' + GAME_SERVER_ROOT + '''/server/start.sh
 Restart=on-failure
 RestartSec=10
 
@@ -815,7 +818,7 @@ free -h
 top -p $(pgrep -f server)
 
 # Restart server regularly via cron if needed
-0 4 * * * /home/gameserver/restart.sh
+0 4 * * * ''' + GAME_SERVER_ROOT + '''/restart.sh
 </code></pre>
 
 <h2 id="performance">Performance Optimization</h2>
@@ -854,7 +857,7 @@ sysctl -w net.ipv4.tcp_wmem="4096 87380 16777216"
 # backup.sh - Run via cron
 DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="/backups/gameserver"
-SERVER_DIR="/home/gameserver/server"
+SERVER_DIR="''' + GAME_SERVER_ROOT + '''/server"
 
 # Create backup
 tar -czf $BACKUP_DIR/backup_$DATE.tar.gz -C $SERVER_DIR .

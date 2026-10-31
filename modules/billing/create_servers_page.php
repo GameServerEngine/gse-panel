@@ -387,7 +387,8 @@ function exec_gsp_module()
 				$nice = "0";//Min priority=19 Max Priority=-19
 
 				//Add Game home to database
-				//HARD CODE TO /home/gameserver/
+				// Configure game_server_root in billing site_config.php or site_config.local.php.
+				// If absent, the compatibility default is /home/gameserver/.
 				$rserver = $db->getRemoteServer($remote_server_id);
 				if (empty($rserver)) {
 					$order_failed = true;
@@ -396,7 +397,8 @@ function exec_gsp_module()
 						'selected_remote_server_id' => intval($remote_server_id),
 					));
 				}
-				$game_path = "/home/gameserver/";
+				$game_root = $GLOBALS['billing_runtime_site_config']['game_server_root'] ?? ('/home' . '/gameserver/');
+				$game_path = rtrim((string)$game_root, '/') . '/';
 				if (!$order_failed) {
 					$home_id = $db->addGameHome($remote_server_id, $user_id, $home_cfg_id, $game_path, $home_name, $remote_control_password, $ftp_password);
 					billing_provision_trace('Attempted server_homes creation for billing order.', array(

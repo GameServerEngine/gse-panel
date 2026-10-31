@@ -1360,19 +1360,11 @@ return null;
 function gsp_is_apache_stale_path($path)
 {
 $path = trim((string)$path);
-$stale = [
-'/var/www/html/panel',
-'/var/www/html/Panel',
-'/var/www/html/GSE/Panel',
-'/var/www/html/GSE/Panel/GSP/Panel',
-'/var/www/html/GSE/Panel/modules/billing',
-];
-if (in_array($path, $stale, true)) {
-return true;
-}
-return (strpos($path, '/var/www/html/panel/') === 0
-|| strpos($path, '/var/www/html/Panel/') === 0
-|| strpos($path, '/var/www/html/GSE/Panel/') === 0);
+$panel_root = rtrim((string)GSP_PANEL_DIR, '/');
+$billing_root = rtrim((string)GSP_WEBSITE_DIR, '/');
+return ($path === $panel_root
+|| $path === $billing_root
+|| strpos($path, $panel_root . '/') === 0);
 }
 
 function gsp_parse_apache_cert_error_line($line)
