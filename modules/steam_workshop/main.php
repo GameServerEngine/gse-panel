@@ -64,7 +64,7 @@ function exec_gsp_module()
 
 	if($home_cfg)
 	{
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_cfg['home_cfg_file']);
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_cfg['home_cfg_file'], gsp_os_for_install_row($home_cfg));
 		if($server_xml === FALSE)
 		{
 			print_failure(get_lang_f('failed_reading_xml_file', SERVER_CONFIG_LOCATION."/".$home_cfg['home_cfg_file']));

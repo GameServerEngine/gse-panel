@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<game_config>
+  <game_key>halo_ce</game_key>
+  <game_name>Halo CE</game_name>
+  <os>
+    <windows>
+      <exe>haloceded.exe</exe>
+    </windows>
+  </os>
+  <cli_template>-exec init.txt -path settings %IP% %PORT%</cli_template>
+  <cli_params>
+    <cli_param id="IP" cli_string="-ip" options="s"/>
+    <cli_param id="PORT" cli_string="-port" options="s"/>
+  </cli_params>
+  <console_log>settings/haloserver.log</console_log>
+  <mods>
+    <mod key="halo_ce">
+      <name>none</name>
+    </mod>
+  </mods>
+</game_config>

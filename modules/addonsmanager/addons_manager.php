@@ -105,7 +105,7 @@ function exec_gsp_module() {
 		{
 			print_failure(get_lang("select_a_game_type"));
 		}
-		elseif ($fields['install_method'] === 'steam_workshop' && (!($game_cfg = $db->getGameCfg($fields['home_cfg_id'])) || !($server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $game_cfg['home_cfg_file'])) || !scm_workshop_is_supported($server_xml)))
+		elseif ($fields['install_method'] === 'steam_workshop' && (!($game_cfg = $db->getGameCfg($fields['home_cfg_id'])) || !($server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $game_cfg['home_cfg_file'], gsp_os_for_install_row($game_cfg))) || !scm_workshop_is_supported($server_xml)))
 		{
 			print_failure('Steam Workshop support must be configured in the selected game XML before creating a Workshop content entry.');
 		}

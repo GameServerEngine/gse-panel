@@ -48,7 +48,7 @@ function exec_gsp_module()
 	$stats_players = 0;
 	$stats_maxplayers = 0;
 
-	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file']);
+	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file'], gsp_os_for_install_row($server_home));
 	$xml_installer = $server_xml->installer;
 
 	$mod_name = $server_home['mods'][$mod_id]['mod_name'];

@@ -1,13 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
 <game_config>
-  <game_key>mohsp_linux32</game_key>
-  <game_name>Medal Of Honor: Spearhead</game_name>
-  <server_exec_name>spearhead_lnxded</server_exec_name>
+  <game_key>mohsp</game_key>
+  <game_name>Medal Of Honor: Spearhead (Windows)</game_name>
+  <os>
+    <windows>
+      <exe>moh_spearhead_server.exe</exe>
+      <cli_template>+set dedicated 1 +set net_noipx 1 +exec server.cfg %IP% %PORT% %PLAYERS%</cli_template>
+    </windows>
+    <linux>
+      <exe>spearhead_lnxded</exe>
+      <cli_template>+set dedicated 1 +set sv_maxrate 5000 +set net_noipx 1 +exec server.cfg %IP% %PORT% %PLAYERS%</cli_template>
+    </linux>
+  </os>
   <query_port type="add">97</query_port>
-  <cli_template>+set dedicated 1 +set sv_maxrate 5000 +set net_noipx 1 +exec server.cfg %IP% %PORT% %PLAYERS%</cli_template>
   <cli_params>
-    <cli_param id="IP" cli_string="+set net_ip" options="s" />
-    <cli_param id="PORT" cli_string="+set net_port" options="s" />
-    <cli_param id="PLAYERS" cli_string="+set sv_maxclients" options="s" />
+    <cli_param id="IP" cli_string="+set net_ip" options="s"/>
+    <cli_param id="PORT" cli_string="+set net_port" options="s"/>
+    <cli_param id="PLAYERS" cli_string="+set sv_maxclients" options="s"/>
   </cli_params>
   <max_user_amount>64</max_user_amount>
   <mods>

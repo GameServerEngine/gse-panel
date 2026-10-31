@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<game_config>
+  <game_key>squad</game_key>
+  <installer>steamcmd</installer>
+  <game_name>Squad</game_name>
+  <os>
+    <windows arch="x64">
+      <exe>SquadGameServer.exe</exe>
+      <reserve_ports>
+        <port type="add" id="QUERY_PORT" cli_string="QueryPort=">19378</port>
+      </reserve_ports>
+      <console_log>SquadGame/Saved/Logs/SquadGame.log</console_log>
+      <replace_texts>
+        <text key="home_name">
+          <default>ServerName=.*</default>
+          <var>ServerName=</var>
+          <filepath>SquadGame/ServerConfig/Server.cfg</filepath>
+          <options>q</options>
+        </text>
+        <text key="max_players">
+          <default>MaxPlayers=.*</default>
+          <var>MaxPlayers=</var>
+          <filepath>SquadGame/ServerConfig/Server.cfg</filepath>
+        </text>
+        <text key="ip">
+          <default>Ip=.*</default>
+          <var>Ip=</var>
+          <filepath>SquadGame/ServerConfig/Rcon.cfg</filepath>
+        </text>
+        <text key="control_password">
+          <default>Password=.*</default>
+          <var>Password=</var>
+          <filepath>SquadGame/ServerConfig/Rcon.cfg</filepath>
+        </text>
+      </replace_texts>
+      <custom_fields>
+        <field key="RCON Port" type="text">
+          <default>Port=.*</default>
+          <default_value>21114</default_value>
+          <var>Port=</var>
+          <filepath>SquadGame/ServerConfig/Rcon.cfg</filepath>
+          <access>admin</access>
+          <desc>Sets the port to RCON.</desc>
+        </field>
+      </custom_fields>
+    </windows>
+    <linux arch="x64">
+      <exe>SquadGameServer.sh</exe>
+      <reserve_ports>
+        <port type="add" id="QUERY_PORT" cli_string="QueryPort=">1</port>
+        <port type="add" id="RCON_PORT" cli_string="RconPort=">2</port>
+      </reserve_ports>
+      <console_log>SquadGame/Saved/Logs/Squad.log</console_log>
+      <replace_texts>
+        <text key="home_name">
+          <default>ServerName=.*</default>
+          <var>ServerName=</var>
+          <filepath>SquadGame/ServerConfig/Server.cfg</filepath>
+        </text>
+        <text key="max_players">
+          <default>MaxPlayers=.*</default>
+          <var>MaxPlayers=</var>
+          <filepath>SquadGame/ServerConfig/Server.cfg</filepath>
+        </text>
+        <text key="ip">
+          <default>Ip=.*</default>
+          <var>Ip=</var>
+          <filepath>SquadGame/ServerConfig/Rcon.cfg</filepath>
+        </text>
+        <text key="control_password">
+          <default>Password=.*</default>
+          <var>Password=</var>
+          <filepath>SquadGame/ServerConfig/Rcon.cfg</filepath>
+        </text>
+      </replace_texts>
+      <custom_fields>
+        <field key="RCON_PORT" type="text">
+          <default>Port=.*</default>
+          <default_value/>
+          <var>Port=</var>
+          <filepath>SquadGame/ServerConfig/Rcon.cfg</filepath>
+          <access>admin</access>
+          <desc>Sets the port to RCON.</desc>
+        </field>
+      </custom_fields>
+    </linux>
+  </os>
+  <cli_template>%IP% %PORT% %QUERY_PORT% %PLAYERS% %TICKRATE% %MAP% -log</cli_template>
+  <cli_params>
+    <cli_param id="IP" cli_string="MultiHome="/>
+    <cli_param id="PORT" cli_string="Port="/>
+    <cli_param id="PLAYERS" cli_string="FIXEDMAXPLAYERS="/>
+  </cli_params>
+  <max_user_amount>80</max_user_amount>
+  <mods>
+    <mod key="default">
+      <name>None</name>
+      <installer_name>403240</installer_name>
+      <installer_login>anonymous</installer_login>
+    </mod>
+  </mods>
+  <server_params>
+    <param key="FIXEDMAXTICKRATE=" type="text" id="TICKRATE">
+      <default>50</default>
+      <options>ns</options>
+      <access>admin</access>
+      <desc>MAX server tickrate.</desc>
+    </param>
+    <param key="RANDOM=" type="select" id="MAP">
+      <option value="ALWAYS">Always</option>
+      <option value="FIRST">First</option>
+      <option value="NONE">None</option>
+      <options>ns</options>
+      <desc>Randomize map rotation.</desc>
+    </param>
+  </server_params>
+  <post_install>
+    sed -i '4s/IP/Ip/g' SquadGame/ServerConfig/Rcon.cfg
+  </post_install>
+  <configuration_files>
+    <file description="Server Configurations">SquadGame/ServerConfig/Server.cfg</file>
+    <file description="RCON Configurations">SquadGame/ServerConfig/Rcon.cfg</file>
+    <file description="Admin Configurations">SquadGame/ServerConfig/Admins.cfg</file>
+    <file description="Map Rotation Configurations">SquadGame/ServerConfig/MapRotation.cfg</file>
+    <file description="Server Messages Configurations">SquadGame/ServerConfig/ServerMessages.cfg</file>
+  </configuration_files>
+</game_config>

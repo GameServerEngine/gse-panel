@@ -75,7 +75,7 @@ function exec_gsp_module(){
 			$server_home['port']    == $port )
 		{
 			$public_ip = checkDisplayPublicIP($server_home['display_public_ip'], $server_home['ip']);
-			$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file']);
+			$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file'], gsp_os_for_install_row($server_home));
 			$url = false;
 			if ($server_xml->protocol == "lgsl"){
 				list($c_port, $q_port, $s_port) = lgsl_port_conversion($server_xml->lgsl_query_name, $server_home['port'], "", "");

@@ -96,7 +96,7 @@ function litefm_attach_game_root(array $homeCfg, &$error = '')
 		$error = 'Server XML configuration is missing.';
 		return false;
 	}
-	$serverXml = read_server_config(SERVER_CONFIG_LOCATION . '/' . $homeCfg['home_cfg_file']);
+	$serverXml = read_server_config(SERVER_CONFIG_LOCATION . '/' . $homeCfg['home_cfg_file'], gsp_os_for_install_row($homeCfg));
 	if ($serverXml === false) {
 		$error = 'Server XML configuration could not be loaded.';
 		return false;

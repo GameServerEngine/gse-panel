@@ -321,7 +321,7 @@ if (is_array($to_delete)) {
                 );
 
                 // Stop the running server process
-                $server_xml   = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file']);
+                $server_xml   = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
                 $control_type = isset($server_xml->control_protocol_type)
                               ? (string)$server_xml->control_protocol_type : "";
                 $addresses    = $db->getHomeIpPorts($home_id);

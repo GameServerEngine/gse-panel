@@ -1,13 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
 <game_config>
-  <game_key>jediknightja_linux32</game_key>
+  <game_key>jediknightja</game_key>
   <game_name>Jedi Knight: Jedi Academy</game_name>
-  <server_exec_name>linuxjampded</server_exec_name>
+  <os>
+    <linux>
+      <exe>linuxjampded</exe>
+    </linux>
+  </os>
   <cli_template>+set dedicated 2 %GAME_TYPE% %IP% %PORT% %PLAYERS% %SVPURE% +exec server.cfg</cli_template>
   <cli_params>
-    <cli_param id="IP" cli_string="+set net_ip" options="s" />
-    <cli_param id="PORT" cli_string="+set net_port" options="s" />
-    <cli_param id="PLAYERS" cli_string="+set sv_maxclients" options="s" />
-    <cli_param id="GAME_TYPE" cli_string="+set fs_game" options="s" />
+    <cli_param id="IP" cli_string="+set net_ip" options="s"/>
+    <cli_param id="PORT" cli_string="+set net_port" options="s"/>
+    <cli_param id="PLAYERS" cli_string="+set sv_maxclients" options="s"/>
+    <cli_param id="GAME_TYPE" cli_string="+set fs_game" options="s"/>
   </cli_params>
   <max_user_amount>32</max_user_amount>
   <mods>
@@ -142,9 +147,9 @@
   </replace_texts>
   <server_params>
     <param id="SVPURE" key="+sv_pure" type="select">
-	  <option value="0">All client files accepted</option>
-	  <option value="1">pure_server_whitelist.txt</option>
-	  <option value="2">All forced to be default</option>
+      <option value="0">All client files accepted</option>
+      <option value="1">pure_server_whitelist.txt</option>
+      <option value="2">All forced to be default</option>
       <caption>Pure Server</caption>
       <desc>Forces all clients on the server to use content that matches what is on the server.</desc>
     </param>

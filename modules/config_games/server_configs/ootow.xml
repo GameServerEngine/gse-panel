@@ -1,15 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
 <game_config>
-  <game_key>ootow_win64</game_key>
+  <game_key>ootow</game_key>
   <installer>steamcmd</installer>
   <game_name>Outlaws of the Old West</game_name>
-  <server_exec_name>OutlawsServer.exe</server_exec_name>
+  <os>
+    <linux>
+      <exe>OutlawsServer.exe</exe>
+    </linux>
+  </os>
   <cli_template>/Game/Maps/MainMap/MainMap -log %IP% %PORT% %QUERY_PORT% %HOSTNAME% %PLAYERS% %CONTROL_PASSWORD% %TYPE%</cli_template>
   <cli_params>
-    <cli_param id="IP" cli_string="-Multihome=" />
-    <cli_param id="PORT" cli_string="-port=" />
-    <cli_param id="PLAYERS" cli_string="-PlayerCount=" />
-    <cli_param id="CONTROL_PASSWORD" cli_string="-AdminPassword=" options="q" />
-    <cli_param id="HOSTNAME" cli_string="-servername=" options="q" />
+    <cli_param id="IP" cli_string="-Multihome="/>
+    <cli_param id="PORT" cli_string="-port="/>
+    <cli_param id="PLAYERS" cli_string="-PlayerCount="/>
+    <cli_param id="CONTROL_PASSWORD" cli_string="-AdminPassword=" options="q"/>
+    <cli_param id="HOSTNAME" cli_string="-servername=" options="q"/>
   </cli_params>
   <reserve_ports>
     <port type="subtract" id="QUERY_PORT" cli_string="-queryport=">359</port>

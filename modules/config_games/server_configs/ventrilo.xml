@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<game_config>
+  <game_key>ventrilo</game_key>
+  <gameq_query_name>ventrilo</gameq_query_name>
+  <game_name>Ventrilo</game_name>
+  <os>
+    <windows arch="x86">
+      <exe>ventrilo_srv.exe</exe>
+    </windows>
+    <linux arch="x86">
+      <exe>ventrilo_srv</exe>
+    </linux>
+  </os>
+  <console_log>ventrilo_srv.log</console_log>
+  <mods>
+    <mod key="default">
+      <name>None</name>
+    </mod>
+  </mods>
+  <replace_texts>
+    <text key="home_name">
+      <default>Name=.*</default>
+      <var>Name=</var>
+      <filepath>ventrilo_srv.ini</filepath>
+    </text>
+    <text key="control_password">
+      <default>AdminPassword=.*</default>
+      <var>AdminPassword=</var>
+      <filepath>ventrilo_srv.ini</filepath>
+    </text>
+  </replace_texts>
+</game_config>

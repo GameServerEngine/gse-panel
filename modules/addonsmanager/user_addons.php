@@ -51,7 +51,7 @@ function exec_gsp_module() {
 		scm_ensure_phase2_schema($db);
 		$server_bot_os_filter = scm_server_bot_os_filter_sql($home_info);
 		if (isset($_POST['scm_manifest_action']) && isset($_POST['manifest_id'])) {
-			$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file']);
+			$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
 			$remote = new GSPRemoteLibrary($home_info['agent_ip'], $home_info['agent_port'], $home_info['encryption_key'], $home_info['timeout']);
 			$action_message = '';
 			if ($server_xml === false) {

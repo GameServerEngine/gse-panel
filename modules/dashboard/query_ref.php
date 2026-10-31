@@ -57,7 +57,7 @@ function exec_gsp_module()
 	require('modules/gamemanager/home_handling_functions.php');
 	require('modules/config_games/server_config_parser.php');
 	$server_home = $_SESSION[$server_key];
-	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file']);
+	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file'], gsp_os_for_install_row($server_home));
 	$port = $server_home['port'];
 	$query_name = "";
 	$mod = "";

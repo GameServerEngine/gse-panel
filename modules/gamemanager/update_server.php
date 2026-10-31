@@ -53,7 +53,7 @@ function exec_gsp_module() {
 
 	echo "<h2>Updating game server <em>".htmlentities($home_info['home_name'])."</em></h2>";
 
-	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file']);
+	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
 
 	$use_steamcmd = ((string)$server_xml->installer === "steamcmd");
 

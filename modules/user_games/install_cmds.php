@@ -34,7 +34,7 @@ function exec_gsp_module()
 	if ( array_key_exists($mod_id, (array)$home_info['mods']) )
 	{
 		echo "<h2>".get_lang('cmds_for')." \"".htmlentities($home_info['home_name'])."\" [Mod:".$home_info['mods'][$mod_id]['mod_name']."]</h2>";
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION.$home_info['home_cfg_file']);
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION.$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
 		$mod_cfg_id = $home_info['mods'][$mod_id]['mod_cfg_id'];
 
 		if(isset($_POST['edit_preinstall_cmds']))

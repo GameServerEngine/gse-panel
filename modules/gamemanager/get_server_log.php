@@ -120,7 +120,7 @@ if (!function_exists('gsp_get_server_log_response')) {
 				require_once($panel_root . '/includes/game_path_helpers.php');
 			}
 
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION . '/' . $home_info['home_cfg_file']);
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION . '/' . $home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
 		if ($server_xml === false) {
 			gsp_get_server_log_log('Failed to load server XML for home ' . $home_id . '.');
 			return gsp_get_server_log_pre('Server configuration is missing or invalid.', 500);

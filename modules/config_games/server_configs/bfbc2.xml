@@ -1,8 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
 <game_config>
-  <game_key>bfbc2_win32</game_key> <!-- Works for Linux too if you have Wine installed and configured so we don't need a xml config for Linux. -->
+  <game_key>bfbc2</game_key>
   <gameq_query_name>bfbc2</gameq_query_name>
   <game_name>Battlefield Bad Company 2</game_name>
-  <server_exec_name>Frost.Game.Main_Win32_Final.exe</server_exec_name>
+  <os>
+    <linux>
+      <exe>Frost.Game.Main_Win32_Final.exe</exe>
+    </linux>
+  </os>
   <query_port type="add">29321</query_port>
   <cli_template>-serverInstancePath "Instance/" -mapPack2Enabled 1 %PORT% %QUERY_PORT% %PLAYERS% -region EU -runtimeLog 0 -displayErrors 0 -displayAsserts 0 -crashDumpAsserts 0 -serverAdminLogs 1 -plasmaServerLog 1 -revisionLevel 8 -revisionKey 7C0A303E-F4D2-985E-763D-E7C41B1E06A3 %GAMEMODEID%</cli_template>
   <cli_params>
@@ -32,9 +37,9 @@
     </text>
   </replace_texts>
   <server_params>
-   <param key="-GameModID" type="select" id="GAMEMODEID">
-     <option value="BC2">BC2</option>
-     <option value="VIETNAM">Vietnam</option>
+    <param key="-GameModID" type="select" id="GAMEMODEID">
+      <option value="BC2">BC2</option>
+      <option value="VIETNAM">Vietnam</option>
       <caption>Game Mode</caption>
       <desc>Select a Game Mode.</desc>
     </param>

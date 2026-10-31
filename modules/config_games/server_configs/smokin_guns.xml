@@ -1,13 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
 <game_config>
-  <game_key>smokinguns_linux32</game_key>
-  <installer>smokinguns</installer> 
- <game_name>Smokin Guns</game_name>
-  <server_exec_name>smokinguns_dedicated.i386</server_exec_name>
+  <game_key>smokin_guns</game_key>
+  <game_name>Smokin Guns</game_name>
+  <os>
+    <windows>
+      <exe>smokinguns_dedicated.exe</exe>
+    </windows>
+    <linux>
+      <exe>smokinguns_dedicated.i386</exe>
+      <installer>smokinguns</installer>
+    </linux>
+  </os>
   <cli_template>server +set dedicated 2 +exec server.cfg +set ttycon 0 %IP% %PORT% %PLAYERS%</cli_template>
   <cli_params>
-    <cli_param id="IP" cli_string="+set net_ip" options="s" />
-    <cli_param id="PORT" cli_string="+set net_port" options="s" />
-    <cli_param id="PLAYERS" cli_string="+set sv_maxclients" options="s" />
+    <cli_param id="IP" cli_string="+set net_ip" options="s"/>
+    <cli_param id="PORT" cli_string="+set net_port" options="s"/>
+    <cli_param id="PLAYERS" cli_string="+set sv_maxclients" options="s"/>
   </cli_params>
   <max_user_amount>32</max_user_amount>
   <control_protocol>rcon</control_protocol>
@@ -30,7 +38,7 @@
       <filepath>smokinguns/server.cfg</filepath>
       <options>sq</options>
     </text>
-	<text key="max_players">
+    <text key="max_players">
       <default>\/?\/?set sv_maxclients\s+\d+</default>
       <var>set sv_maxclients</var>
       <filepath>smokinguns/server.cfg</filepath>
@@ -43,10 +51,10 @@
       <option value="gametype 1 +exec server_duel.cfg">Duel</option>
       <option value="gametype 3 +exec server_deathmatch.cfg">Team Death Match</option>
       <option value="gametype 4 +exec server_mixed.cfg">Round Teamplay</option>
-	  <option value="gametype 5 +exec server_bank_robbery.cfg">Bank Robbery</option>
+      <option value="gametype 5 +exec server_bank_robbery.cfg">Bank Robbery</option>
       <caption>Game Type</caption>
       <desc>Select a Game Type.</desc>
-	  <options>ns</options>
+      <options>ns</options>
     </param>
   </server_params>
   <list_players_command>status</list_players_command>
@@ -57,11 +65,11 @@
   </player_info>
   <player_commands>
     <command key="Kick" type="hidden">
-	  <string>kick "%Name%"</string>
-	</command>
+      <string>kick "%Name%"</string>
+    </command>
     <command key="Ban" type="hidden">
-	  <string>banaddr %userid%</string>
-	  <string>kick "%Name%"</string>
-	</command>
+      <string>banaddr %userid%</string>
+      <string>kick "%Name%"</string>
+    </command>
   </player_commands>
 </game_config>

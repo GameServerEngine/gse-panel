@@ -113,6 +113,24 @@ foreach ($groups as $base => $byos) {
             $allFiles[] = basename($e['file']);
         }
     }
+    $allPaths = array();
+    foreach ($byos as $list) {
+        foreach ($list as $e) {
+            $allPaths[] = $e['file'];
+        }
+    }
+    $dropped = '';
+    foreach (array('windows', 'linux') as $osx) {
+        if (isset($byos[$osx]) && count($byos[$osx]) > 1) {
+            foreach ($byos[$osx] as $k => $e) {
+                if ($e['suffix'] === '') {
+                    $dropped = basename($e['file']);
+                    unset($byos[$osx][$k]);
+                }
+            }
+            $byos[$osx] = array_values($byos[$osx]);
+        }
+    }
     $oss = array();
     foreach (array('windows', 'linux') as $os) {
         if (isset($byos[$os])) {
@@ -148,7 +166,9 @@ foreach ($groups as $base => $byos) {
     }
     $single = (count($oss) === 1);
     $notes = array();
-
+    if ($dropped !== '') {
+        $notes[] = 'info: unsuffixed duplicate ' . $dropped . ' dropped';
+    }
     /* Game name is shared. If the platforms disagree, the Windows value is used and the difference is noted. */
     $gn = array();
     foreach ($oss as $os) {
@@ -300,11 +320,11 @@ foreach ($groups as $base => $byos) {
     }
     $rows[] = array(implode(';', $allFiles), $base . '.xml', implode('+', $oss), $kind, implode(';', $arches), implode('; ', $notes));
     foreach ($notes as $n) {
-        if (strpos($n, 'game_name differs') !== 0) {
+        if (strpos($n, 'game_name differs') !== 0 && strpos($n, 'info:') !== 0) {
             $problems[] = $base . ': ' . $n;
         }
     }
-    $processed[$base] = $fullPaths;
+    $processed[$base] = $allPaths;
     if ($single) {
         $renamed++;
     } else {

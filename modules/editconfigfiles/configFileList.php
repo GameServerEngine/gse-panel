@@ -52,7 +52,7 @@ function exec_gsp_module()
         return;
     }
 
-    $server_xml = read_server_config(SERVER_CONFIG_LOCATION .'/'. $server_home['home_cfg_file']);
+    $server_xml = read_server_config(SERVER_CONFIG_LOCATION .'/'. $server_home['home_cfg_file'], gsp_os_for_install_row($server_home));
 
     $files = getFilesInXML($server_xml->configuration_files);
 

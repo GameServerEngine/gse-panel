@@ -1,7 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
 <game_config>
-  <game_key>shoutcast_bot_linux32</game_key>
+  <game_key>shoutcast_bot</game_key>
   <game_name>Shoutcast server Bot</game_name>
-  <server_exec_name>sc_trans_linux</server_exec_name>
+  <os>
+    <linux>
+      <exe>sc_trans_linux</exe>
+    </linux>
+  </os>
   <max_user_amount>100</max_user_amount>
   <control_protocol>lcon</control_protocol>
   <mods>

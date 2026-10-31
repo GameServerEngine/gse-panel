@@ -209,6 +209,24 @@ function gsp_apply_os_block(DOMDocument $dom, $os)
 		}
 	}
 }
+
+/* OS of the agent a game is installed on. Returns 'unknown' when it cannot be determined, so the
+ * read fails visibly instead of loading the wrong block. */
+function gsp_os_for_install_row($row)
+{
+	global $db;
+	if (is_array($row) && !empty($row['server_os'])) {
+		return $row['server_os'];
+	}
+	$homeId = is_array($row) && isset($row['home_id']) ? (int)$row['home_id'] : 0;
+	if ($homeId > 0 && isset($db) && $db) {
+		$rows = $db->resultQuery("SELECT rs.server_os FROM GSP_DB_PREFIXserver_homes sh INNER JOIN GSP_DB_PREFIXremote_servers rs ON rs.remote_server_id = sh.remote_server_id WHERE sh.home_id = {$homeId} LIMIT 1");
+		if (!empty($rows[0]['server_os'])) {
+			return $rows[0]['server_os'];
+		}
+	}
+	return 'unknown';
+}
 function read_server_config( $filename, $os = null )
 {
 	gsp_ensure_xml_support();

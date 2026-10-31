@@ -29,7 +29,7 @@ function gsp_agent_get_server_xml($home)
 	if (empty($home['home_cfg_file'])) {
 		return false;
 	}
-	return read_server_config(SERVER_CONFIG_LOCATION . "/" . $home['home_cfg_file']);
+	return read_server_config(SERVER_CONFIG_LOCATION . "/" . $home['home_cfg_file'], gsp_os_for_install_row($home));
 }
 
 function gsp_agent_force_stop_action($db, $remote_server, $remote)

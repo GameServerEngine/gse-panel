@@ -158,7 +158,7 @@ function exec_gsp_module() {
 	scm_ensure_phase2_schema($db);
 
 	$home_cfg_id = $home_info['home_cfg_id'];
-	$server_xml  = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file']);
+	$server_xml  = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
 	$path_error = '';
 	$home_info = gsp_with_game_root($home_info, $server_xml, $path_error);
 	if ($home_info === false) {

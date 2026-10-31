@@ -60,7 +60,7 @@ function exec_gsp_module() {
 
 	echo "<h2>".htmlentities($home_info['home_name'])."</h2>";
 
-	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file']);
+	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
 
 	if ( !$server_xml )
 	{

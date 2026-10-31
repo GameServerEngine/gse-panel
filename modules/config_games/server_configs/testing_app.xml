@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<game_config>
+  <game_key>testing_app</game_key>
+  <game_name>Testing App</game_name>
+  <os>
+    <windows arch="x64">
+      <exe>server-port-test-windows-amd64.exe</exe>
+      <pre_install><![CDATA[
+# TODO: Replace this placeholder with the final server-port-test release endpoint.
+SERVER_PORT_TEST_RELEASE_BASE="${SERVER_PORT_TEST_RELEASE_BASE:-https://example.invalid/runlevel/server-port-test/releases/latest/download}"
+rm -f server-port-test-windows-amd64.exe
+if command -v curl >/dev/null 2>&1; then
+  curl -fL -o server-port-test-windows-amd64.exe "$SERVER_PORT_TEST_RELEASE_BASE/server-port-test-windows-amd64.exe"
+else
+  wget -O server-port-test-windows-amd64.exe "$SERVER_PORT_TEST_RELEASE_BASE/server-port-test-windows-amd64.exe"
+fi
+]]></pre_install>
+    </windows>
+    <linux arch="x64">
+      <exe>server-port-test-linux-amd64.sh</exe>
+      <pre_install><![CDATA[
+# TODO: Replace this placeholder with the final server-port-test release endpoint.
+SERVER_PORT_TEST_RELEASE_BASE="${SERVER_PORT_TEST_RELEASE_BASE:-https://example.invalid/runlevel/server-port-test/releases/latest/download}"
+rm -f server-port-test-linux-amd64.sh
+if command -v curl >/dev/null 2>&1; then
+  curl -fL -o server-port-test-linux-amd64.sh "$SERVER_PORT_TEST_RELEASE_BASE/server-port-test-linux-amd64.sh"
+else
+  wget -O server-port-test-linux-amd64.sh "$SERVER_PORT_TEST_RELEASE_BASE/server-port-test-linux-amd64.sh"
+fi
+chmod +x server-port-test-linux-amd64.sh
+]]></pre_install>
+    </linux>
+  </os>
+  <cli_template>%GAME_TYPE% %IP% %PORT%</cli_template>
+  <cli_params>
+    <cli_param id="GAME_TYPE" cli_string="--"/>
+    <cli_param id="IP" cli_string="--ip" options="s"/>
+    <cli_param id="PORT" cli_string="--port" options="s"/>
+  </cli_params>
+  <mods>
+    <mod key="server">
+      <name>Server</name>
+    </mod>
+  </mods>
+</game_config>

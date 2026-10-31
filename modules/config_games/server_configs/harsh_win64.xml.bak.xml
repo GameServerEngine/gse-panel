@@ -1,22 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
 <game_config>
-  <game_key>harsh_win64</game_key>
+  <game_key>harsh_win64.xml.bak</game_key>
   <installer>steamcmd</installer>
   <game_name>Operation Harsh Doorstep</game_name>
-  <server_exec_name>HarshDoorstop\Binaries\Win64\HarshDoorstopServer-Win64-Shipping.exe</server_exec_name>
- <query_port type="add">1</query_port>
+  <os>
+    <linux>
+      <exe>HarshDoorstop\Binaries\Win64\HarshDoorstopServer-Win64-Shipping.exe</exe>
+    </linux>
+  </os>
+  <query_port type="add">1</query_port>
   <cli_template>%SERVERNAME% %PASSWORD%</cli_template>
   <cli_params>
-    <cli_param id="IP" cli_string="-ip=" />
-    <cli_param id="PORT" cli_string="-port=" />
+    <cli_param id="IP" cli_string="-ip="/>
+    <cli_param id="PORT" cli_string="-port="/>
   </cli_params>
-<reserve_ports>
-	<port type="add" id="STEAM_PORT" cli_string="-STEAMport=">1</port>
-	<port type="add" id="RCON_PORT" cli_string="-RCONport=">2</port>
-	<port type="add" id="RCON_PORT" cli_string="-RCONport=">3</port>
-</reserve_ports>
+  <reserve_ports>
+    <port type="add" id="STEAM_PORT" cli_string="-STEAMport=">1</port>
+    <port type="add" id="RCON_PORT" cli_string="-RCONport=">2</port>
+    <port type="add" id="RCON_PORT" cli_string="-RCONport=">3</port>
+  </reserve_ports>
   <cli_allow_chars>@;[]-_.</cli_allow_chars>
-
-<console_log>harsh.log</console_log>
+  <console_log>harsh.log</console_log>
   <max_user_amount>64</max_user_amount>
   <control_protocol>armabe</control_protocol>
   <mods>
@@ -27,7 +31,6 @@
     </mod>
   </mods>
   <replace_texts>
-
     <text key="query_port">
       <default>(steamQueryPort\s*=\s*)(.*)(;)</default>
       <var>steamQueryPort = %key%;</var>
@@ -40,38 +43,31 @@
       <filepath>serverDZ.cfg</filepath>
       <options>key-regex</options>
     </text>
-
-
   </replace_texts>
   <server_params>
-<param id="SERVERNAME" key="-ServerName=" type="text">
-<default>My Server</default>
-<option>q</option>
- <caption>Server Name</caption>
- <desc>Shown in server browser</desc>
- </param>
-
-<param id="PASSWORD" key="-password=" type="text">
-<option>q</option>
- <caption>Server Password</caption>
- <desc>Required to join server</desc>
- </param>
-
+    <param id="SERVERNAME" key="-ServerName=" type="text">
+      <default>My Server</default>
+      <option>q</option>
+      <caption>Server Name</caption>
+      <desc>Shown in server browser</desc>
+    </param>
+    <param id="PASSWORD" key="-password=" type="text">
+      <option>q</option>
+      <caption>Server Password</caption>
+      <desc>Required to join server</desc>
+    </param>
   </server_params>
-<post_install>
+  <post_install>
 </post_install>
-<pre_start>
+  <pre_start>
 </pre_start>
-
-<lock_files>
+  <lock_files>
 DayZServer_x64.exe
 </lock_files>
-
-<configuration_files>
- <file description="Game.ini">\HarshDoorstop\Saved\Config\WindowsServer\game.ini</file>
- <file description="Engine.ini" >\HarshDoorstop\Saved\Config\WindowsServer\engine.ini</file>
- <file description="Mapcycle.cfg" >\HarshDoorstop\Saved\Config\WindowsServer\mapcycle.cfg</file>
- <file description="Admins.cfg" >\HarshDoorstop\Saved\Config\WindowsServer\admins.cfg</file>
-
- </configuration_files>
+  <configuration_files>
+    <file description="Game.ini">\HarshDoorstop\Saved\Config\WindowsServer\game.ini</file>
+    <file description="Engine.ini">\HarshDoorstop\Saved\Config\WindowsServer\engine.ini</file>
+    <file description="Mapcycle.cfg">\HarshDoorstop\Saved\Config\WindowsServer\mapcycle.cfg</file>
+    <file description="Admins.cfg">\HarshDoorstop\Saved\Config\WindowsServer\admins.cfg</file>
+  </configuration_files>
 </game_config>

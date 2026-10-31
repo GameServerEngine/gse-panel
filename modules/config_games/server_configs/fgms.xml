@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<game_config>
+  <game_key>fgms</game_key>
+  <game_name>FlightGear Multiplayer Server</game_name>
+  <os>
+    <linux arch="x86">
+      <exe>fgms</exe>
+    </linux>
+  </os>
+  <max_user_amount>64</max_user_amount>
+  <mods>
+    <mod key="fgms">
+      <name>None</name>
+    </mod>
+  </mods>
+  <replace_texts>
+    <text key="port">
+      <default>server.port = .*</default>
+      <var>server.port = </var>
+      <filepath>fgms.conf</filepath>
+      <options/>
+    </text>
+    <text key="ip">
+      <default>server.address = .*</default>
+      <var>server.address = </var>
+      <filepath>fgms.conf</filepath>
+      <options/>
+    </text>
+  </replace_texts>
+</game_config>

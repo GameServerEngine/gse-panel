@@ -107,7 +107,7 @@ function exec_gsp_module()
 	//get used custom value or get default
 	$custom_fields = json_decode($db->getCustomFields($home_id), True);
 
-	$server_xml = read_server_config(SERVER_CONFIG_LOCATION.$home_info['home_cfg_file']);
+	$server_xml = read_server_config(SERVER_CONFIG_LOCATION.$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
 
 	include_once('includes/lib_remote.php');
 	$remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);

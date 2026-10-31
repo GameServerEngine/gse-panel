@@ -215,7 +215,7 @@ function get_action_selector($action = false, $server_homes = false, $homeid_ip_
 	$server_actions = array('restart','stop','start');
 	if($server_homes and $homeid_ip_port)
 	{
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_homes[$homeid_ip_port]['home_cfg_file']);
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_homes[$homeid_ip_port]['home_cfg_file'], gsp_os_for_install_row($server_homes[$homeid_ip_port]));
 		if( $server_xml->installer == "steamcmd" )
 			$server_actions[] = 'steam_auto_update';
 	}

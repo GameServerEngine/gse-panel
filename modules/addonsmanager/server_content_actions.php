@@ -151,7 +151,7 @@ function server_content_resolve_script_path(array $home_info, $script_key, array
 	if (isset($options['script_path'])) {
 		$script_path = trim((string)$options['script_path']);
 	}
-	$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file']);
+	$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
 	if ($server_xml === false) {
 		return array(false, false);
 	}
@@ -257,7 +257,7 @@ function server_content_install_updates($home_id, $options = array())
 	}
 
 	if (!empty($workshop_ids)) {
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file']);
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
 		if ($server_xml === false) {
 			return server_content_result('failed', 'Unable to load server XML configuration for Workshop update.');
 		}
@@ -406,7 +406,7 @@ function server_content_restart_home($home_id, $options = array())
 	if ($home_info === false) {
 		return server_content_result('failed', 'Invalid server home.');
 	}
-	$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file']);
+	$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
 	if ($server_xml === false) {
 		return server_content_result('failed', 'Could not load server XML for restart.');
 	}

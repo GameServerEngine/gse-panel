@@ -218,7 +218,7 @@ function exec_gsp_module()
 									$postcmd = $game_mod_postcmd[0]['postcmd'];
 
 								$home_info = $db->getGameHome($home_id);
-								$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file']);
+								$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
 								$path_error = '';
 								$home_info = gsp_with_game_root($home_info, $server_xml, $path_error);
 								if ($home_info === false) {
@@ -499,7 +499,7 @@ function exec_gsp_module()
 		elseif( ! isset( $_POST['max_players'] ) )
 		{
 			$cfg_info = $db->resultQuery("SELECT DISTINCT home_cfg_file FROM GSP_DB_PREFIXconfig_homes WHERE home_cfg_id=" . $_POST['home_cfg_id']);
-			$server_xml = read_server_config(SERVER_CONFIG_LOCATION.$cfg_info[0]['home_cfg_file']);
+			$server_xml = read_server_config(SERVER_CONFIG_LOCATION.$cfg_info[0]['home_cfg_file'], gsp_os_for_install_row($cfg_info[0]));
 
 			if( isset( $server_xml->installer )  )
 			{

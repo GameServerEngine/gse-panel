@@ -32,7 +32,7 @@ function exec_gsp_module()
 	echo "<p class='info'>". get_lang("extra_cmd_line_info") ."</p>\n";
 	$enabled_mods = $db->getHomeMods($home_id);
 	$home_info = $db->getGameHomeWithoutMods($home_id);
-	$server_xml = read_server_config(SERVER_CONFIG_LOCATION.$home_info['home_cfg_file']);
+	$server_xml = read_server_config(SERVER_CONFIG_LOCATION.$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
 	$remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'], $home_info['timeout']);
 	if( empty($enabled_mods) )
 	{

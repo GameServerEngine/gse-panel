@@ -1,7 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
 <game_config>
-  <game_key>enemyterritory_linux32</game_key>
+  <game_key>wolfet</game_key>
   <game_name>Wolfenstein: Enemy Territory</game_name>
-  <server_exec_name>etded</server_exec_name>
+  <os>
+    <linux>
+      <exe>etded</exe>
+    </linux>
+  </os>
   <cli_template>+set dedicated 2 %GAME_TYPE% %IP% %PORT% %PLAYERS% %MAP%</cli_template>
   <cli_params>
     <cli_param id="MAP" cli_string="+map" options="s"/>
@@ -27,24 +32,24 @@
     <mod key="jaymod">
       <name>Jaymod</name>
     </mod>
-	<mod key="nq">
+    <mod key="nq">
       <name>No Quarter</name>
     </mod>
   </mods>
   <server_params>
     <param key="+set sv_punkbuster 1" type="checkbox_key_value">
-	  <default>0</default>
+      <default>0</default>
       <caption>Enable PunkBuster(r)</caption>
       <desc>Will start the server with PunkBuster(r) Anti-Cheat technology.</desc>
     </param>
-<!-- We do not need a param to disable PB. Either the param above is set, which enables PB or it is not set, which disables PB
+    <!-- We do not need a param to disable PB. Either the param above is set, which enables PB or it is not set, which disables PB
      <param key="+set sv_punkbuster 0" type="checkbox_key_value">
 	  <default>1</default>
       <caption>Disable PunkBuster(r)</caption>
       <desc>Will start the server without PunkBuster(r) Anti-Cheat technology.</desc>
     </param> -->
     <param key="+set vm_game 0" type="checkbox_key_value">
-	  <default>1</default>
+      <default>1</default>
       <caption>No virtual environment</caption>
       <desc>The server starts without a virtual environment.</desc>
     </param>

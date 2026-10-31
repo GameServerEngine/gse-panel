@@ -1,15 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
 <game_config>
-  <game_key>hidden_source_linux32</game_key>
+  <game_key>hidden_source</game_key>
   <game_name>Hidden: Source</game_name>
-  <server_exec_name>srcds_run</server_exec_name>
+  <os>
+    <linux>
+      <exe>srcds_run</exe>
+    </linux>
+  </os>
   <cli_template>%GAME_TYPE% %PID_FILE% %MAP% %IP% %PORT% %PLAYERS%</cli_template>
   <cli_params>
-    <cli_param id="PID_FILE" cli_string="-pidfile" options="s" />
-    <cli_param id="MAP" cli_string="+map" options="s" />
-    <cli_param id="IP" cli_string="+ip" options="s" />
-    <cli_param id="PORT" cli_string="+port" options="s" />
-    <cli_param id="PLAYERS" cli_string="+maxplayers" options="s" />
-    <cli_param id="GAME_TYPE" cli_string="-game" options="s" />
+    <cli_param id="PID_FILE" cli_string="-pidfile" options="s"/>
+    <cli_param id="MAP" cli_string="+map" options="s"/>
+    <cli_param id="IP" cli_string="+ip" options="s"/>
+    <cli_param id="PORT" cli_string="+port" options="s"/>
+    <cli_param id="PLAYERS" cli_string="+maxplayers" options="s"/>
+    <cli_param id="GAME_TYPE" cli_string="-game" options="s"/>
   </cli_params>
   <maps_location>mod/maps/</maps_location>
   <map_list>mod/mapcycle.txt</map_list>
@@ -66,7 +71,7 @@
       <options>s</options>
       <desc>Max bandwidth rate allowed on server ( bytes per second ), 0 == unlimited.</desc>
     </field>
-	<field key="sv_minrate" type="text">
+    <field key="sv_minrate" type="text">
       <default>sv_minrate.*</default>
       <default_value>5000</default_value>
       <var>sv_minrate</var>
@@ -80,7 +85,7 @@
       <var>sv_maxcmdrate</var>
       <filepath>hiddensource/cfg/server.cfg</filepath>
       <options>s</options>
-      <desc>If sv_mincmdrate is > 0, this sets the maximum value for cl_cmdrate.</desc>
+      <desc>If sv_mincmdrate is &gt; 0, this sets the maximum value for cl_cmdrate.</desc>
     </field>
     <field key="sv_mincmdrate" type="text">
       <default>sv_mincmdrate.*</default>
@@ -115,21 +120,21 @@
   </player_info>
   <player_commands>
     <command key="Kick" type="hidden">
-	  <string>kick "%Name%"</string>
-	</command>
+      <string>kick "%Name%"</string>
+    </command>
     <command key="Ban" type="select">
-	  <option value="0">Permanent</option>
-	  <option value="15">15m</option>
-	  <option value="30">30m</option>
+      <option value="0">Permanent</option>
+      <option value="15">15m</option>
+      <option value="30">30m</option>
       <option value="60">1h</option>
-	  <option value="1440">1D</option>
-	  <option value="10080">1W</option>
-	  <option value="43200">30D</option>
-	  <string>banid %input% %userid% kick</string>
-	</command>
-	<command key="Change Nick" type="text">
-	  <default>new nick</default>
-	  <string>sm_rename #%userid% "%input%"</string>
-	</command>
+      <option value="1440">1D</option>
+      <option value="10080">1W</option>
+      <option value="43200">30D</option>
+      <string>banid %input% %userid% kick</string>
+    </command>
+    <command key="Change Nick" type="text">
+      <default>new nick</default>
+      <string>sm_rename #%userid% "%input%"</string>
+    </command>
   </player_commands>
 </game_config>
