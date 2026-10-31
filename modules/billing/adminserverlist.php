@@ -345,63 +345,6 @@ function sort_link_params(string $column, string $sort, string $dir, string $gam
 }
 
 /* -----------------------------------------------------------------------
-   SAVE: per-server OS / city / install-enabled settings
------------------------------------------------------------------------ */
-$serverSettingsCsrfKey = 'billing_adminserverlist_servers_csrf';
-if (isset($_POST['save_server_settings'])) {
-    if (!billing_action_validate_csrf($_POST['csrf_servers'] ?? '', $serverSettingsCsrfKey)) {
-        $flashType = 'err';
-        $flash[] = 'Invalid security token. Reload the page and try again.';
-    } else {
-        $validCityIds = [];
-        $cityRes = $db->query(
-            "SELECT location_id FROM `{$table_prefix}billing_locations` WHERE kind = 'city' AND enabled = 1"
-        );
-        while ($cityRes && ($cityRow = $cityRes->fetch_assoc())) {
-            $validCityIds[(int)$cityRow['location_id']] = true;
-        }
-
-        $postedServerSettings = (array)($_POST['server'] ?? []);
-        $serverSettingsUpdated = 0;
-        foreach ($postedServerSettings as $rsid => $data) {
-            $rsid = (int)$rsid;
-            if ($rsid <= 0) {
-                continue;
-            }
-            $serverOs = (string)($data['server_os'] ?? 'linux');
-            if (!in_array($serverOs, ['linux', 'windows', 'any'], true)) {
-                $serverOs = 'linux';
-            }
-            $locationIdRaw = (int)($data['location_id'] ?? 0);
-            $locationId = isset($validCityIds[$locationIdRaw]) ? $locationIdRaw : null;
-            $installEnabled = isset($data['install_enabled']) ? 1 : 0;
-
-            $stmt = $db->prepare(
-                "UPDATE `{$table_prefix}remote_servers`
-                 SET server_os = ?, location_id = ?, install_enabled = ?
-                 WHERE remote_server_id = ?"
-            );
-            if ($stmt) {
-                $stmt->bind_param('siii', $serverOs, $locationId, $installEnabled, $rsid);
-                $stmt->execute();
-                $stmt->close();
-                $serverSettingsUpdated++;
-            }
-        }
-
-        if ($serverSettingsUpdated > 0) {
-            $flash[] = "{$serverSettingsUpdated} remote server row(s) saved.";
-        } else {
-            $flashType = 'err';
-            $flash[] = 'No remote server rows were updated.';
-        }
-    }
-    $_SESSION['billing_adminserverlist_flash'] = ['type' => $flashType, 'messages' => $flash];
-    header("Location: /adminserverlist.php?{$sortQuery}");
-    exit;
-}
-
-/* -----------------------------------------------------------------------
    SAVE: placement headroom thresholds (billing_config, global row)
 ----------------------------------------------------------------------- */
 $headroomCsrfKey = 'billing_adminserverlist_headroom_csrf';
@@ -560,16 +503,6 @@ while ($rsRes && ($row = $rsRes->fetch_assoc())) {
     $remoteServers[] = $row;
 }
 
-$cityLocations = [];
-$cityListRes = $db->query(
-    "SELECT location_id, name FROM `{$table_prefix}billing_locations`
-     WHERE kind = 'city' AND enabled = 1
-     ORDER BY name"
-);
-while ($cityListRes && ($row = $cityListRes->fetch_assoc())) {
-    $cityLocations[] = $row;
-}
-
 $headroom = ['headroom_cpu_pct' => 70, 'headroom_ram_pct' => 70, 'headroom_disk_pct' => 85];
 $headroomRes = $db->query(
     "SELECT headroom_cpu_pct, headroom_ram_pct, headroom_disk_pct
@@ -583,7 +516,6 @@ if ($headroomRes && ($headroomRow = $headroomRes->fetch_assoc())) {
     ];
 }
 
-$serverSettingsCsrf = billing_action_csrf_token($serverSettingsCsrfKey);
 $headroomCsrf        = billing_action_csrf_token($headroomCsrfKey);
 
 $services = [];
@@ -641,70 +573,6 @@ if (!empty($services)) {
 <?php foreach (array_merge((array)$syncMessages, (array)$flash) as $msg): ?>
   <div class="flash-<?php echo $flashType; ?>"><?php echo h($msg); ?></div>
 <?php endforeach; ?>
-
-<h2>Remote Server Settings</h2>
-<p class="muted">
-    Set each remote server's operating system, its city (used for region/distance placement),
-    and whether automatic game installs are allowed on it.
-</p>
-<?php if (empty($remoteServers)): ?>
-  <p>No remote servers configured.</p>
-<?php else: ?>
-<form method="post" action="">
-  <input type="hidden" name="save_server_settings" value="1">
-  <input type="hidden" name="csrf_servers" value="<?php echo h($serverSettingsCsrf); ?>">
-  <div style="overflow-x:auto;">
-  <table class="svc-table">
-    <thead>
-      <tr>
-        <th class="game-name">Server</th>
-        <th>OS</th>
-        <th>City</th>
-        <th>Install Enabled</th>
-      </tr>
-    </thead>
-    <tbody>
-    <?php foreach ((array)$remoteServers as $rs):
-      $rsid       = (int)$rs['remote_server_id'];
-      $rsOs       = (string)($rs['server_os'] ?? 'linux');
-      $rsLocation = (int)($rs['location_id'] ?? 0);
-      $rsInstall  = (int)($rs['install_enabled'] ?? 1);
-    ?>
-      <tr>
-        <td class="game-name"><?php echo h($rs['remote_server_name']); ?> <span class="muted">(#<?php echo $rsid; ?>)</span></td>
-        <td>
-          <select name="server[<?php echo $rsid; ?>][server_os]">
-            <option value="linux"   <?php echo $rsOs === 'linux'   ? 'selected' : ''; ?>>Linux</option>
-            <option value="windows" <?php echo $rsOs === 'windows' ? 'selected' : ''; ?>>Windows</option>
-            <option value="any"     <?php echo $rsOs === 'any'     ? 'selected' : ''; ?>>Any</option>
-          </select>
-        </td>
-        <td>
-          <select name="server[<?php echo $rsid; ?>][location_id]">
-            <option value="">— none —</option>
-            <?php foreach ((array)$cityLocations as $city): ?>
-              <option value="<?php echo (int)$city['location_id']; ?>"
-                <?php echo ($rsLocation === (int)$city['location_id']) ? 'selected' : ''; ?>>
-                <?php echo h($city['name']); ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
-        </td>
-        <td style="text-align:center;">
-          <input type="hidden"   name="server[<?php echo $rsid; ?>][install_enabled]" value="0">
-          <input type="checkbox" name="server[<?php echo $rsid; ?>][install_enabled]" value="1"
-                 <?php echo $rsInstall ? 'checked' : ''; ?>>
-        </td>
-      </tr>
-    <?php endforeach; ?>
-    </tbody>
-  </table>
-  </div>
-  <div style="margin-top:14px;">
-    <button type="submit" class="btn-save-all">Save Server Settings</button>
-  </div>
-</form>
-<?php endif; ?>
 
 <h2 style="margin-top:28px;">Placement Headroom</h2>
 <p class="muted">
