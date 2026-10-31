@@ -350,6 +350,7 @@
       <xs:element name="game_name" type="nonEmptyString" />
       <xs:element name="workshop_support" type="workshop_support_type" minOccurs="0" />
       <xs:element name="server_exec_name" type="nonEmptyString" />
+      <xs:element name="os" type="os_type" minOccurs="0" />
       <xs:element name="query_port" type="query_port_type" minOccurs="0" />
       <xs:element name="cli_template" type="nonEmptyString" minOccurs="0" />
       <xs:element name="cli_params" type="cli_params_type" minOccurs="0" />
@@ -377,6 +378,32 @@
       <xs:element name="environment_variables" type="nonEmptyString" minOccurs="0" />
       <xs:element name="lock_files" type="nonEmptyString" minOccurs="0" />
       <xs:element name="configuration_files" type="configuration_files_type" minOccurs="0" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:simpleType name="os_arch_type">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="x86" />
+      <xs:enumeration value="x64" />
+    </xs:restriction>
+  </xs:simpleType>
+  <!-- One block per operating system the game can run on. A child is present only when the game
+  supports that OS. exe is required; the other children are optional and add more options as needed. -->
+  <xs:complexType name="os_platform_type">
+    <xs:sequence>
+      <xs:element name="exe" type="nonEmptyString" />
+      <xs:element name="exe_location" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="cli_template" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="pre_install" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="post_install" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="environment_variables" type="nonEmptyString" minOccurs="0" />
+      <xs:element name="lock_files" type="nonEmptyString" minOccurs="0" />
+    </xs:sequence>
+    <xs:attribute name="arch" type="os_arch_type" use="optional" default="x64" />
+  </xs:complexType>
+  <xs:complexType name="os_type">
+    <xs:sequence>
+      <xs:element name="windows" type="os_platform_type" minOccurs="0" />
+      <xs:element name="linux" type="os_platform_type" minOccurs="0" />
     </xs:sequence>
   </xs:complexType>
 </xs:schema>
