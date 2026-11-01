@@ -18,6 +18,7 @@
 require_once(__DIR__ . '/includes/admin_auth.php');
 require_once(__DIR__ . '/includes/config_loader.php');
 require_once(__DIR__ . '/includes/action_security.php');
+require_once(__DIR__ . '/includes/paypal_credentials.php');
 include(__DIR__ . '/includes/top.php');
 include(__DIR__ . '/includes/menu.php');
 
@@ -116,16 +117,6 @@ function billing_admin_build_config(string $existingContent, array $vals): strin
     $dataDir   = trim($vals['SITE_DATA_DIR'] ?? '');
     $wh_path   = '/' . ltrim(trim($vals['paypal_webhook_path'] ?? '/paypal/webhook.php'), '/');
 
-    // Sandbox credentials — never erase existing secret if field was left blank
-    $sb_id     = trim($vals['paypal_sandbox_client_id']     ?? '');
-    $sb_sec    = trim($vals['paypal_sandbox_client_secret'] ?? '');
-    $sb_wh     = trim($vals['paypal_sandbox_webhook_id']    ?? '');
-
-    // Live credentials — never erase existing secret if field was left blank
-    $lv_id     = trim($vals['paypal_live_client_id']        ?? '');
-    $lv_sec    = trim($vals['paypal_live_client_secret']    ?? '');
-    $lv_wh     = trim($vals['paypal_live_webhook_id']       ?? '');
-
     $dbBlock = '';
     foreach (['db_host', 'db_port', 'db_user', 'db_pass', 'db_name', 'table_prefix', 'db_type'] as $var) {
         if (isset($dbLines[$var])) {
@@ -159,20 +150,9 @@ function billing_admin_build_config(string $existingContent, array $vals): strin
         . '// Data directory for persisted payment webhook JSON files.' . "\n"
         . $dataDirLine . "\n"
         . "\n"
-        . '// ---------------------------------------------------------------------------' . "\n"
-        . '// PayPal configuration' . "\n"
-        . '// ---------------------------------------------------------------------------' . "\n"
+        . '// PayPal credentials are stored encrypted in the billing database.' . "\n"
+        . '// The legacy config values, when present, are read-only fallbacks.' . "\n"
         . '$paypal_mode = ' . $q($mode) . ';  // \'sandbox\' or \'live\'' . "\n"
-        . "\n"
-        . '// Sandbox credentials (PayPal Developer Dashboard → sandbox app)' . "\n"
-        . '$paypal_sandbox_client_id     = ' . $q($sb_id) . ';' . "\n"
-        . '$paypal_sandbox_client_secret = ' . $q($sb_sec) . ';' . "\n"
-        . '$paypal_sandbox_webhook_id    = ' . $q($sb_wh) . ';' . "\n"
-        . "\n"
-        . '// Live credentials (leave blank until ready for production)' . "\n"
-        . '$paypal_live_client_id     = ' . $q($lv_id) . ';' . "\n"
-        . '$paypal_live_client_secret = ' . $q($lv_sec) . ';' . "\n"
-        . '$paypal_live_webhook_id    = ' . $q($lv_wh) . ';' . "\n"
         . "\n"
         . '// Webhook path (relative to billing site root, must start with /)' . "\n"
         . '// Full public URL = $SITE_BASE_URL + $paypal_webhook_path' . "\n"
@@ -192,10 +172,10 @@ $cfgVals = [
     'SITE_DATA_DIR'                  => $SITE_DATA_DIR           ?? '',
     'paypal_mode'                    => $paypal_mode             ?? 'sandbox',
     'paypal_sandbox_client_id'       => $paypal_sandbox_client_id       ?? '',
-    'paypal_sandbox_client_secret'   => $paypal_sandbox_client_secret   ?? '',
+    'paypal_sandbox_client_secret'   => '',
     'paypal_sandbox_webhook_id'      => $paypal_sandbox_webhook_id      ?? '',
     'paypal_live_client_id'          => $paypal_live_client_id          ?? '',
-    'paypal_live_client_secret'      => $paypal_live_client_secret      ?? '',
+    'paypal_live_client_secret'      => '',
     'paypal_live_webhook_id'         => $paypal_live_webhook_id         ?? '',
     'paypal_webhook_path'            => $paypal_webhook_path            ?? '/paypal/webhook.php',
     'backup_retention'               => $SITE_CONFIG_BACKUP_RETENTION   ?? 5,

@@ -45,7 +45,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   </ul>
 
   <h3>Sandbox account (testing)</h3>
-  <p>Use PayPal sandbox credentials when testing payments. Set your sandbox <code>client_id</code> and <code>client_secret</code> in <code>modules/billing/includes/config.inc.php</code> (the <code>$paypal_client_id</code> and <code>$paypal_client_secret</code> variables). Set <code>$paypal_sandbox = false</code> for live payments.</p>
+  <p>Use PayPal sandbox credentials when testing payments. Enter the client ID, client secret, webhook ID, and mode on the <a href="admin_config.php">Config page</a>. Secrets are stored encrypted in the billing database.</p>
   <ul>
     <li>Create a sandbox business account at <a href="https://developer.paypal.com">PayPal Developer</a> and obtain a sandbox client ID/secret.</li>
     <li>Update the payment handler config and restart the webserver if required.</li>
@@ -57,7 +57,7 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   <ol>
     <li>User adds an item and proceeds to checkout (<code>_website/cart.php</code>).</li>
     <li>The checkout page renders the PayPal JS SDK and calls server-side endpoints (create_order/capture_order).</li>
-  <li>After a successful capture, PayPal sends a webhook event to <code>_website/webhook.php</code> (or the equivalent handler under <code>_website/api/</code>).</li>
+    <li>After a successful capture, PayPal sends a webhook event to <code>modules/billing/paypal/webhook.php</code>.</li>
     <li>The webhook verifies the signature, fetches any missing order details, and writes a JSON record to the <code>data/</code> directory (this powers <code>invoices.php</code> and <code>return.php</code>).</li>
     <li>On successful payment we mark the order as PAID in the JSON and the site UI (invoices/returns) reads those JSONs to render receipts.</li>
     <li>Admin pages can view invoices at <code>./invoices.php</code> and reconcile or trigger further provisioning via internal panel APIs.</li>
