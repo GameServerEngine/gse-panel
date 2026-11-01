@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/includes/brand.php'; ?>
 <?php
 require_once __DIR__ . '/includes/login_required.php';
 require_once __DIR__ . '/includes/action_security.php';

@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/brand.php'; ?>
 <?php
 /**
  * Navigation Menu for GameServers.World Website

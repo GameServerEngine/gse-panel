@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/brand.php'; ?>
 <?php
 // Simple footer include
 require_once(dirname(__DIR__) . '/billing_bootstrap.php');

@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/includes/brand.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>

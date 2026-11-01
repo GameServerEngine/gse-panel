@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/includes/brand.php'; ?>
 <?php
 /**
  * Shopping Cart - Rebuilt from scratch for reliability

@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/includes/brand.php'; ?>
 <?php
 session_name("gameserverpanel_web");
 session_start();
