@@ -66,7 +66,7 @@ Commit
 
 Hash
 
-`317031e4` (amended after recording this history entry)
+The commit was amended after this record was created; the final SHA is reported in the task handoff.
 
 ## Remaining Work
 
