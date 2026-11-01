@@ -8,10 +8,31 @@
 class BillingLifecycleService
 {
     private $repo;
+    private $runtimeStarter;
 
-    public function __construct($repo)
+    public function __construct($repo, ?callable $runtimeStarter = null)
     {
         $this->repo = $repo;
+        $this->runtimeStarter = $runtimeStarter;
+    }
+
+    private function restartBillingSuspendedHome(int $homeId, array $home): bool
+    {
+        if (empty($home['billing_suspended']) || empty($home['billing_enabled'])) return true;
+        if ($this->runtimeStarter) {
+            if (!(($this->runtimeStarter)($homeId))) return false;
+            $this->repo->updateServerHomeBilling($homeId, ['billing_suspended' => 0]);
+            return true;
+        }
+        if (!isset($GLOBALS['db'])) return true;
+        require_once dirname(__DIR__, 2) . '/gamemanager/home_handling_functions.php';
+        $db = $GLOBALS['db'];
+        $started = true;
+        foreach ((array)$db->getHomeIpPorts($homeId) as $address) {
+            if (!exec_operation('start', $homeId, (int)($address['force_mod_id'] ?? 0), $address['ip'], $address['port'], true)) $started = false;
+        }
+        if ($started) $this->repo->updateServerHomeBilling($homeId, ['billing_suspended' => 0]);
+        return $started;
     }
 
     public static function durationMeta(array $row): array
@@ -57,6 +78,12 @@ class BillingLifecycleService
             return null;
         }
         return date('Y-m-d H:i:s', $ts);
+    }
+
+    public static function shouldSendExpiryReminder(array $home, string $expiryDate): bool
+    {
+        return !empty($home['billing_enabled']) && empty($home['cancel_at_expiry'])
+            && (($home['billing_reminder_sent_for'] ?? null) !== $expiryDate);
     }
 
     public static function resolvePaidThroughDate(array $invoice, ?array $order = null, ?array $home = null, ?string $paidAt = null): string
@@ -215,6 +242,7 @@ class BillingLifecycleService
                 ])) {
                     throw new RuntimeException('home_billing_update_failed');
                 }
+                $this->restartBillingSuspendedHome($homeId, $home);
             }
 
             $transactionId = $this->repo->logTransaction([

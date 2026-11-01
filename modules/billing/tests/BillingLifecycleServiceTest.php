@@ -171,7 +171,11 @@ function assertTrueValue($actual, string $message): void
 }
 
 $repo = new FakeLifecycleRepository();
-$svc = new BillingLifecycleService($repo);
+$restartCalls = [];
+$svc = new BillingLifecycleService($repo, function (int $homeId) use (&$restartCalls): bool {
+    $restartCalls[] = $homeId;
+    return true;
+});
 
 // Initial paid checkout to Active order.
 $repo->invoices[1] = [
@@ -187,7 +191,7 @@ assertSameValue('paid', $repo->invoices[1]['payment_status'], 'invoice payment t
 assertSameValue('Active', $repo->orders[$paid['order_id']]['status'], 'new order is Active for provisioning');
 
 // Provisioning linkage.
-$repo->homes[55] = ['home_id' => 55, 'billing_status' => 'Active', 'last_invoice_id' => 0];
+$repo->homes[55] = ['home_id' => 55, 'billing_status' => 'Active', 'billing_enabled' => 1, 'billing_suspended' => 1, 'last_invoice_id' => 0];
 $linked = $svc->activateOrderProvisioning((int)$paid['order_id'], 55, ['end_date' => '2026-08-01 00:00:00']);
 assertTrueValue($linked['success'], 'provisioning linkage succeeds');
 assertSameValue(55, (int)$repo->invoices[1]['home_id'], 'invoice home_id linked');
@@ -208,6 +212,16 @@ $renewalId = (int)$renewal['invoice_id'];
 $renewPaid = $svc->processPaidInvoice($renewalId, ['transaction_external_id' => 'tx-renew', 'amount' => 12.00, 'paid_at' => '2026-08-02 00:00:00']);
 assertTrueValue($renewPaid['success'], 'renewal payment succeeds');
 assertSameValue($repo->invoices[$renewalId]['period_end'], $repo->homes[55]['next_invoice_date'], 'renewal extends to invoice period_end');
+assertSameValue([55], $restartCalls, 'payment restarts billing-suspended home');
+assertSameValue(0, $repo->homes[55]['billing_suspended'], 'payment clears billing suspension');
+
+// A manually stopped home is not marked billing-suspended and is never restarted.
+$repo->homes[56] = ['home_id' => 56, 'billing_status' => 'Invoiced', 'billing_enabled' => 1, 'billing_suspended' => 0];
+$repo->invoices[560] = ['invoice_id' => 560, 'order_id' => 0, 'user_id' => 56, 'home_id' => 56, 'payment_status' => 'unpaid', 'billing_status' => 'Invoiced', 'period_end' => '2026-10-01 00:00:00', 'invoice_duration' => 'month'];
+$svc->processPaidInvoice(560, ['transaction_external_id' => 'tx-manual', 'amount' => 1.00, 'paid_at' => '2026-09-01 00:00:00']);
+assertSameValue([55], $restartCalls, 'manual stop is not restarted by billing');
+assertTrueValue(BillingLifecycleService::shouldSendExpiryReminder(['billing_enabled' => 1, 'cancel_at_expiry' => 0], '2026-10-01'), 'unsent expiry reminder is due');
+assertSameValue(false, BillingLifecycleService::shouldSendExpiryReminder(['billing_enabled' => 1, 'cancel_at_expiry' => 0, 'billing_reminder_sent_for' => '2026-10-01'], '2026-10-01'), 'expiry reminder is idempotent');
 
 // Restoration from Expired.
 $repo->homes[55]['billing_status'] = 'Expired';

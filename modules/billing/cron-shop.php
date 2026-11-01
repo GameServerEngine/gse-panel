@@ -55,6 +55,7 @@ require_once("modules/config_games/server_config_parser.php");
 require_once("includes/lib_remote.php");
 require_once("modules/billing/classes/BillingRepository.php");
 require_once("modules/billing/classes/BillingLifecycleService.php");
+require_once("modules/gamemanager/home_handling_functions.php");
 require_once(CONFIG_FILE);
 
 // Connect using the panel's DB helper (provides $db with logger(), resultQuery(), etc.)
@@ -93,6 +94,47 @@ $delete_after_days    = intval($global_cfg['delete_after_expired_days'] ?? 7);
 $default_rate_type    = $global_cfg['rate_type']                        ?? 'monthly';
 
 $db->logger("BILLING-CRON: Config => grace_days={$grace_days}, delete_after={$delete_after_days}, rate={$default_rate_type}");
+
+// Suspend immediately at expiry. The existing panel stop path is used so all
+// lifecycle/RPC handling remains identical to a user-initiated stop.
+$db->logger("BILLING-CRON: --- Step 0: suspend unpaid homes at expiry ---");
+$to_suspend = $db->resultQuery("SELECT sh.home_id FROM {$table_prefix}server_homes sh
+    WHERE sh.billing_enabled = 1 AND sh.billing_status = 'Invoiced'
+      AND sh.server_expiration_date IS NOT NULL AND sh.server_expiration_date < NOW()
+      AND COALESCE(sh.cancel_at_expiry, 0) = 0 AND COALESCE(sh.billing_suspended, 0) = 0
+      AND EXISTS (SELECT 1 FROM {$table_prefix}billing_invoices inv WHERE inv.invoice_id = sh.last_invoice_id
+                  AND inv.billing_status = 'Invoiced' AND inv.paid_date IS NULL)");
+foreach ((array)$to_suspend as $srv) {
+    $home_id = (int)$srv['home_id'];
+    $stopped = true;
+    $addresses = $db->getHomeIpPorts($home_id);
+    if (empty($addresses)) $stopped = false;
+    foreach ((array)$addresses as $addr) {
+        if (!exec_operation('stop', $home_id, (int)($addr['force_mod_id'] ?? 0), $addr['ip'], $addr['port'], true)) $stopped = false;
+    }
+    if ($stopped && $db->query("UPDATE {$table_prefix}server_homes SET billing_suspended = 1 WHERE home_id = {$home_id}")) {
+        $db->logger("BILLING-CRON: Step 0 - SUSPENDED home {$home_id}");
+    } else {
+        $db->logger("BILLING-CRON: Step 0 - FAILED home {$home_id}");
+    }
+}
+
+// One reminder per home and expiry date.
+$db->logger("BILLING-CRON: --- Step 0b: one-week expiry reminders ---");
+$reminders = $db->resultQuery("SELECT sh.home_id, sh.home_name, sh.server_expiration_date, u.users_email
+    FROM {$table_prefix}server_homes sh LEFT JOIN {$table_prefix}users u ON u.user_id = sh.user_id_main
+    WHERE sh.billing_enabled = 1 AND sh.billing_status = 'Active' AND COALESCE(sh.cancel_at_expiry, 0) = 0
+      AND DATE(sh.server_expiration_date) = DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+      AND (sh.billing_reminder_sent_for IS NULL OR sh.billing_reminder_sent_for <> DATE(sh.server_expiration_date))");
+foreach ((array)$reminders as $srv) {
+    $home_id = (int)$srv['home_id']; $expiry = date('Y-m-d', strtotime($srv['server_expiration_date']));
+    if (!empty($srv['users_email']) && mymail($srv['users_email'], 'Server expiry reminder - ' . ($srv['home_name'] ?? $home_id),
+        "Your server '{$srv['home_name']}' expires on " . date('F j, Y', strtotime($expiry)) . ". Please renew to keep it active.", $db->getSettings())) {
+        $safe = $db->realEscapeSingle($expiry);
+        $db->query("UPDATE {$table_prefix}server_homes SET billing_reminder_sent_for = '{$safe}' WHERE home_id = {$home_id}");
+        $db->logger("BILLING-CRON: Step 0b - reminder sent for home {$home_id} ({$expiry})");
+    }
+}
 
 // ======================================================================
 // STEP A - Active -> Invoiced

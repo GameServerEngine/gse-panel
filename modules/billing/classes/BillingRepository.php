@@ -577,7 +577,7 @@ class BillingRepository
             "SELECT home_id, home_name, user_id_main, billing_status, billing_expires_at,
                     billing_price, billing_rate_type, billing_players, billing_enabled,
                     next_invoice_date, server_expiration_date, billing_invoice_sent_at,
-                    last_invoice_id, cancel_at_expiry
+                    last_invoice_id, cancel_at_expiry, billing_suspended, billing_reminder_sent_for
              FROM `{$this->prefix}server_homes`
              WHERE home_id = ? LIMIT 1"
         );
@@ -596,7 +596,7 @@ class BillingRepository
             'billing_status', 'billing_expires_at', 'billing_price',
             'billing_rate_type', 'billing_players', 'billing_enabled',
             'next_invoice_date', 'server_expiration_date', 'billing_invoice_sent_at',
-            'last_invoice_id', 'cancel_at_expiry',
+            'last_invoice_id', 'cancel_at_expiry', 'billing_suspended', 'billing_reminder_sent_for',
         ];
         $set    = [];
         $params = [];

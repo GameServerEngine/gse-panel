@@ -211,6 +211,12 @@ $install_queries[1] = array(
     "SELECT 1"
 );
 
+// db_version 11 — explicit billing suspension and reminder idempotency.
+$install_queries[11] = array(
+    function($db) { $r=$db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='GSP_DB_PREFIXserver_homes' AND COLUMN_NAME='billing_suspended'"); return ($r && (int)$r[0]['cnt']>0) || (bool)$db->query("ALTER TABLE `GSP_DB_PREFIXserver_homes` ADD `billing_suspended` TINYINT(1) NOT NULL DEFAULT 0"); },
+    function($db) { $r=$db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='GSP_DB_PREFIXserver_homes' AND COLUMN_NAME='billing_reminder_sent_for'"); return ($r && (int)$r[0]['cnt']>0) || (bool)$db->query("ALTER TABLE `GSP_DB_PREFIXserver_homes` ADD `billing_reminder_sent_for` DATE NULL"); }
+);
+
 // -----------------------------------------------------------------------
 // db_version 2 — Safe idempotent column migrations for existing installs.
 // Each callable queries INFORMATION_SCHEMA to confirm the column is absent
