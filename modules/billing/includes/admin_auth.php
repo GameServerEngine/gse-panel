@@ -8,7 +8,7 @@ if (!function_exists('billing_is_panel_context')) {
     {
         return !empty($_SESSION['user_id'])
             && isset($_GET['m']) && $_GET['m'] === 'billing'
-            && basename((string)($_SERVER['PHP_SELF'] ?? '')) === 'index.php';
+            && in_array(basename((string)($_SERVER['PHP_SELF'] ?? '')), array('index.php', 'home.php'), true);
     }
 }
 
