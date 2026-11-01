@@ -4,7 +4,7 @@ The billing module is the customer storefront for game server hosting. It lives 
 
 ## Rebranding
 
-Change the name and company in `site_config.php` (not in git):
+Change the name and company in `site_config.local.php` (per install, not in git), or in `site_config.php` for a default that goes with the code:
 
 ```php
 'brand' => [
@@ -21,10 +21,10 @@ Anything not set falls back to the defaults in `includes/brand.php`. To change t
 |---|---|
 | `base_path` | Storefront base URL path |
 | `panel_path` | Path to the panel installation |
-| `paypal_key_file` | Encryption key for the stored PayPal secret. Keep it outside the web root, readable by the web server only. |
+| `paypal_key_file` (set in `site_config.local.php`) | Encryption key for the stored PayPal secret. Keep it outside the web root, readable by the web server only. |
 | `brand` | Name and company text (see above) |
 
-`site_config.example.php` lists the keys.
+`site_config.php` is tracked in git and holds the defaults. `site_config.local.php` is gitignored and overrides it on each install. `site_config.example.php` lists the keys.
 
 ## PayPal
 
