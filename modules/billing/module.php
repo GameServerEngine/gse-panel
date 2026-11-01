@@ -30,15 +30,8 @@ $module_required = FALSE;
 // Module description
 $module_description = "Billing storefront / provisioning integration.";
 
-$module_menus = array(
-    array('subpage' => 'admin_config.php', 'name' => 'Billing Config', 'group' => 'admin'),
-    array('subpage' => 'admin_payments.php', 'name' => 'Billing Payments', 'group' => 'admin'),
-    array('subpage' => 'admin_orders.php', 'name' => 'Billing Orders', 'group' => 'admin'),
-    array('subpage' => 'admin_invoices.php', 'name' => 'Billing Invoices', 'group' => 'admin'),
-    array('subpage' => 'admin_cancellations.php', 'name' => 'Billing Cancellations', 'group' => 'admin'),
-    array('subpage' => 'admin_coupons.php', 'name' => 'Billing Coupons', 'group' => 'admin'),
-    array('subpage' => 'admin_locations.php', 'name' => 'Billing Locations', 'group' => 'admin'),
-);
+// Billing admin pages are standalone storefront pages and are not registered in the panel menu.
+$module_menus = array();
 
 $install_queries = array();
 
@@ -220,28 +213,9 @@ $install_queries[11] = array(
     function($db) { $r=$db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='GSP_DB_PREFIXserver_homes' AND COLUMN_NAME='billing_reminder_sent_for'"); return ($r && (int)$r[0]['cnt']>0) || (bool)$db->query("ALTER TABLE `GSP_DB_PREFIXserver_homes` ADD `billing_reminder_sent_for` DATE NULL"); }
 );
 
-// db_version 12 — billing administration menu entries for existing installs.
+// db_version 12 — menu registration was intentionally removed.
 $install_queries[12] = array(
-    function($db) {
-        $rows = $db->resultQuery("SELECT id FROM `GSP_DB_PREFIXmodules` WHERE folder='billing' LIMIT 1");
-        if (!$rows || !isset($rows[0]['id'])) return false;
-        $moduleId = (int)$rows[0]['id'];
-        $menus = array(
-            array('Billing Config', 'admin_config.php'),
-            array('Billing Payments', 'admin_payments.php'),
-            array('Billing Orders', 'admin_orders.php'),
-            array('Billing Invoices', 'admin_invoices.php'),
-            array('Billing Cancellations', 'admin_cancellations.php'),
-            array('Billing Coupons', 'admin_coupons.php'),
-            array('Billing Locations', 'admin_locations.php')
-        );
-        foreach ($menus as $menu) {
-            $name = $db->realEscapeSingle($menu[0]);
-            $page = $db->realEscapeSingle($menu[1]);
-            if (!$db->query("INSERT INTO `GSP_DB_PREFIXmodule_menus` (module_id, subpage, `group`, menu_name, pos) SELECT {$moduleId}, '{$page}', 'admin', '{$name}', 0 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `GSP_DB_PREFIXmodule_menus` WHERE module_id={$moduleId} AND subpage='{$page}' AND `group`='admin')")) return false;
-        }
-        return true;
-    }
+    "SELECT 1"
 );
 
 // -----------------------------------------------------------------------
