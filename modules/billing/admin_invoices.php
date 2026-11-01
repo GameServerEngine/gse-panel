@@ -17,7 +17,9 @@ function billing_admin_datetime_local($value): string
     return $ts ? date('Y-m-d\TH:i', $ts) : '';
 }
 
-$db = mysqli_connect($db_host, $db_user, $db_pass, $db_name, isset($db_port) ? (int)$db_port : null);
+$db = isset($db_host, $db_user, $db_pass, $db_name)
+    ? @mysqli_connect($db_host, $db_user, $db_pass, $db_name, isset($db_port) ? (int)$db_port : null)
+    : false;
 if (!$db) {
     if (billing_is_panel_context()) {
         echo '<div class="failure">Billing admin: database connection failed.</div>';
@@ -144,6 +146,7 @@ if (isset($_GET['type'])) $msgType = $_GET['type'];
 </head>
 <body>
 <?php include __DIR__ . '/includes/top.php'; include __DIR__ . '/includes/menu.php'; ?>
+<?php endif; ?>
 <div class="container-wide panel">
   <h1>Admin — All Invoices</h1>
   <?php if ($message): ?>
@@ -199,6 +202,6 @@ if (isset($_GET['type'])) $msgType = $_GET['type'];
     </tbody>
   </table>
 </div>
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php if (!billing_is_panel_context()): ?><?php include __DIR__ . '/includes/footer.php'; ?>
 </body>
 <?php endif; ?>

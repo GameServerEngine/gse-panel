@@ -40,15 +40,22 @@ if (!function_exists('billing_admin_orders_lifecycle')) {
 
 function exec_gsp_module()
 {
+	static $rendered = false;
+	if ($rendered) {
+		return;
+	}
+	$rendered = true;
 	global $db, $view, $table_prefix;
 	$user_id = $_SESSION['user_id'];
-	$isAdmin = $db->isAdmin($user_id);
+	$isAdmin = $db && $db->isAdmin($user_id);
 	$csrf = billing_action_csrf_token('billing_panel_billing_csrf');
 	$db_prefix = isset($table_prefix) ? $table_prefix : '';
 	$messages = array();
 
 	if (!$isAdmin) {
-		echo "<div class='failure'><p>Access Denied: Admin privileges required.</p></div>";
+		echo "<h2>Manage All Orders (Admin)</h2>";
+		echo "<form method='get' action='home.php'><input type='hidden' name='m' value='billing'><input type='hidden' name='p' value='admin_orders'><button type='submit'>Reload</button></form>";
+		echo "<div class='failure'><p>Billing admin: database connection failed or administrator verification is unavailable.</p></div>";
 		return;
 	}
 
@@ -295,5 +302,9 @@ function exec_gsp_module()
 		echo "</tbody></table>";
 	}
 	echo "</div>";
+}
+
+if (billing_is_panel_context()) {
+	exec_gsp_module();
 }
 ?>

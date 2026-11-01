@@ -36,7 +36,9 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 $db = false;
 try {
   // suppress direct output; we'll log errors and show a friendly message
-  $db = @mysqli_connect($db_host, $db_user, $db_pass, $db_name, isset($db_port) ? (int)$db_port : null);
+  $db = (isset($db_host, $db_user, $db_pass, $db_name))
+    ? @mysqli_connect($db_host, $db_user, $db_pass, $db_name, isset($db_port) ? (int)$db_port : null)
+    : false;
 } catch (Throwable $e) {
   error_log('[admin_coupons] mysqli_connect exception: ' . $e->getMessage());
   $db = false;
@@ -304,6 +306,7 @@ $coupons_result = $db
 include(__DIR__ . '/includes/top.php');
 include(__DIR__ . '/includes/menu.php');
 ?>
+<?php endif; ?>
 <div class="container-wide panel">
   <h1>Coupon Management</h1>
   
@@ -531,7 +534,7 @@ include(__DIR__ . '/includes/menu.php');
   <?php endif; ?>
   
 </div>
-<?php include(__DIR__ . '/includes/footer.php'); ?>
+<?php if (!billing_is_panel_context()): ?><?php include(__DIR__ . '/includes/footer.php'); ?>
 </body>
 <?php endif; ?>
 

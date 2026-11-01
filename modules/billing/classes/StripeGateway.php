@@ -19,6 +19,11 @@ class StripeGateway implements PaymentGatewayInterface
         return ['success' => false, 'error' => 'stripe_not_implemented'];
     }
 
+    public function refund(array $params): array
+    {
+        return ['success' => false, 'error' => 'stripe_not_supported'];
+    }
+
     public function verifyPayment(array $payload): bool { return false; }
 
     public function getTransactionId(array $captureResult): ?string { return null; }

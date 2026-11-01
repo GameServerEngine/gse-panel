@@ -10,7 +10,9 @@ require_once __DIR__ . '/classes/BillingRepository.php';
 
 function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
-$db = mysqli_connect($db_host, $db_user, $db_pass, $db_name, isset($db_port) ? (int)$db_port : null);
+$db = isset($db_host, $db_user, $db_pass, $db_name)
+    ? @mysqli_connect($db_host, $db_user, $db_pass, $db_name, isset($db_port) ? (int)$db_port : null)
+    : false;
 $transactions = [];
 $errorMsg = '';
 if (!$db) {
@@ -46,6 +48,7 @@ if (!$db) {
 </head>
 <body>
 <?php include __DIR__ . '/includes/top.php'; include __DIR__ . '/includes/menu.php'; ?>
+<?php endif; ?>
 <div class="container-wide panel">
   <h1>Payment Transaction Log</h1>
   <?php if ($errorMsg): ?><div class="alert alert-error"><?= h($errorMsg) ?></div><?php endif; ?>
@@ -93,6 +96,6 @@ if (!$db) {
   </table>
   <?php endif; ?>
 </div>
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php if (!billing_is_panel_context()): ?><?php include __DIR__ . '/includes/footer.php'; ?>
 </body>
 <?php endif; ?>

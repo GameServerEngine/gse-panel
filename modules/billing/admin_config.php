@@ -19,8 +19,10 @@ require_once(__DIR__ . '/includes/admin_auth.php');
 require_once(__DIR__ . '/includes/config_loader.php');
 require_once(__DIR__ . '/includes/action_security.php');
 require_once(__DIR__ . '/includes/paypal_credentials.php');
-include(__DIR__ . '/includes/top.php');
-include(__DIR__ . '/includes/menu.php');
+if (!billing_is_panel_context()) {
+    include(__DIR__ . '/includes/top.php');
+    include(__DIR__ . '/includes/menu.php');
+}
 
 if (session_status() === PHP_SESSION_NONE) {
     session_name('gameserverpanel_web');
@@ -401,6 +403,7 @@ rsort($bakFiles); // newest first
 <?php include(__DIR__ . '/includes/theme_head.php'); ?>
 </head>
 <body>
+<?php endif; ?>
 <div class="container-wide panel">
   <h1>Edit Site Config</h1>
 
@@ -917,6 +920,6 @@ rsort($bakFiles); // newest first
   </div>
 
 </div>
-<?php include(__DIR__ . '/includes/footer.php'); ?>
+<?php if (!billing_is_panel_context()): ?><?php include(__DIR__ . '/includes/footer.php'); ?>
 </body>
 <?php endif; ?>
