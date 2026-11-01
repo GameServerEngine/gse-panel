@@ -4,6 +4,7 @@
  * Allows admins to view, provision, suspend, and delete orders
  */
 
+require_once __DIR__ . '/includes/admin_auth.php';
 require_once __DIR__ . '/includes/action_security.php';
 require_once __DIR__ . '/classes/BillingRepository.php';
 require_once __DIR__ . '/classes/BillingLifecycleService.php';

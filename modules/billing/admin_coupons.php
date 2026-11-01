@@ -152,7 +152,7 @@ if (is_dir($games_dir)) {
 // Get all coupons
 $coupons_result = mysqli_query($db, "SELECT * FROM {$table_prefix}billing_coupons ORDER BY created_date DESC");
 ?>
-<!doctype html>
+<?php if (!billing_is_panel_context()): ?><!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -531,7 +531,7 @@ include(__DIR__ . '/includes/menu.php');
 </div>
 <?php include(__DIR__ . '/includes/footer.php'); ?>
 </body>
-</html>
+<?php endif; ?>
 
 <?php
 if ($db) mysqli_close($db);

@@ -363,7 +363,7 @@ $bakFiles = is_dir($bakDir) ? (array)glob($bakDir . '/*.bak') : [];
 rsort($bakFiles); // newest first
 
 ?>
-<!doctype html>
+<?php if (!billing_is_panel_context()): ?><!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -919,4 +919,4 @@ rsort($bakFiles); // newest first
 </div>
 <?php include(__DIR__ . '/includes/footer.php'); ?>
 </body>
-</html>
+<?php endif; ?>

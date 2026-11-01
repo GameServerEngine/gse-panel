@@ -30,8 +30,15 @@ $module_required = FALSE;
 // Module description
 $module_description = "Billing storefront / provisioning integration.";
 
-// Billing admin pages are standalone storefront pages and are not registered in the panel menu.
-$module_menus = array();
+$module_menus = array(
+    array('subpage' => 'admin_config', 'name' => 'Billing Configuration', 'group' => 'admin'),
+    array('subpage' => 'admin_payments', 'name' => 'Billing Payments', 'group' => 'admin'),
+    array('subpage' => 'admin_orders', 'name' => 'Billing Orders', 'group' => 'admin'),
+    array('subpage' => 'admin_invoices', 'name' => 'Billing Invoices', 'group' => 'admin'),
+    array('subpage' => 'admin_cancellations', 'name' => 'Billing Cancellations', 'group' => 'admin'),
+    array('subpage' => 'admin_coupons', 'name' => 'Billing Coupons', 'group' => 'admin'),
+    array('subpage' => 'admin_locations', 'name' => 'Billing Locations', 'group' => 'admin'),
+);
 
 $install_queries = array();
 
@@ -213,9 +220,31 @@ $install_queries[11] = array(
     function($db) { $r=$db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='GSP_DB_PREFIXserver_homes' AND COLUMN_NAME='billing_reminder_sent_for'"); return ($r && (int)$r[0]['cnt']>0) || (bool)$db->query("ALTER TABLE `GSP_DB_PREFIXserver_homes` ADD `billing_reminder_sent_for` DATE NULL"); }
 );
 
-// db_version 12 — menu registration was intentionally removed.
+// db_version 12 — restore billing admin menu entries for existing installs.
 $install_queries[12] = array(
-    "SELECT 1"
+    "INSERT INTO `".GSP_DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+     SELECT m.id, 'admin_config', 'admin', 'Billing Configuration', 0
+     FROM `".GSP_DB_PREFIX."modules` m
+     WHERE m.folder = 'billing'
+       AND NOT EXISTS (SELECT 1 FROM `".GSP_DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_config' AND mm.group = 'admin')",
+    "INSERT INTO `".GSP_DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+     SELECT m.id, 'admin_payments', 'admin', 'Billing Payments', 1 FROM `".GSP_DB_PREFIX."modules` m
+     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".GSP_DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_payments' AND mm.group = 'admin')",
+    "INSERT INTO `".GSP_DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+     SELECT m.id, 'admin_orders', 'admin', 'Billing Orders', 2 FROM `".GSP_DB_PREFIX."modules` m
+     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".GSP_DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_orders' AND mm.group = 'admin')",
+    "INSERT INTO `".GSP_DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+     SELECT m.id, 'admin_invoices', 'admin', 'Billing Invoices', 3 FROM `".GSP_DB_PREFIX."modules` m
+     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".GSP_DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_invoices' AND mm.group = 'admin')",
+    "INSERT INTO `".GSP_DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+     SELECT m.id, 'admin_cancellations', 'admin', 'Billing Cancellations', 4 FROM `".GSP_DB_PREFIX."modules` m
+     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".GSP_DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_cancellations' AND mm.group = 'admin')",
+    "INSERT INTO `".GSP_DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+     SELECT m.id, 'admin_coupons', 'admin', 'Billing Coupons', 5 FROM `".GSP_DB_PREFIX."modules` m
+     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".GSP_DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_coupons' AND mm.group = 'admin')",
+    "INSERT INTO `".GSP_DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+     SELECT m.id, 'admin_locations', 'admin', 'Billing Locations', 6 FROM `".GSP_DB_PREFIX."modules` m
+     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".GSP_DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_locations' AND mm.group = 'admin')"
 );
 
 // -----------------------------------------------------------------------

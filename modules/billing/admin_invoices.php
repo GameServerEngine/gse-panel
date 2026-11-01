@@ -112,7 +112,7 @@ $db = null;
 if (isset($_GET['msg']))  $message = $_GET['msg'];
 if (isset($_GET['type'])) $msgType = $_GET['type'];
 ?>
-<!doctype html>
+<?php if (!billing_is_panel_context()): ?><!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -195,4 +195,4 @@ if (isset($_GET['type'])) $msgType = $_GET['type'];
 </div>
 <?php include __DIR__ . '/includes/footer.php'; ?>
 </body>
-</html>
+<?php endif; ?>

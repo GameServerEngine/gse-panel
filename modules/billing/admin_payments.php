@@ -35,7 +35,7 @@ if (!$db) {
     $db = null;
 }
 ?>
-<!doctype html>
+<?php if (!billing_is_panel_context()): ?><!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -95,4 +95,4 @@ if (!$db) {
 </div>
 <?php include __DIR__ . '/includes/footer.php'; ?>
 </body>
-</html>
+<?php endif; ?>

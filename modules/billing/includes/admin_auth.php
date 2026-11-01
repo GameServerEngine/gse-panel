@@ -3,6 +3,25 @@
 require_once(__DIR__ . '/session_bridge.php');
 require_once(dirname(__DIR__) . '/billing_bootstrap.php');
 
+if (!function_exists('billing_is_panel_context')) {
+    function billing_is_panel_context(): bool
+    {
+        return !empty($_SESSION['user_id'])
+            && isset($_GET['m']) && $_GET['m'] === 'billing'
+            && basename((string)($_SERVER['PHP_SELF'] ?? '')) === 'index.php';
+    }
+}
+
+// The panel has already authenticated the request and is rendering this file
+// inside its layout. Never redirect or emit a standalone login page here.
+if (billing_is_panel_context()) {
+    if (strtolower((string)($_SESSION['users_role'] ?? '')) !== 'admin') {
+        echo '<div class="failure">Billing admin requires a panel administrator account.</div>';
+        exit();
+    }
+    return;
+}
+
 // If not logged in, redirect to login
 if (empty($_SESSION['website_user_id'])) {
     $loginUrl = billing_url('login.php');
