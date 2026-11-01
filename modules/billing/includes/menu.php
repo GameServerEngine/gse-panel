@@ -126,7 +126,6 @@ if ($is_logged_in) {
       <span class="gsw-nav-toggle-bars" aria-hidden="true"></span>
     </button>
     <a href="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('index.php') : ($nav_prefix . 'index.php')); ?>" class="gsw-logo-link">
-      <img src="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('images/brand/gsw-globe-icon.png') : ($nav_prefix . 'images/brand/gsw-globe-icon.png')); ?>" alt="" class="gsw-logo-globe" aria-hidden="true">
       <img src="<?php echo billing_nav_escape(function_exists('billing_url') ? panel_asset_url('images/logo.png') : ($nav_prefix . 'images/brand/gsw-text-logo.png')); ?>" alt="" class="gsw-logo-text" aria-hidden="true">
       <span class="gsw-site-name"><?php echo billing_brand_e('name'); ?></span>
     </a>

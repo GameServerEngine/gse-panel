@@ -22,6 +22,36 @@
  *
  */
 
+/*
+ * Saves an uploaded panel logo to images/logo.png. PNG only, 2 MB max.
+ * Leaves the current logo alone when no file was chosen.
+ */
+function gsp_settings_save_panel_logo()
+{
+	if (!isset($_FILES['panel_logo']) || $_FILES['panel_logo']['error'] === UPLOAD_ERR_NO_FILE) {
+		return;
+	}
+	$file = $_FILES['panel_logo'];
+	if ($file['error'] !== UPLOAD_ERR_OK) {
+		echo "<div class='error'>Logo not saved: the upload failed.</div>";
+		return;
+	}
+	if ($file['size'] > 2 * 1024 * 1024) {
+		echo "<div class='error'>Logo not saved: the file is larger than 2 MB.</div>";
+		return;
+	}
+	$info = @getimagesize($file['tmp_name']);
+	if ($info === false || $info[2] !== IMAGETYPE_PNG) {
+		echo "<div class='error'>Logo not saved: the file must be a PNG.</div>";
+		return;
+	}
+	if (!move_uploaded_file($file['tmp_name'], 'images/logo.png')) {
+		echo "<div class='error'>Logo not saved: images/logo.png could not be written.</div>";
+		return;
+	}
+	echo "<div class='success'>Logo saved.</div>";
+}
+
 function exec_gsp_module()
 {
 	require_once('includes/form_table_class.php');
@@ -38,6 +68,7 @@ function exec_gsp_module()
 	{
 		$ssl = (isset($_POST['smtp_secure']) and $_POST['smtp_secure'] == 'ssl') ? 1 : 0;
 		$tls = (isset($_POST['smtp_secure']) and $_POST['smtp_secure'] == 'tls') ? 1 : 0;
+		gsp_settings_save_panel_logo();
 		$settings = array("panel_name" => $_REQUEST['panel_name'],
 			"header_code" => $_REQUEST['header_code'],
 			"maintenance_mode" => $_REQUEST['maintenance_mode'],
@@ -135,9 +166,11 @@ function exec_gsp_module()
 	}
 
 	$ft = new FormTable();
-	$ft->start_form("?m=settings", "post", "autocomplete=\"off\"");
+	$ft->start_form("?m=settings", "post", "autocomplete=\"off\" enctype=\"multipart/form-data\"");
 	$ft->start_table();
 	$ft->add_field('string','panel_name',@$row['panel_name']);
+	$logo_preview = is_file('images/logo.png') ? "<img src='images/logo.png?v=" . filemtime('images/logo.png') . "' style='max-height:64px;background:#222;padding:4px;'>" : '';
+	$ft->add_custom_field('panel_logo', "<input type='file' name='panel_logo' id='panel_logo' accept='image/png'> " . $logo_preview);
 	$locale_files = makefilelist("lang/", ".|..|.svn", true, "folders");
 	$locale_files = array('' => "-") + $locale_files;
 	$ft->add_custom_field('panel_language',

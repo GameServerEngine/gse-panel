@@ -40,6 +40,8 @@ define('LANG_panel_email_address', "Outgoing E-Mail Address");
 define('LANG_panel_email_address_info', "This is the e-mail address that is in from field when passwords are sent to users.");
 define('LANG_panel_name', "Panel name");
 define('LANG_panel_name_info', "Name of the Panel that is shown in the page title. This value will overrule all page titles, if it's not empty.");
+define('LANG_panel_logo', "Panel logo (PNG)");
+define('LANG_panel_logo_info', "Shown in the panel header and the storefront header. PNG only, 2 MB max.");
 define('LANG_feed_enable', "Enable LGSL Feed");
 define('LANG_feed_enable_info', "If your webhost has a firewall which is blocking the query port, then you need to open the port manually.");
 define('LANG_feed_url', "Feed URL");

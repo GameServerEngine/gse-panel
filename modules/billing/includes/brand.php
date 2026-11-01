@@ -2,17 +2,33 @@
 /*
  * Brand text for the storefront.
  *
- * To rebrand, set the 'brand' array in site_config.php (not in git):
- *   'brand' => ['name' => 'Your Store', 'company' => 'Your Company'],
- * To change the logo, replace the PNG files in images/brand/ and keep the file names.
- * Anything not set falls back to the defaults below.
+ * Name: set it in the panel under Settings > Panel name. That value is used on the
+ *       storefront too. If it is empty, the 'brand' name in site_config is used.
+ * Company: set 'brand' => ['company' => '...'] in site_config.local.php.
+ * Logo: set it in the panel under Settings > Panel logo (images/logo.png).
  */
 
 if (!function_exists('billing_brand')) {
     function billing_brand(string $key): string
     {
+        static $panelName = null;
+        if ($key === 'name') {
+            if ($panelName === null) {
+                $panelName = '';
+                if (function_exists('billing_get_panel_settings')) {
+                    $settings = @billing_get_panel_settings();
+                    if (is_array($settings) && !empty($settings['panel_name'])) {
+                        $panelName = (string)$settings['panel_name'];
+                    }
+                }
+            }
+            if ($panelName !== '') {
+                return $panelName;
+            }
+        }
+
         $defaults = array(
-            'name'    => 'GameServers.World',
+            'name'    => 'GameServer Engine',
             'company' => 'Run Level Systems',
             'tagline' => 'Game server hosting with human support from Run Level Systems.',
         );
