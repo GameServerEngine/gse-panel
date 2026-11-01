@@ -19,8 +19,8 @@ function gsw_home_e($value): string
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Rent hosted game servers for communities, modders, clans, private groups, and public servers through GameServers.World.">
-    <title>GameServers.World - Game Server Hosting</title>
+    <meta name="description" content="Rent hosted game servers for communities, modders, clans, private groups, and public servers through <?php echo billing_brand_e('name'); ?>.">
+    <title><?php echo billing_brand_e('name'); ?> - Game Server Hosting</title>
     <link rel="icon" type="image/png" sizes="16x16" href="<?php echo gsw_home_e(billing_url('images/brand/favicon-16x16.png')); ?>">
     <link rel="icon" type="image/png" sizes="32x32" href="<?php echo gsw_home_e(billing_url('images/brand/favicon-32x32.png')); ?>">
     <link rel="apple-touch-icon" href="<?php echo gsw_home_e(billing_url('images/brand/apple-touch-icon.png')); ?>">
@@ -78,7 +78,7 @@ function gsw_home_e($value): string
   </section>
 
   <section class="gsw-section" aria-labelledby="pillars-title">
-    <p class="gsw-section-eyebrow">Why Gameservers.World</p>
+    <p class="gsw-section-eyebrow">Why <?php echo billing_brand_e('name'); ?></p>
     <h2 class="gsw-section-title" id="pillars-title">Practical hosting without the runaround.</h2>
     <p class="gsw-section-copy">Pick a supported game, keep costs reasonable, and get help from people who understand real server operations.</p>
     <div class="gsw-grid mt-20">
@@ -100,7 +100,7 @@ function gsw_home_e($value): string
       <article class="gsw-feature-card">
         <span class="gsw-card-kicker">Experience</span>
         <h3>Built by server operators</h3>
-        <p>Gameservers.World is operated by the same team behind GameServer Engine, so hosting decisions stay grounded in real use.</p>
+        <p><?php echo billing_brand_e('name'); ?> is operated by the same team behind GameServer Engine, so hosting decisions stay grounded in real use.</p>
       </article>
     </div>
   </section>
@@ -159,7 +159,7 @@ function gsw_home_e($value): string
     <div class="gsw-callout-panel gsw-powered">
       <p class="gsw-section-eyebrow">Built On Experience</p>
       <h2 class="gsw-section-title" id="powered-title">Powered by GameServer Engine.</h2>
-      <p class="gsw-section-copy">Gameservers.World is operated by the team behind GameServer Engine, with the same practical focus on reliable game-server operations.</p>
+      <p class="gsw-section-copy"><?php echo billing_brand_e('name'); ?> is operated by the team behind GameServer Engine, with the same practical focus on reliable game-server operations.</p>
       <p class="gsw-low-emphasis-link"><a href="<?php echo gsw_home_e(billing_url('docs.php')); ?>">Browse hosting documentation</a></p>
     </div>
   </section>

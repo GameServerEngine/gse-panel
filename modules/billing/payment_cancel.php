@@ -15,7 +15,7 @@ $invoice_ref = isset($_GET['invoice']) ? $_GET['invoice'] : '';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Cancelled - GameServers.World</title>
+    <title>Payment Cancelled - <?php echo billing_brand_e('name'); ?></title>
 <?php include(__DIR__ . '/includes/theme_head.php'); ?>
 </head>
 <body>

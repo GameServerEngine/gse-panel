@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Servers - GameServers.World</title>
+    <title>My Servers - <?php echo billing_brand_e('name'); ?></title>
 <?php include(__DIR__ . '/includes/theme_head.php'); ?>
 </head>
 <body>

@@ -64,7 +64,7 @@ if ($db instanceof mysqli) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Status - GameServers.World</title>
+    <title>Server Status - <?php echo billing_brand_e('name'); ?></title>
     <link rel="icon" type="image/png" sizes="32x32" href="<?php echo gsw_status_e(billing_url('images/brand/favicon-32x32.png')); ?>">
 <?php include(__DIR__ . '/includes/theme_head.php'); ?>
 </head>
@@ -75,7 +75,7 @@ if ($db instanceof mysqli) {
 <main class="site-panel">
     <h1 class="site-panel-title">Server Status</h1>
     <div class="text-center mb-20">
-        <p class="text-muted">Runtime-backed status for configured GameServers.World hosting nodes.</p>
+        <p class="text-muted">Runtime-backed status for configured <?php echo billing_brand_e('name'); ?> hosting nodes.</p>
     </div>
 
     <?php if ($statusError !== ''): ?>

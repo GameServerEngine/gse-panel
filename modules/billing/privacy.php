@@ -4,18 +4,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy - GameServers.World</title>
+  <title>Privacy Policy - <?php echo billing_brand_e('name'); ?></title>
   <link rel="icon" type="image/png" sizes="32x32" href="<?php echo htmlspecialchars(billing_url('images/brand/favicon-32x32.png'), ENT_QUOTES, 'UTF-8'); ?>">
 <?php include(__DIR__ . '/includes/theme_head.php'); ?>
 </head>
 <body>
 <?php include(__DIR__ . '/includes/top.php'); include(__DIR__ . '/includes/menu.php'); ?>
 <main class="container-wide pad-40">
-  <p class="gsw-section-eyebrow">GameServers.World</p>
+  <p class="gsw-section-eyebrow"><?php echo billing_brand_e('name'); ?></p>
   <h1>Privacy Policy</h1>
   <p class="muted">Last updated: July 2026</p>
 
-  <p>This privacy policy applies to the GameServers.World storefront, account, billing, documentation, and support pages operated by Run Level Systems.</p>
+  <p>This privacy policy applies to the <?php echo billing_brand_e('name'); ?> storefront, account, billing, documentation, and support pages operated by <?php echo billing_brand_e('company'); ?>.</p>
 
   <h2>What we collect</h2>
   <ul>
@@ -57,7 +57,7 @@
   <h2>Contact</h2>
   <p>
     Privacy questions? Contact:<br>
-    <strong>Run Level Systems</strong><br>
+    <strong><?php echo billing_brand_e('company'); ?></strong><br>
     3400 Laurel Rd., Brunswick, OH 44212<br>
     Phone: <a href="tel:13307868223">330-786-8223</a><br>
     Email: <a href="mailto:runlevelsystems@gmail.com">runlevelsystems@gmail.com</a>

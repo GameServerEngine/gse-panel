@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Support - GameServers.World</title>
+  <title>Support - <?php echo billing_brand_e('name'); ?></title>
   <link rel="icon" type="image/png" sizes="32x32" href="<?php echo htmlspecialchars(billing_url('images/brand/favicon-32x32.png'), ENT_QUOTES, 'UTF-8'); ?>">
 <?php include(__DIR__ . '/includes/theme_head.php'); ?>
 </head>
@@ -13,7 +13,7 @@
 <main class="container-wide pad-40">
   <p class="gsw-section-eyebrow">Hosting Support</p>
   <h1>Support</h1>
-  <p>Use this page for help with GameServers.World orders, hosted servers, account access, billing, renewals, and service status. The service is managed by developers and gamers at Run Level Systems.</p>
+  <p>Use this page for help with <?php echo billing_brand_e('name'); ?> orders, hosted servers, account access, billing, renewals, and service status. The service is managed by developers and gamers at <?php echo billing_brand_e('company'); ?>.</p>
 
   <div class="account-info-grid">
     <section class="account-section">

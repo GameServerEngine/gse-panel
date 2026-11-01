@@ -121,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_password']) && 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Password - GameServers.World</title>
+    <title>Reset Password - <?php echo billing_brand_e('name'); ?></title>
 <style>
         * {
             margin: 0;

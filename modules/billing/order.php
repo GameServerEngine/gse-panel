@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Server - GameServers.World</title>
+    <title>Order Server - <?php echo billing_brand_e('name'); ?></title>
     <link rel="stylesheet" href="css/header.css">
     <style>
         body { margin: 0; padding: 0; }
@@ -156,7 +156,7 @@ foreach ($offers as $offer) {
 <img src="<?php echo order_e($imgSrc); ?>" alt="<?php echo order_e($displayName); ?>"
      onerror="this.src='/images/games/default_server.png'; this.onerror=null;">
 <center class="order-media-title"><b><?php echo order_e($displayName); ?></b></center>
-<p class="order-media-desc">Configured through the GameServers.World billing catalog.</p>
+<p class="order-media-desc">Configured through the <?php echo billing_brand_e('name'); ?> billing catalog.</p>
 </div>
 <div class="order-form-card">
 <?php if ($orderErrorMessage !== ''): ?>

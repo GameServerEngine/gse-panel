@@ -32,7 +32,7 @@ function billing_serverlist_excerpt(string $value): string
     $value = trim(strip_tags(str_replace('<br>', ' ', $value)));
     $value = preg_replace('/\s+/', ' ', $value);
     if ($value === '') {
-        return 'Configured through the GameServers.World billing catalog.';
+        return 'Configured through the ' . billing_brand('name') . ' billing catalog.';
     }
     return strlen($value) > 170 ? rtrim(substr($value, 0, 167)) . '...' : $value;
 }
@@ -56,7 +56,7 @@ if ($db instanceof mysqli) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Server Catalog - GameServers.World</title>
+    <title>Game Server Catalog - <?php echo billing_brand_e('name'); ?></title>
     <link rel="icon" type="image/png" sizes="32x32" href="<?php echo billing_serverlist_e(billing_url('images/brand/favicon-32x32.png')); ?>">
 <?php include(__DIR__ . '/includes/theme_head.php'); ?>
 </head>

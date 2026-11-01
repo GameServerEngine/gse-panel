@@ -286,7 +286,7 @@ $siteBase = $protocol . $host;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shopping Cart - GameServers.World</title>
+    <title>Shopping Cart - <?php echo billing_brand_e('name'); ?></title>
     <link rel="stylesheet" href="css/header.css">
     <style>
         /* Do not override site-wide font or header/menu styles here.

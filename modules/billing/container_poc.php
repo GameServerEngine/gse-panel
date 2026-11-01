@@ -56,7 +56,7 @@ $csrf = billing_action_csrf_token('container_poc_csrf');
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Application Catalog - GameServers.World</title>
+  <title>Application Catalog - <?php echo billing_brand_e('name'); ?></title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 <?php include(__DIR__ . '/includes/theme_head.php'); ?>
 </head>

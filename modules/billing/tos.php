@@ -4,21 +4,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Terms of Service - GameServers.World</title>
+  <title>Terms of Service - <?php echo billing_brand_e('name'); ?></title>
   <link rel="icon" type="image/png" sizes="32x32" href="<?php echo htmlspecialchars(billing_url('images/brand/favicon-32x32.png'), ENT_QUOTES, 'UTF-8'); ?>">
 <?php include(__DIR__ . '/includes/theme_head.php'); ?>
 </head>
 <body>
 <?php include(__DIR__ . '/includes/top.php'); include(__DIR__ . '/includes/menu.php'); ?>
 <main class="container-wide pad-40">
-  <p class="gsw-section-eyebrow">GameServers.World</p>
+  <p class="gsw-section-eyebrow"><?php echo billing_brand_e('name'); ?></p>
   <h1>Terms of Service</h1>
   <p class="muted">Last updated: July 2026</p>
 
-  <p>These terms apply to the GameServers.World storefront and game-server hosting services operated by Run Level Systems.</p>
+  <p>These terms apply to the <?php echo billing_brand_e('name'); ?> storefront and game-server hosting services operated by <?php echo billing_brand_e('company'); ?>.</p>
 
   <h2>Who We Are</h2>
-  <p>GameServers.World provides game server hosting, related account tools, billing workflows, documentation, and best-effort support.</p>
+  <p><?php echo billing_brand_e('name'); ?> provides game server hosting, related account tools, billing workflows, documentation, and best-effort support.</p>
 
   <h2>What You Are Buying</h2>
   <p>You are renting server resources and related service access for supported games, mods, and server configurations. Specific plan details, duration, price, and renewal terms are shown during ordering or in your account.</p>
@@ -42,11 +42,11 @@
   <p>Services may be suspended or terminated for nonpayment, abuse, legal risk, security risk, or violation of these terms. We may act immediately when urgent network, legal, or safety issues are involved.</p>
 
   <h2>Limitation of Liability</h2>
-  <p>Technology services can fail. To the maximum extent allowed by law, Run Level Systems is not responsible for indirect, incidental, or consequential losses.</p>
+  <p>Technology services can fail. To the maximum extent allowed by law, <?php echo billing_brand_e('company'); ?> is not responsible for indirect, incidental, or consequential losses.</p>
 
   <h2>Contact</h2>
   <p>
-    Run Level Systems<br>
+    <?php echo billing_brand_e('company'); ?><br>
     3400 Laurel Rd., Brunswick, OH 44212<br>
     Phone: <a href="tel:13307868223">330-786-8223</a><br>
     Email: <a href="mailto:runlevelsystems@gmail.com">runlevelsystems@gmail.com</a>

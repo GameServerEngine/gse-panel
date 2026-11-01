@@ -35,6 +35,7 @@ if (!function_exists('billing_runtime_load_site_config')) {
 }
 
 $billing_runtime_site_config = billing_runtime_load_site_config();
+require_once __DIR__ . "/includes/brand.php";
 
 if (!function_exists('billing_runtime_panel_root')) {
     function billing_runtime_panel_root(): ?string

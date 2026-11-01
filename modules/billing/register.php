@@ -46,7 +46,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && !empty($_POST['username'
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register - GameServers.World</title>
+  <title>Register - <?php echo billing_brand_e('name'); ?></title>
   <link rel="icon" type="image/png" sizes="32x32" href="<?php echo htmlspecialchars(billing_url('images/brand/favicon-32x32.png'), ENT_QUOTES, 'UTF-8'); ?>">
 <?php include(__DIR__ . '/includes/theme_head.php'); ?>
 </head>
@@ -55,7 +55,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && !empty($_POST['username'
 <main class="container-wide pad-40">
   <p class="gsw-section-eyebrow">Create Account</p>
   <h1>Register</h1>
-  <p>Create a GameServers.World account to order servers, manage invoices, and access the control panel workflow.</p>
+  <p>Create a <?php echo billing_brand_e('name'); ?> account to order servers, manage invoices, and access the control panel workflow.</p>
 
   <section class="panel">
     <?php if (!empty($error)) echo '<div class="alert alert-error">'.htmlspecialchars($error, ENT_QUOTES, 'UTF-8').'</div>'; ?>

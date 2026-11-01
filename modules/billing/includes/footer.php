@@ -5,8 +5,8 @@ require_once(dirname(__DIR__) . '/billing_bootstrap.php');
 <footer class="gsw-footer">
   <div class="container-wide gsw-footer-grid">
     <div class="gsw-footer-brand">
-      <strong>GameServers.World</strong>
-      <span>Game server hosting with human support from Run Level Systems.</span>
+      <strong><?php echo billing_brand_e('name'); ?></strong>
+      <span>Game server hosting with human support from <?php echo billing_brand_e('company'); ?>.</span>
     </div>
     <div class="gsw-footer-group">
       <h2>Navigation</h2>
@@ -20,7 +20,7 @@ require_once(dirname(__DIR__) . '/billing_bootstrap.php');
     <div class="gsw-footer-group">
       <h2>Contact</h2>
       <address class="gsw-footer-contact">
-        Run Level Systems<br>
+        <?php echo billing_brand_e('company'); ?><br>
         3400 Laurel Rd.<br>
         Brunswick, OH 44212<br>
         <a href="tel:13307868223">330-786-8223</a><br>
@@ -35,7 +35,7 @@ require_once(dirname(__DIR__) . '/billing_bootstrap.php');
         <a href="<?php echo htmlspecialchars(function_exists('billing_url') ? billing_url('tos.php') : 'tos.php', ENT_QUOTES, 'UTF-8'); ?>">Terms</a>
         <a href="<?php echo htmlspecialchars(function_exists('billing_url') ? billing_url('careers.php') : 'careers.php', ENT_QUOTES, 'UTF-8'); ?>">Careers</a>
       </nav>
-      <p class="gsw-footer-copy">&copy; 2026 Run Level Systems. All rights reserved.</p>
+      <p class="gsw-footer-copy">&copy; 2026 <?php echo billing_brand_e('company'); ?>. All rights reserved.</p>
       <p class="gsw-footer-powered">Powered by GameServer Engine.</p>
     </div>
   </div>

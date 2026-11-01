@@ -195,7 +195,7 @@ uksort($grouped, function($a, $b) use ($categoryOrder) {
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title><?php echo htmlspecialchars('Documentation - GameServers.World', ENT_QUOTES, 'UTF-8'); ?></title>
+    <title><?php echo htmlspecialchars('Documentation - ' . billing_brand('name'), ENT_QUOTES, 'UTF-8'); ?></title>
     <link rel="icon" type="image/png" sizes="32x32" href="<?php echo htmlspecialchars(billing_url('images/brand/favicon-32x32.png'), ENT_QUOTES, 'UTF-8'); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(billing_url('css/header.css'), ENT_QUOTES, 'UTF-8'); ?>">
     <style>

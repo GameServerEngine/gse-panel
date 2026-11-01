@@ -99,7 +99,7 @@ if ($db && $user_id > 0) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Successful - GameServers.World</title>
+    <title>Payment Successful - <?php echo billing_brand_e('name'); ?></title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -263,7 +263,7 @@ if ($db && $user_id > 0) {
                 <li><strong>✓ Payment Confirmed:</strong> Your payment has been captured by PayPal</li>
                 <li><strong>⚙️ Server Provisioning:</strong> Your game server(s) are queued for automatic install now; if a node is unavailable they remain clearly marked as pending install</li>
                 <li><strong>📧 Email Notification:</strong> You'll receive a confirmation email with your order details</li>
-                <li><strong>🎮 Access Your Servers:</strong> Log into the GameServers.World control panel to manage your new servers</li>
+                <li><strong>🎮 Access Your Servers:</strong> Log into the <?php echo billing_brand_e('name'); ?> control panel to manage your new servers</li>
             </ul>
             <div class="provision-banner <?php echo htmlspecialchars($banner['class']); ?>">
                 <?php echo htmlspecialchars($banner['message']); ?>
