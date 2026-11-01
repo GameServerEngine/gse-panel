@@ -222,6 +222,18 @@ $svc->processPaidInvoice(560, ['transaction_external_id' => 'tx-manual', 'amount
 assertSameValue([55], $restartCalls, 'manual stop is not restarted by billing');
 assertTrueValue(BillingLifecycleService::shouldSendExpiryReminder(['billing_enabled' => 1, 'cancel_at_expiry' => 0], '2026-10-01'), 'unsent expiry reminder is due');
 assertSameValue(false, BillingLifecycleService::shouldSendExpiryReminder(['billing_enabled' => 1, 'cancel_at_expiry' => 0, 'billing_reminder_sent_for' => '2026-10-01'], '2026-10-01'), 'expiry reminder is idempotent');
+assertSameValue(true, BillingLifecycleService::shouldRetryBillingRestart([
+    'billing_suspended' => 1, 'billing_enabled' => 1, 'server_expiration_date' => '2026-10-02 00:00:00',
+], strtotime('2026-10-01 00:00:00')), 'paid-through suspended home should retry restart');
+assertSameValue(false, BillingLifecycleService::shouldRetryBillingRestart([
+    'billing_suspended' => 0, 'billing_enabled' => 1, 'server_expiration_date' => '2026-10-02 00:00:00',
+], strtotime('2026-10-01 00:00:00')), 'non-suspended home should not retry restart');
+assertSameValue(false, BillingLifecycleService::shouldRetryBillingRestart([
+    'billing_suspended' => 1, 'billing_enabled' => 0, 'server_expiration_date' => '2026-10-02 00:00:00',
+], strtotime('2026-10-01 00:00:00')), 'billing-disabled home should not retry restart');
+assertSameValue(false, BillingLifecycleService::shouldRetryBillingRestart([
+    'billing_suspended' => 1, 'billing_enabled' => 1, 'server_expiration_date' => '2026-09-30 00:00:00',
+], strtotime('2026-10-01 00:00:00')), 'expired home should not retry restart');
 
 // Restoration from Expired.
 $repo->homes[55]['billing_status'] = 'Expired';

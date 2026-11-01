@@ -86,6 +86,15 @@ class BillingLifecycleService
             && (($home['billing_reminder_sent_for'] ?? null) !== $expiryDate);
     }
 
+    public static function shouldRetryBillingRestart(array $home, int $now): bool
+    {
+        $expiry = strtotime((string)($home['server_expiration_date'] ?? ''));
+        return !empty($home['billing_suspended'])
+            && !empty($home['billing_enabled'])
+            && $expiry !== false
+            && $expiry >= $now;
+    }
+
     public static function resolvePaidThroughDate(array $invoice, ?array $order = null, ?array $home = null, ?string $paidAt = null): string
     {
         if (!empty($invoice['period_end']) && strtotime((string)$invoice['period_end']) !== false) {

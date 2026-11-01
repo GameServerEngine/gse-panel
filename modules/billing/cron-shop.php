@@ -119,6 +119,30 @@ foreach ((array)$to_suspend as $srv) {
     }
 }
 
+// Retry starts for homes that were paid after suspension but whose immediate
+// restart did not succeed. The suspension flag remains set until all starts pass.
+$db->logger("BILLING-CRON: --- Step 0c: retry billing restart ---");
+$retry_now = time();
+$to_retry = $db->resultQuery("SELECT sh.home_id, sh.billing_enabled, sh.billing_suspended, sh.server_expiration_date
+    FROM {$table_prefix}server_homes sh
+    WHERE sh.billing_suspended = 1 AND sh.billing_enabled = 1
+      AND sh.server_expiration_date >= NOW()");
+foreach ((array)$to_retry as $srv) {
+    if (!BillingLifecycleService::shouldRetryBillingRestart($srv, $retry_now)) continue;
+    $home_id = (int)$srv['home_id'];
+    $started = true;
+    $addresses = $db->getHomeIpPorts($home_id);
+    if (empty($addresses)) $started = false;
+    foreach ((array)$addresses as $addr) {
+        if (!exec_operation('start', $home_id, (int)($addr['force_mod_id'] ?? 0), $addr['ip'], $addr['port'], true)) $started = false;
+    }
+    if ($started && $db->query("UPDATE {$table_prefix}server_homes SET billing_suspended = 0 WHERE home_id = {$home_id}")) {
+        $db->logger("BILLING-CRON: Step 0c - RESTARTED home {$home_id}");
+    } else {
+        $db->logger("BILLING-CRON: Step 0c - restart failed home {$home_id}");
+    }
+}
+
 // One reminder per home and expiry date.
 $db->logger("BILLING-CRON: --- Step 0b: one-week expiry reminders ---");
 $reminders = $db->resultQuery("SELECT sh.home_id, sh.home_name, sh.server_expiration_date, u.users_email
