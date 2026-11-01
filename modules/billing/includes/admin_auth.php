@@ -15,6 +15,13 @@ if (!function_exists('billing_is_panel_context')) {
 // The panel has already authenticated the request and is rendering this file
 // inside its layout. Never redirect or emit a standalone login page here.
 if (billing_is_panel_context()) {
+    // The panel bootstrap has already loaded its config in this include scope.
+    // Copy only the runtime connection values; never load or persist billing config.
+    foreach (array('db_host', 'db_user', 'db_pass', 'db_name', 'db_port', 'table_prefix', 'db_type') as $billingDbVar) {
+        if (array_key_exists($billingDbVar, $GLOBALS)) {
+            ${$billingDbVar} = $GLOBALS[$billingDbVar];
+        }
+    }
     if (strtolower((string)($_SESSION['users_role'] ?? '')) !== 'admin') {
         echo '<div class="failure">Billing admin requires a panel administrator account.</div>';
         exit();

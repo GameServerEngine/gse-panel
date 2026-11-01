@@ -14,7 +14,7 @@ $db = mysqli_connect($db_host, $db_user, $db_pass, $db_name, isset($db_port) ? (
 $transactions = [];
 $errorMsg = '';
 if (!$db) {
-    $errorMsg = 'Database connection failed.';
+    $errorMsg = billing_is_panel_context() ? 'Billing admin: database connection failed.' : 'Database connection failed.';
 } else {
     mysqli_set_charset($db, 'utf8mb4');
     $prefix = $table_prefix ?? 'gsp_';

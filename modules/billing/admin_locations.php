@@ -30,6 +30,7 @@ function loc_parent_options(array $children, int $parentId, int $depth)
 }
 
 $db = mysqli_connect($db_host, $db_user, $db_pass, $db_name, isset($db_port) ? (int)$db_port : null);
+if (!$db && billing_is_panel_context()) { echo '<div class="failure">Billing admin: database connection failed.</div>'; return; }
 mysqli_set_charset($db, 'utf8mb4');
 $p = isset($table_prefix) ? $table_prefix : '';
 $csrfKey = 'billing_admin_locations_csrf';

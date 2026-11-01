@@ -18,7 +18,13 @@ function billing_admin_datetime_local($value): string
 }
 
 $db = mysqli_connect($db_host, $db_user, $db_pass, $db_name, isset($db_port) ? (int)$db_port : null);
-if (!$db) die('DB connection failed');
+if (!$db) {
+    if (billing_is_panel_context()) {
+        echo '<div class="failure">Billing admin: database connection failed.</div>';
+        return;
+    }
+    die('DB connection failed');
+}
 mysqli_set_charset($db, 'utf8mb4');
 $prefix = $table_prefix ?? 'gsp_';
 $repo   = new BillingRepository($db, $prefix);

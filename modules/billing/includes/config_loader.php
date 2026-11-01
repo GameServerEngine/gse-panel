@@ -151,18 +151,21 @@ if (!function_exists('_billing_find_panel_config')) {
 $billing_config_warning = null; // surfaced to admin pages when non-null
 
 $localConfig = __DIR__ . '/config.inc.php';
+$billing_panel_context = function_exists('billing_is_panel_context') && billing_is_panel_context();
 
 if (!is_readable($localConfig)) {
-    $billing_config_warning =
-        'GSP Billing module cannot find modules/billing/includes/config.inc.php. '
-        . 'Public storefront pages will render in degraded mode until the config is created from config.example.php.';
-    $db_host = '';
-    $db_port = null;
-    $db_user = '';
-    $db_pass = '';
-    $db_name = '';
-    $table_prefix = '';
-    $db_type = 'mysql';
+    // Core panel installs intentionally do not have a billing config file.
+    // Keep standalone defaults in memory, but do not warn, include, or create it.
+    $billing_config_warning = null;
+    if (!$billing_panel_context) {
+        $db_host = '';
+        $db_port = null;
+        $db_user = '';
+        $db_pass = '';
+        $db_name = '';
+        $table_prefix = '';
+        $db_type = 'mysql';
+    }
     $SITE_BASE_URL = '';
     $SITE_BACKGROUND = '';
     $SITE_DATA_DIR = dirname(__DIR__) . '/data';
@@ -216,7 +219,9 @@ if ($_billing_panel_config !== null) {
         // Only rewrite the file when the on-disk values actually differ so that
         // we never touch the file on normal page loads where nothing changed.
         // -------------------------------------------------------------------
-        $diskVars = _billing_extract_db_vars_from_file($localConfig);
+        $diskVars = is_readable($localConfig)
+            ? _billing_extract_db_vars_from_file($localConfig)
+            : [];
         $needsSync = false;
         foreach ($panelDbVars as $k => $v) {
             if (!array_key_exists($k, $diskVars) || $diskVars[$k] !== $v) {
@@ -225,7 +230,7 @@ if ($_billing_panel_config !== null) {
             }
         }
 
-        if ($needsSync) {
+        if ($needsSync && is_readable($localConfig)) {
             if (!_billing_sync_db_vars_to_file($localConfig, $panelDbVars)) {
                 // Non-fatal: show admin warning; runtime DB vars are already overridden above.
                 $billing_config_warning =
@@ -238,7 +243,7 @@ if ($_billing_panel_config !== null) {
     }
 }
 
-unset($_billing_panel_config, $panelDbVars, $diskVars, $needsSync, $k, $v);
+unset($_billing_panel_config, $panelDbVars, $diskVars, $needsSync, $k, $v, $billing_panel_context);
 
 // ---------------------------------------------------------------------------
 // Step 4: Apply safe defaults for billing-specific variables that may be absent

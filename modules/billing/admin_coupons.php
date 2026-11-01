@@ -42,12 +42,12 @@ try {
   $db = false;
 }
 if (!$db) {
-  $error = 'Database connection failed. Please check your configuration.';
+  $error = billing_is_panel_context() ? 'Billing admin: database connection failed.' : 'Database connection failed. Please check your configuration.';
   error_log('[admin_coupons] DB connect failed for host=' . ($db_host ?? 'unknown') . ' user=' . ($db_user ?? 'unknown') . ' db=' . ($db_name ?? 'unknown') . ' - ' . mysqli_connect_error());
 }
 
 $status = '';
-$error = '';
+$error = $error ?? '';
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -150,7 +150,9 @@ if (is_dir($games_dir)) {
 }
 
 // Get all coupons
-$coupons_result = mysqli_query($db, "SELECT * FROM {$table_prefix}billing_coupons ORDER BY created_date DESC");
+$coupons_result = $db
+  ? mysqli_query($db, "SELECT * FROM {$table_prefix}billing_coupons ORDER BY created_date DESC")
+  : false;
 ?>
 <?php if (!billing_is_panel_context()): ?><!doctype html>
 <html>

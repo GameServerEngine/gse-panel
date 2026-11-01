@@ -6,7 +6,21 @@
 // Ensure session sync with panel happens first
 require_once __DIR__ . '/billing_bootstrap.php';
 require_once __DIR__ . '/includes/session_bridge.php';
+$billing_panel_runtime_vars = [];
+if (!empty($_SESSION['user_id']) && ($_GET['m'] ?? '') === 'billing'
+    && in_array(basename((string)($_SERVER['PHP_SELF'] ?? '')), ['index.php', 'home.php'], true)) {
+    foreach (['db_host', 'db_user', 'db_pass', 'db_name', 'db_port', 'table_prefix', 'db_type'] as $billingDbVar) {
+        if (array_key_exists($billingDbVar, $GLOBALS)) {
+            $billing_panel_runtime_vars[$billingDbVar] = $GLOBALS[$billingDbVar];
+        }
+    }
+}
 require_once __DIR__ . '/includes/config_loader.php';
+foreach ($billing_panel_runtime_vars as $billingDbVar => $billingDbValue) {
+    $GLOBALS[$billingDbVar] = $billingDbValue;
+    ${$billingDbVar} = $billingDbValue;
+}
+unset($billing_panel_runtime_vars, $billingDbVar, $billingDbValue);
 
 // Ensure $table_prefix exists (fallback to empty string)
 if (!isset($table_prefix)) {
