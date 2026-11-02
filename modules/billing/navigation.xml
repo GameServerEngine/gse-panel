@@ -4,33 +4,24 @@ Panel-side navigation for billing module.
 These pages are accessible within the panel for server provisioning and management.
 -->
 <root>
-	<!-- Admin pages for server provisioning -->
-	<page key="provision_servers" file="create_servers_page.php" access="admin,user">
-		<menu>Provision Servers</menu>
-	</page>
-	
-	<page key="my_orders" file="my_orders_panel.php" access="admin,user">
-		<menu>My Orders</menu>
-	</page>
-	
-	<page key="game_catalog" file="admin_catalog.php" access="admin">
-		<menu>Game Catalog</menu>
-	</page>
-	
-	<page key="admin_orders" file="panel_admin.php" access="admin">
-		<menu>Manage All Orders</menu>
-	</page>
-	<page key="admin_cancellations" file="panel_admin.php" access="admin"><menu>Billing Cancellations</menu></page>
-	<page key="admin_locations" file="panel_admin.php" access="admin"><menu>Billing Locations</menu></page>
-	<page key="admin_config.php" file="panel_admin.php" access="admin" />
-	<page key="admin_payments.php" file="panel_admin.php" access="admin" />
-	<page key="admin_orders.php" file="panel_admin.php" access="admin" />
-	<page key="admin_invoices.php" file="panel_admin.php" access="admin" />
-	<page key="admin_cancellations.php" file="panel_admin.php" access="admin" />
-	<page key="admin_coupons.php" file="panel_admin.php" access="admin" />
-	<page key="admin_locations.php" file="panel_admin.php" access="admin" />
-	
-	<page key="test_integration" file="test_integration.php" access="admin,user">
-		<menu>Test Integration</menu>
-	</page>
+  <!-- Admin pages for server provisioning -->
+  <page key="provision_servers" file="create_servers_page.php" access="admin,user">
+    <menu>Provision Servers</menu>
+  </page>
+  <page key="my_orders" file="my_orders_panel.php" access="admin,user">
+    <menu>My Orders</menu>
+  </page>
+  <page key="game_catalog" file="admin_catalog.php" access="admin">
+    <menu>Game Catalog</menu>
+  </page>
+  <page key="admin_config.php" file="panel_admin.php" access="admin"/>
+  <page key="admin_payments.php" file="panel_admin.php" access="admin"/>
+  <page key="admin_orders.php" file="panel_admin.php" access="admin"/>
+  <page key="admin_invoices.php" file="panel_admin.php" access="admin"/>
+  <page key="admin_cancellations.php" file="panel_admin.php" access="admin"/>
+  <page key="admin_coupons.php" file="panel_admin.php" access="admin"/>
+  <page key="admin_locations.php" file="panel_admin.php" access="admin"/>
+  <page key="test_integration" file="test_integration.php" access="admin,user">
+    <menu>Test Integration</menu>
+  </page>
 </root>
