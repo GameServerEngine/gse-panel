@@ -38,7 +38,7 @@ if (!function_exists('billing_admin_orders_lifecycle')) {
 	}
 }
 
-function exec_gsp_module()
+function billing_admin_orders_exec()
 {
 	static $rendered = false;
 	if ($rendered) {
@@ -305,6 +305,6 @@ function exec_gsp_module()
 }
 
 if (billing_is_panel_context()) {
-	exec_gsp_module();
+	billing_admin_orders_exec();
 }
 ?>

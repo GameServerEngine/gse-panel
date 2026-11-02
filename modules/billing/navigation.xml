@@ -17,11 +17,18 @@ These pages are accessible within the panel for server provisioning and manageme
 		<menu>Game Catalog</menu>
 	</page>
 	
-	<page key="admin_orders" file="admin_orders.php" access="admin">
+	<page key="admin_orders" file="panel_admin.php" access="admin">
 		<menu>Manage All Orders</menu>
 	</page>
-	<page key="admin_cancellations" file="admin_cancellations.php" access="admin"><menu>Billing Cancellations</menu></page>
-	<page key="admin_locations" file="admin_locations.php" access="admin"><menu>Billing Locations</menu></page>
+	<page key="admin_cancellations" file="panel_admin.php" access="admin"><menu>Billing Cancellations</menu></page>
+	<page key="admin_locations" file="panel_admin.php" access="admin"><menu>Billing Locations</menu></page>
+	<page key="admin_config.php" file="panel_admin.php" access="admin" />
+	<page key="admin_payments.php" file="panel_admin.php" access="admin" />
+	<page key="admin_orders.php" file="panel_admin.php" access="admin" />
+	<page key="admin_invoices.php" file="panel_admin.php" access="admin" />
+	<page key="admin_cancellations.php" file="panel_admin.php" access="admin" />
+	<page key="admin_coupons.php" file="panel_admin.php" access="admin" />
+	<page key="admin_locations.php" file="panel_admin.php" access="admin" />
 	
 	<page key="test_integration" file="test_integration.php" access="admin,user">
 		<menu>Test Integration</menu>
