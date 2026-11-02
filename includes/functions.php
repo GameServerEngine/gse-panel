@@ -309,8 +309,35 @@ function create_home_selector_game_type($module, $subpage, $server_homes) {
 	echo "</select>\n</form>\n";
 }
 
-function mymail($email_address, $subject, $message, $panel_settings, $user_to_panel = FALSE){
-	global $view;
+function get_mail_sender($panel_settings, $billing = false){
+	$address_keys = $billing
+		? array('billing_email_address', 'billing_sender_address')
+		: array('panel_email_address', 'admin_email_address', 'support_email_address');
+	$name_keys = $billing
+		? array('billing_email_name', 'billing_sender_name')
+		: array('panel_email_name', 'admin_email_name', 'support_email_name');
+	$address = '';
+	foreach ($address_keys as $key) {
+		if (!empty($panel_settings[$key])) {
+			$address = $panel_settings[$key];
+			break;
+		}
+	}
+	$name = '';
+	foreach ($name_keys as $key) {
+		if (!empty($panel_settings[$key])) {
+			$name = $panel_settings[$key];
+			break;
+		}
+	}
+	return array(
+		'from_address' => $address ?: ($billing ? 'billing@runlevelsystems.com' : 'info@runlevelsystems.com'),
+		'from_name' => $name ?: (!empty($panel_settings['panel_name']) ? $panel_settings['panel_name'] : 'Gameserver Engine')
+	);
+}
+
+function mymail($email_address, $subject, $message, $panel_settings, $user_to_panel = FALSE, $sender = null){
+	global $view, $db;
 	if( empty( $panel_settings['panel_name'] ) )
 		$panel_name = "Gameserver Engine";
 	else
@@ -336,7 +363,12 @@ function mymail($email_address, $subject, $message, $panel_settings, $user_to_pa
 		if (isset($panel_settings['smtp_server']) and !empty($panel_settings['smtp_server']))
 			$mail->Host = $panel_settings['smtp_server'];
 		else
+		{
 			$mail->Host = 'localhost';
+			if (isset($db) && is_object($db) && method_exists($db, 'logger'))
+				$db->logger('MAIL: SMTP server is not configured; email not sent');
+			return false;
+		}
 
 		// set the SMTP port
 		if (isset($panel_settings['smtp_port']) and !empty($panel_settings['smtp_port']))
@@ -349,12 +381,15 @@ function mymail($email_address, $subject, $message, $panel_settings, $user_to_pa
 			$mail->SMTPSecure = "ssl";
 		elseif (isset($panel_settings['smtp_tls']) and $panel_settings['smtp_tls'] == 1)
 			$mail->SMTPSecure = "tls";
-		if (isset($panel_settings['smtp_login']) and !empty($panel_settings['smtp_login']))
+		$smtp_username = !empty($panel_settings['smtp_username'])
+			? $panel_settings['smtp_username']
+			: ($panel_settings['smtp_login'] ?? '');
+		if (!empty($smtp_username))
 		{
 			// enable SMTP authentication
 			$mail->SMTPAuth = true;
 			// SMTP username
-			$mail->Username = $panel_settings['smtp_login'];
+			$mail->Username = $smtp_username;
 			if (isset($panel_settings['smtp_passw']) and !empty($panel_settings['smtp_passw']))
 			{
 				// SMTP password
@@ -386,8 +421,10 @@ function mymail($email_address, $subject, $message, $panel_settings, $user_to_pa
 			{
 				$mail->AddAddress($address);
 			}
-			$mail->SetFrom($panel_email,$panel_name);
-			$mail->AddReplyTo($panel_email,$panel_name);
+			$default_sender = get_mail_sender($panel_settings);
+			$sender = is_array($sender) ? array_merge($default_sender, $sender) : $default_sender;
+			$mail->SetFrom($sender['from_address'], $sender['from_name']);
+			$mail->AddReplyTo($sender['from_address'], $sender['from_name']);
 		}
 
 		$mail->CharSet = $view->charset;

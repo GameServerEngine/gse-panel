@@ -153,7 +153,7 @@ $reminders = $db->resultQuery("SELECT sh.home_id, sh.home_name, sh.server_expira
 foreach ((array)$reminders as $srv) {
     $home_id = (int)$srv['home_id']; $expiry = date('Y-m-d', strtotime($srv['server_expiration_date']));
     if (!empty($srv['users_email']) && mymail($srv['users_email'], 'Server expiry reminder - ' . ($srv['home_name'] ?? $home_id),
-        "Your server '{$srv['home_name']}' expires on " . date('F j, Y', strtotime($expiry)) . ". Please renew to keep it active.", $db->getSettings())) {
+        "Your server '{$srv['home_name']}' expires on " . date('F j, Y', strtotime($expiry)) . ". Please renew to keep it active.", $db->getSettings(), false, get_mail_sender($db->getSettings(), true))) {
         $safe = $db->realEscapeSingle($expiry);
         $db->query("UPDATE {$table_prefix}server_homes SET billing_reminder_sent_for = '{$safe}' WHERE home_id = {$home_id}");
         $db->logger("BILLING-CRON: Step 0b - reminder sent for home {$home_id} ({$expiry})");
@@ -268,7 +268,7 @@ if (is_array($due_for_invoice)) {
                       . "<br>Due Date: " . date('F j, Y', $due_date_ts)
                       . "<br><br>Please log in to pay your invoice and keep your server active."
                       . "<br><br>Thank you!";
-            if (!mymail($srv['users_email'], $subject, $message, $settings)) {
+            if (!mymail($srv['users_email'], $subject, $message, $settings, false, get_mail_sender($settings, true))) {
                 $db->logger("BILLING-CRON: Step A - Email FAILED for home {$home_id}");
             }
         }
@@ -331,7 +331,7 @@ if (is_array($past_due)) {
                        . "<br><br>The server will be permanently deleted in {$delete_after_days} day(s) if payment is not received."
                        . "<br><br>Please log in and pay your outstanding invoice to restore service."
                        . "<br><br>Thank you.";
-            if (!mymail($srv['users_email'], $subject, $message, $settings)) {
+            if (!mymail($srv['users_email'], $subject, $message, $settings, false, get_mail_sender($settings, true))) {
                 $db->logger("BILLING-CRON: Step B - Email FAILED for home {$home_id}");
             }
         }
@@ -440,7 +440,7 @@ if (is_array($to_delete)) {
                       . "<br><br>The server expired and was removed after the grace period."
                       . "<br><br>If this was an error, contact us immediately - we may be able to restore from backup."
                       . "<br><br>Thank you for being a customer. We hope to serve you again.";
-            if (!mymail($srv['users_email'], $subject, $message, $settings)) {
+            if (!mymail($srv['users_email'], $subject, $message, $settings, false, get_mail_sender($settings, true))) {
                 $db->logger("BILLING-CRON: Step C - Email FAILED for home {$home_id}");
             }
         }

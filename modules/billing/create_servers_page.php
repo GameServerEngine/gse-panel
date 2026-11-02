@@ -364,7 +364,7 @@ function exec_gsp_module()
                   Thank You for your continued support.<br>
 				  If you have any questions or requests, visit our website  or contact us directly in our Discord Server.";
 
-      $mail = mymail($email, $subject, $message, $settings);
+      $mail = mymail($email, $subject, $message, $settings, false, get_mail_sender($settings, true));
 	  $rundate = date('d/M/y G:i', is_numeric($now) ? (int)$now : strtotime($now));
 
  if (!$mail)
@@ -577,7 +577,7 @@ function exec_gsp_module()
                                    If you have any questions or requests, visit our website  or contact us directly in our Discord Server.
 								  You can login to the Game Panel and click on Game Monitor to see your server.  <br><br>
 								  Thank you!<br> ";
-					  $mail = mymail($email, $subject, $message, $settings);
+					  $mail = mymail($email, $subject, $message, $settings, false, get_mail_sender($settings, true));
 				  	  $rundate = date('d/M/y G:i', is_numeric($now) ? (int)$now : strtotime($now));
 
 					  if (!$mail)
