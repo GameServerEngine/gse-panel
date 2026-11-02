@@ -14,13 +14,8 @@ These pages are accessible within the panel for server provisioning and manageme
   <page key="game_catalog" file="admin_catalog.php" access="admin">
     <menu>Game Catalog</menu>
   </page>
-  <page key="admin_config.php" file="panel_admin.php" access="admin"/>
-  <page key="admin_payments.php" file="panel_admin.php" access="admin"/>
-  <page key="admin_orders.php" file="panel_admin.php" access="admin"/>
-  <page key="admin_invoices.php" file="panel_admin.php" access="admin"/>
-  <page key="admin_cancellations.php" file="panel_admin.php" access="admin"/>
-  <page key="admin_coupons.php" file="panel_admin.php" access="admin"/>
-  <page key="admin_locations.php" file="panel_admin.php" access="admin"/>
+  <page key="billing_setup.php" file="panel_admin.php" access="admin"><menu>Billing Setup</menu></page>
+  <page key="billing_operations.php" file="panel_admin.php" access="admin"><menu>Billing Operations</menu></page>
   <page key="test_integration" file="test_integration.php" access="admin,user">
     <menu>Test Integration</menu>
   </page>
