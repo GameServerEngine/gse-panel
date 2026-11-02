@@ -2,13 +2,7 @@
 /**
  * Admin Config Editor
  *
- * Provides billing configuration controls and an optional raw editor:
- *   A. Interactive form (top) — fields for each billing-specific setting.
- *   B. Raw PHP editor  (bottom) — direct file content textarea (advanced).
- *
- * Both methods create a timestamped backup before saving and apply the
- * $SITE_CONFIG_BACKUP_RETENTION limit (default 5) after writing.
- * A post-save php -l syntax check rolls back the file on parse errors.
+ * Provides billing configuration controls for PayPal and related settings.
  *
  * Database settings remain internal to the panel and are never rendered here.
  */
@@ -31,136 +25,9 @@ if (empty($_SESSION['admin_csrf'])) {
 }
 $csrf = $_SESSION['admin_csrf'];
 
-$cfgPath = __DIR__ . '/includes/config.inc.php';
-$bakDir  = dirname($cfgPath) . '/backups';
-
 function h(string $s): string
 {
     return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
-}
-
-// ---------------------------------------------------------------------------
-// Helper: apply backup retention — delete oldest .bak files beyond the limit.
-// Only touches files with names matching *.bak inside the expected backup dir.
-// ---------------------------------------------------------------------------
-function billing_admin_apply_retention(string $dir, int $retention): void
-{
-    $retention = max(1, min(10, $retention));
-    if (!is_dir($dir)) {
-        return;
-    }
-    $files = glob($dir . '/*.bak');
-    if (!is_array($files) || count($files) <= $retention) {
-        return;
-    }
-    // Sort oldest first (by file modification time)
-    usort($files, static function (string $a, string $b): int {
-        return filemtime($a) <=> filemtime($b);
-    });
-    $toDelete = count($files) - $retention;
-    for ($i = 0; $i < $toDelete; $i++) {
-        @unlink($files[$i]);
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Helper: create a backup of the config file; returns backup filename or ''.
-// ---------------------------------------------------------------------------
-function billing_admin_create_backup(string $cfgPath, string $bakDir): string
-{
-    @mkdir($bakDir, 0775, true);
-    $bakName = $bakDir . '/config.inc.php.' . date('Ymd-His') . '.' . bin2hex(random_bytes(4)) . '.bak';
-    if (!copy($cfgPath, $bakName)) {
-        return '';
-    }
-    return $bakName;
-}
-
-// ---------------------------------------------------------------------------
-// Helper: run php -l on a file and return [ok, output].
-// ---------------------------------------------------------------------------
-function billing_admin_lint(string $filePath): array
-{
-    $phpExec = PHP_BINARY ?: null;
-    if (!$phpExec) {
-        return [true, 'PHP executable not found; skipping syntax check.'];
-    }
-    $cmd = escapeshellarg($phpExec) . ' -l ' . escapeshellarg($filePath);
-    $out = [];
-    $rc  = 0;
-    @exec($cmd . ' 2>&1', $out, $rc);
-    return [$rc === 0, implode("\n", $out)];
-}
-
-// ---------------------------------------------------------------------------
-// Helper: generate canonical config.inc.php content from an array of values.
-// DB settings are preserved from the existing file; only billing fields change.
-// ---------------------------------------------------------------------------
-function billing_admin_build_config(string $existingContent, array $vals): string
-{
-    // Extract current DB settings from existing file content so we never lose them.
-    $dbLines = [];
-    foreach (['db_host', 'db_port', 'db_user', 'db_pass', 'db_name', 'table_prefix', 'db_type'] as $var) {
-        if (preg_match('/^\s*\$' . preg_quote($var, '/') . '\s*=.*$/m', $existingContent, $m)) {
-            $dbLines[$var] = rtrim($m[0]);
-        }
-    }
-
-    $q = static function (string $v): string {
-        return '"' . addslashes($v) . '"';
-    };
-
-    $mode      = (strtolower($vals['paypal_mode'] ?? 'sandbox') === 'live') ? 'live' : 'sandbox';
-    $retention = max(1, min(10, (int)($vals['backup_retention'] ?? 5)));
-    $baseUrl   = rtrim(trim($vals['SITE_BASE_URL'] ?? ($GLOBALS['SITE_BASE_URL'] ?? '')), '/');
-    $bg        = trim($vals['SITE_BACKGROUND'] ?? 'images/dark.jpg');
-    $dataDir   = trim($vals['SITE_DATA_DIR'] ?? '');
-    $wh_path   = '/' . ltrim(trim($vals['paypal_webhook_path'] ?? '/paypal/webhook.php'), '/');
-
-    $dbBlock = '';
-    foreach (['db_host', 'db_port', 'db_user', 'db_pass', 'db_name', 'table_prefix', 'db_type'] as $var) {
-        if (isset($dbLines[$var])) {
-            $dbBlock .= $dbLines[$var] . "\n";
-        }
-    }
-
-    $dataDirLine = ($dataDir !== '' && $dataDir !== 'auto')
-        ? '$SITE_DATA_DIR = ' . $q($dataDir) . ';'
-        : "\$SITE_DATA_DIR = realpath(__DIR__ . '/..') . DIRECTORY_SEPARATOR . 'data';";
-
-    return '<?php' . "\n"
-        . '###############################################' . "\n"
-        . '# Website Database Configuration' . "\n"
-        . '# This file contains the database connection' . "\n"
-        . '# settings for the billing website.' . "\n"
-        . '#' . "\n"
-        . '# Managed via Admin > Edit Config.' . "\n"
-        . '###############################################' . "\n"
-        . $dbBlock
-        . "\n"
-        . '// Optional: base URL without trailing slash (e.g. https://gameservers.world).' . "\n"
-        . '// Leave empty to use relative paths.' . "\n"
-        . '$SITE_BASE_URL = ' . $q($baseUrl) . ';' . "\n"
-        . '$SITE_BASE_URL = rtrim(trim((string)$SITE_BASE_URL), \'/\');' . "\n"
-        . "\n"
-        . '// Site-wide background image (relative to site root).' . "\n"
-        . '$SITE_BACKGROUND = ' . $q($bg) . ';' . "\n"
-        . '$SITE_BACKGROUND = trim((string)$SITE_BACKGROUND);' . "\n"
-        . "\n"
-        . '// Data directory for persisted payment webhook JSON files.' . "\n"
-        . $dataDirLine . "\n"
-        . "\n"
-        . '// PayPal credentials are stored encrypted in the billing database.' . "\n"
-        . '// The legacy config values, when present, are read-only fallbacks.' . "\n"
-        . '$paypal_mode = ' . $q($mode) . ';  // \'sandbox\' or \'live\'' . "\n"
-        . "\n"
-        . '// Webhook path (relative to billing site root, must start with /)' . "\n"
-        . '// Full public URL = $SITE_BASE_URL + $paypal_webhook_path' . "\n"
-        . '$paypal_webhook_path = ' . $q($wh_path) . ';' . "\n"
-        . "\n"
-        . '// Admin config backup retention: how many backups to keep (1–10). Default 5.' . "\n"
-        . '$SITE_CONFIG_BACKUP_RETENTION = ' . $retention . ';' . "\n"
-        . '?>' . "\n";
 }
 
 // ---------------------------------------------------------------------------
@@ -178,7 +45,6 @@ $cfgVals = [
     'paypal_live_client_secret'      => '',
     'paypal_live_webhook_id'         => $paypal_live_webhook_id         ?? '',
     'paypal_webhook_path'            => $paypal_webhook_path            ?? '/paypal/webhook.php',
-    'backup_retention'               => $SITE_CONFIG_BACKUP_RETENTION   ?? 5,
 ];
 
 // Computed full webhook URL for display
@@ -227,7 +93,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
             'paypal_sandbox_webhook_id'   => trim($_POST['paypal_sandbox_webhook_id']   ?? ''),
             'paypal_live_webhook_id'      => trim($_POST['paypal_live_webhook_id']      ?? ''),
             'paypal_webhook_path'         => trim($_POST['paypal_webhook_path']         ?? '/paypal/webhook.php'),
-            'backup_retention'            => (int)($_POST['backup_retention']           ?? 5),
         ];
 
         // Client secrets: only update if a non-blank value was submitted (never erase existing).
@@ -239,10 +104,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
 
         // Validate
         $validationError = '';
-        if ($formVals['backup_retention'] < 1 || $formVals['backup_retention'] > 10) {
-            $validationError = 'Backup retention must be a number between 1 and 10.';
-        }
-
         if ($validationError) {
             $status     = $validationError;
             $statusType = 'error';
@@ -303,62 +164,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
     }
 }
 
-// ---------------------------------------------------------------------------
-// POST: Save raw editor
-// ---------------------------------------------------------------------------
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_raw') {
-    $token = $_POST['csrf'] ?? '';
-    if (!hash_equals($csrf, (string)$token)) {
-        $status     = 'Invalid CSRF token.';
-        $statusType = 'error';
-    } elseif (!is_writable($cfgPath)) {
-        $status     = 'Config file is not writable: ' . h($cfgPath);
-        $statusType = 'error';
-    } else {
-        $newRaw = $_POST['config_text'] ?? '';
-        if (strpos(trim($newRaw), '<?php') !== 0) {
-            $status     = 'Config must start with <?php';
-            $statusType = 'error';
-        } else {
-            // Backup then write (admin-only operation; concurrent writes are not expected).
-            $bakName = billing_admin_create_backup($cfgPath, $bakDir);
-            if (!$bakName) {
-                $status     = 'Failed to create backup. Aborting save.';
-                $statusType = 'error';
-            } else {
-                if (file_put_contents($cfgPath, $newRaw, LOCK_EX) === false) {
-                    $status     = 'Failed to write config file.';
-                    $statusType = 'error';
-                } else {
-                    [$lintOk, $lintOut] = billing_admin_lint($cfgPath);
-                    if (!$lintOk) {
-                        @copy($bakName, $cfgPath); // rollback
-                        $status     = 'Syntax error detected; changes rolled back. Lint: ' . h($lintOut);
-                        $statusType = 'error';
-                    } else {
-                        // Apply backup retention from config
-                        $retentionNow = max(1, min(10, (int)($SITE_CONFIG_BACKUP_RETENTION ?? 5)));
-                        billing_admin_apply_retention($bakDir, $retentionNow);
-
-                        $status     = 'Config saved successfully. Backup: ' . basename($bakName);
-                        $statusType = 'success';
-                    }
-                }
-            }
-        }
-    }
-}
-
-// Always read current raw content from disk for the raw editor
-$currentText = '';
-if (is_readable($cfgPath)) {
-    $currentText = file_get_contents($cfgPath);
-}
-
-// List current backups for display
-$bakFiles = is_dir($bakDir) ? (array)glob($bakDir . '/*.bak') : [];
-rsort($bakFiles); // newest first
-
 ?>
 <?php if (!billing_is_panel_context()): ?><!doctype html>
 <html>
@@ -393,7 +198,6 @@ rsort($bakFiles); // newest first
                 border-radius:4px; margin-bottom:14px; font-size:0.9em; }
     .save-row { margin:14px 0; }
     .save-row button { padding:10px 24px; font-size:1em; font-weight:600; }
-    .bak-list { font-size:0.85em; color:#555; margin-top:4px; }
   </style>
 <?php include(__DIR__ . '/includes/theme_head.php'); ?>
 </head>
@@ -561,22 +365,6 @@ rsort($bakFiles); // newest first
         });
       </script>
 
-      <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
-      <h3 style="margin-top:0;color:#333;">Backup Settings</h3>
-
-      <!-- Backup Retention -->
-      <div class="field-group">
-        <label for="cfg_retention">Config Backup Retention</label>
-        <div class="field-help">
-          Number of config backups to keep (1–10). The oldest backup beyond this limit is
-          deleted after each save. Backups are stored in
-          <code><?php echo h($bakDir); ?></code>.
-        </div>
-        <input type="number" id="cfg_retention" name="backup_retention"
-               value="<?php echo (int)$cfgVals['backup_retention']; ?>"
-               min="1" max="10" style="max-width:100px;">
-      </div>
-
       <div class="save-row">
         <button type="submit">💾 Save Settings</button>
       </div>
@@ -680,7 +468,6 @@ rsort($bakFiles); // newest first
       &bull; Webhook file: <?php echo $diag_wh_exists ? '✅ exists' : '❌ not found'; ?> — <code style="word-break:break-all"><?php echo h($diag_wh_file); ?></code><br>
       &bull; Logs directory: <?php $logDir = __DIR__ . '/logs'; echo (is_dir($logDir) && is_writable($logDir)) ? '✅ writable' : '⚠️ ' . (is_dir($logDir) ? 'not writable' : 'missing'); ?><br>
       &bull; Data directory: <?php echo (is_dir($SITE_DATA_DIR ?? '') && is_writable($SITE_DATA_DIR ?? '')) ? '✅ writable' : '⚠️ check path'; ?><br>
-      &bull; Config file: <?php echo is_writable($cfgPath) ? '✅ writable' : '⚠️ read-only'; ?><br>
     </div>
     <?php endif; } ?>
 
@@ -818,43 +605,6 @@ rsort($bakFiles); // newest first
     </div>
     <?php endif; ?>
   </div>
-
-  <?php if (!$panelMode): ?>
-  <!-- ===================================================================
-       SECTION C: Raw PHP editor
-  ==================================================================== -->
-  <div class="cfg-section">
-    <h2>Advanced: Raw Config Editor</h2>
-    <div class="warn-box">
-      ⚠️ <strong>Warning:</strong> Manually editing the raw PHP file can break the billing
-      website if you introduce a syntax error or remove required variables.
-      A backup is created automatically before saving, and a syntax check runs after.
-      The file is rolled back if a parse error is detected.
-    </div>
-
-    <form method="post" action="home.php?m=billing&amp;p=billing_setup">
-      <input type="hidden" name="csrf"   value="<?php echo h($csrf); ?>">
-      <input type="hidden" name="action" value="save_raw">
-      <div class="save-row"><button type="submit">💾 Save Raw Config</button></div>
-      <textarea name="config_text" rows="28"
-                style="width:100%;font-family:monospace;font-size:0.9em;border:1px solid #ccc;border-radius:4px;padding:10px;box-sizing:border-box;"
-      ><?php echo h((string)$currentText); ?></textarea>
-      <div class="save-row"><button type="submit">💾 Save Raw Config</button></div>
-    </form>
-
-    <p style="margin-top:16px;">
-      <strong>Backup directory:</strong> <code><?php echo h($bakDir); ?></code>
-      <?php if ($bakFiles): ?>
-        <br><span class="bak-list">
-          <?php echo count($bakFiles); ?> backup(s) stored.
-          Most recent: <code><?php echo h(basename($bakFiles[0])); ?></code>
-        </span>
-      <?php else: ?>
-        <br><span class="bak-list">No backups yet.</span>
-      <?php endif; ?>
-    </p>
-  </div>
-  <?php endif; ?>
 
 </div>
 <?php if (!billing_is_panel_context()): ?><?php include(__DIR__ . '/includes/footer.php'); ?>

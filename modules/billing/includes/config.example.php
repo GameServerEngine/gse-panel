@@ -53,7 +53,3 @@ $paypal_live_webhook_id    = '';
 # Full public URL = $SITE_BASE_URL + $paypal_webhook_path
 # Example full URL: https://gameservers.world/paypal/webhook.php
 $paypal_webhook_path = '/paypal/webhook.php';
-
-# --- Admin config backup retention ---
-# Number of config backups to keep (1–10). Oldest backups beyond this limit are deleted.
-$SITE_CONFIG_BACKUP_RETENTION = 5;

@@ -4,8 +4,8 @@
  *
  * Load order:
  *   1. modules/billing/includes/config.inc.php  — always loaded first; contains billing-specific
- *      settings (PayPal credentials, SITE_BASE_URL, SITE_BACKGROUND, SITE_DATA_DIR, backup
- *      retention, and default DB settings for standalone installs).
+ *      settings (PayPal credentials, SITE_BASE_URL, SITE_BACKGROUND, SITE_DATA_DIR,
+ *      and default DB settings for standalone installs).
  *   2. <panel_root>/includes/config.inc.php     — read via regex (no side-effects) when the
  *      billing module is installed inside a GSP panel tree.  DB variables extracted from the
  *      panel config override the billing config DB variables in memory so that the module
@@ -320,11 +320,6 @@ if (!isset($SITE_BACKGROUND)) {
 if (!isset($SITE_DATA_DIR)) {
     $SITE_DATA_DIR = realpath(__DIR__ . '/..') . DIRECTORY_SEPARATOR . 'data';
 }
-if (!isset($SITE_CONFIG_BACKUP_RETENTION) || !is_int($SITE_CONFIG_BACKUP_RETENTION)) {
-    $SITE_CONFIG_BACKUP_RETENTION = 5;
-}
-$SITE_CONFIG_BACKUP_RETENTION = max(1, min(10, (int)$SITE_CONFIG_BACKUP_RETENTION));
-
 define('BILLING_CONFIG_LOADED', true);
 
 // ---------------------------------------------------------------------------
