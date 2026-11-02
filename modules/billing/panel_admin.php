@@ -7,12 +7,12 @@ if (!function_exists('exec_gsp_module')) {
     {
         $page = (string)($_GET['p'] ?? '');
         $sections = array(
-            'billing_setup.php' => array(
+            'billing_setup' => array(
                 'config' => 'admin_config.php',
                 'locations' => 'admin_locations.php',
                 'coupons' => 'admin_coupons.php',
             ),
-            'billing_operations.php' => array(
+            'billing_operations' => array(
                 'invoices' => 'admin_invoices.php',
                 'orders' => 'admin_orders.php',
                 'payments' => 'admin_payments.php',
@@ -26,7 +26,7 @@ if (!function_exists('exec_gsp_module')) {
         }
 
         $selected = $_GET['s'] ?? '';
-        $default = $page === 'billing_setup.php' ? 'config' : 'invoices';
+        $default = $page === 'billing_setup' ? 'config' : 'invoices';
         $section = $selected === '' ? $default : (string)$selected;
         echo '<nav class="billing-admin-tabs" aria-label="Billing administration">';
         foreach ($sections[$page] as $key => $file) {
