@@ -197,36 +197,6 @@ $statusType = 'info';   // 'success' | 'error' | 'info'
 $paypalDb = billing_get_paypal_db_config();
 $paypalCsrf = billing_action_csrf_token('billing_paypal_config_csrf');
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['paypal_save', 'paypal_test'], true)) {
-    if (!billing_action_validate_csrf($_POST['csrf'] ?? '', 'billing_paypal_config_csrf')) {
-        $status = 'Invalid CSRF token.'; $statusType = 'error';
-    } else {
-        $mode = ($_POST['paypal_mode'] ?? 'sandbox') === 'live' ? 'live' : 'sandbox';
-        $id = trim((string)($_POST['paypal_client_id'] ?? ''));
-        $webhook = trim((string)($_POST['paypal_webhook_id'] ?? ''));
-        $secret = trim((string)($_POST['paypal_client_secret'] ?? ''));
-        if (($_POST['action'] ?? '') === 'paypal_test') {
-            $testSecret = $secret !== '' ? $secret : billing_paypal_decrypt_secret((string)($paypalDb['paypal_client_secret_enc'] ?? ''), billing_paypal_read_key());
-            $code = ($id !== '' && $testSecret !== '') ? billing_paypal_test_connection($mode, $id, $testSecret) : 0;
-            $status = $code > 0 ? 'PayPal connection HTTP status: ' . $code : 'PayPal connection could not be tested because credentials are incomplete.'; $statusType = ($code === 200) ? 'success' : 'error';
-        } elseif ($secret !== '' && billing_paypal_read_key() === '') {
-            $path = billing_paypal_key_path() ?: 'the path configured by BILLING_PAYPAL_KEY_FILE';
-            $status = 'Cannot save secret: create the external encryption key file at ' . $path . '.'; $statusType = 'error';
-        } else {
-            global $db_host, $db_user, $db_pass, $db_name, $db_port, $table_prefix;
-            $db = @mysqli_connect($db_host, $db_user, $db_pass, $db_name, isset($db_port) ? (int)$db_port : 0);
-            $enc = $secret !== '' ? billing_paypal_encrypt_secret($secret, billing_paypal_read_key()) : (string)($paypalDb['paypal_client_secret_enc'] ?? '');
-            $sql = $paypalDb['config_id'] ?? null
-                ? "UPDATE `{$table_prefix}billing_config` SET paypal_mode='" . mysqli_real_escape_string($db, $mode) . "', paypal_client_id='" . mysqli_real_escape_string($db, $id) . "', paypal_client_secret_enc='" . mysqli_real_escape_string($db, $enc) . "', paypal_webhook_id='" . mysqli_real_escape_string($db, $webhook) . "' WHERE config_id=" . (int)$paypalDb['config_id']
-                : "INSERT INTO `{$table_prefix}billing_config` (game_key, paypal_mode, paypal_client_id, paypal_client_secret_enc, paypal_webhook_id) VALUES ('__global__','" . mysqli_real_escape_string($db, $mode) . "','" . mysqli_real_escape_string($db, $id) . "','" . mysqli_real_escape_string($db, $enc) . "','" . mysqli_real_escape_string($db, $webhook) . "')";
-            if ($db && mysqli_query($db, $sql)) {
-                $status = 'PayPal credentials saved.'; $statusType = 'success';
-            } else { $status = 'Could not save PayPal credentials.'; $statusType = 'error'; }
-            if ($db) mysqli_close($db);
-        }
-    }
-}
-
 // ---------------------------------------------------------------------------
 // POST: Save interactive form
 // ---------------------------------------------------------------------------
@@ -269,6 +239,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
             $status     = $validationError;
             $statusType = 'error';
         } else {
+            // The visible form submits mode-specific names; persist the active mode
+            // credentials in the panel database as part of this same save request.
+            $paypalMode = $formVals['paypal_mode'];
+            $paypalId = $paypalMode === 'live' ? $formVals['paypal_live_client_id'] : $formVals['paypal_sandbox_client_id'];
+            $paypalWebhook = $paypalMode === 'live' ? $formVals['paypal_live_webhook_id'] : $formVals['paypal_sandbox_webhook_id'];
+            $paypalSecret = $paypalMode === 'live' ? $lvSecPost : $sbSecPost;
+            $paypalKey = billing_paypal_read_key();
+            if ($paypalSecret !== '' && $paypalKey === '') {
+                $status = 'Save failed: encryption key not available.';
+                $statusType = 'error';
+            } else {
+                global $db_host, $db_user, $db_pass, $db_name, $db_port, $table_prefix;
+                $paypalDbLink = @mysqli_connect($db_host, $db_user, $db_pass, $db_name, isset($db_port) ? (int)$db_port : 0);
+                if (!$paypalDbLink) {
+                    $status = 'Save failed: database connection unavailable.';
+                    $statusType = 'error';
+                } else {
+                    try {
+                        $encryptedSecret = $paypalSecret !== ''
+                            ? billing_paypal_encrypt_secret($paypalSecret, $paypalKey)
+                            : (string)($paypalDb['paypal_client_secret_enc'] ?? '');
+                        $esc = static fn(string $value): string => mysqli_real_escape_string($paypalDbLink, $value);
+                        $globalResult = mysqli_query($paypalDbLink, "SELECT config_id FROM `{$table_prefix}billing_config` WHERE game_key='__global__' ORDER BY config_id ASC LIMIT 1");
+                        $globalRow = $globalResult ? mysqli_fetch_assoc($globalResult) : null;
+                        if ($globalRow) {
+                            $sql = "UPDATE `{$table_prefix}billing_config` SET paypal_mode='" . $esc($paypalMode) . "', paypal_client_id='" . $esc($paypalId) . "', paypal_client_secret_enc='" . $esc($encryptedSecret) . "', paypal_webhook_id='" . $esc($paypalWebhook) . "' WHERE config_id=" . (int)$globalRow['config_id'];
+                        } else {
+                            $sql = "INSERT INTO `{$table_prefix}billing_config` (game_key, paypal_mode, paypal_client_id, paypal_client_secret_enc, paypal_webhook_id) VALUES ('__global__','" . $esc($paypalMode) . "','" . $esc($paypalId) . "','" . $esc($encryptedSecret) . "','" . $esc($paypalWebhook) . "')";
+                        }
+                        if (!mysqli_query($paypalDbLink, $sql)) {
+                            throw new RuntimeException('database write failed.');
+                        }
+                        $status = 'PayPal settings saved.';
+                        $statusType = 'success';
+                    } catch (Throwable $e) {
+                        $status = 'Save failed: ' . $e->getMessage();
+                        $statusType = 'error';
+                    }
+                    mysqli_close($paypalDbLink);
+                }
+            }
+        }
+        if ($statusType === 'error') {
+            // Do not continue into the config-file writer after a PayPal failure.
+        } else {
             $existingContent = (string)file_get_contents($cfgPath);
             $newContent      = billing_admin_build_config($existingContent, $formVals);
 
@@ -298,7 +313,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
 
                         $cfgVals         = array_merge($cfgVals, $formVals); // update displayed values while preserving panel-managed values
                         $computedWebhookUrl = rtrim((string)($cfgVals['SITE_BASE_URL'] ?? ''), '/') . ('/' . ltrim($formVals['paypal_webhook_path'] ?? '/paypal/webhook.php', '/'));
-                        $status     = 'Config saved successfully. Backup: ' . basename($bakName);
+                        $status     = 'PayPal settings saved.';
                         $statusType = 'success';
                     }
                 }
@@ -421,27 +436,14 @@ rsort($bakFiles); // newest first
     <h2>Site Settings</h2>
 
     <?php if ($panelMode): ?>
-    <div class="panel-badge">
-      ℹ️ <strong>Panel-integrated mode.</strong>
-      Database settings are managed by the panel and synced automatically from
-      <code><?php echo h($panelCfgPath); ?></code>.
-      They are shown below for reference only.
-    </div>
+    <div class="panel-badge">ℹ️ <strong>Panel-integrated mode.</strong> Billing settings are managed by the panel.</div>
     <?php endif; ?>
 
-    <form method="post" action="">
+    <form method="post" action="home.php?m=billing&amp;p=billing_setup">
       <input type="hidden" name="csrf"   value="<?php echo h($csrf); ?>">
       <input type="hidden" name="action" value="save_form">
 
-      <!-- DB read-only info (panel mode) -->
-      <?php if ($panelMode): ?>
-      <div class="field-group">
-        <label>Database Host</label>
-        <div class="field-help">Managed by the panel config. Edit the panel's <code>includes/config.inc.php</code> to change.</div>
-        <input type="text" class="readonly-field" value="<?php echo h((string)($db_host ?? '')); ?>" readonly>
-      </div>
 
-      <?php endif; ?>
 
       <!-- Site Base URL -->
       <div class="field-group">
@@ -862,6 +864,7 @@ rsort($bakFiles); // newest first
     <?php endif; ?>
   </div>
 
+  <?php if (!$panelMode): ?>
   <!-- ===================================================================
        SECTION C: Raw PHP editor
   ==================================================================== -->
@@ -874,7 +877,7 @@ rsort($bakFiles); // newest first
       The file is rolled back if a parse error is detected.
     </div>
 
-    <form method="post" action="">
+    <form method="post" action="home.php?m=billing&amp;p=billing_setup">
       <input type="hidden" name="csrf"   value="<?php echo h($csrf); ?>">
       <input type="hidden" name="action" value="save_raw">
       <div class="save-row"><button type="submit">💾 Save Raw Config</button></div>
@@ -896,6 +899,7 @@ rsort($bakFiles); // newest first
       <?php endif; ?>
     </p>
   </div>
+  <?php endif; ?>
 
 </div>
 <?php if (!billing_is_panel_context()): ?><?php include(__DIR__ . '/includes/footer.php'); ?>
