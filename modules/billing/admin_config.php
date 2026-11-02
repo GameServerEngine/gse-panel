@@ -114,7 +114,7 @@ function billing_admin_build_config(string $existingContent, array $vals): strin
 
     $mode      = (strtolower($vals['paypal_mode'] ?? 'sandbox') === 'live') ? 'live' : 'sandbox';
     $retention = max(1, min(10, (int)($vals['backup_retention'] ?? 5)));
-    $baseUrl   = rtrim(trim($vals['SITE_BASE_URL'] ?? ''), '/');
+    $baseUrl   = rtrim(trim($vals['SITE_BASE_URL'] ?? ($GLOBALS['SITE_BASE_URL'] ?? '')), '/');
     $bg        = trim($vals['SITE_BACKGROUND'] ?? 'images/dark.jpg');
     $dataDir   = trim($vals['SITE_DATA_DIR'] ?? '');
     $wh_path   = '/' . ltrim(trim($vals['paypal_webhook_path'] ?? '/paypal/webhook.php'), '/');
@@ -241,7 +241,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
     } else {
         // Collect and validate form values
         $formVals = [
-            'SITE_BASE_URL'               => trim($_POST['SITE_BASE_URL']               ?? ''),
             'SITE_BACKGROUND'             => trim($_POST['SITE_BACKGROUND']             ?? 'images/dark.jpg'),
             'SITE_DATA_DIR'               => trim($_POST['SITE_DATA_DIR']               ?? ''),
             'paypal_mode'                 => (strtolower(trim($_POST['paypal_mode'] ?? 'sandbox')) === 'live') ? 'live' : 'sandbox',
@@ -297,8 +296,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
                         $retention = max(1, min(10, $formVals['backup_retention']));
                         billing_admin_apply_retention($bakDir, $retention);
 
-                        $cfgVals         = $formVals; // update displayed values
-                        $computedWebhookUrl = rtrim($formVals['SITE_BASE_URL'], '/') . ('/' . ltrim($formVals['paypal_webhook_path'] ?? '/paypal/webhook.php', '/'));
+                        $cfgVals         = array_merge($cfgVals, $formVals); // update displayed values while preserving panel-managed values
+                        $computedWebhookUrl = rtrim((string)($cfgVals['SITE_BASE_URL'] ?? ''), '/') . ('/' . ltrim($formVals['paypal_webhook_path'] ?? '/paypal/webhook.php', '/'));
                         $status     = 'Config saved successfully. Backup: ' . basename($bakName);
                         $statusType = 'success';
                     }
@@ -389,7 +388,7 @@ rsort($bakFiles); // newest first
                 background:#f5f5f5; cursor:pointer; white-space:nowrap; }
     .status-box { padding:12px 16px; border-radius:4px; margin-bottom:18px; font-weight:600; }
     .status-success { background:#d4edda; color:#155724; border:1px solid #c3e6cb; }
-    .status-error   { background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; }
+    .status-error   { background:#f8d7da; color:#8b1e2d; border:1px solid #b21f35; }
     .status-info    { background:#d1ecf1; color:#0c5460; border:1px solid #bee5eb; }
     .panel-badge { background:#e8f4fd; border:1px solid #9ec8f0; color:#1a5276; padding:10px 14px;
                    border-radius:4px; margin-bottom:18px; font-size:0.9em; }
@@ -442,25 +441,6 @@ rsort($bakFiles); // newest first
         <input type="text" class="readonly-field" value="<?php echo h((string)($db_host ?? '')); ?>" readonly>
       </div>
 
-      <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
-      <h3 style="margin-top:0;color:#333;">PayPal</h3>
-        <input type="hidden" name="csrf" value="<?php echo h($paypalCsrf); ?>">
-        <input type="hidden" name="action" value="paypal_save">
-        <div class="field-group"><label for="paypal_mode">Mode</label>
-          <select id="paypal_mode" name="paypal_mode"><option value="sandbox" <?php echo (($paypalDb['paypal_mode'] ?? 'sandbox') === 'sandbox') ? 'selected' : ''; ?>>Sandbox</option><option value="live" <?php echo (($paypalDb['paypal_mode'] ?? '') === 'live') ? 'selected' : ''; ?>>Live</option></select></div>
-        <div class="field-group"><label for="paypal_client_id">Client ID</label><input id="paypal_client_id" name="paypal_client_id" type="text" value="<?php echo h((string)($paypalDb['paypal_client_id'] ?? '')); ?>"></div>
-        <div class="field-group"><label for="paypal_client_secret">Client secret</label><input id="paypal_client_secret" name="paypal_client_secret" type="password" autocomplete="new-password" placeholder="<?php echo h(billing_paypal_secret_input_placeholder(!empty($paypalDb['paypal_client_secret_enc']))); ?>"></div>
-        <div class="field-group"><label for="paypal_webhook_id">Webhook ID (optional)</label><input id="paypal_webhook_id" name="paypal_webhook_id" type="text" value="<?php echo h((string)($paypalDb['paypal_webhook_id'] ?? '')); ?>"></div>
-        <button type="submit">Save PayPal credentials</button>
-        <button type="submit" name="action" value="paypal_test">Test connection</button>
-      <div class="field-group">
-        <label>Database Name</label>
-        <input type="text" class="readonly-field" value="<?php echo h((string)($db_name ?? '')); ?>" readonly>
-      </div>
-      <div class="field-group">
-        <label>Table Prefix</label>
-        <input type="text" class="readonly-field" value="<?php echo h((string)($table_prefix ?? '')); ?>" readonly>
-      </div>
       <?php endif; ?>
 
       <!-- Site Base URL -->
@@ -470,9 +450,7 @@ rsort($bakFiles); // newest first
           Full base URL <strong>without trailing slash</strong> (e.g. <code>https://gameservers.world</code>).
           Leave empty to use relative paths. Used to compute the full public PayPal webhook URL.
         </div>
-        <input type="text" id="cfg_base_url" name="SITE_BASE_URL"
-               value="<?php echo h((string)$cfgVals['SITE_BASE_URL']); ?>"
-               placeholder="https://example.com">
+        <input type="text" id="cfg_base_url" value="<?php echo h((string)$cfgVals['SITE_BASE_URL']); ?>" readonly>
       </div>
 
       <!-- Site Background -->
@@ -672,7 +650,7 @@ rsort($bakFiles); // newest first
   $diag_active_wh_set  = $diag_is_sandbox ? $diag_sb_wh_set  : $diag_lv_wh_set;
 
   function diag_badge(bool $ok, string $yes = 'Yes', string $no = 'No'): string {
-      $cls   = $ok ? 'background:#d4edda;color:#155724;border:1px solid #c3e6cb;' : 'background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;';
+      $cls   = $ok ? 'background:#d4edda;color:#155724;border:1px solid #c3e6cb;' : 'background:#f8d7da;color:#8b1e2d;border:1px solid #b21f35;';
       $label = $ok ? $yes : $no;
       return '<span style="' . $cls . 'padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:600;display:inline-block;word-break:break-word;">' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</span>';
   }

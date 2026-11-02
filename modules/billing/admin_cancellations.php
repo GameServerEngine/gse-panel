@@ -4,7 +4,7 @@ require_once __DIR__.'/bootstrap.php'; require_once __DIR__.'/includes/admin_aut
 require_once __DIR__.'/classes/BillingRepository.php'; require_once __DIR__.'/classes/RefundCalculator.php'; require_once __DIR__.'/classes/GatewayFactory.php';
 function h($v){return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}
 $db=(isset($db_host,$db_user,$db_pass,$db_name)) ? @mysqli_connect($db_host,$db_user,$db_pass,$db_name,isset($db_port)?(int)$db_port:null) : false;
-if (!$db && billing_is_panel_context()) { echo '<div class="failure">Billing admin: database connection failed.</div>'; return; }
+if (!$db && billing_is_panel_context()) { echo '<div class="failure billing-admin-failure">Billing admin: database connection failed.</div>'; return; }
 mysqli_set_charset($db,'utf8mb4'); $p=$table_prefix??'gsp_';
 $csrf=billing_action_csrf_token('billing_admin_cancellation_csrf'); $msg='';
 if ($_SERVER['REQUEST_METHOD']==='POST' && billing_action_validate_csrf($_POST['csrf']??'','billing_admin_cancellation_csrf')) {

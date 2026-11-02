@@ -1005,6 +1005,15 @@ a.gsw-catalog-action {
     border: 1px solid rgba(255, 93, 115, 0.28);
 }
 
+/* Billing admin-only failure and status contrast overrides. */
+.billing-admin-failure,
+.billing-admin-status.status-refunded,
+.billing-admin-status.status-failed {
+    color: #8b1e2d;
+    background: #f8d7da;
+    border-color: #b21f35;
+}
+
 .alert-success {
     color: #d8fff0;
     background: rgba(38, 217, 157, 0.14);

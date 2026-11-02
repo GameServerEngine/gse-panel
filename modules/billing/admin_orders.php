@@ -55,7 +55,7 @@ function billing_admin_orders_exec()
 	if (!$isAdmin) {
 		echo "<h2>Manage All Orders (Admin)</h2>";
 		echo "<form method='get' action='home.php'><input type='hidden' name='m' value='billing'><input type='hidden' name='p' value='admin_orders'><button type='submit'>Reload</button></form>";
-		echo "<div class='failure'><p>Billing admin: database connection failed or administrator verification is unavailable.</p></div>";
+		echo "<div class='failure billing-admin-failure'><p>Billing admin: database connection failed or administrator verification is unavailable.</p></div>";
 		return;
 	}
 
@@ -103,7 +103,7 @@ function billing_admin_orders_exec()
 
 	echo "<h2>Manage All Orders (Admin)</h2>";
 	foreach ($messages as $message) {
-		echo "<div class='" . billing_admin_orders_h($message['type']) . "'><p>" . billing_admin_orders_h($message['text']) . "</p></div>";
+		echo "<div class='" . billing_admin_orders_h($message['type']) . " billing-admin-failure'><p>" . billing_admin_orders_h($message['text']) . "</p></div>";
 	}
 
 	// Filter form

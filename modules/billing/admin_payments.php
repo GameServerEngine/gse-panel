@@ -88,7 +88,7 @@ if (!$db) {
         <td><?= h($t['payment_method']) ?></td>
         <td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis"><?= h($t['transaction_external_id']) ?></td>
         <td><?= h($t['currency'] . ' ' . number_format((float)$t['amount'], 2)) ?></td>
-        <td><span class="status-badge status-<?= h(ucfirst($t['status'])) ?>"><?= h($t['status']) ?></span></td>
+        <td><span class="status-badge billing-admin-status status-<?= h(ucfirst($t['status'])) ?>"><?= h($t['status']) ?></span></td>
         <td><?= h($t['created_at']) ?></td>
       </tr>
     <?php endforeach; ?>

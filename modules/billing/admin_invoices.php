@@ -22,7 +22,7 @@ $db = isset($db_host, $db_user, $db_pass, $db_name)
     : false;
 if (!$db) {
     if (billing_is_panel_context()) {
-        echo '<div class="failure">Billing admin: database connection failed.</div>';
+        echo '<div class="failure billing-admin-failure">Billing admin: database connection failed.</div>';
         return;
     }
     die('DB connection failed');
@@ -132,7 +132,7 @@ if (isset($_GET['type'])) $msgType = $_GET['type'];
     .status-paid      { background:#d4edda; color:#155724; }
     .status-unpaid    { background:#fff3cd; color:#856404; }
     .status-cancelled { background:#e2e3e5; color:#383d41; }
-    .status-refunded  { background:#f8d7da; color:#721c24; }
+    .status-refunded  { background:#f8d7da; color:#8b1e2d; }
     .action-btn { padding:3px 8px; font-size:12px; border:none; border-radius:3px; cursor:pointer; }
 	    .btn-pay    { background:#28a745; color:#fff; }
 	    .btn-cancel { background:#6c757d; color:#fff; }
@@ -176,7 +176,7 @@ if (isset($_GET['type'])) $msgType = $_GET['type'];
         <td><?= h($inv['players'] ?? '—') ?></td>
         <td style="font-size:11px"><?= h(substr($inv['period_start'] ?? '', 0, 10)) ?> – <?= h(substr($inv['period_end'] ?? '', 0, 10)) ?></td>
         <td><?= h(number_format((float)($inv['total_due'] ?? $inv['amount'] ?? 0), 2)) ?></td>
-        <td><span class="status-badge status-<?= h(in_array($inv['payment_status'] ?? '', ['unpaid','paid','cancelled','refunded']) ? $inv['payment_status'] : 'unpaid') ?>"><?= h($inv['payment_status'] ?? 'unpaid') ?></span></td>
+        <td><span class="status-badge billing-admin-status status-<?= h(in_array($inv['payment_status'] ?? '', ['unpaid','paid','cancelled','refunded']) ? $inv['payment_status'] : 'unpaid') ?>"><?= h($inv['payment_status'] ?? 'unpaid') ?></span></td>
         <td><?= h($inv['payment_method'] ?? '—') ?></td>
         <td style="font-size:11px;max-width:120px;overflow:hidden"><?= h($inv['payment_txid'] ?? '—') ?></td>
 	        <td>
