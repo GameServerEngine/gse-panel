@@ -479,18 +479,17 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 				$displayIP =  checkDisplayPublicIP($server_home['display_public_ip'], $ip);
 				$address = "";
 
-				$agent_status = get_agent_server_status($remote, $server_xml, $server_home['home_id'], $server_home['ip'], $server_home['port']);
+				// The status file returned by the agent is authoritative for this home.
+				// Keep this RPC short: a slow/unreachable agent must not make the list hang.
+				$agent_status = get_agent_server_status($remote, $server_xml, $server_home['home_id'], $server_home['ip'], $server_home['port'], '', 5);
 				$agent_state = isset($agent_status['status']) ? strtoupper($agent_status['status']) : "UNKNOWN";
-				$desired_state_note = "";
-				foreach (array('desired_state', 'desired_lifecycle_state', 'desired_state_file', 'status_marker') as $desired_key)
-				{
-					if (isset($agent_status[$desired_key]) && (string)$agent_status[$desired_key] !== "")
-					{
-						$desired_state_note = " <span class='note'>Desired: ".htmlentities((string)$agent_status[$desired_key])."</span>";
-						break;
-					}
+				$desired_state = strtoupper((string)($agent_status['desired'] ?? ''));
+				$desired_state_note = $desired_state !== '' ? " <span class='note'>Desired: ".htmlentities($desired_state)."</span>" : "";
+				$reason = trim((string)($agent_status['reason'] ?? ($agent_status['last_error'] ?? '')));
+				$screen_running = ((int)($agent_status['process_running'] ?? 0) === 1);
+				if (method_exists($db, 'saveServerStatusCache') && !empty($server_home['ip_id'])) {
+					$db->saveServerStatusCache($server_home['ip_id'], $server_home['port'], $agent_status);
 				}
-				$screen_running = is_agent_status_active($agent_status);
 				$update_in_progress = $remote->is_screen_running(GSP_SCREEN_TYPE_UPDATE,$server_home['home_id']) === 1;
 				if($update_in_progress)
 				{
@@ -499,17 +498,11 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 					if($workshop_log_state == 1 && steam_workshop_log_is_terminal($workshop_log_txt))
 						$update_in_progress = false;
 				}
-				if($screen_running)
+				if($agent_state === "RUNNING" && ((int)($agent_status['process_running'] ?? 0) === 1) && ((int)($agent_status['port_listening'] ?? ($agent_status['game_port_listening'] ?? 0)) === 1))
 				{
-					// Check if the screen running the server is running.
-					$status = ($agent_state === "ONLINE") ? "online" : "starting";
-					$order = ($agent_state === "ONLINE") ? (1 + $j) : (2 + $j);
-					if($agent_state !== "ONLINE")
-					{
-						$address = "<span class='note'>".htmlentities($agent_state)."</span>".$desired_state_note;
-						if(isset($agent_status['last_error']) && $agent_status['last_error'] !== "")
-							$address .= " <span class='failure'>".htmlentities($agent_status['last_error'])."</span>";
-					}
+					$status = "online";
+					$order = 1 + $j;
+					$address = $desired_state_note;
 					if ($server_xml->protocol == "lgsl")
 					{
 						$get_q_and_s = lgsl_port_conversion($query_name, $server_home['port'], "", "");
@@ -519,16 +512,16 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 						$q_port = $get_q_and_s['1'];
 						//software port
 						$s_port = $get_q_and_s['2'];
-							if($agent_state === "ONLINE")
+							if($status === "online")
 								$address = "<a href='" . lgsl_software_link($query_name, $query_ip, $c_port, $q_port, $s_port) . "' >Connect</a>";
 
 
 					}
-					if ($server_xml->protocol == "teamspeak3" && $agent_state === "ONLINE")
+					if ($server_xml->protocol == "teamspeak3" && $status === "online")
 						$address = "<a href='ts3server://" . $query_ip . ":" . $server_home['port'] . "'>".$displayIP.":".$server_home['port']."</a>";
-					if($server_xml->protocol == "gameq" and $server_xml->installer == 'steamcmd' && $agent_state === "ONLINE")
+					if($server_xml->protocol == "gameq" and $server_xml->installer == 'steamcmd' && $status === "online")
 						$address = "<a href='steam://connect/" . $query_ip . ":" . $server_home['port'] . "'>" . $displayIP . ":" . $server_home['port'] . "</a>";
-					if($agent_state === "ONLINE" && isset($agent_status['query_port']) && $agent_status['query_port'] !== "" && empty($agent_status['query_port_listening']))
+					if($status === "online" && isset($agent_status['query_port']) && $agent_status['query_port'] !== "" && empty($agent_status['query_port_listening']))
 						$address .= " <span class='note'>Query info unavailable.</span>";
 					$refresh_url = "home.php?m=gamemanager&p=ref_servermonitor&type=cleared&home_id=". $server_home['home_id'] . "&mod_id=". $server_home['mod_id'] . "&ip=" . $server_home['ip'] . "&port=" . $server_home['port'];
 					$pos = $refresh->add($refresh_url);
@@ -554,19 +547,18 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 					}
 					$stats_servers_online++;
 				}
-				elseif($agent_state === "UNKNOWN")
+				elseif(in_array($agent_state, array("STARTING", "STOPPING"), true))
 				{
-					$status = "unknown";
-					$order = 3;
-					$address = "<span class='note'>Unknown - status check unavailable.</span>";
-					if(isset($agent_status['last_error']) && $agent_status['last_error'] !== "")
-						$address .= " <span class='failure'>".htmlentities($agent_status['last_error'])."</span>";
-					$offlineT = "<span class='note'>Server state is unknown because the Panel could not complete a reliable agent status check.</span>";
+					$status = "starting";
+					$order = 2 + $j;
+					$address = "<span class='note'>".htmlentities($agent_state)."</span>".$desired_state_note;
+					if ($reason !== '') $address .= " <span class='note'>".htmlentities($reason)."</span>";
 				}
 				else
 				{
-					$status = "offline";
+					$status = $agent_state === "UNKNOWN" ? "unknown" : "offline";
 					$address .= $desired_state_note;
+					if ($reason !== '') $address .= " <span class='failure'>".htmlentities($reason)."</span>";
 					if ($server_home['last_param'] != "" and isset($server_home['ip']) and isset($server_home['mod_id']))
 					{
 						if(!$single_server_monitor)
@@ -603,6 +595,13 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 				$order = 3;
 				$address = "<span style='color:darkred;font-weight:bold;'>Agent Offline</span>";
 				$offlineT = "<span class='note'>Agent is offline. Server state is unknown.</span>";
+				if (method_exists($db, 'saveServerStatusCache') && !empty($server_home['ip_id'])) {
+					$db->saveServerStatusCache($server_home['ip_id'], $server_home['port'], array(
+						'status' => 'UNKNOWN', 'desired' => '', 'process_running' => 0,
+						'port_listening' => 0, 'reason' => 'agent unreachable', 'updated_at' => time()
+					));
+				}
+				$db->logger('Game monitor skipped live status for home '.$server_home['home_id'].': agent host check failed');
 			}
 				$user = $db->getUserById($server_home['user_id_main']);
 
