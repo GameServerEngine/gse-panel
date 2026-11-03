@@ -695,6 +695,9 @@ function get_monitor_buttons($server_home, $server_xml)
 	}
 	foreach ((array)$installed_modules as $installed_module)
 	{
+		if (!$db->isModuleEnabled($installed_module['folder'])) {
+			continue;
+		}
 		$buttons_file = "modules/$installed_module[folder]/monitor_buttons.php";
 		if(file_exists($buttons_file))
 		{

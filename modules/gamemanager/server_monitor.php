@@ -612,7 +612,11 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 				$first .= "<td class='collapsible' data-status='$status' data-pos='$pos'><span class='hidden'>$order</span>" . $status_icon . "</td>";
 				$first .= "<td class='collapsible'>" . "<span class='hidden'>$mod</span><img src='$icon_path' />" . "</td>";
 				$first .= "<td class='collapsible serverId hide'>" . $server_home["home_id"] . "</td>";
-				$first .= "<td class='collapsible' data-status='$status' data-pos='$pos'><b>" . htmlentities($server_home['home_name']) . "</b>$mod_name</td>";
+				$ftp_info = "";
+				if (!empty($server_home['ftp_login'])) {
+					$ftp_info = "<div class='ftp-info' style='font-size:12px;margin-top:4px;line-height:1.8'><b>FTP</b>&nbsp;&nbsp;<b>IP:Port</b> " . htmlentities($server_home['ip']) . ":21&nbsp;&nbsp;<b>User ID:</b> " . htmlentities($server_home['ftp_login']) . "&nbsp;&nbsp;<b>Password:</b> " . htmlentities($server_home['ftp_password']) . "</div>";
+				}
+				$first .= "<td class='collapsible' data-status='$status' data-pos='$pos'><b>" . htmlentities($server_home['home_name']) . "</b>$mod_name$ftp_info</td>";
 				$first .= "<td>" . $server_home['ip'] . ":" .  $server_home['port'] ." " . $address . "</td>";
 				//$first .= "<td class='collapsible serverIPAddress ignoreSortable' data-status='$status' data-pos='$pos'>" . $address . "</td>";
 				//$first .= "<td class='collapsible serverIPAddress ignoreSortable' data-status='$status' data-pos='$pos'>" . $server_home['ip'] . ":" .  $server_home['port'] . "</td>";
@@ -635,11 +639,7 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 					$second .= "<td class='operations' >$ts3opt</td>";
 			$second .= "</tr>";
 			//Echo them all
-			$ftp_row = "";
-			if (!empty($server_home['ftp_login'])) {
-				$ftp_row = "<tr class='ftp-row'><td colspan='7' style='text-align:left;padding:10px 14px;line-height:2'><b>FTP</b>&nbsp;&nbsp;&nbsp;&nbsp;<b>IP:Port</b> " . htmlentities($server_home['ip']) . ":21&nbsp;&nbsp;&nbsp;&nbsp;<b>User ID:</b> " . htmlentities($server_home['ftp_login']) . "&nbsp;&nbsp;&nbsp;&nbsp;<b>Password:</b> " . htmlentities($server_home['ftp_password']) . "</td></tr>";
-			}
-			echo "$first$ftp_row$second";
+			echo "$first$second";
 		}
 		$j++;
 	}
