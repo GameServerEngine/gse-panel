@@ -768,6 +768,9 @@ a:before,
 	transform: rotate(-90deg);
 }
 
+.monitorbutton {
+	color: #fff;
+}
 .monitorbutton:before {
         display: block;
         font-size: 40px;
@@ -952,9 +955,7 @@ table,
 
 /* Readability on the dark background (2026-10-21):
    light blue links, white hover, and checkboxes that are clearly visible. */
-a,
-a:link,
-a:visited {
+a {
 	color: #7fc8f8;
 }
 a:hover,
