@@ -484,7 +484,7 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 				$agent_status = get_agent_server_status($remote, $server_xml, $server_home['home_id'], $server_home['ip'], $server_home['port'], '', 5);
 				$agent_state = isset($agent_status['status']) ? strtoupper($agent_status['status']) : "UNKNOWN";
 				$desired_state = strtoupper((string)($agent_status['desired'] ?? ''));
-				$desired_state_note = $desired_state !== '' ? " <span class='note'>Desired: ".htmlentities($desired_state)."</span>" : "";
+				$desired_state_note = "";  // simple row: no Desired note
 				$reason = trim((string)($agent_status['reason'] ?? ($agent_status['last_error'] ?? '')));
 				$screen_running = ((int)($agent_status['process_running'] ?? 0) === 1);
 				if (method_exists($db, 'saveServerStatusCache') && !empty($server_home['ip_id'])) {
@@ -551,14 +551,13 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 				{
 					$status = "starting";
 					$order = 2 + $j;
-					$address = "<span class='note'>".htmlentities($agent_state)."</span>".$desired_state_note;
-					if ($reason !== '') $address .= " <span class='note'>".htmlentities($reason)."</span>";
+					$address = "<span class='note'>".htmlentities($agent_state)."</span>";
 				}
 				else
 				{
 					$status = $agent_state === "UNKNOWN" ? "unknown" : "offline";
-					$address .= $desired_state_note;
-					if ($reason !== '') $address .= " <span class='failure'>".htmlentities($reason)."</span>";
+					$address .= "<span class='note'>".htmlentities($agent_state)."</span>";
+					if ($reason !== '' && in_array($agent_state, array('CRASHED', 'FAILED'), true)) $address .= " <span class='failure'>".htmlentities($reason)."</span>";
 					if ($server_home['last_param'] != "" and isset($server_home['ip']) and isset($server_home['mod_id']))
 					{
 						if(!$single_server_monitor)
