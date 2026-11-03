@@ -378,7 +378,7 @@ elseif($server_home['home_id'] == $_POST['home_id'])
 	// done below and is still running.
 	$gate_status = $remote->remote_server_status($server_home['home_id'], $ip, $port, '', '', 180, '');
 	$gate_name = (is_array($gate_status) && isset($gate_status['status'])) ? strtoupper((string)$gate_status['status']) : 'UNKNOWN';
-	if ( in_array($gate_name, array('ONLINE','STARTING'), true) )
+	if ( in_array($gate_name, array('ONLINE','RUNNING','STARTING'), true) )
 	{
 		echo "<p>".get_lang_f('server_already_running')."<a href=?m=gamemanager&amp;p=stop&amp;home_id=".$server_home['home_id'].
 			"&amp;ip=".$ip."&amp;port=".

@@ -146,7 +146,7 @@ function gsp_agent_port_listening($remote, $server_port)
 
 function is_agent_status_online($agent_status)
 {
-	return is_array($agent_status) && isset($agent_status['status']) && strtoupper($agent_status['status']) === 'ONLINE' && gsp_agent_status_has_runtime_evidence($agent_status);
+	return is_array($agent_status) && isset($agent_status['status']) && in_array(strtoupper($agent_status['status']), array('ONLINE', 'RUNNING'), true) && gsp_agent_status_has_runtime_evidence($agent_status);
 }
 
 function gsp_agent_status_has_runtime_evidence($agent_status)
@@ -186,7 +186,7 @@ function is_agent_status_active($agent_status)
 		return false;
 	}
 	$status = strtoupper($agent_status['status']);
-	if (!in_array($status, array('STARTING', 'ONLINE', 'STOPPING', 'UNRESPONSIVE'), true)) {
+	if (!in_array($status, array('STARTING', 'ONLINE', 'RUNNING', 'STOPPING', 'UNRESPONSIVE'), true)) {
 		return false;
 	}
 	if (gsp_agent_status_has_runtime_evidence($agent_status)) {
