@@ -254,3 +254,9 @@ tr.maintr td:last-child {
 	height: 16px;
 	margin-left: 2px;
 }
+
+/* Button labels: white on all monitor tiles (links were picking up the theme link color) */
+.monitorbutton span,
+.monitorbutton:hover span {
+	color: #fff !important;
+}
