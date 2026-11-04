@@ -5,6 +5,7 @@
  * Stores the restic target storage and backup policy in the panel settings
  * table under restic_ keys. No passwords or keys are stored here.
  */
+require_once __DIR__ . '/restic_keys.php';
 
 function restic_admin_defaults()
 {
@@ -64,7 +65,20 @@ function exec_gsp_module()
     global $db;
 
     $errors = array();
-    if (isset($_POST['restic_save']))
+    if (isset($_POST['restic_enable_backups']))
+    {
+        $result = restic_enable_create_master_key();
+        if ($result === 'created' || $result === 'exists')
+        {
+            $db->setSettings(array('restic_enabled' => '1'));
+            echo '<center><div class="ok">Customer backups are enabled.</div></center>';
+        }
+        else
+        {
+            $errors[] = 'Could not enable customer backups: ' . $result;
+        }
+    }
+    elseif (isset($_POST['restic_save']))
     {
         $clean = restic_admin_validate($_POST, $errors);
         if (empty($errors))
@@ -75,10 +89,20 @@ function exec_gsp_module()
     }
 
     $current = restic_admin_load_settings();
+    $enabled = (string)$db->getSetting('restic_enabled') === '1' && restic_master_key_exists();
 
     echo '<center><h3>Backup/Restore - Admin Settings</h3></center>';
     foreach ($errors as $error)
         echo '<center><div class="error">'.htmlspecialchars($error).'</div></center>';
+
+    echo '<center><p>Customer backups: <strong>'.($enabled ? 'enabled' : 'not enabled').'</strong></p>';
+    if (!$enabled)
+    {
+        echo '<form method="POST" action="?m=backup-restore&amp;p=admin">';
+        echo '<button type="submit" name="restic_enable_backups" value="1">Enable customer backups</button>';
+        echo '</form>';
+    }
+    echo '</center>';
 
     $modes = array('manual' => 'Manual only', 'daily' => 'Daily', 'every_x_days' => 'Every X days');
     $initial = ($current['restic_initial_backup'] === '1') ? ' checked' : '';
