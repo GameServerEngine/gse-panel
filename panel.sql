@@ -1830,6 +1830,56 @@ ALTER TABLE `gsp_widgets`
 --
 ALTER TABLE `gsp_ticket_messages`
   ADD CONSTRAINT `gsp_ticket_messages_fk0` FOREIGN KEY (`ticket_id`) REFERENCES `gsp_tickets` (`tid`);
+-- Core tables created at runtime by the update runner and addons helpers,
+-- plus the customer restic tables. Part of the base schema, not install_queries.
+CREATE TABLE IF NOT EXISTS `gsp_schema_migrations` (
+  `migration_id` VARCHAR(191) NOT NULL,
+  `applied_at` DATETIME NOT NULL,
+  PRIMARY KEY (`migration_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `gsp_server_content_workshop_catalog` (
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `workshop_id` VARCHAR(64) NOT NULL,
+  `app_id` VARCHAR(32) NOT NULL DEFAULT '',
+  `title` VARCHAR(255) NULL,
+  `install_count` INT NOT NULL DEFAULT 0,
+  `first_seen` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_installed` DATETIME NULL,
+  `last_updated` DATETIME NULL,
+  `published_date` DATETIME NULL,
+  `tags` TEXT NULL,
+  `game_key` VARCHAR(128) NULL,
+  `local_cache_path` VARCHAR(512) NULL,
+  `author` VARCHAR(255) NULL,
+  `thumbnail_url` VARCHAR(512) NULL,
+  UNIQUE KEY `uniq_workshop_app` (`workshop_id`, `app_id`),
+  KEY `idx_app_id` (`app_id`),
+  KEY `idx_install_count` (`install_count`),
+  KEY `idx_last_installed` (`last_installed`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `gsp_restic_homes` (
+  `home_id` INT UNSIGNED NOT NULL PRIMARY KEY,
+  `rest_user` VARCHAR(64) NOT NULL,
+  `repo_state` VARCHAR(20) NOT NULL DEFAULT 'pending',
+  `created_at` INT UNSIGNED NOT NULL DEFAULT 0,
+  `delete_after` INT UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE IF NOT EXISTS `gsp_restic_snapshots` (
+  `snapshot_row_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `home_id` INT UNSIGNED NOT NULL,
+  `snapshot_id` VARCHAR(64) NOT NULL,
+  `kind` VARCHAR(12) NOT NULL DEFAULT 'customer',
+  `comment` VARCHAR(200) NOT NULL DEFAULT '',
+  `created_by` VARCHAR(120) NOT NULL DEFAULT '',
+  `created_at` INT UNSIGNED NOT NULL DEFAULT 0,
+  UNIQUE KEY `uniq_restic_snap` (`home_id`, `snapshot_id`),
+  KEY `idx_restic_snap_kind` (`home_id`, `kind`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -10,8 +10,9 @@ SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+/*M!999999\- enable the sandbox mode */ 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_addons` (
   `addon_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(80) NOT NULL,
@@ -50,7 +51,7 @@ CREATE TABLE `gsp_addons` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_adminExternalLinks` (
   `link_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(80) NOT NULL,
@@ -60,7 +61,7 @@ CREATE TABLE `gsp_adminExternalLinks` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_adminexternallinks` (
   `link_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(80) NOT NULL,
@@ -70,7 +71,7 @@ CREATE TABLE `gsp_adminexternallinks` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_adminlte_serverstats` (
   `home_id` int(4) NOT NULL,
   `users_online` int(4) NOT NULL,
@@ -78,7 +79,7 @@ CREATE TABLE `gsp_adminlte_serverstats` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_adminlte_settings` (
   `id` int(20) NOT NULL AUTO_INCREMENT,
   `user` int(4) NOT NULL,
@@ -89,7 +90,7 @@ CREATE TABLE `gsp_adminlte_settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_agent_resource_snapshots` (
   `remote_server_id` int(11) NOT NULL,
   `agent_ip` varchar(255) NOT NULL DEFAULT '',
@@ -109,7 +110,7 @@ CREATE TABLE `gsp_agent_resource_snapshots` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci COMMENT='Latest cached per-agent resource snapshot';
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_api_tokens` (
   `user_id` int(11) NOT NULL,
   `token` varchar(64) NOT NULL,
@@ -118,7 +119,7 @@ CREATE TABLE `gsp_api_tokens` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_arrange_ports` (
   `range_id` int(11) NOT NULL AUTO_INCREMENT,
   `ip_id` int(11) NOT NULL,
@@ -131,14 +132,14 @@ CREATE TABLE `gsp_arrange_ports` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci COMMENT='Remote servers and IPs';
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_backup_restore` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_ban_list` (
   `client_ip` varchar(255) NOT NULL,
   `logging_attempts` int(11) NOT NULL DEFAULT 0,
@@ -147,10 +148,52 @@ CREATE TABLE `gsp_ban_list` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `gsp_billing_cancellation_requests` (
+  `request_id` int(11) NOT NULL AUTO_INCREMENT,
+  `home_id` int(11) NOT NULL,
+  `order_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `mode` enum('immediate','end_of_term') NOT NULL,
+  `status` enum('pending','approved','rejected','completed','failed') NOT NULL DEFAULT 'pending',
+  `requested_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `decided_at` datetime DEFAULT NULL,
+  `decided_by` int(11) DEFAULT NULL,
+  `refund_amount` decimal(10,2) DEFAULT NULL,
+  `refund_currency` varchar(3) NOT NULL DEFAULT 'USD',
+  `refund_status` enum('none','pending','refunded','manual_required','failed') NOT NULL DEFAULT 'none',
+  `refund_txid` varchar(255) DEFAULT NULL,
+  `note` text DEFAULT NULL,
+  PRIMARY KEY (`request_id`),
+  KEY `idx_cancel_home_status` (`home_id`,`status`),
+  KEY `idx_cancel_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `gsp_billing_config` (
+  `config_id` int(11) NOT NULL AUTO_INCREMENT,
+  `game_key` varchar(100) DEFAULT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
+  `grace_days` int(11) NOT NULL DEFAULT 0,
+  `delete_after_expired_days` int(11) NOT NULL DEFAULT 7,
+  `rate_type` enum('daily','monthly','yearly') NOT NULL DEFAULT 'monthly',
+  `price_per_player` decimal(10,4) NOT NULL DEFAULT 0.0000,
+  `refund_full_days` int(11) NOT NULL DEFAULT 30,
+  `headroom_cpu_pct` tinyint(4) NOT NULL DEFAULT 70,
+  `headroom_ram_pct` tinyint(4) NOT NULL DEFAULT 70,
+  `headroom_disk_pct` tinyint(4) NOT NULL DEFAULT 85,
+  `paypal_mode` enum('sandbox','live') NOT NULL DEFAULT 'sandbox',
+  `paypal_client_id` varchar(255) DEFAULT NULL,
+  `paypal_client_secret_enc` text DEFAULT NULL,
+  `paypal_webhook_id` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`config_id`),
+  KEY `game_key` (`game_key`),
+  KEY `enabled` (`enabled`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_billing_coupons` (
   `coupon_id` int(11) NOT NULL AUTO_INCREMENT,
   `code` varchar(50) NOT NULL,
@@ -174,7 +217,7 @@ CREATE TABLE `gsp_billing_coupons` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_billing_invoices` (
   `invoice_id` int(11) NOT NULL AUTO_INCREMENT,
   `order_id` int(11) NOT NULL DEFAULT 0,
@@ -221,7 +264,19 @@ CREATE TABLE `gsp_billing_invoices` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `gsp_billing_locations` (
+  `location_id` int(11) NOT NULL AUTO_INCREMENT,
+  `parent_id` int(11) DEFAULT NULL,
+  `kind` varchar(32) NOT NULL DEFAULT 'region',
+  `name` varchar(120) NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`location_id`),
+  KEY `idx_loc_parent` (`parent_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_billing_orders` (
   `order_id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
@@ -250,7 +305,7 @@ CREATE TABLE `gsp_billing_orders` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_billing_paypal_errors` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `context` varchar(64) NOT NULL DEFAULT '',
@@ -269,7 +324,7 @@ CREATE TABLE `gsp_billing_paypal_errors` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_billing_paypal_webhook_events` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `paypal_event_id` varchar(100) NOT NULL DEFAULT '',
@@ -289,10 +344,65 @@ CREATE TABLE `gsp_billing_paypal_webhook_events` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `gsp_billing_service_agents` (
+  `service_id` int(11) NOT NULL,
+  `remote_server_id` int(11) NOT NULL,
+  PRIMARY KEY (`service_id`,`remote_server_id`),
+  KEY `idx_bsa_remote` (`remote_server_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `gsp_billing_service_requirements` (
+  `home_cfg_id` int(11) NOT NULL,
+  `min_cpu_cores` decimal(6,2) NOT NULL DEFAULT 0.00,
+  `min_ram_mb` int(11) NOT NULL DEFAULT 0,
+  `min_disk_gb` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`home_cfg_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `gsp_billing_service_tiers` (
+  `service_id` int(11) NOT NULL,
+  `tier_key` varchar(16) NOT NULL,
+  `slot_count` int(11) NOT NULL DEFAULT 0,
+  `price_monthly` float(15,4) NOT NULL DEFAULT 0.0000,
+  PRIMARY KEY (`service_id`,`tier_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `gsp_billing_services` (
+  `service_id` int(11) NOT NULL AUTO_INCREMENT,
+  `home_cfg_id` int(11) NOT NULL,
+  `mod_cfg_id` int(11) NOT NULL,
+  `service_name` varchar(255) NOT NULL,
+  `remote_server_id` varchar(255) NOT NULL,
+  `out_of_stock` varchar(255) NOT NULL,
+  `slot_max_qty` int(11) NOT NULL,
+  `slot_min_qty` int(11) NOT NULL,
+  `price_daily` float(15,4) NOT NULL,
+  `price_monthly` float(15,4) NOT NULL,
+  `price_year` float(15,4) NOT NULL,
+  `description` varchar(1000) NOT NULL,
+  `img_url` varchar(255) NOT NULL,
+  `ftp` varchar(255) NOT NULL,
+  `install_method` varchar(255) NOT NULL,
+  `manual_url` varchar(255) NOT NULL,
+  `access_rights` varchar(255) NOT NULL,
+  `enabled` int(11) NOT NULL,
+  `pricing_mode` varchar(16) NOT NULL DEFAULT 'per_slot',
+  `base_slots` int(11) NOT NULL DEFAULT 0,
+  `per_slot_price_monthly` float(15,4) NOT NULL DEFAULT 0.0000,
+  `base_price_monthly` float(15,4) NOT NULL DEFAULT 0.0000,
+  `extra_price_per_slot_monthly` float(15,4) NOT NULL DEFAULT 0.0000,
+  PRIMARY KEY (`service_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_billing_transactions` (
   `transaction_id` int(11) NOT NULL AUTO_INCREMENT,
   `invoice_id` int(11) NOT NULL DEFAULT 0,
@@ -315,7 +425,7 @@ CREATE TABLE `gsp_billing_transactions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_circular` (
   `circular_id` int(11) NOT NULL AUTO_INCREMENT,
   `subject` text NOT NULL,
@@ -325,7 +435,7 @@ CREATE TABLE `gsp_circular` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_circular_recipients` (
   `user_id` int(11) NOT NULL,
   `circular_id` int(11) NOT NULL,
@@ -334,7 +444,7 @@ CREATE TABLE `gsp_circular_recipients` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_config_homes` (
   `home_cfg_id` int(20) NOT NULL AUTO_INCREMENT,
   `game_key` varchar(64) NOT NULL,
@@ -345,7 +455,7 @@ CREATE TABLE `gsp_config_homes` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_config_mods` (
   `mod_cfg_id` int(50) NOT NULL AUTO_INCREMENT,
   `home_cfg_id` varchar(50) NOT NULL,
@@ -358,7 +468,7 @@ CREATE TABLE `gsp_config_mods` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_fastdl_access_rules` (
   `home_cfg_id` varchar(32) NOT NULL,
   `match_file_extension` text DEFAULT NULL,
@@ -367,7 +477,7 @@ CREATE TABLE `gsp_fastdl_access_rules` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_fastdl_settings` (
   `remote_server_id` int(11) NOT NULL,
   `setting` varchar(63) NOT NULL,
@@ -376,7 +486,7 @@ CREATE TABLE `gsp_fastdl_settings` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_game_mods` (
   `mod_id` int(50) NOT NULL AUTO_INCREMENT,
   `home_id` int(255) NOT NULL,
@@ -392,7 +502,7 @@ CREATE TABLE `gsp_game_mods` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci COMMENT='utf8mb4_general_ci';
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_game_port_offsets` (
   `offset_id` int(11) NOT NULL AUTO_INCREMENT,
   `home_cfg_id` int(11) NOT NULL,
@@ -414,7 +524,7 @@ CREATE TABLE `gsp_game_port_offsets` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci COMMENT='Normalized per-game port offsets imported from XML or review';
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_home_ip_ports` (
   `ip_id` int(11) NOT NULL,
   `port` int(11) NOT NULL,
@@ -424,7 +534,7 @@ CREATE TABLE `gsp_home_ip_ports` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_home_port_blocks` (
   `block_id` bigint(20) NOT NULL AUTO_INCREMENT,
   `home_id` int(11) DEFAULT NULL,
@@ -451,7 +561,7 @@ CREATE TABLE `gsp_home_port_blocks` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci COMMENT='Whole port-block allocation ledger';
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_lgsl` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `type` varchar(50) NOT NULL DEFAULT '',
@@ -469,7 +579,7 @@ CREATE TABLE `gsp_lgsl` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_logger` (
   `log_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `date` varchar(20) NOT NULL,
@@ -493,7 +603,7 @@ CREATE TABLE `gsp_logger` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_machine_samples` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `machine_id` varchar(64) NOT NULL,
@@ -521,7 +631,7 @@ CREATE TABLE `gsp_machine_samples` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_machines` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `machine_id` varchar(64) NOT NULL,
@@ -533,7 +643,7 @@ CREATE TABLE `gsp_machines` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_master_server_homes` (
   `home_id` int(11) NOT NULL,
   `home_cfg_id` int(11) NOT NULL,
@@ -542,7 +652,7 @@ CREATE TABLE `gsp_master_server_homes` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_module_access_rights` (
   `module_id` int(11) NOT NULL COMMENT 'This references to modules.id',
   `flag` char(1) NOT NULL,
@@ -550,9 +660,15 @@ CREATE TABLE `gsp_module_access_rights` (
   UNIQUE KEY `flag` (`flag`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `gsp_module_access_rights` (`module_id`, `flag`, `description`) VALUES (13,'d','allow_fast_download'),(14,'t','allow_ftp'),(15,'u','allow_updates'),(15,'p','allow_parameter_usage'),(15,'e','allow_extra_params'),(15,'c','allow_custom_fields'),(17,'f','allow_file_management');
+INSERT INTO `gsp_module_access_rights` (`module_id`, `flag`, `description`) VALUES (13,'d','allow_fast_download'),
+(14,'t','allow_ftp'),
+(15,'u','allow_updates'),
+(15,'p','allow_parameter_usage'),
+(15,'e','allow_extra_params'),
+(15,'c','allow_custom_fields'),
+(17,'f','allow_file_management');
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_module_menus` (
   `module_id` int(11) NOT NULL COMMENT 'This references to modules.id',
   `subpage` varchar(64) NOT NULL DEFAULT '',
@@ -562,9 +678,53 @@ CREATE TABLE `gsp_module_menus` (
   PRIMARY KEY (`module_id`,`subpage`,`group`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `gsp_module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`) VALUES (1,'','user','ts3admin',0),(2,'addons_manager','admin','Server Content Manager',0),(3,'watch_logger','admin','Watch Logger',0),(6,'','admin','Notification',0),(7,'','admin','Game/Mod Config',0),(8,'cron','admin','Cron Admin',0),(8,'user_cron','user','Task Scheduler',0),(9,'dashboard','user','Dashboard',0),(10,'admin_dsi','admin','DSi Settings',0),(12,'','admin','F.A.Q.',0),(13,'','admin','Fast Download',0),(14,'ftp_admin','admin','FTP Admin',0),(15,'game_monitor','user','Game Monitor',0),(16,'lgsl','user','LGSL',0),(16,'lgsl','guest','LGSL',0),(16,'lgsl_admin','admin','LGSL Admin',0),(17,'litefm_settings','admin','LiteFM Settings',0),(19,'','admin','Modules',0),(20,'mysql_admin','admin','MySQL Admin',0),(21,'news','user','News',0),(21,'news','guest','News',0),(21,'admin_news','admin','News Admin',0),(22,'rcon','admin','Rcon',0),(23,'form','guest','Register',0),(24,'rs_packs_shop','user','Reseller Packs',0),(24,'rs_accounts','admin','Reseller Accounts',0),(24,'rs_services','admin','Reseller Services',0),(24,'rs_settings','admin','Reseller Settings',0),(25,'','admin','Servers',0),(26,'','admin','Panel Settings',0),(26,'themes','admin','Theme Settings',0),(28,'workshop_admin','admin','Steam Workshop',0),(30,'support','user','Support',0),(32,'','user','Support Tickets',0),(32,'ticket_settings','admin','Support Ticket Settings',0),(33,'','user','tshock',0),(34,'','admin','Update',0),(35,'','admin','User Admin',0),(35,'show_groups','admin','Group Admin',0),(36,'','admin','Game Servers',0),(37,'','user','Utilities',0);
+INSERT INTO `gsp_module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`) VALUES (1,'','user','ts3admin',0),
+(2,'addons_manager','admin','Server Content Manager',0),
+(3,'watch_logger','admin','Watch Logger',0),
+(4,'admin','admin','Backup/Restore Admin',0),
+(5,'billing_setup','admin','Billing Setup',0),
+(5,'billing_operations','admin','Billing Operations',0),
+(6,'','admin','Notification',0),
+(7,'','admin','Game/Mod Config',0),
+(8,'cron','admin','Cron Admin',0),
+(8,'user_cron','user','Task Scheduler',0),
+(9,'dashboard','user','Dashboard',0),
+(10,'admin_dsi','admin','DSi Settings',0),
+(12,'','admin','F.A.Q.',0),
+(13,'','admin','Fast Download',0),
+(14,'ftp_admin','admin','FTP Admin',0),
+(15,'game_monitor','user','Game Monitor',0),
+(16,'lgsl','user','LGSL',0),
+(16,'lgsl','guest','LGSL',0),
+(16,'lgsl_admin','admin','LGSL Admin',0),
+(17,'litefm_settings','admin','LiteFM Settings',0),
+(19,'','admin','Modules',0),
+(20,'mysql_admin','admin','MySQL Admin',0),
+(21,'news','user','News',0),
+(21,'news','guest','News',0),
+(21,'admin_news','admin','News Admin',0),
+(22,'my_notifications','user','Notifications',0),
+(23,'rcon','admin','Rcon',0),
+(24,'form','guest','Register',0),
+(25,'rs_packs_shop','user','Reseller Packs',0),
+(25,'rs_accounts','admin','Reseller Accounts',0),
+(25,'rs_services','admin','Reseller Services',0),
+(25,'rs_settings','admin','Reseller Settings',0),
+(26,'','admin','Servers',0),
+(27,'','admin','Panel Settings',0),
+(27,'themes','admin','Theme Settings',0),
+(29,'workshop_admin','admin','Steam Workshop',0),
+(31,'support','user','Support',0),
+(33,'','user','Support Tickets',0),
+(33,'ticket_settings','admin','Support Ticket Settings',0),
+(34,'','user','tshock',0),
+(35,'','admin','Update',0),
+(36,'','admin','User Admin',0),
+(36,'show_groups','admin','Group Admin',0),
+(37,'','admin','Game Servers',0),
+(38,'','user','Utilities',0);
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_modules` (
   `id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
   `title` varchar(100) NOT NULL DEFAULT '',
@@ -574,11 +734,48 @@ CREATE TABLE `gsp_modules` (
   `enabled` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
   UNIQUE KEY `folder` (`folder`)
-) ENGINE=MyISAM AUTO_INCREMENT=38 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=39 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `gsp_modules` (`id`, `title`, `folder`, `version`, `db_version`, `enabled`) VALUES (1,'TS3Admin','TS3Admin','0.2',1,1),(2,'Server Content Manager','addonsmanager','2.6',9,1),(3,'Administration','administration','1.0',1,1),(4,'Backup/Restore','backup-restore','1.0',0,1),(5,'billing','billing','3.6',8,1),(6,'Circular','circular','0.1',0,1),(7,'Config games','config_games','1.0',0,1),(8,'Cron','cron','1.0',0,1),(9,'Dashboard','dashboard','1.0',0,1),(10,'Dynamic Server Image','dsi','1.0.3',0,1),(11,'Edit Config Files','editconfigfiles','1.0',0,1),(12,'F.A.Q.','faq','1.0',0,1),(13,'Fast Download','fast_download','2.1',1,1),(14,'ftp','ftp','1.0',1,1),(15,'Game manager','gamemanager','1.33',2,1),(16,'LGSL','lgsl_with_img_mod','0.2',0,1),(17,'Lite File Manager','litefm','1.0',1,1),(18,'Lost Password','lostpwd','1.0',0,1),(19,'Module manager','modulemanager','1.0',1,1),(20,'MySQL','mysql','0.1',0,1),(21,'NewsLister','news','1.0',0,1),(22,'Rcon','rcon','1.0',0,1),(23,'register','register','1.0',0,1),(24,'Reseller','reseller','0.1',0,1),(25,'Server manager','server','1.0',3,1),(26,'Settings','settings','1.0',1,1),(27,'Status','status','Alpha',0,1),(28,'Steam Workshop','steam_workshop','1.1',0,1),(29,'subusers','subusers','1.0',0,1),(30,'Support','support','1.0',0,1),(31,'Teamspeak 3 Web Interface','teamspeak3','Beta 3.4.2',0,1),(32,'Tickets','tickets','1.0a',3,1),(33,'tshock','tshock','Alpha',0,1),(34,'Update','update','1.0',4,1),(35,'User admin','user_admin','1.0',7,1),(36,'User games','user_games','1.0',3,1),(37,'Utilities','util','1.0',0,1);
+INSERT INTO `gsp_modules` (`id`, `title`, `folder`, `version`, `db_version`, `enabled`) VALUES (1,'TS3Admin','TS3Admin','0.2',1,1),
+(2,'Server Content Manager','addonsmanager','2.6',9,1),
+(3,'Administration','administration','1.0',1,1),
+(4,'Backup/Restore','backup-restore','1.1',0,1),
+(5,'billing','billing','3.6',13,1),
+(6,'Circular','circular','0.1',0,1),
+(7,'Config games','config_games','1.0',0,1),
+(8,'Cron','cron','1.0',0,1),
+(9,'Dashboard','dashboard','1.0',0,1),
+(10,'Dynamic Server Image','dsi','1.0.3',0,1),
+(11,'Edit Config Files','editconfigfiles','1.0',0,1),
+(12,'F.A.Q.','faq','1.0',0,1),
+(13,'Fast Download','fast_download','2.1',1,1),
+(14,'ftp','ftp','1.0',1,1),
+(15,'Game manager','gamemanager','1.33',2,1),
+(16,'LGSL','lgsl_with_img_mod','0.2',0,1),
+(17,'Lite File Manager','litefm','1.0',1,1),
+(18,'Lost Password','lostpwd','1.0',0,1),
+(19,'Module manager','modulemanager','1.0',1,1),
+(20,'MySQL','mysql','0.1',0,1),
+(21,'NewsLister','news','1.0',0,1),
+(22,'Notifications','notifications','1.0',0,1),
+(23,'Rcon','rcon','1.0',0,1),
+(24,'register','register','1.0',0,1),
+(25,'Reseller','reseller','0.1',0,1),
+(26,'Server manager','server','1.0',3,1),
+(27,'Settings','settings','1.0',1,1),
+(28,'Status','status','Alpha',0,1),
+(29,'Steam Workshop','steam_workshop','1.1',0,1),
+(30,'subusers','subusers','1.0',0,1),
+(31,'Support','support','1.0',0,1),
+(32,'Teamspeak 3 Web Interface','teamspeak3','Beta 3.4.2',0,1),
+(33,'Tickets','tickets','1.0a',3,1),
+(34,'tshock','tshock','Alpha',0,1),
+(35,'Update','update','1.0',4,1),
+(36,'User admin','user_admin','1.0',7,1),
+(37,'User games','user_games','1.0',3,1),
+(38,'Utilities','util','1.0',0,1);
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_mysql_databases` (
   `db_id` int(11) NOT NULL AUTO_INCREMENT,
   `mysql_server_id` int(11) NOT NULL,
@@ -597,7 +794,7 @@ CREATE TABLE `gsp_mysql_databases` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_mysql_servers` (
   `mysql_server_id` int(11) NOT NULL AUTO_INCREMENT,
   `remote_server_id` int(11) NOT NULL,
@@ -611,7 +808,7 @@ CREATE TABLE `gsp_mysql_servers` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_notification` (
   `notification_id` int(11) NOT NULL AUTO_INCREMENT,
   `subject` text NOT NULL,
@@ -621,7 +818,7 @@ CREATE TABLE `gsp_notification` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_notification_recipients` (
   `user_id` int(11) NOT NULL,
   `notification_id` int(11) NOT NULL,
@@ -630,7 +827,7 @@ CREATE TABLE `gsp_notification_recipients` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_panel_update_log` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `channel` varchar(64) NOT NULL,
@@ -646,7 +843,7 @@ CREATE TABLE `gsp_panel_update_log` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_port_allocation_events` (
   `event_id` bigint(20) NOT NULL AUTO_INCREMENT,
   `block_id` bigint(20) DEFAULT NULL,
@@ -666,7 +863,7 @@ CREATE TABLE `gsp_port_allocation_events` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci COMMENT='Port allocation audit events';
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_port_pool_games` (
   `pool_game_id` int(11) NOT NULL AUTO_INCREMENT,
   `pool_id` int(11) NOT NULL,
@@ -686,7 +883,7 @@ CREATE TABLE `gsp_port_pool_games` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci COMMENT='Game config to global port pool mappings';
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_port_pools` (
   `pool_id` int(11) NOT NULL AUTO_INCREMENT,
   `pool_key` varchar(64) NOT NULL,
@@ -708,9 +905,17 @@ CREATE TABLE `gsp_port_pools` (
   KEY `idx_port_pools_range` (`range_start`,`range_end`)
 ) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci COMMENT='Global reusable port pool catalog';
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `gsp_port_pools` (`pool_id`, `pool_key`, `name`, `purpose`, `base_port`, `range_start`, `range_end`, `block_size`, `priority`, `enabled`, `allow_manual`, `notes`, `created_at`, `updated_at`) VALUES (1,'arma-dayz-2302','Arma/DayZ 2302','game',2302,2302,2399,10,10,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-09-25 08:53:56',NULL),(2,'valheim-2456','Valheim 2456','game',2456,2456,2525,10,20,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-09-25 08:53:56',NULL),(3,'unreal-7777','Unreal-style 7777','game',7777,7777,7866,10,30,1,0,'Non-standard large query offsets still require per-game review.','2026-09-25 08:53:56',NULL),(4,'minecraft-25565','Minecraft 25565','game',25565,25565,25654,10,40,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-09-25 08:53:56',NULL),(5,'7dtd-26900','7 Days to Die 26900','game',26900,26900,27009,10,50,1,0,'Capped before the Source/SRCDS 27015 pool.','2026-09-25 08:53:56',NULL),(6,'source-27015','Source/SRCDS 27015','game',27015,27015,27104,10,60,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-09-25 08:53:56',NULL),(7,'rust-28015','Rust 28015','game',28015,28015,28104,10,70,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-09-25 08:53:56',NULL),(8,'quake-cod-28960','Quake/Call of Duty 28960','game',28960,28960,29049,10,80,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-09-25 08:53:56',NULL),(9,'gse-overflow-32000','GSE controlled overflow 32000','overflow',32000,32000,32999,10,1000,1,0,'Controlled overflow only: 100 ten-port blocks per IP.','2026-09-25 08:53:56',NULL);
+INSERT INTO `gsp_port_pools` (`pool_id`, `pool_key`, `name`, `purpose`, `base_port`, `range_start`, `range_end`, `block_size`, `priority`, `enabled`, `allow_manual`, `notes`, `created_at`, `updated_at`) VALUES (1,'arma-dayz-2302','Arma/DayZ 2302','game',2302,2302,2399,10,10,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-04 15:52:59',NULL),
+(2,'valheim-2456','Valheim 2456','game',2456,2456,2525,10,20,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-04 15:52:59',NULL),
+(3,'unreal-7777','Unreal-style 7777','game',7777,7777,7866,10,30,1,0,'Non-standard large query offsets still require per-game review.','2026-11-04 15:52:59',NULL),
+(4,'minecraft-25565','Minecraft 25565','game',25565,25565,25654,10,40,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-04 15:52:59',NULL),
+(5,'7dtd-26900','7 Days to Die 26900','game',26900,26900,27009,10,50,1,0,'Capped before the Source/SRCDS 27015 pool.','2026-11-04 15:52:59',NULL),
+(6,'source-27015','Source/SRCDS 27015','game',27015,27015,27104,10,60,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-04 15:52:59',NULL),
+(7,'rust-28015','Rust 28015','game',28015,28015,28104,10,70,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-04 15:52:59',NULL),
+(8,'quake-cod-28960','Quake/Call of Duty 28960','game',28960,28960,29049,10,80,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-04 15:52:59',NULL),
+(9,'gse-overflow-32000','GSE controlled overflow 32000','overflow',32000,32000,32999,10,1000,1,0,'Controlled overflow only: 100 ten-port blocks per IP.','2026-11-04 15:52:59',NULL);
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_process_samples` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `machine_id` varchar(64) NOT NULL,
@@ -736,7 +941,7 @@ CREATE TABLE `gsp_process_samples` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_rcon_presets` (
   `preset_id` int(50) NOT NULL AUTO_INCREMENT,
   `name` varchar(20) NOT NULL,
@@ -747,7 +952,7 @@ CREATE TABLE `gsp_rcon_presets` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_remote_server_ips` (
   `ip_id` int(11) NOT NULL AUTO_INCREMENT,
   `remote_server_id` int(11) NOT NULL,
@@ -756,7 +961,7 @@ CREATE TABLE `gsp_remote_server_ips` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_remote_servers` (
   `remote_server_id` int(11) NOT NULL AUTO_INCREMENT,
   `remote_server_name` varchar(100) NOT NULL,
@@ -772,12 +977,14 @@ CREATE TABLE `gsp_remote_servers` (
   `display_public_ip` varchar(255) NOT NULL,
   `server_os` enum('linux','windows','any') NOT NULL DEFAULT 'linux',
   `enabled` int(11) NOT NULL DEFAULT 1,
+  `location_id` int(11) DEFAULT NULL,
+  `install_enabled` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`remote_server_id`),
   UNIQUE KEY `agent_ip` (`agent_ip`,`agent_port`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci COMMENT='Remote servers and IPs';
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_reseller_accounts` (
   `account_id` int(11) NOT NULL AUTO_INCREMENT,
   `service_id` int(11) NOT NULL,
@@ -795,7 +1002,7 @@ CREATE TABLE `gsp_reseller_accounts` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_reseller_carts` (
   `cart_id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
@@ -806,7 +1013,7 @@ CREATE TABLE `gsp_reseller_carts` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_reseller_discount_codes` (
   `discount_id` int(11) NOT NULL AUTO_INCREMENT,
   `service_id` int(11) NOT NULL,
@@ -817,7 +1024,7 @@ CREATE TABLE `gsp_reseller_discount_codes` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_reseller_homes` (
   `home_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -828,7 +1035,7 @@ CREATE TABLE `gsp_reseller_homes` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_reseller_services` (
   `service_id` int(11) NOT NULL AUTO_INCREMENT,
   `service_name` varchar(60) NOT NULL,
@@ -844,7 +1051,41 @@ CREATE TABLE `gsp_reseller_services` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `gsp_restic_homes` (
+  `home_id` int(10) unsigned NOT NULL,
+  `rest_user` varchar(64) NOT NULL,
+  `repo_state` varchar(20) NOT NULL DEFAULT 'pending',
+  `created_at` int(10) unsigned NOT NULL DEFAULT 0,
+  `delete_after` int(10) unsigned DEFAULT NULL,
+  PRIMARY KEY (`home_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `gsp_restic_snapshots` (
+  `snapshot_row_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `home_id` int(10) unsigned NOT NULL,
+  `snapshot_id` varchar(64) NOT NULL,
+  `kind` varchar(12) NOT NULL DEFAULT 'customer',
+  `comment` varchar(200) NOT NULL DEFAULT '',
+  `created_by` varchar(120) NOT NULL DEFAULT '',
+  `created_at` int(10) unsigned NOT NULL DEFAULT 0,
+  PRIMARY KEY (`snapshot_row_id`),
+  UNIQUE KEY `uniq_restic_snap` (`home_id`,`snapshot_id`),
+  KEY `idx_restic_snap_kind` (`home_id`,`kind`,`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `gsp_schema_migrations` (
+  `migration_id` varchar(191) NOT NULL,
+  `applied_at` datetime NOT NULL,
+  PRIMARY KEY (`migration_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_server_content_install_history` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `home_id` int(11) NOT NULL,
@@ -866,7 +1107,7 @@ CREATE TABLE `gsp_server_content_install_history` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_server_content_manifest` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `home_id` int(11) NOT NULL,
@@ -895,7 +1136,7 @@ CREATE TABLE `gsp_server_content_manifest` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_server_content_workshop` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `content_id` int(11) DEFAULT NULL,
@@ -925,7 +1166,31 @@ CREATE TABLE `gsp_server_content_workshop` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `gsp_server_content_workshop_catalog` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `workshop_id` varchar(64) NOT NULL,
+  `app_id` varchar(32) NOT NULL DEFAULT '',
+  `title` varchar(255) DEFAULT NULL,
+  `install_count` int(11) NOT NULL DEFAULT 0,
+  `first_seen` datetime NOT NULL DEFAULT current_timestamp(),
+  `last_installed` datetime DEFAULT NULL,
+  `last_updated` datetime DEFAULT NULL,
+  `published_date` datetime DEFAULT NULL,
+  `tags` text DEFAULT NULL,
+  `game_key` varchar(128) DEFAULT NULL,
+  `local_cache_path` varchar(512) DEFAULT NULL,
+  `author` varchar(255) DEFAULT NULL,
+  `thumbnail_url` varchar(512) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_workshop_app` (`workshop_id`,`app_id`),
+  KEY `idx_app_id` (`app_id`),
+  KEY `idx_install_count` (`install_count`),
+  KEY `idx_last_installed` (`last_installed`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_server_homes` (
   `home_id` int(50) NOT NULL AUTO_INCREMENT,
   `remote_server_id` int(11) NOT NULL,
@@ -941,6 +1206,7 @@ CREATE TABLE `gsp_server_homes` (
   `custom_fields` longtext DEFAULT NULL,
   `server_expiration_date` varchar(21) NOT NULL DEFAULT 'X',
   `home_user_order` int(11) NOT NULL DEFAULT 99999,
+  `cancel_at_expiry` tinyint(1) NOT NULL DEFAULT 0,
   `billing_status` varchar(16) NOT NULL DEFAULT 'Active',
   `billing_enabled` tinyint(1) NOT NULL DEFAULT 0,
   `next_invoice_date` datetime DEFAULT NULL,
@@ -956,7 +1222,7 @@ CREATE TABLE `gsp_server_homes` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_server_status` (
   `status_id` int(11) NOT NULL AUTO_INCREMENT,
   `remote_server_id` int(11) NOT NULL,
@@ -975,16 +1241,24 @@ CREATE TABLE `gsp_server_status` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_settings` (
   `setting` varchar(63) NOT NULL,
   `value` varchar(1024) NOT NULL,
   PRIMARY KEY (`setting`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `gsp_settings` (`setting`, `value`) VALUES ('title','Gameserver Engine Panel'),('slogan','Gameserver Engine'),('gsp_version','0'),('version_type','GSP'),('theme','Revolution'),('welcome_title','1'),('welcome_title_message','<h0>Welcome</h0>'),('page_auto_refresh','1'),('port_block_size','10');
+INSERT INTO `gsp_settings` (`setting`, `value`) VALUES ('title','Gameserver Engine Panel'),
+('slogan','The Open-Source one!'),
+('gsp_version','0'),
+('version_type','GSP'),
+('theme','SimpleBootstrap'),
+('welcome_title','1'),
+('welcome_title_message','<h0>Welcome! <b style=\'font-size:12px; font-weight:normal;\'>You can change this title in \'<a href=\'?m=settings&p=themes\'>Theme Settings</a>\' under the \'<a href=\'?m=administration&p=main\'>Administration</a>\' tab.</b></h0>'),
+('page_auto_refresh','1'),
+('port_block_size','10');
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_static_port_reservations` (
   `reservation_id` int(11) NOT NULL AUTO_INCREMENT,
   `scope` enum('ip','remote_server','global') NOT NULL DEFAULT 'ip',
@@ -1008,7 +1282,7 @@ CREATE TABLE `gsp_static_port_reservations` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci COMMENT='Static host and service port reservations';
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_status_cache` (
   `date_timestamp` char(16) NOT NULL,
   `ip_id` char(3) NOT NULL,
@@ -1017,7 +1291,7 @@ CREATE TABLE `gsp_status_cache` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_ticket_attachments` (
   `attachment_id` int(11) NOT NULL AUTO_INCREMENT,
   `ticket_id` int(11) NOT NULL,
@@ -1029,7 +1303,7 @@ CREATE TABLE `gsp_ticket_attachments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_ticket_messages` (
   `reply_id` int(11) NOT NULL AUTO_INCREMENT,
   `ticket_id` int(11) NOT NULL,
@@ -1045,7 +1319,7 @@ CREATE TABLE `gsp_ticket_messages` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_ticket_settings` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `setting_name` varchar(32) NOT NULL,
@@ -1054,9 +1328,15 @@ CREATE TABLE `gsp_ticket_settings` (
   UNIQUE KEY `setting_name` (`setting_name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `gsp_ticket_settings` (`id`, `setting_name`, `setting_value`) VALUES (1,'ratings_enabled','1'),(2,'attachments_enabled','1'),(3,'attachment_max_size','52428800'),(4,'attachment_limit','5'),(5,'attachment_save_dir','/home/dev/Projects/GSE-Panel/modules/tickets/uploads'),(6,'attachment_extensions','jpg, gif, jpeg, jpg, png, pdf, txt, sql, zip'),(7,'notifications_enabled','1');
+INSERT INTO `gsp_ticket_settings` (`id`, `setting_name`, `setting_value`) VALUES (1,'ratings_enabled','1'),
+(2,'attachments_enabled','1'),
+(3,'attachment_max_size','52428800'),
+(4,'attachment_limit','5'),
+(5,'attachment_save_dir','/home/dev/projects/gse-panel/modules/tickets/uploads'),
+(6,'attachment_extensions','jpg, gif, jpeg, jpg, png, pdf, txt, sql, zip'),
+(7,'notifications_enabled','1');
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_tickets` (
   `tid` int(11) NOT NULL AUTO_INCREMENT,
   `uid` varchar(32) NOT NULL,
@@ -1074,7 +1354,7 @@ CREATE TABLE `gsp_tickets` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_ts3_homes` (
   `ts3_id` int(50) NOT NULL AUTO_INCREMENT,
   `rserver_id` int(50) NOT NULL,
@@ -1088,7 +1368,7 @@ CREATE TABLE `gsp_ts3_homes` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_tshock` (
   `token_id` int(11) NOT NULL AUTO_INCREMENT,
   `ip` varchar(255) NOT NULL,
@@ -1098,7 +1378,7 @@ CREATE TABLE `gsp_tshock` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_update_blacklist` (
   `file_path` varchar(1000) DEFAULT NULL,
   UNIQUE KEY `file_path` (`file_path`),
@@ -1107,7 +1387,7 @@ CREATE TABLE `gsp_update_blacklist` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_update_patches` (
   `patch_id` varchar(191) NOT NULL,
   `status` varchar(32) NOT NULL,
@@ -1118,7 +1398,7 @@ CREATE TABLE `gsp_update_patches` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_user_group_homes` (
   `home_id` int(11) NOT NULL,
   `group_id` int(11) NOT NULL,
@@ -1128,7 +1408,7 @@ CREATE TABLE `gsp_user_group_homes` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_user_group_info` (
   `group_id` int(11) NOT NULL AUTO_INCREMENT,
   `group_name` varchar(255) DEFAULT NULL,
@@ -1138,7 +1418,7 @@ CREATE TABLE `gsp_user_group_info` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_user_group_remote_servers` (
   `remote_server_id` int(11) NOT NULL,
   `group_id` int(11) NOT NULL,
@@ -1147,7 +1427,7 @@ CREATE TABLE `gsp_user_group_remote_servers` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_user_groups` (
   `user_id` int(11) NOT NULL,
   `role_id` int(11) DEFAULT NULL,
@@ -1156,7 +1436,7 @@ CREATE TABLE `gsp_user_groups` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_user_homes` (
   `home_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -1166,7 +1446,7 @@ CREATE TABLE `gsp_user_homes` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_user_role_info` (
   `role_id` int(11) NOT NULL AUTO_INCREMENT,
   `role_name` varchar(100) DEFAULT NULL,
@@ -1175,14 +1455,13 @@ CREATE TABLE `gsp_user_role_info` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_users` (
   `user_id` int(11) NOT NULL AUTO_INCREMENT,
   `users_login` varchar(255) NOT NULL,
   `users_passwd` varchar(255) NOT NULL,
   `users_lang` varchar(20) NOT NULL DEFAULT 'English',
   `users_role` varchar(30) NOT NULL DEFAULT 'user',
-  `users_group` varchar(100) DEFAULT NULL,
   `users_fname` varchar(255) DEFAULT NULL,
   `users_lname` varchar(255) DEFAULT NULL,
   `users_email` varchar(255) DEFAULT NULL,
@@ -1202,7 +1481,7 @@ CREATE TABLE `gsp_users` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_widgets` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `column_id` int(11) NOT NULL,
@@ -1212,9 +1491,13 @@ CREATE TABLE `gsp_widgets` (
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `gsp_widgets` (`id`, `column_id`, `sort_no`, `collapsed`, `title`) VALUES (1,1,1,0,'Game Monitor'),(2,2,0,0,'Online Server'),(3,2,1,0,'Currently Online'),(4,3,0,0,'FTP'),(5,3,1,0,'Support');
+INSERT INTO `gsp_widgets` (`id`, `column_id`, `sort_no`, `collapsed`, `title`) VALUES (1,1,1,0,'Game Monitor'),
+(2,2,0,0,'Online Server'),
+(3,2,1,0,'Currently Online'),
+(4,3,0,0,'FTP'),
+(5,3,1,0,'Support');
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gsp_widgets_users` (
   `user_id` int(11) NOT NULL,
   `widget_id` int(11) NOT NULL,
@@ -1226,104 +1509,3 @@ CREATE TABLE `gsp_widgets_users` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 SET FOREIGN_KEY_CHECKS = 1;
-
-CREATE TABLE `gsp_billing_services` (
-  `service_id` int(11) NOT NULL AUTO_INCREMENT,
-  `home_cfg_id` int(11) NOT NULL,
-  `mod_cfg_id` int(11) NOT NULL,
-  `service_name` varchar(255) NOT NULL,
-  `remote_server_id` varchar(255) NOT NULL,
-  `out_of_stock` varchar(255) NOT NULL,
-  `slot_max_qty` int(11) NOT NULL,
-  `slot_min_qty` int(11) NOT NULL,
-  `price_daily` float(15,4) NOT NULL,
-  `price_monthly` float(15,4) NOT NULL,
-  `price_year` float(15,4) NOT NULL,
-  `description` varchar(1000) NOT NULL,
-  `img_url` varchar(255) NOT NULL,
-  `ftp` varchar(255) NOT NULL,
-  `install_method` varchar(255) NOT NULL,
-  `manual_url` varchar(255) NOT NULL,
-  `access_rights` varchar(255) NOT NULL,
-  `enabled` int(11) NOT NULL,
-  `pricing_mode` varchar(16) NOT NULL DEFAULT 'per_slot',
-  `base_slots` int(11) NOT NULL DEFAULT '0',
-  `per_slot_price_monthly` float(15,4) NOT NULL DEFAULT '0.0000',
-  `base_price_monthly` float(15,4) NOT NULL DEFAULT '0.0000',
-  `extra_price_per_slot_monthly` float(15,4) NOT NULL DEFAULT '0.0000',
-  PRIMARY KEY (`service_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `gsp_billing_config` (
-  `config_id` int(11) NOT NULL AUTO_INCREMENT,
-  `game_key` varchar(100) DEFAULT NULL,
-  `enabled` tinyint(1) NOT NULL DEFAULT '1',
-  `grace_days` int(11) NOT NULL DEFAULT '0',
-  `delete_after_expired_days` int(11) NOT NULL DEFAULT '7',
-  `rate_type` enum('daily','monthly','yearly') NOT NULL DEFAULT 'monthly',
-  `price_per_player` decimal(10,4) NOT NULL DEFAULT '0.0000',
-  `refund_full_days` int(11) NOT NULL DEFAULT '30',
-  `headroom_cpu_pct` tinyint(4) NOT NULL DEFAULT '70',
-  `headroom_ram_pct` tinyint(4) NOT NULL DEFAULT '70',
-  `headroom_disk_pct` tinyint(4) NOT NULL DEFAULT '85',
-  `paypal_mode` enum('sandbox','live') NOT NULL DEFAULT 'sandbox',
-  `paypal_client_id` varchar(255) DEFAULT NULL,
-  `paypal_client_secret_enc` text,
-  `paypal_webhook_id` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`config_id`),
-  KEY `game_key` (`game_key`),
-  KEY `enabled` (`enabled`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `gsp_billing_locations` (
-  `location_id` int(11) NOT NULL AUTO_INCREMENT,
-  `parent_id` int(11) DEFAULT NULL,
-  `kind` varchar(32) NOT NULL DEFAULT 'region',
-  `name` varchar(120) NOT NULL,
-  `enabled` tinyint(1) NOT NULL DEFAULT '1',
-  PRIMARY KEY (`location_id`),
-  KEY `idx_loc_parent` (`parent_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `gsp_billing_service_requirements` (
-  `home_cfg_id` int(11) NOT NULL,
-  `min_cpu_cores` decimal(6,2) NOT NULL DEFAULT '0.00',
-  `min_ram_mb` int(11) NOT NULL DEFAULT '0',
-  `min_disk_gb` int(11) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`home_cfg_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `gsp_billing_cancellation_requests` (
-  `request_id` int(11) NOT NULL AUTO_INCREMENT,
-  `home_id` int(11) NOT NULL,
-  `order_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `mode` enum('immediate','end_of_term') NOT NULL,
-  `status` enum('pending','approved','rejected','completed','failed') NOT NULL DEFAULT 'pending',
-  `requested_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `decided_at` datetime DEFAULT NULL,
-  `decided_by` int(11) DEFAULT NULL,
-  `refund_amount` decimal(10,2) DEFAULT NULL,
-  `refund_currency` varchar(3) NOT NULL DEFAULT 'USD',
-  `refund_status` enum('none','pending','refunded','manual_required','failed') NOT NULL DEFAULT 'none',
-  `refund_txid` varchar(255) DEFAULT NULL,
-  `note` text,
-  PRIMARY KEY (`request_id`),
-  KEY `idx_cancel_home_status` (`home_id`,`status`),
-  KEY `idx_cancel_status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `gsp_billing_service_agents` (
-  `service_id` int(11) NOT NULL,
-  `remote_server_id` int(11) NOT NULL,
-  PRIMARY KEY (`service_id`,`remote_server_id`),
-  KEY `idx_bsa_remote` (`remote_server_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `gsp_billing_service_tiers` (
-  `service_id` int(11) NOT NULL,
-  `tier_key` varchar(16) NOT NULL,
-  `slot_count` int(11) NOT NULL DEFAULT '0',
-  `price_monthly` float(15,4) NOT NULL DEFAULT '0.0000',
-  PRIMARY KEY (`service_id`,`tier_key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
