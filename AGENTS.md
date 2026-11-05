@@ -275,3 +275,17 @@ Remaining work
 
 ## Global ISA infrastructure
 Before infrastructure-related work, read `/home/dev/Projects/ISA-KNOWLEDGE/INFRASTRUCTURE.md`. This is the canonical shared non-secret host/IP/VPN/account/service source of truth.
+
+## Coding Standards
+
+- Fix the root cause. Do not put a patch on top of broken code.
+  If a rule or function is wrong, change that rule or function.
+- CSS: change the rule where it is first written. Do not add a second
+  rule that overrides it.
+- Write the simplest code that works. Use plain steps that a beginner can follow.
+- Use a harder method only when it is really needed. Say why in a comment.
+- Do not write short clever code just to save lines. Clear code is better.
+- Keep each function to one job, and keep functions short.
+- Before you finish, read your change once as if you are new to the project.
+  If it is hard to follow, make it simpler.
+- Never put tokens, passwords, or keys in code, docs, or git history.
