@@ -1,0 +1,16 @@
+# TODO and Issues
+
+Read this file before you start work in this repo. Update it every time you work here.
+The rules are in AGENTS.md under Work Tracking.
+
+Type: todo, issue, goal, need.
+Status: open, doing, done, invalid.
+Older lists (for example docs/plans/BACKLOG.md) are copied into this file. Add new items only here.
+
+| ID | Type | Status | Title | Owner | Opened | Updated | GitLab |
+|---|---|---|---|---|---|---|---|
+| T-001 | todo | open | Switch restic backup, restore, and delete to start and poll the agent job in function.php | Claude | 2026-11-05 | 2026-11-05 | - |
+| T-002 | todo | open | Drop -r from restic_lib.php argv and pass the repo URL in the environment | Claude | 2026-11-05 | 2026-11-05 | - |
+| T-003 | todo | open | Install cron for cron-purge.php on core | User | 2026-11-05 | 2026-11-05 | - |
+| T-004 | todo | open | Confirm the DR denied-command check for restic-home-admin-ssh | User | 2026-11-05 | 2026-11-05 | - |
+| T-005 | goal | open | Move TODO.md, docs/FEATURES_TODO.md, docs/development/COPILOT_TODO.md, and docs/plans/BACKLOG.md items into this file | Claude | 2026-11-05 | 2026-11-05 | - |
