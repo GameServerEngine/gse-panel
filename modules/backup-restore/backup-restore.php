@@ -1,49 +1,51 @@
 <?php
 
-include "function.php";
+require_once __DIR__ . '/function.php';
 
-function exec_gsp_module(){
+// Customer backup screen for one game home. Routes POST actions from the forms in function.php.
+function exec_gsp_module()
+{
+    $home_id = isset($_REQUEST['home_id']) ? (int)$_REQUEST['home_id'] : 0;
+    if ($home_id <= 0) {
+        echo '<center><h3>There is no game server selected.</h3></center>';
+        return;
+    }
 
-	if($_SERVER['REQUEST_METHOD'] === 'GET'){
-		$homeid = $_GET['home_id'];
-		if($homeid == ""){
-			$home = "https://panel.iaregamer.com/home.php?m=dashboard&p=dashboard";
-			echo '<center>';
-			echo '<h1>WE HAVE A PROBLEM:</h1>';
-			echo '<h3>Theres NO homeid</h3>';
-//			echo '<button onclick="window.location.href="'.$home.';">&emsp; OK &emsp;</button>';
-			echo '</center>';
-		}else{
-			echo "<center><div>";
-			echo '<h3 style="text-transform: none;">
-				This Module is Currently not Working - Testing phase - if you need to
-				restore from a backup see &emsp; @shootingBlanks &emsp; or &emsp; @dimrod
-				&emsp; on discord</h3>';
-			echo '<p><b>You can push buttons to see what it does,
-				you wont hurt anything right now!</b></p>';
-			echo '<div><form id="mianForm" method="POST">';
-			echo '<input type="hidden" name="home_id" value="'.$homeid.'"/>';
-				getButtonList($homeid);
-			echo "	</form></div></center>";
-		}
-	}elseif($_SERVER['REQUEST_METHOD'] === 'POST'){
-		$homeid = $_GET['home_id'];
-		$action = $_POST['dothis'];
-		if($action == "backupNow"){
-			$homeid = $_POST['home_id'];
-			$action = $_POST['dothis'];
-			BackupNow($homeid, $action);
-		}elseif($action == "restoreNow"){
-			$homeid = $_POST['home_id'];
-			$action = $_POST['dothis'];
-			restoreNow($homeid, $action);
-		}elseif($action == cancel){
-			$homeid = $_POST['home_id'];
-			goBack($homeid);
-		}else{
-			$action = $_POST['dothis'];
-			$homeid = $_POST['home_id'];
-			doButtons($homeid, $action);
-		}
-	}
+    $cfg = restic_load_home($home_id);
+    if ($cfg === FALSE) {
+        echo '<center><h3>You do not have access to this game server.</h3></center>';
+        return;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        restic_render_home($cfg, $home_id);
+        return;
+    }
+
+    $action = isset($_POST['dothis']) ? (string)$_POST['dothis'] : '';
+    if ($action === 'cancel') {
+        header('Location: home.php?m=gamemanager&p=game_monitor&home_id=' . $home_id);
+        exit;
+    }
+
+    if (!restic_csrf_ok()) {
+        restic_render_home($cfg, $home_id, 'Your form expired. Please try again.', FALSE);
+        return;
+    }
+
+    switch ($action) {
+        case 'backupNow':
+            list($ok, $message) = restic_do_backup($cfg, $home_id);
+            restic_render_home($cfg, $home_id, $message, $ok);
+            break;
+        case 'restoreConfirm':
+            restic_render_restore_confirm($cfg, $home_id);
+            break;
+        case 'restoreNow':
+            list($ok, $message) = restic_do_restore($cfg, $home_id);
+            restic_render_home($cfg, $home_id, $message, $ok);
+            break;
+        default:
+            restic_render_home($cfg, $home_id);
+    }
 }

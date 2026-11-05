@@ -1210,6 +1210,22 @@ class GSPDatabaseMySQL extends GSPDatabase
 	/// \brief Used to make plain query to the database.
 	/// \return true if success and false otherwise.
 	/// When false is returned user can check error with getError() function.
+	// Runs a SELECT and returns all rows as arrays (GSP_DB_PREFIX placeholder allowed). FALSE on failure.
+	public function queryRows( $query )
+	{
+		if ( !$this->link ) return FALSE;
+
+		$query = str_replace( "GSP_DB_PREFIX", $this->table_prefix, $query );
+
+		++$this->queries_;
+		$result = mysqli_query($this->link,$query);
+		if ( $result === FALSE ) return FALSE;
+
+		$rows = array();
+		while ( $row = mysqli_fetch_assoc($result) ) $rows[] = $row;
+		mysqli_free_result($result);
+		return $rows;
+	}
 	public function query( $query )
 	{
 		if ( !$this->link ) return FALSE;
@@ -2921,6 +2937,12 @@ class GSPDatabaseMySQL extends GSPDatabase
 			$result = mysqli_query($this->link,$query);
 			$return = ($result === FALSE) ? FALSE : $return;
 		}
+		// Customer backups of this server are purged 7 days later (restic_purge_due_homes).
+		// The table is missing on installs that never enabled backups; that error is ignored.
+		$restic_query = sprintf("UPDATE `%srestic_homes` SET `repo_state` = 'deleted', `delete_after` = %d WHERE `home_id` = %d AND `repo_state` IN ('pending','ready');",
+			$this->table_prefix, time() + 7 * 86400, $home_id);
+		mysqli_query($this->link, $restic_query);
+
 		return $return;
 	}
 
