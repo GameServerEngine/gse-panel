@@ -950,8 +950,8 @@ class GSPRemoteLibrary
 		if ($retval != 1 || $data_tmp === NULL)
 			return FALSE;
 		$values = array();
-		foreach (explode("\n", $data_tmp) as $line)
-			$values[] = base64_decode($line);
+		foreach (explode('\n', $data_tmp) as $line)
+			$values[] = base64_decode(trim($line));
 		return $values;
 	}
 
