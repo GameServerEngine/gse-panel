@@ -10,9 +10,10 @@ require_once __DIR__ . '/restic_keys.php';
 function restic_admin_defaults()
 {
     return array(
-        'restic_target_host'       => 'dr.isaserver.net',
-        'restic_target_user'       => 'leroy',
-        'restic_target_path'       => '/srv/restic-dev',
+        'restic_rest_url'          => '',   // rest-server base URL, e.g. http://<address>:<port>
+        'restic_target_host'       => '',   // backup server host name or IP, for SSH
+        'restic_target_user'       => '',   // SSH user on the backup server
+        'restic_target_path'       => '',   // storage directory on the backup server (reference only)
         'restic_policy_mode'       => 'manual',   // manual | daily | every_x_days
         'restic_policy_every_days' => '7',
         'restic_initial_backup'    => '0',        // 1 = baseline snapshot at install
@@ -38,6 +39,9 @@ function restic_admin_validate($input, &$errors)
     $path = rtrim(trim((string)$input['restic_target_path']), '/');
     $mode = (string)$input['restic_policy_mode'];
     $days = (int)$input['restic_policy_every_days'];
+    $rest = restic_rest_base_valid(trim((string)$input['restic_rest_url']));
+    if ($rest === FALSE)
+        $errors[] = 'Backup server address must look like http://address:port, with an IP address or host name.';
 
     if (!preg_match('/^[A-Za-z0-9.-]+$/', $host))
         $errors[] = 'Target host may only contain letters, digits, dots and hyphens.';
@@ -51,6 +55,7 @@ function restic_admin_validate($input, &$errors)
         $errors[] = 'Every X days must be between 1 and 365.';
 
     return array(
+        'restic_rest_url'          => ($rest === FALSE) ? '' : $rest,
         'restic_target_host'       => $host,
         'restic_target_user'       => $user,
         'restic_target_path'       => $path,
@@ -109,6 +114,7 @@ function exec_gsp_module()
 
     echo '<center><form method="POST" action="?m=backup-restore&amp;p=admin">';
     echo '<table>';
+    echo '<tr><td>Backup server address</td><td><input type="text" name="restic_rest_url" placeholder="http://address:port" value="'.htmlspecialchars($current['restic_rest_url']).'"></td></tr>';
     echo '<tr><td>Target host</td><td><input type="text" name="restic_target_host" value="'.htmlspecialchars($current['restic_target_host']).'"></td></tr>';
     echo '<tr><td>Target user</td><td><input type="text" name="restic_target_user" value="'.htmlspecialchars($current['restic_target_user']).'"></td></tr>';
     echo '<tr><td>Target path</td><td><input type="text" name="restic_target_path" value="'.htmlspecialchars($current['restic_target_path']).'"></td></tr>';

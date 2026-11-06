@@ -15,22 +15,28 @@ const RESTIC_CUSTOMER_LIMIT = 3;
 const RESTIC_COMMENT_MAX = 200;
 const RESTIC_DELETE_DELAY_DAYS = 7;
 
-// Base URL of the rest-server on the DR box (WireGuard address).
-function restic_rest_base()
+// Base URL of the rest-server (scheme://host:port), entered in Backup/Restore Admin.
+// Nothing is built in. Returns the URL without a trailing slash, or FALSE if it is not
+// an http(s) URL with an IP address or host name and an optional port from 1 to 65535.
+function restic_rest_base_valid($url)
 {
-    return 'http://10.255.0.1:8000';
+    $url = rtrim(trim((string)$url), '/');
+    if (!preg_match('#^https?://(\[[0-9A-Fa-f:]+\]|[A-Za-z0-9.-]+)(:[0-9]{1,5})?$#', $url))
+        return FALSE;
+    if (preg_match('/:([0-9]{1,5})$/', $url, $m) && (int)$m[1] > 65535)
+        return FALSE;
+    return $url;
 }
 
-// Repo URL for one game home's REST account on the DR box, without credentials.
-function restic_repo_url($rest_user)
+// Repo URL for one game home's REST account on the backup server, without credentials.
+function restic_repo_url($rest_user, $base)
 {
-    return 'rest:' . restic_rest_base() . '/' . rawurlencode($rest_user) . '/';
+    return 'rest:' . $base . '/' . rawurlencode($rest_user) . '/';
 }
 
 // Repo URL with the REST account's credentials. restic's REST backend reads them only from the URL.
-function restic_repo_url_auth($rest_user, $rest_password)
+function restic_repo_url_auth($rest_user, $rest_password, $base)
 {
-    $base = restic_rest_base();
     $scheme_end = strpos($base, '://') + 3;
     return 'rest:' . substr($base, 0, $scheme_end)
         . rawurlencode($rest_user) . ':' . rawurlencode($rest_password)

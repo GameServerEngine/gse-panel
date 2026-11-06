@@ -10,11 +10,17 @@ function check($label, $actual, $expected, &$failures)
     echo "FAIL $label: expected " . var_export($expected, TRUE) . ' got ' . var_export($actual, TRUE) . "\n";
 }
 
-check('repo url', restic_repo_url('home-52'), 'rest:http://10.255.0.1:8000/home-52/', $failures);
-check('repo url with auth', restic_repo_url_auth('home-52', 'abc123'),
-    'rest:http://home-52:abc123@10.255.0.1:8000/home-52/', $failures);
-check('repo url auth escapes password', restic_repo_url_auth('home-52', 'p@ss/w'),
-    'rest:http://home-52:p%40ss%2Fw@10.255.0.1:8000/home-52/', $failures);
+check('rest base normalized', restic_rest_base_valid('http://192.0.2.10:8000/'), 'http://192.0.2.10:8000', $failures);
+check('rest base host name', restic_rest_base_valid('https://backup.example.net'), 'https://backup.example.net', $failures);
+check('rest base rejects other scheme', restic_rest_base_valid('ftp://192.0.2.10:8000'), FALSE, $failures);
+check('rest base rejects empty', restic_rest_base_valid(''), FALSE, $failures);
+check('rest base rejects port 99999', restic_rest_base_valid('http://192.0.2.10:99999'), FALSE, $failures);
+check('rest base rejects path', restic_rest_base_valid('http://192.0.2.10:8000/x y'), FALSE, $failures);
+check('repo url', restic_repo_url('home-52', 'http://192.0.2.10:8000'), 'rest:http://192.0.2.10:8000/home-52/', $failures);
+check('repo url with auth', restic_repo_url_auth('home-52', 'abc123', 'http://192.0.2.10:8000'),
+    'rest:http://home-52:abc123@192.0.2.10:8000/home-52/', $failures);
+check('repo url auth escapes password', restic_repo_url_auth('home-52', 'p@ss/w', 'http://192.0.2.10:8000'),
+    'rest:http://home-52:p%40ss%2Fw@192.0.2.10:8000/home-52/', $failures);
 
 check('comment ok', restic_comment_valid('before the wipe'), TRUE, $failures);
 check('comment empty rejected', restic_comment_valid(''), FALSE, $failures);

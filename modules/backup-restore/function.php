@@ -157,9 +157,19 @@ function restic_home_env($master, $home_id, $rest_user)
     );
 }
 
+// The rest-server base URL from Backup/Restore Admin, or FALSE if it is not set or not valid.
+function restic_configured_rest_base()
+{
+    global $db;
+    return restic_rest_base_valid($db->getSetting('restic_rest_url'));
+}
+
 function restic_home_repo_url($master, $home_id, $rest_user)
 {
-    return restic_repo_url_auth($rest_user, restic_home_rest_password($master, $home_id));
+    $base = restic_configured_rest_base();
+    if ($base === FALSE)
+        return FALSE;
+    return restic_repo_url_auth($rest_user, restic_home_rest_password($master, $home_id), $base);
 }
 
 // Creates or updates this home's REST account on the DR box. The DR helper writes the
@@ -171,6 +181,8 @@ function restic_provision_home($home_id, $master)
     $target_user = (string)$db->getSetting('restic_target_user');
     if ($target_host === '' || $target_user === '')
         return 'The backup target is not set in Backup/Restore Admin.';
+    if (restic_configured_rest_base() === FALSE)
+        return 'The backup server address is not set in Backup/Restore Admin.';
 
     $rest_user = 'home-' . (int)$home_id;
     $hash = password_hash(restic_home_rest_password($master, $home_id), PASSWORD_BCRYPT);
@@ -196,6 +208,8 @@ function restic_do_backup($cfg, $home_id)
 {
     if (!restic_home_is_windows($cfg))
         return array(FALSE, 'Backups are only available for Windows game servers right now.');
+    if (restic_configured_rest_base() === FALSE)
+        return array(FALSE, 'The backup server address is not set in Backup/Restore Admin.');
     global $db;
     $comment = trim((string)(isset($_POST['comment']) ? $_POST['comment'] : ''));
     if (!restic_comment_valid($comment))
@@ -275,6 +289,8 @@ function restic_do_restore($cfg, $home_id)
 {
     if (!restic_home_is_windows($cfg))
         return array(FALSE, 'Restores are only available for Windows game servers right now.');
+    if (restic_configured_rest_base() === FALSE)
+        return array(FALSE, 'The backup server address is not set in Backup/Restore Admin.');
     $snapshot_id = (string)(isset($_POST['snapshot_id']) ? $_POST['snapshot_id'] : '');
     if (!restic_snapshot_id_valid($snapshot_id))
         return array(FALSE, 'Pick a snapshot to restore.');
