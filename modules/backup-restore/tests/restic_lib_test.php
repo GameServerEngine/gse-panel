@@ -26,13 +26,24 @@ check('snapshot id full ok', restic_snapshot_id_valid(str_repeat('f', 64)), TRUE
 check('snapshot id with shell chars rejected', restic_snapshot_id_valid('abcd;rm'), FALSE, $failures);
 check('snapshot id uppercase rejected', restic_snapshot_id_valid('ABCD1234'), FALSE, $failures);
 
-check('backup argv for customer', restic_build_backup_argv('/p', 52, 'customer'),
-    array('restic', 'backup', '/p', '--tag', 'customer', '--tag', 'home-52', '--json'), $failures);
-check('unknown kind rejected', restic_build_backup_argv('/p', 52, 'auto'), FALSE, $failures);
+$game52 = 'C:\\GSE\\Agent\\home\\gameserver\\52';
+check('game home path', restic_game_home_path(52), $game52, $failures);
+check('game home path rejects bad id', restic_game_home_path('52;rm'), FALSE, $failures);
+check('backup argv for customer', restic_build_backup_argv($game52, 52, 'customer'),
+    array('restic', 'backup', $game52, '--exclude', $game52 . '\\restic-restore', '--tag', 'customer', '--tag', 'home-52', '--json'), $failures);
+check('backup rejects other path', restic_build_backup_argv('/', 52, 'customer'), FALSE, $failures);
+check('backup rejects other game folder', restic_build_backup_argv($game52, 53, 'customer'), FALSE, $failures);
+check('unknown kind rejected', restic_build_backup_argv($game52, 52, 'auto'), FALSE, $failures);
 
-check('restore argv', restic_build_restore_argv('abcd1234'),
-    array('restic', 'restore', 'abcd1234', '--target', '/'), $failures);
-check('restore rejects bad id', restic_build_restore_argv('abcd;ls'), FALSE, $failures);
+check('windows home', restic_home_is_windows(array('server_os' => 'windows')), TRUE, $failures);
+check('linux home not windows', restic_home_is_windows(array('server_os' => 'linux')), FALSE, $failures);
+check('any home not windows', restic_home_is_windows(array('server_os' => 'any')), FALSE, $failures);
+check('no server_os not windows', restic_home_is_windows(array()), FALSE, $failures);
+
+check('restore argv', restic_build_restore_argv('abcd1234', 52),
+    array('restic', 'restore', 'abcd1234', '--target', $game52 . '\\restic-restore'), $failures);
+check('restore rejects bad id', restic_build_restore_argv('abcd;ls', 52), FALSE, $failures);
+check('restore rejects bad home', restic_build_restore_argv('abcd1234', 'x'), FALSE, $failures);
 
 check('forget argv', restic_build_forget_argv(array('abcd1234', 'ef567890')),
     array('restic', 'forget', '--prune', 'abcd1234', 'ef567890'), $failures);

@@ -52,13 +52,33 @@ function restic_snapshot_id_valid($id)
     return is_string($id) && preg_match('/^[0-9a-f]{8,64}$/', $id) === 1;
 }
 
-// argv for `restic backup` of one home directory. Passed to the agent as escaped arguments.
+// Windows path of one game server's folder on the agent host. Restic only ever touches this folder.
+// Returns FALSE for an id that is not a plain positive integer.
+function restic_game_home_path($home_id)
+{
+    if (!preg_match('/^[1-9][0-9]{0,9}$/', (string)$home_id))
+        return FALSE;
+    return 'C:\\GSE\\Agent\\home\\gameserver\\' . $home_id;
+}
+
+// argv for `restic backup` of one game home directory. Passed to the agent as escaped arguments.
+// The path must be exactly this game's own folder (restic_game_home_path), nothing else.
 function restic_build_backup_argv($home_path, $home_id, $kind)
 {
     if ($kind !== 'baseline' && $kind !== 'customer')
         return FALSE;
+    if ($home_path !== restic_game_home_path($home_id))
+        return FALSE;
+    // Restore staging lives inside the game folder; keep it out of backups.
     return array('restic', 'backup', $home_path,
+        '--exclude', $home_path . '\\restic-restore',
         '--tag', $kind, '--tag', 'home-' . (int)$home_id, '--json');
+}
+
+// True when the game server runs Windows. The Windows restic paths only apply to those servers.
+function restic_home_is_windows($cfg)
+{
+    return is_array($cfg) && isset($cfg['server_os']) && $cfg['server_os'] === 'windows';
 }
 
 // argv that creates the repo only when it does not exist yet (checked with `cat config`).
@@ -72,12 +92,18 @@ function restic_build_probe_argv()
     return array('restic', 'cat', 'config');
 }
 
-// argv for `restic restore`. Snapshots record absolute paths, so restoring to / puts files back in place.
-function restic_build_restore_argv($snapshot_id)
+// argv for `restic restore` into a staging folder inside the game's own folder.
+// Restic recreates the stored absolute path under the target (C:\GSE\... becomes
+// <staging>\C\GSE\...), so this never writes outside the game folder and never to C:\ or /.
+// Moving files back into place is a separate, reviewed step.
+function restic_build_restore_argv($snapshot_id, $home_id)
 {
     if (!restic_snapshot_id_valid($snapshot_id))
         return FALSE;
-    return array('restic', 'restore', $snapshot_id, '--target', '/');
+    $home = restic_game_home_path($home_id);
+    if ($home === FALSE)
+        return FALSE;
+    return array('restic', 'restore', $snapshot_id, '--target', $home . '\\restic-restore');
 }
 
 // argv for `restic forget --prune` with explicit snapshot ids.

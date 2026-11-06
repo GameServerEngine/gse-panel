@@ -194,6 +194,8 @@ function restic_provision_home($home_id, $master)
 // Returns array(ok, message).
 function restic_do_backup($cfg, $home_id)
 {
+    if (!restic_home_is_windows($cfg))
+        return array(FALSE, 'Backups are only available for Windows game servers right now.');
     global $db;
     $comment = trim((string)(isset($_POST['comment']) ? $_POST['comment'] : ''));
     if (!restic_comment_valid($comment))
@@ -224,7 +226,7 @@ function restic_do_backup($cfg, $home_id)
             return array(FALSE, 'The backup repository could not be created on the game server.');
     }
 
-    $res = restic_job_run($cfg, $env, restic_build_backup_argv($cfg['home_path'], $home_id, 'customer'));
+    $res = restic_job_run($cfg, $env, restic_build_backup_argv(restic_game_home_path($home_id), $home_id, 'customer'));
     if ($res === FALSE)
         return array(FALSE, 'The game server did not answer. Nothing was backed up.');
     if ($res[0] !== 0)
@@ -271,6 +273,8 @@ function restic_prune_customers($cfg, $home_id, $master)
 // Returns array(ok, message).
 function restic_do_restore($cfg, $home_id)
 {
+    if (!restic_home_is_windows($cfg))
+        return array(FALSE, 'Restores are only available for Windows game servers right now.');
     $snapshot_id = (string)(isset($_POST['snapshot_id']) ? $_POST['snapshot_id'] : '');
     if (!restic_snapshot_id_valid($snapshot_id))
         return array(FALSE, 'Pick a snapshot to restore.');
@@ -286,7 +290,7 @@ function restic_do_restore($cfg, $home_id)
         return array(FALSE, 'Customer backups are not enabled.');
     $row = restic_home_row($home_id);
     $env = restic_home_env($master, $home_id, $row['rest_user']);
-    $res = restic_job_run($cfg, $env, restic_build_restore_argv($snapshot_id));
+    $res = restic_job_run($cfg, $env, restic_build_restore_argv($snapshot_id, $home_id));
     if ($res === FALSE)
         return array(FALSE, 'The game server did not answer. Nothing was restored.');
     if ($res[0] !== 0)
