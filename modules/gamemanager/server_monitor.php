@@ -556,7 +556,7 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 				else
 				{
 					$status = $agent_state === "UNKNOWN" ? "unknown" : "offline";
-					$address .= "<span class='note'>".htmlentities($agent_state)."</span>";
+					$address .= "<span class='note'>".($agent_state === "UNKNOWN" ? "UNKNOWN" : "STOPPED")."</span>";
 					if ($reason !== '' && in_array($agent_state, array('CRASHED', 'FAILED'), true)) $address .= " <span class='failure'>".htmlentities($reason)."</span>";
 					if ($server_home['last_param'] != "" and isset($server_home['ip']) and isset($server_home['mod_id']))
 					{
@@ -606,8 +606,8 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 
 				// Template
                               @$first = "<tr class='maintr$trclass'>";
-				$status_color = $status === 'online' ? '#2da44e' : ($status === 'starting' ? '#d29922' : ($status === 'unknown' ? '#8b949e' : '#d1242f'));
-				$status_title = $status === 'starting' ? 'Starting' : ($status === 'unknown' ? 'Unknown' : ucfirst($status));
+				$status_color = ($status === 'starting' || $update_in_progress) ? '#d29922' : ($status === 'online' ? '#2da44e' : ($status === 'unknown' ? '#8b949e' : '#d1242f'));
+				$status_title = $update_in_progress ? 'Updating' : ($status === 'starting' ? 'Starting' : ($status === 'unknown' ? 'Unknown' : ($status === 'offline' ? 'Stopped' : ucfirst($status))));
 				$status_icon = "<span title='" . htmlentities($status_title) . "' style='display:inline-block;width:14px;height:14px;border-radius:50%;background:" . $status_color . ";border:1px solid rgba(255,255,255,.35);vertical-align:middle;'></span>";
 				$first .= "<td class='collapsible' data-status='$status' data-pos='$pos'><span class='hidden'>$order</span>" . $status_icon . "</td>";
 				$first .= "<td class='collapsible'>" . "<span class='hidden'>$mod</span><img src='$icon_path' />" . "</td>";
