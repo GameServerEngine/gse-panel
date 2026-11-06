@@ -1,13 +1,13 @@
 <?php
 /*
- * CRON: reseller-cron-shop.php  (LEGACY, not scheduled)
+ * CRON: reseller-cron-shop.php  (WORK IN PROGRESS, not scheduled)
  *
- * Location: cron/reseller-cron-shop.php (moved from cron/reseller-cron-shop.php).
+ * Location: cron/reseller-cron-shop.php (moved from modules/reseller/cron-shop.php).
  *
  * What it does: removes expired reseller game homes (FTP user, server stop, unassign).
  *   Nothing in the panel or in the docs runs this file today.
  *
- * Status: NOT scheduled. Before enabling, check it: the SQL uses a GSP_DB_PREFIX
+ * Status: work in progress. The reseller module is not active or ready for users, so this is not scheduled. Before enabling, check it: the SQL uses a GSP_DB_PREFIX
  *   placeholder that is not replaced in this file, so it will not run as written.
  *   Fix and test on the testing database first.
  *
