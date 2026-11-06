@@ -16,7 +16,7 @@ these files cannot be triggered from a web page.
 |---|---|---|---|
 | `cron-shop.php` | Billing lifecycle: renewal invoices, expiry, suspension, deletion after grace. | `0 3 * * *` | Scheduled (required for billing) |
 | `cron-purge.php` | Removes customer restic backup repos of deleted game servers after 7 days. | `30 3 * * *` | Scheduled when restic backups are enabled |
-| `reseller-cron-shop.php` | Removes expired reseller game homes. | `0 4 * * *` | Work in progress, not scheduled. |
+| `cron-reseller.php` | Removes expired reseller game homes. | `0 4 * * *` | Work in progress, not scheduled. |
 
 Replace `/var/www/html/GSE/Panel` with your panel path. Add the lines with `crontab -e`
 as the web server user (for example `www-data` or `apache`). Logs go to `/var/log/gse-*.log`.

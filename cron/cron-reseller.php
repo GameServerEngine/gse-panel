@@ -1,21 +1,24 @@
 <?php
 /*
- * CRON: reseller-cron-shop.php  (WORK IN PROGRESS, not scheduled)
+ * CRON: cron-reseller.php  (reseller game home expiry, WORK IN PROGRESS)
  *
- * Location: cron/reseller-cron-shop.php (moved from modules/reseller/cron-shop.php).
+ * Location: cron/cron-reseller.php (moved from modules/reseller/cron-shop.php).
  *
- * What it does: removes expired reseller game homes (FTP user, server stop, unassign).
- *   Nothing in the panel or in the docs runs this file today.
+ * What it does: for reseller accounts, removes game homes whose reseller period
+ *   has ended (FTP user, server stop, unassign, delete files, restore the account's
+ *   slots), and marks reseller accounts expired when their months run out.
  *
- * Status: work in progress. The reseller module is not active or ready for users, so this is not scheduled. Before enabling, check it: the SQL uses a GSP_DB_PREFIX
- *   placeholder that is not replaced in this file, so it will not run as written.
- *   Fix and test on the testing database first.
+ * Status: work in progress. The reseller module is not active or ready for users,
+ *   so this script is NOT scheduled. Test it on the testing database first.
  *
  * Run by hand (CLI only; a browser request gets a 404):
- *   php /var/www/html/GSE/Panel/cron/reseller-cron-shop.php
+ *   php /var/www/html/GSE/Panel/cron/cron-reseller.php
  *
- * Suggested schedule once fixed: once a day.
- *   0 4 * * * php /var/www/html/GSE/Panel/cron/reseller-cron-shop.php >> /var/log/gse-reseller-cron.log 2>&1
+ * Suggested schedule once the module is ready: once a day.
+ *   0 4 * * * php /var/www/html/GSE/Panel/cron/cron-reseller.php >> /var/log/gse-cron-reseller.log 2>&1
+ *
+ * Add it with: crontab -e   (as the web server user, for example www-data or apache)
+ * Safe to re-run: yes. Removed homes are no longer listed, and expired accounts are skipped.
  * See cron/README.md for the full cron list and the rules for adding scripts.
  */
 if (PHP_SAPI !== 'cli') {
@@ -63,8 +66,8 @@ $db = createDatabaseConnection($db_type, $db_host, $db_user, $db_pass, $db_name,
 
 //Remove outdated user homes, It must be a cron or in home.php
 $user_homes = $db->resultQuery( "SELECT *
-								 FROM GSP_DB_PREFIXreseller_homes
-								 WHERE status>0 AND status<NOW()" );
+								 FROM {$table_prefix}reseller_homes
+								 WHERE status <> '0' AND STR_TO_DATE(status, '%Y-%m-%d') < CURDATE()" );
 
 if (!is_array($user_homes))
 {
@@ -102,10 +105,10 @@ else
 		echo "Home ID $home_id removed successfully.\r\n";
 
 		// Restore slots in the reseller account
-		$qry_accounts = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_accounts WHERE account_id=".$user_home['account_id']);
+		$qry_accounts = $db->resultQuery("SELECT * FROM {$table_prefix}reseller_accounts WHERE account_id=".$user_home['account_id']);
 		$account = $qry_accounts[0];
 		$update_available_slots = $account['available_slots'] + $user_home['assigned_slots'];
-		$db->query("UPDATE GSP_DB_PREFIXreseller_accounts SET available_slots=".$update_available_slots." WHERE account_id=".$account['account_id']);
+		$db->query("UPDATE {$table_prefix}reseller_accounts SET available_slots=".$update_available_slots." WHERE account_id=".$account['account_id']);
 
 		// Delete the reseller home entry
 		$db->query( "DELETE FROM " . $table_prefix . "reseller_homes
@@ -114,7 +117,7 @@ else
 		echo "The amount of available slots available at the reseller account with ID ".$account['account_id']." has been updated,\r\nnow haves ".$update_available_slots." free slots.\r\n";
 	}
 }
-$reseller_accounts = $db->resultQuery( "SELECT * FROM GSP_DB_PREFIXreseller_accounts WHERE status>0" );
+$reseller_accounts = $db->resultQuery( "SELECT * FROM {$table_prefix}reseller_accounts WHERE status>0" );
 if (!is_array($reseller_accounts))
 {
 	echo "Nothing to do at reseller accounts.\r\n";
@@ -134,8 +137,8 @@ else
 
 			if( $update_available_months <= 0 )
 			{
-				$db->query("UPDATE GSP_DB_PREFIXreseller_accounts SET available_months=".$update_available_months." WHERE account_id=".$account['account_id']);
-				$db->query("UPDATE GSP_DB_PREFIXreseller_accounts SET status=-1 WHERE account_id=".$account['account_id']);
+				$db->query("UPDATE {$table_prefix}reseller_accounts SET available_months=".$update_available_months." WHERE account_id=".$account['account_id']);
+				$db->query("UPDATE {$table_prefix}reseller_accounts SET status=-1 WHERE account_id=".$account['account_id']);
 				echo "The reseller account with ID ".$account['account_id']." has expired (0 months available).\r\n";
 				$changes = TRUE;
 			}
@@ -143,7 +146,7 @@ else
 			{
 				if( $account['available_months'] != $update_available_months )
 				{
-					$db->query("UPDATE GSP_DB_PREFIXreseller_accounts SET available_months=".$update_available_months." WHERE account_id=".$account['account_id']);
+					$db->query("UPDATE {$table_prefix}reseller_accounts SET available_months=".$update_available_months." WHERE account_id=".$account['account_id']);
 					echo "The amount of available months at reseller account ID ".$account['account_id']." has been updated,\r\n".$update_available_months." months remaining to expire.\r\n";
 					$changes = TRUE;
 				}
