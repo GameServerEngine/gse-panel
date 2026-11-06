@@ -51,7 +51,7 @@ This file captures how the control panel, storefront, agents, and helper scripts
 | Admin | `modules/billing/admin.php`, `adminserverlist.php`, `admin_orders.php`, `admin_coupons.php`, `admin_config.php`, `my_orders_panel.php` | Manage services, coupons, prices, and provisioning. `adminserverlist.php` controls service availability per node. |
 | PayPal API | `modules/billing/api/create_order.php`, `api/capture_order.php`, `paypal/webhook.php`, `logs/payment_capture.log` | Implements REST checkout. Legacy `Website/api/*` and `Website/paypal/webhook.php` wrappers proxy to module runtime. |
 | Provisioning bridge | `modules/billing/create_servers.php`, `includes/provisioner.php`, `includes/panel_bridge.php` | Shared between panel module and storefront backend. Encapsulates whole server creation/renewal pipeline. |
-| Cron helpers | `modules/billing/cron-shop.php`, `diag_remote.php` | Automations for renewals, diagnostics, health checks. |
+| Cron helpers | `cron/cron-shop.php`, `diag_remote.php` | Automations for renewals, diagnostics, health checks. |
 | Documentation | `modules/billing/docs.php`, `docs/*`, `docs/admin_xml_notes.php` (PHP mirror of XML wiki) | Provide guidance for editing XML and game configs directly inside repo. |
 | Logs/data | `modules/billing/logs/`, `data/`, `timestamp.txt` | Payment JSON archives, debug traces, and runtime timestamp (synced from canonical `Website/timestamp.txt`). |
 

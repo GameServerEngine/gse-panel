@@ -48,7 +48,7 @@ $this->link = mysqli_connect($db_host, $db_user, $db_pass, $db_name, $port);
 and forwards `$db_port`.
 
 All panel entry points (`home.php`, `index.php`, `gsp_api.php`,
-`server_status.php`, `modules/billing/cron-shop.php`,
+`server_status.php`, `cron/cron-shop.php`,
 `modules/billing/includes/panel_bridge.php`) pass
 `isset($db_port) ? $db_port : NULL` when calling
 `createDatabaseConnection()`.

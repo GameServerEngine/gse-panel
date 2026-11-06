@@ -51,7 +51,7 @@ Indexes/constraints in live dump: primary key on `service_id`.
 | `slot_max_qty` | `int(11) NOT NULL` | Maximum slots allowed for order. | `modules/billing/order.php`, `modules/billing/add_to_cart.php`, `modules/billing/adminserverlist.php` | db_version 1 |
 | `slot_min_qty` | `int(11) NOT NULL` | Minimum slots allowed for order. | `modules/billing/order.php`, `modules/billing/add_to_cart.php`, `modules/billing/adminserverlist.php` | db_version 1 |
 | `price_daily` | `float(15,4) NOT NULL` | Daily price option. | `modules/billing/adminserverlist.php` | db_version 1 |
-| `price_monthly` | `float(15,4) NOT NULL` | Primary storefront and renewal price. | `modules/billing/order.php`, `modules/billing/add_to_cart.php`, `modules/billing/cron-shop.php` | db_version 1 |
+| `price_monthly` | `float(15,4) NOT NULL` | Primary storefront and renewal price. | `modules/billing/order.php`, `modules/billing/add_to_cart.php`, `cron/cron-shop.php` | db_version 1 |
 | `price_year` | `float(15,4) NOT NULL` | Yearly price option. | `modules/billing/order.php`, `modules/billing/adminserverlist.php` | db_version 1 |
 | `description` | `varchar(1000) NOT NULL` | Catalog/service description. | `modules/billing/serverlist.php`, `modules/billing/order.php` | db_version 1 |
 | `img_url` | `varchar(255) NOT NULL` | Catalog image path/URL. | `modules/billing/bootstrap.php`, `modules/billing/serverlist.php`, `modules/billing/order.php` | db_version 1 |
@@ -70,7 +70,7 @@ Primary readers/writers:
 - Created by `modules/billing/module.php`.
 - Created/updated by `modules/billing/api/capture_order.php`, `modules/billing/paypal/webhook.php`, `modules/billing/includes/payment_processor.php`, `modules/billing/checkout_free.php`, and `modules/user_games/billing_integration.php`.
 - Provisioning queue reader/writer: `modules/billing/create_servers.php`.
-- Renewal/expiration writer: `modules/billing/cron-shop.php`.
+- Renewal/expiration writer: `cron/cron-shop.php`.
 - Admin status writer: `modules/billing/admin_orders.php`.
 - User/admin display: `modules/billing/my_account.php`, `modules/billing/my_orders_panel.php`, `modules/billing/payment_success.php`.
 
@@ -83,15 +83,15 @@ Indexes/constraints in live dump: primary key on `order_id`, keys `idx_user_id`,
 | `service_id` | `int(11) NOT NULL` | Purchased catalog service. | `modules/billing/create_servers.php`, `modules/billing/my_account.php` | db_version 1 |
 | `home_name` | `varchar(255) NOT NULL` | Requested/provisioned server name. | `modules/billing/create_servers.php`, `modules/billing/payment_success.php` | db_version 1 |
 | `ip` | `varchar(255) NOT NULL` | Chosen remote server id despite the name. Provisioning treats it as `remote_server_id`. | `modules/billing/create_servers.php`, `modules/billing/api/capture_order.php` | db_version 1 |
-| `qty` | `int(11) NOT NULL` | Quantity/duration multiplier and sometimes slot count fallback in renewal code. | `modules/billing/add_to_cart.php`, `modules/billing/api/capture_order.php`, `modules/billing/cron-shop.php` | db_version 1 |
-| `invoice_duration` | `varchar(16) NOT NULL` | Billing period label (`day`, `month`, `year` or mapped canonical equivalent). | `modules/billing/add_to_cart.php`, `modules/billing/api/capture_order.php`, `modules/billing/cron-shop.php` | db_version 1 |
+| `qty` | `int(11) NOT NULL` | Quantity/duration multiplier and sometimes slot count fallback in renewal code. | `modules/billing/add_to_cart.php`, `modules/billing/api/capture_order.php`, `cron/cron-shop.php` | db_version 1 |
+| `invoice_duration` | `varchar(16) NOT NULL` | Billing period label (`day`, `month`, `year` or mapped canonical equivalent). | `modules/billing/add_to_cart.php`, `modules/billing/api/capture_order.php`, `cron/cron-shop.php` | db_version 1 |
 | `max_players` | `int(11) NOT NULL` | Slot count for provisioned mod parameters. | `modules/billing/create_servers.php`, `modules/billing/add_to_cart.php` | db_version 1 |
-| `price` | `float(15,2) NOT NULL` | Charged order amount/renewal fallback amount. | `modules/billing/api/capture_order.php`, `modules/billing/cron-shop.php`, `modules/billing/admin_orders.php` | db_version 1 |
+| `price` | `float(15,2) NOT NULL` | Charged order amount/renewal fallback amount. | `modules/billing/api/capture_order.php`, `cron/cron-shop.php`, `modules/billing/admin_orders.php` | db_version 1 |
 | `discount_amount` | `decimal(10,2) NOT NULL DEFAULT '0.00'` | Applied coupon discount on order. | `modules/billing/api/capture_order.php`, `modules/billing/checkout_free.php`, `modules/billing/classes/BillingRepository.php` | db_version 1 and db_version 2 guard |
 | `remote_control_password` | `varchar(255) DEFAULT NULL` | Password used when creating `server_homes.control_password`. | `modules/billing/create_servers.php`, `modules/user_games/billing_integration.php` | db_version 1 |
 | `ftp_password` | `varchar(255) DEFAULT NULL` | Password used for provisioned FTP account. | `modules/billing/create_servers.php`, `modules/user_games/billing_integration.php` | db_version 1 |
-| `home_id` | `varchar(255) NOT NULL DEFAULT '0'` | Link to `gsp_server_homes.home_id`; string type is legacy drift but code treats it as numeric. | `modules/billing/create_servers.php`, `modules/billing/cron-shop.php`, `modules/billing/admin_orders.php` | db_version 1 |
-| `status` | `varchar(16) NOT NULL DEFAULT 'in-cart'` | Order/provisioning lifecycle. Active code selects `Active`; admin writes `Active`, `Invoiced`, `Expired`; legacy docs mention `paid` and `in-cart`. | `modules/billing/create_servers.php`, `modules/billing/admin_orders.php`, `modules/billing/cron-shop.php` | db_version 1 plus `modules/billing/sql/normalize_billing_order_status.sql` |
+| `home_id` | `varchar(255) NOT NULL DEFAULT '0'` | Link to `gsp_server_homes.home_id`; string type is legacy drift but code treats it as numeric. | `modules/billing/create_servers.php`, `cron/cron-shop.php`, `modules/billing/admin_orders.php` | db_version 1 |
+| `status` | `varchar(16) NOT NULL DEFAULT 'in-cart'` | Order/provisioning lifecycle. Active code selects `Active`; admin writes `Active`, `Invoiced`, `Expired`; legacy docs mention `paid` and `in-cart`. | `modules/billing/create_servers.php`, `modules/billing/admin_orders.php`, `cron/cron-shop.php` | db_version 1 plus `modules/billing/sql/normalize_billing_order_status.sql` |
 | `order_date` | `datetime NOT NULL DEFAULT CURRENT_TIMESTAMP` | Creation time. | `modules/billing/classes/BillingRepository.php`, `modules/billing/admin_orders.php` | db_version 1 |
 | `end_date` | `datetime DEFAULT NULL` | Paid-through/end date for order; active renewal code increasingly uses `server_homes.next_invoice_date` and `server_expiration_date`. | `modules/billing/api/capture_order.php`, `modules/billing/classes/BillingRepository.php`, `modules/billing/admin_orders.php` | db_version 1 |
 | `payment_txid` | `varchar(255) DEFAULT NULL` | Gateway transaction id. | `modules/billing/api/capture_order.php`, `modules/billing/paypal/webhook.php`, `modules/billing/includes/payment_processor.php` | db_version 1 |
@@ -106,21 +106,21 @@ Owner: `modules/billing`, with write integration from `modules/user_games` for a
 Primary readers/writers:
 
 - Created by `modules/billing/module.php`.
-- Inserted by `modules/billing/add_to_cart.php`, `modules/billing/checkout_free.php`, `modules/billing/cron-shop.php`, `modules/user_games/billing_integration.php`, and `modules/billing/classes/BillingRepository.php`.
+- Inserted by `modules/billing/add_to_cart.php`, `modules/billing/checkout_free.php`, `cron/cron-shop.php`, `modules/user_games/billing_integration.php`, and `modules/billing/classes/BillingRepository.php`.
 - Payment updates by `modules/billing/api/capture_order.php`, `modules/billing/paypal/webhook.php`, `modules/billing/includes/payment_processor.php`, `modules/billing/admin_invoices.php`.
-- Renewal state updates by `modules/billing/cron-shop.php`.
+- Renewal state updates by `cron/cron-shop.php`.
 - Cart/user display reads by `modules/billing/cart.php`, `modules/billing/invoices.php`, `modules/billing/admin_invoices.php`.
 
 Indexes/constraints in live dump: primary key on `invoice_id`; keys on `order_id`, `user_id`, `status`, `due_date`, `service_id`, and `idx_coupon` on `coupon_id`. Live dump does not have an index on `home_id`, although cron joins and filters by it.
 
 | Column | Live type/default/nullability | Purpose and lifecycle | Main PHP references | Migration source |
 | --- | --- | --- | --- | --- |
-| `invoice_id` | `int(11) NOT NULL AUTO_INCREMENT` | Invoice primary key. | `modules/billing/cart.php`, `modules/billing/api/capture_order.php`, `modules/billing/cron-shop.php` | db_version 1 |
+| `invoice_id` | `int(11) NOT NULL AUTO_INCREMENT` | Invoice primary key. | `modules/billing/cart.php`, `modules/billing/api/capture_order.php`, `cron/cron-shop.php` | db_version 1 |
 | `order_id` | `int(11) NOT NULL DEFAULT '0'` | Back-link to created/renewed order. `0` means invoice-first row not yet linked. | `modules/billing/api/capture_order.php`, `modules/billing/classes/BillingRepository.php`, `modules/billing/create_servers.php` | db_version 1 |
-| `user_id` | `int(11) NOT NULL` | Invoice owner. | `modules/billing/cart.php`, `modules/billing/api/capture_order.php`, `modules/billing/cron-shop.php` | db_version 1 |
+| `user_id` | `int(11) NOT NULL` | Invoice owner. | `modules/billing/cart.php`, `modules/billing/api/capture_order.php`, `cron/cron-shop.php` | db_version 1 |
 | `coupon_id` | `int(11) DEFAULT NULL` | Coupon applied to invoice. Live allows null; module baseline says not null default 0. | `modules/billing/add_to_cart.php`, `modules/billing/api/capture_order.php` | coupon scripts and db_version 2 guard |
 | `service_id` | `int(11) NOT NULL` | Catalog service id, `0` allowed in code comments for ad-hoc/admin invoices. | `modules/billing/add_to_cart.php`, `modules/billing/api/capture_order.php`, `modules/user_games/billing_integration.php` | db_version 1 |
-| `home_id` | `int(11) NOT NULL DEFAULT '0'` | Server home link for renewal invoices and already-provisioned homes. | `modules/billing/cron-shop.php`, `modules/billing/api/capture_order.php`, `modules/billing/classes/BillingRepository.php` | db_version 1 and db_version 2 guard |
+| `home_id` | `int(11) NOT NULL DEFAULT '0'` | Server home link for renewal invoices and already-provisioned homes. | `cron/cron-shop.php`, `modules/billing/api/capture_order.php`, `modules/billing/classes/BillingRepository.php` | db_version 1 and db_version 2 guard |
 | `home_name` | `varchar(255) NOT NULL DEFAULT ''` | Requested/provisioned server name. | `modules/billing/add_to_cart.php`, `modules/billing/api/capture_order.php`, `modules/user_games/billing_integration.php` | db_version 1 |
 | `ip` | `int(11) NOT NULL DEFAULT '0'` | Stores selected remote server id for invoice-first provisioning. | `modules/billing/add_to_cart.php`, `modules/billing/api/capture_order.php` | db_version 1 |
 | `max_players` | `int(11) NOT NULL DEFAULT '0'` | Slot count. | `modules/billing/add_to_cart.php`, `modules/billing/api/capture_order.php` | db_version 1 |
@@ -133,21 +133,21 @@ Indexes/constraints in live dump: primary key on `invoice_id`; keys on `order_id
 | `currency` | `varchar(3) NOT NULL DEFAULT 'USD'` | Currency code. | `modules/billing/cart.php`, `modules/billing/api/capture_order.php` | db_version 1 |
 | `payment_status` | `enum('unpaid','paid','cancelled','refunded') NOT NULL DEFAULT 'unpaid'` | Canonical payment state. | `modules/billing/cart.php`, `modules/billing/api/capture_order.php`, `modules/billing/admin_invoices.php`, `modules/billing/classes/BillingRepository.php` | db_version 1 and db_version 2 guard |
 | `status` | `varchar(16) NOT NULL DEFAULT 'due'` | Legacy/cart payment status; still actively used for cart filtering and webhook lookup. | `modules/billing/cart.php`, `modules/billing/paypal/webhook.php`, `modules/billing/includes/payment_processor.php` | db_version 1 |
-| `billing_status` | `varchar(16) NOT NULL DEFAULT 'due'` | Renewal lifecycle. Cron writes `Invoiced`, `Expired`, `Active`; checkout writes `Active` after payment. | `modules/billing/cron-shop.php`, `modules/billing/add_to_cart.php`, `modules/billing/checkout_free.php` | db_version 1 and db_version 2 guard |
+| `billing_status` | `varchar(16) NOT NULL DEFAULT 'due'` | Renewal lifecycle. Cron writes `Invoiced`, `Expired`, `Active`; checkout writes `Active` after payment. | `cron/cron-shop.php`, `modules/billing/add_to_cart.php`, `modules/billing/checkout_free.php` | db_version 1 and db_version 2 guard |
 | `invoice_date` | `datetime NOT NULL DEFAULT CURRENT_TIMESTAMP` | Created timestamp. | `modules/billing/cart.php`, `modules/user_games/billing_integration.php` | db_version 1 |
-| `due_date` | `datetime DEFAULT NULL` | Payment due date and renewal period due date. | `modules/billing/cron-shop.php`, `modules/billing/add_to_cart.php` | db_version 1 |
-| `paid_date` | `datetime DEFAULT NULL` | Payment timestamp. | `modules/billing/api/capture_order.php`, `modules/billing/cron-shop.php` | db_version 1 |
+| `due_date` | `datetime DEFAULT NULL` | Payment due date and renewal period due date. | `cron/cron-shop.php`, `modules/billing/add_to_cart.php` | db_version 1 |
+| `paid_date` | `datetime DEFAULT NULL` | Payment timestamp. | `modules/billing/api/capture_order.php`, `cron/cron-shop.php` | db_version 1 |
 | `payment_txid` | `varchar(255) DEFAULT NULL` | Gateway transaction id. | `modules/billing/api/capture_order.php`, `modules/billing/paypal/webhook.php`, `modules/billing/includes/payment_processor.php` | db_version 1 |
 | `payment_method` | `varchar(50) DEFAULT NULL` | Gateway/manual payment method. | `modules/billing/api/capture_order.php`, `modules/billing/admin_invoices.php` | db_version 1 |
 | `description` | `varchar(500) NOT NULL DEFAULT ''` | Invoice display description. | `modules/billing/add_to_cart.php`, `modules/user_games/billing_integration.php` | db_version 1 |
 | `invoice_duration` | `varchar(16) NOT NULL DEFAULT 'month'` | Billing duration label. | `modules/billing/add_to_cart.php`, `modules/billing/api/capture_order.php` | db_version 1 |
-| `rate_type` | `enum('daily','monthly','yearly') NOT NULL DEFAULT 'monthly'` | Canonical renewal rate type. | `modules/billing/cron-shop.php`, `modules/billing/add_to_cart.php`, `modules/billing/classes/BillingRepository.php` | db_version 1 and db_version 2 guard |
-| `rate_per_player` | `decimal(15,4) NOT NULL DEFAULT '0.0000'` | Renewal price basis. | `modules/billing/cron-shop.php`, `modules/billing/add_to_cart.php`, `modules/user_games/billing_integration.php` | db_version 1 and db_version 2 guard |
-| `players` | `int(11) NOT NULL DEFAULT '0'` | Player/slot count used for renewal pricing. | `modules/billing/cron-shop.php`, `modules/billing/add_to_cart.php`, `modules/user_games/billing_integration.php` | db_version 1 and db_version 2 guard |
+| `rate_type` | `enum('daily','monthly','yearly') NOT NULL DEFAULT 'monthly'` | Canonical renewal rate type. | `cron/cron-shop.php`, `modules/billing/add_to_cart.php`, `modules/billing/classes/BillingRepository.php` | db_version 1 and db_version 2 guard |
+| `rate_per_player` | `decimal(15,4) NOT NULL DEFAULT '0.0000'` | Renewal price basis. | `cron/cron-shop.php`, `modules/billing/add_to_cart.php`, `modules/user_games/billing_integration.php` | db_version 1 and db_version 2 guard |
+| `players` | `int(11) NOT NULL DEFAULT '0'` | Player/slot count used for renewal pricing. | `cron/cron-shop.php`, `modules/billing/add_to_cart.php`, `modules/user_games/billing_integration.php` | db_version 1 and db_version 2 guard |
 | `period_start` | `datetime DEFAULT NULL` | Invoice service period start. | `modules/billing/add_to_cart.php`, `modules/user_games/billing_integration.php` | db_version 1 and db_version 7 guard |
 | `period_end` | `datetime DEFAULT NULL` | Invoice service period end. | `modules/billing/add_to_cart.php`, `modules/user_games/billing_integration.php` | db_version 1 and db_version 7 guard |
-| `subtotal` | `decimal(15,2) NOT NULL DEFAULT '0.00'` | Pre-discount amount. | `modules/billing/cart.php`, `modules/billing/api/capture_order.php`, `modules/billing/cron-shop.php` | db_version 1 and db_version 2 guard |
-| `total_due` | `decimal(15,2) NOT NULL DEFAULT '0.00'` | Due amount after discounts. | `modules/billing/cart.php`, `modules/billing/api/capture_order.php`, `modules/billing/cron-shop.php` | db_version 1 and db_version 2 guard |
+| `subtotal` | `decimal(15,2) NOT NULL DEFAULT '0.00'` | Pre-discount amount. | `modules/billing/cart.php`, `modules/billing/api/capture_order.php`, `cron/cron-shop.php` | db_version 1 and db_version 2 guard |
+| `total_due` | `decimal(15,2) NOT NULL DEFAULT '0.00'` | Due amount after discounts. | `modules/billing/cart.php`, `modules/billing/api/capture_order.php`, `cron/cron-shop.php` | db_version 1 and db_version 2 guard |
 | `qty` | `int(11) NOT NULL DEFAULT '1'` | Quantity/duration multiplier. | `modules/billing/add_to_cart.php`, `modules/billing/api/capture_order.php` | db_version 1 |
 
 ### `gsp_billing_transactions`
@@ -186,7 +186,7 @@ Primary readers/writers:
 
 - Created/updated/deleted through `includes/database_mysqli.php` and `modules/user_games/*`.
 - Provisioned by `modules/billing/create_servers.php`.
-- Renewal lifecycle managed by `modules/billing/cron-shop.php`.
+- Renewal lifecycle managed by `cron/cron-shop.php`.
 - Billing helper reads/writes in `modules/billing/classes/BillingRepository.php` and `modules/billing/classes/BillingService.php`.
 - Display/read paths include `modules/billing/my_servers.php`, `modules/gamemanager/module.php`, `modules/gamemanager/server_monitor.php`.
 
@@ -196,22 +196,22 @@ Indexes/constraints in live dump: primary key on `home_id`. No live indexes on `
 | --- | --- | --- | --- | --- |
 | `home_id` | `int(11) NOT NULL AUTO_INCREMENT` | Server home primary key. | `includes/database_mysqli.php`, `modules/billing/create_servers.php`, `modules/gamemanager/*` | core panel schema |
 | `remote_server_id` | `int(11) NOT NULL` | Agent/remote host id. | `includes/database_mysqli.php`, `modules/billing/create_servers.php`, `modules/cron/*` | core panel schema |
-| `user_id_main` | `int(11) NOT NULL` | Owning user id. | `includes/database_mysqli.php`, `modules/billing/cron-shop.php`, `modules/user_games/edit_home.php` | core panel schema |
-| `home_path` | `varchar(500) DEFAULT NULL` | Filesystem home path on agent. | `includes/database_mysqli.php`, `modules/gamemanager/*`, `modules/billing/cron-shop.php` | core panel schema |
+| `user_id_main` | `int(11) NOT NULL` | Owning user id. | `includes/database_mysqli.php`, `cron/cron-shop.php`, `modules/user_games/edit_home.php` | core panel schema |
+| `home_path` | `varchar(500) DEFAULT NULL` | Filesystem home path on agent. | `includes/database_mysqli.php`, `modules/gamemanager/*`, `cron/cron-shop.php` | core panel schema |
 | `home_cfg_id` | `int(11) NOT NULL` | Game config id. | `includes/database_mysqli.php`, `modules/billing/create_servers.php` | core panel schema |
-| `home_name` | `varchar(500) DEFAULT NULL` | Display server name. | `includes/database_mysqli.php`, `modules/billing/cron-shop.php`, `modules/gamemanager/*` | core panel schema |
-| `control_password` | `varchar(128) DEFAULT NULL` | RCON/control password. | `modules/gamemanager/*`, `modules/user_games/edit_home.php`, `modules/billing/cron-shop.php` | core panel schema |
+| `home_name` | `varchar(500) DEFAULT NULL` | Display server name. | `includes/database_mysqli.php`, `cron/cron-shop.php`, `modules/gamemanager/*` | core panel schema |
+| `control_password` | `varchar(128) DEFAULT NULL` | RCON/control password. | `modules/gamemanager/*`, `modules/user_games/edit_home.php`, `cron/cron-shop.php` | core panel schema |
 | `ftp_password` | `varchar(128) DEFAULT NULL` | FTP password. | `modules/user_games/*`, `modules/billing/create_servers.php` | core panel schema |
 | `last_param` | `longtext DEFAULT NULL` | Last launch parameters. | `modules/gamemanager/mini_start.php`, `modules/gamemanager/server_monitor.php` | core panel schema |
-| `ftp_login` | `varchar(32) DEFAULT NULL` | FTP login override. | `modules/billing/cron-shop.php`, `modules/user_games/del_home.php` | core panel schema |
+| `ftp_login` | `varchar(32) DEFAULT NULL` | FTP login override. | `cron/cron-shop.php`, `modules/user_games/del_home.php` | core panel schema |
 | `ftp_status` | `int(11) NOT NULL DEFAULT '0'` | FTP enabled/disabled status. | `includes/database_mysqli.php`, `modules/gamemanager/module.php` | core panel schema |
 | `custom_fields` | `longtext DEFAULT NULL` | XML/custom game fields. | `modules/user_games/custom_fields.php`, `modules/gamemanager/mini_start.php` | core panel schema |
-| `server_expiration_date` | `varchar(21) NOT NULL DEFAULT 'X'` | Legacy and billing expiration marker. Billing cron now writes datetime strings or `NULL` despite type/default. | `modules/billing/cron-shop.php`, `modules/user_games/check_expire.php`, `modules/user_games/show_homes.php` | core panel schema |
+| `server_expiration_date` | `varchar(21) NOT NULL DEFAULT 'X'` | Legacy and billing expiration marker. Billing cron now writes datetime strings or `NULL` despite type/default. | `cron/cron-shop.php`, `modules/user_games/check_expire.php`, `modules/user_games/show_homes.php` | core panel schema |
 | `home_user_order` | `int(11) NOT NULL DEFAULT '99999'` | UI sort order. | `includes/database_mysqli.php`, `modules/gamemanager/module.php` | core panel schema |
-| `billing_status` | `varchar(16) NOT NULL DEFAULT 'Active'` | Authoritative server billing lifecycle: `Active`, `Invoiced`, `Expired`. | `modules/billing/cron-shop.php`, `modules/billing/my_servers.php`, `modules/billing/classes/BillingRepository.php` | `modules/gamemanager/module.php` guards; present live |
-| `billing_enabled` | `tinyint(1) NOT NULL DEFAULT '0'` | Enables billing cron management for this home. | `modules/billing/cron-shop.php`, `modules/billing/create_servers.php`, `modules/billing/classes/BillingRepository.php` | `modules/gamemanager/module.php` guards; present live |
-| `next_invoice_date` | `datetime DEFAULT NULL` | Date cron uses to create renewal invoice. | `modules/billing/cron-shop.php`, `modules/billing/create_servers.php`, `modules/billing/classes/BillingService.php` | `modules/gamemanager/module.php` guards; present live |
-| `last_invoice_id` | `int(11) NOT NULL DEFAULT '0'` | Last renewal invoice id used by cron expiry checks. | `modules/billing/cron-shop.php`, `modules/gamemanager/module.php` | `modules/gamemanager/module.php` guards; present live |
+| `billing_status` | `varchar(16) NOT NULL DEFAULT 'Active'` | Authoritative server billing lifecycle: `Active`, `Invoiced`, `Expired`. | `cron/cron-shop.php`, `modules/billing/my_servers.php`, `modules/billing/classes/BillingRepository.php` | `modules/gamemanager/module.php` guards; present live |
+| `billing_enabled` | `tinyint(1) NOT NULL DEFAULT '0'` | Enables billing cron management for this home. | `cron/cron-shop.php`, `modules/billing/create_servers.php`, `modules/billing/classes/BillingRepository.php` | `modules/gamemanager/module.php` guards; present live |
+| `next_invoice_date` | `datetime DEFAULT NULL` | Date cron uses to create renewal invoice. | `cron/cron-shop.php`, `modules/billing/create_servers.php`, `modules/billing/classes/BillingService.php` | `modules/gamemanager/module.php` guards; present live |
+| `last_invoice_id` | `int(11) NOT NULL DEFAULT '0'` | Last renewal invoice id used by cron expiry checks. | `cron/cron-shop.php`, `modules/gamemanager/module.php` | `modules/gamemanager/module.php` guards; present live |
 | `billing_expires_at` | `datetime DEFAULT NULL` | Repository/service helper expiration timestamp. Overlaps with `server_expiration_date` and `next_invoice_date`. | `modules/billing/classes/BillingRepository.php`, `modules/billing/classes/BillingService.php` | `modules/gamemanager/module.php` guards; present live |
 | `billing_price` | `decimal(15,4) NOT NULL DEFAULT '0.0000'` | Stored per-home billing price. | `modules/billing/classes/BillingRepository.php`, `modules/gamemanager/module.php` | `modules/gamemanager/module.php` guards; present live |
 | `billing_rate_type` | `enum('daily','monthly','yearly') NOT NULL DEFAULT 'monthly'` | Stored per-home renewal rate type. | `modules/billing/classes/BillingRepository.php`, `modules/gamemanager/module.php` | `modules/gamemanager/module.php` guards; present live |
@@ -224,7 +224,7 @@ Owner: core panel authentication/user administration. Billing reads these fields
 
 Indexes/constraints in live dump: primary key on `users_login`, unique key `id` on `user_id`, unique key `email` on `users_email`.
 
-Active references include `index.php`, `home.php`, `includes/database_mysqli.php`, `modules/billing/login.php`, `modules/billing/register.php`, `modules/billing/my_account.php`, `modules/billing/add_to_cart.php`, `modules/billing/cron-shop.php`, and `modules/user_games/billing_integration.php`.
+Active references include `index.php`, `home.php`, `includes/database_mysqli.php`, `modules/billing/login.php`, `modules/billing/register.php`, `modules/billing/my_account.php`, `modules/billing/add_to_cart.php`, `cron/cron-shop.php`, and `modules/user_games/billing_integration.php`.
 
 | Column group | Columns | Purpose and status |
 | --- | --- | --- |

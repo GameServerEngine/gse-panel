@@ -34,7 +34,7 @@ The uploaded live dump is current enough for this verification gate: its phpMyAd
 - `modules/billing/paypal/webhook.php`
 - `modules/billing/includes/payment_processor.php`
 - `modules/billing/create_servers.php`
-- `modules/billing/cron-shop.php`
+- `cron/cron-shop.php`
 - `modules/billing/admin_orders.php`
 - `modules/billing/admin_invoices.php`
 - `modules/billing/admin_payments.php`
@@ -64,8 +64,8 @@ The uploaded live dump is current enough for this verification gate: its phpMyAd
 
 - `gsp_billing_invoices.payment_status` is active and should remain the canonical payment status for repository-based checkout. It is read by `modules/billing/cart.php` and `modules/billing/classes/BillingRepository.php`, and written by `modules/billing/api/capture_order.php`, `modules/billing/paypal/webhook.php`, `modules/billing/checkout_free.php`, and admin invoice actions.
 - `gsp_billing_invoices.status` is still active for cart removal, legacy webhook/payment lookup, and compatibility. It must not be removed in Phase 2.
-- `gsp_billing_invoices.billing_status` is active for renewal lifecycle. It is written by `modules/billing/cron-shop.php`, `modules/billing/add_to_cart.php`, and `modules/billing/checkout_free.php`.
-- `gsp_billing_invoices.home_id` is active for renewal invoices and cron joins. It is read and written by `modules/billing/cron-shop.php`, `modules/billing/api/capture_order.php`, and repository helpers.
+- `gsp_billing_invoices.billing_status` is active for renewal lifecycle. It is written by `cron/cron-shop.php`, `modules/billing/add_to_cart.php`, and `modules/billing/checkout_free.php`.
+- `gsp_billing_invoices.home_id` is active for renewal invoices and cron joins. It is read and written by `cron/cron-shop.php`, `modules/billing/api/capture_order.php`, and repository helpers.
 - `gsp_billing_invoices.period_start`, `period_end`, `subtotal`, `total_due`, `rate_type`, `rate_per_player`, and `players` are active in add-to-cart, checkout, cron, and admin views.
 - `gsp_billing_orders.status` is active as the provisioning queue state. `modules/billing/create_servers.php` selects only `status='Active'`.
 - `gsp_billing_orders.home_id` is active as the order-to-server link. Provisioning writes it; cron clears it when deleting expired homes.

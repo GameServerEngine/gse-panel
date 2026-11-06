@@ -1,5 +1,28 @@
 <?php
 /*
+ * CRON: reseller-cron-shop.php  (LEGACY, not scheduled)
+ *
+ * Location: cron/reseller-cron-shop.php (moved from cron/reseller-cron-shop.php).
+ *
+ * What it does: removes expired reseller game homes (FTP user, server stop, unassign).
+ *   Nothing in the panel or in the docs runs this file today.
+ *
+ * Status: NOT scheduled. Before enabling, check it: the SQL uses a GSP_DB_PREFIX
+ *   placeholder that is not replaced in this file, so it will not run as written.
+ *   Fix and test on the testing database first.
+ *
+ * Run by hand (CLI only; a browser request gets a 404):
+ *   php /var/www/html/GSE/Panel/cron/reseller-cron-shop.php
+ *
+ * Suggested schedule once fixed: once a day.
+ *   0 4 * * * php /var/www/html/GSE/Panel/cron/reseller-cron-shop.php >> /var/log/gse-reseller-cron.log 2>&1
+ * See cron/README.md for the full cron list and the rules for adding scripts.
+ */
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    exit;
+}
+/*
  *
  * GSP - GameServer Panel
  * Copyright (C) 2008 - 2010 The GSP Development Team
@@ -23,7 +46,7 @@
  */
 
 chdir(realpath(dirname(__FILE__))); /* Change to the current file path */
-chdir("../.."); /* Base path to gsp web files */
+chdir(".."); /* Base path to gsp web files */
 // Report all PHP errors
 error_reporting(E_ALL);
 // Path definitions

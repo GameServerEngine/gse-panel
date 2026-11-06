@@ -1,4 +1,27 @@
-<?php
+/*
+ * CRON: cron-shop.php  (billing renewals, expiry and deletion)
+ *
+ * Location: cron/cron-shop.php (moved from cron/cron-shop.php).
+ *
+ * What it does: runs the billing lifecycle for every billed game server once a day.
+ *   Creates renewal invoices, moves unpaid servers to Expired, and removes servers
+ *   past the grace period. Steps are described in the BILLING CRON block below.
+ *
+ * Run by hand (CLI only; a browser request gets a 404):
+ *   php /var/www/html/GSE/Panel/cron/cron-shop.php
+ *
+ * Suggested schedule: once a day, early morning, after midnight so the
+ * full-day expiration rule is applied to the previous day.
+ *   0 3 * * * php /var/www/html/GSE/Panel/cron/cron-shop.php >> /var/log/gse-cron-shop.log 2>&1
+ *
+ * Add it with: crontab -e   (as the web server user, for example www-data or apache)
+ * Safe to re-run: yes. Each step only changes servers whose state requires it.
+ * See cron/README.md for the full cron list and the rules for adding scripts.
+ */
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    exit;
+}
 /*
  *
  * GSP / GSP - GameServer Panel / Game Server Panel
@@ -42,7 +65,7 @@
  */
 
 chdir(realpath(dirname(__FILE__))); /* Change to the billing module directory */
-chdir("../.."); /* Step back to the GSP/GSP web root */
+chdir(".."); /* Step back to the panel web root (this file lives in cron/) */
 
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
