@@ -52,17 +52,36 @@ function restic_load_home($home_id)
     return $db->getUserGameHome($_SESSION['user_id'], $home_id);
 }
 
-// Run a shell command line on the game's agent. Returns array(exit code, output) or FALSE if the agent did not answer.
-function restic_agent_run($cfg, $command_line)
+// Limits for restic jobs on the agent. The panel polls every few seconds and stops
+// waiting after the wait limit.
+const RESTIC_JOB_POLL_SECONDS = 2;
+const RESTIC_JOB_WAIT_SECONDS = 600;
+
+// Runs one restic command on the game's agent as a job and waits for it to finish.
+// Returns array(exit code, output), or FALSE if the agent did not start the job.
+// If the job is still running after the wait limit, returns array(-1, message).
+function restic_job_run($cfg, $env, $argv)
 {
     include_once __DIR__ . '/../../includes/lib_remote.php';
+    set_time_limit(RESTIC_JOB_WAIT_SECONDS + 60);
     $remote = new GSPRemoteLibrary($cfg['agent_ip'], $cfg['agent_port'], $cfg['encryption_key'], $cfg['timeout']);
-    $output = $remote->exec($command_line . '; echo "RESTIC_EXIT=$?"');
-    if ($output === NULL || $output === FALSE)
+
+    $job_id = bin2hex(random_bytes(16));
+    if ($remote->restic_job_start($job_id, json_encode($argv), json_encode($env)) !== 'started')
         return FALSE;
-    if (!preg_match('/RESTIC_EXIT=(\d+)\s*$/', $output, $m))
-        return array(-1, $output);
-    return array((int)$m[1], preg_replace('/RESTIC_EXIT=\d+\s*$/', '', $output));
+
+    $deadline = time() + RESTIC_JOB_WAIT_SECONDS;
+    while (time() < $deadline) {
+        sleep(RESTIC_JOB_POLL_SECONDS);
+        $status = $remote->restic_job_status($job_id);
+        if ($status === FALSE)
+            return FALSE;
+        if ($status['state'] === 'done')
+            return array((int)$status['exit'], $status['output']);
+        if ($status['state'] !== 'running')
+            return array(-1, 'The game server lost the backup job.');
+    }
+    return array(-1, 'The job is still running on the game server. Check again later.');
 }
 
 // Run a local command with stdin. Used for the ssh call to the DR box.
@@ -128,9 +147,14 @@ function restic_snapshot_forget_row($home_id, $snapshot_id)
 
 // ---------- repo access ----------
 
-function restic_home_env($master, $home_id)
+// Environment for one restic job. The repo URL (with its REST password) and the
+// restic password travel here, never in argv.
+function restic_home_env($master, $home_id, $rest_user)
 {
-    return array('RESTIC_PASSWORD' => restic_home_repo_password($master, $home_id));
+    return array(
+        'RESTIC_REPOSITORY' => restic_home_repo_url($master, $home_id, $rest_user),
+        'RESTIC_PASSWORD' => restic_home_repo_password($master, $home_id),
+    );
 }
 
 function restic_home_repo_url($master, $home_id, $rest_user)
@@ -189,14 +213,18 @@ function restic_do_backup($cfg, $home_id)
         $row = restic_home_row($home_id);
     }
 
-    $url = restic_home_repo_url($master, $home_id, $row['rest_user']);
-    $env = restic_home_env($master, $home_id);
+    $env = restic_home_env($master, $home_id, $row['rest_user']);
     // Create the repo the first time only: probe with `cat config`, init when that fails.
-    $init = '(' . restic_shell_command($env, restic_build_probe_argv($url)) . ' >/dev/null 2>&1 || '
-        . restic_shell_command($env, restic_build_init_argv($url)) . ')';
-    $backup = restic_shell_command($env, restic_build_backup_argv($url, $cfg['home_path'], $home_id, 'customer'));
+    $probe = restic_job_run($cfg, $env, restic_build_probe_argv());
+    if ($probe === FALSE)
+        return array(FALSE, 'The game server did not answer. Nothing was backed up.');
+    if ($probe[0] !== 0) {
+        $init = restic_job_run($cfg, $env, restic_build_init_argv());
+        if ($init === FALSE || $init[0] !== 0)
+            return array(FALSE, 'The backup repository could not be created on the game server.');
+    }
 
-    $res = restic_agent_run($cfg, $init . ' && ' . $backup);
+    $res = restic_job_run($cfg, $env, restic_build_backup_argv($cfg['home_path'], $home_id, 'customer'));
     if ($res === FALSE)
         return array(FALSE, 'The game server did not answer. Nothing was backed up.');
     if ($res[0] !== 0)
@@ -229,9 +257,8 @@ function restic_prune_customers($cfg, $home_id, $master)
         return '';
 
     $row = restic_home_row($home_id);
-    $url = restic_home_repo_url($master, $home_id, $row['rest_user']);
-    $argv = restic_build_forget_argv($url, $ids);
-    $res = restic_agent_run($cfg, restic_shell_command(restic_home_env($master, $home_id), $argv));
+    $env = restic_home_env($master, $home_id, $row['rest_user']);
+    $res = restic_job_run($cfg, $env, restic_build_forget_argv($ids));
     if ($res === FALSE || $res[0] !== 0)
         return 'Older snapshots could not be removed yet; the next backup will try again.';
 
@@ -258,10 +285,8 @@ function restic_do_restore($cfg, $home_id)
     if ($master === FALSE)
         return array(FALSE, 'Customer backups are not enabled.');
     $row = restic_home_row($home_id);
-    $url = restic_home_repo_url($master, $home_id, $row['rest_user']);
-    $cmd = restic_shell_command(restic_home_env($master, $home_id), restic_build_restore_argv($url, $snapshot_id));
-
-    $res = restic_agent_run($cfg, $cmd);
+    $env = restic_home_env($master, $home_id, $row['rest_user']);
+    $res = restic_job_run($cfg, $env, restic_build_restore_argv($snapshot_id));
     if ($res === FALSE)
         return array(FALSE, 'The game server did not answer. Nothing was restored.');
     if ($res[0] !== 0)

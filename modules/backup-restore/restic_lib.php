@@ -53,35 +53,35 @@ function restic_snapshot_id_valid($id)
 }
 
 // argv for `restic backup` of one home directory. Passed to the agent as escaped arguments.
-function restic_build_backup_argv($repo_url, $home_path, $home_id, $kind)
+function restic_build_backup_argv($home_path, $home_id, $kind)
 {
     if ($kind !== 'baseline' && $kind !== 'customer')
         return FALSE;
-    return array('restic', '-r', $repo_url, 'backup', $home_path,
+    return array('restic', 'backup', $home_path,
         '--tag', $kind, '--tag', 'home-' . (int)$home_id, '--json');
 }
 
 // argv that creates the repo only when it does not exist yet (checked with `cat config`).
-function restic_build_init_argv($repo_url)
+function restic_build_init_argv()
 {
-    return array('restic', '-r', $repo_url, 'init');
+    return array('restic', 'init');
 }
 
-function restic_build_probe_argv($repo_url)
+function restic_build_probe_argv()
 {
-    return array('restic', '-r', $repo_url, 'cat', 'config');
+    return array('restic', 'cat', 'config');
 }
 
 // argv for `restic restore`. Snapshots record absolute paths, so restoring to / puts files back in place.
-function restic_build_restore_argv($repo_url, $snapshot_id)
+function restic_build_restore_argv($snapshot_id)
 {
     if (!restic_snapshot_id_valid($snapshot_id))
         return FALSE;
-    return array('restic', '-r', $repo_url, 'restore', $snapshot_id, '--target', '/');
+    return array('restic', 'restore', $snapshot_id, '--target', '/');
 }
 
 // argv for `restic forget --prune` with explicit snapshot ids.
-function restic_build_forget_argv($repo_url, $snapshot_ids)
+function restic_build_forget_argv($snapshot_ids)
 {
     $ids = array();
     foreach ((array)$snapshot_ids as $id) {
@@ -91,22 +91,7 @@ function restic_build_forget_argv($repo_url, $snapshot_ids)
     }
     if (empty($ids))
         return FALSE;
-    return array_merge(array('restic', '-r', $repo_url, 'forget', '--prune'), $ids);
-}
-
-// One shell command line for the agent: VAR='value' prefixes, then escaped arguments.
-// Secrets go in $env (environment), not in argv; the REST URL still carries the REST password.
-function restic_shell_command($env, $argv)
-{
-    $parts = array();
-    foreach ((array)$env as $name => $value) {
-        if (!preg_match('/^[A-Z_][A-Z0-9_]*$/', (string)$name))
-            return FALSE;
-        $parts[] = $name . '=' . escapeshellarg((string)$value);
-    }
-    foreach ((array)$argv as $arg)
-        $parts[] = escapeshellarg((string)$arg);
-    return implode(' ', $parts);
+    return array_merge(array('restic', 'forget', '--prune'), $ids);
 }
 
 // Pull the new snapshot id out of `restic backup --json` output, or NULL.

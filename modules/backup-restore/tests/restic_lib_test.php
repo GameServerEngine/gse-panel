@@ -26,22 +26,20 @@ check('snapshot id full ok', restic_snapshot_id_valid(str_repeat('f', 64)), TRUE
 check('snapshot id with shell chars rejected', restic_snapshot_id_valid('abcd;rm'), FALSE, $failures);
 check('snapshot id uppercase rejected', restic_snapshot_id_valid('ABCD1234'), FALSE, $failures);
 
-check('backup argv for customer', restic_build_backup_argv('rest:x', '/p', 52, 'customer'),
-    array('restic', '-r', 'rest:x', 'backup', '/p', '--tag', 'customer', '--tag', 'home-52', '--json'), $failures);
-check('unknown kind rejected', restic_build_backup_argv('rest:x', '/p', 52, 'auto'), FALSE, $failures);
+check('backup argv for customer', restic_build_backup_argv('/p', 52, 'customer'),
+    array('restic', 'backup', '/p', '--tag', 'customer', '--tag', 'home-52', '--json'), $failures);
+check('unknown kind rejected', restic_build_backup_argv('/p', 52, 'auto'), FALSE, $failures);
 
-check('restore argv', restic_build_restore_argv('rest:x', 'abcd1234'),
-    array('restic', '-r', 'rest:x', 'restore', 'abcd1234', '--target', '/'), $failures);
-check('restore rejects bad id', restic_build_restore_argv('rest:x', 'abcd;ls'), FALSE, $failures);
+check('restore argv', restic_build_restore_argv('abcd1234'),
+    array('restic', 'restore', 'abcd1234', '--target', '/'), $failures);
+check('restore rejects bad id', restic_build_restore_argv('abcd;ls'), FALSE, $failures);
 
-check('forget argv', restic_build_forget_argv('rest:x', array('abcd1234', 'ef567890')),
-    array('restic', '-r', 'rest:x', 'forget', '--prune', 'abcd1234', 'ef567890'), $failures);
-check('forget rejects empty list', restic_build_forget_argv('rest:x', array()), FALSE, $failures);
-check('forget rejects bad id', restic_build_forget_argv('rest:x', array('zz')), FALSE, $failures);
+check('forget argv', restic_build_forget_argv(array('abcd1234', 'ef567890')),
+    array('restic', 'forget', '--prune', 'abcd1234', 'ef567890'), $failures);
+check('forget rejects empty list', restic_build_forget_argv(array()), FALSE, $failures);
+check('no -r in probe argv', in_array('-r', restic_build_probe_argv(), TRUE), FALSE, $failures);
+check('forget rejects bad id', restic_build_forget_argv(array('zz')), FALSE, $failures);
 
-check('shell command quotes and env', restic_shell_command(array('RESTIC_PASSWORD' => "a'b"), array('restic', 'backup', '/srv/my home')),
-    "RESTIC_PASSWORD='a'\\''b' 'restic' 'backup' '/srv/my home'", $failures);
-check('shell command rejects bad env name', restic_shell_command(array('x;y' => '1'), array('restic')), FALSE, $failures);
 
 $out = "{\"message_type\":\"status\",\"percent_done\":1}\n{\"message_type\":\"summary\",\"snapshot_id\":\"abc123\"}\n";
 check('parse snapshot id', restic_parse_backup_snapshot_id($out), 'abc123', $failures);

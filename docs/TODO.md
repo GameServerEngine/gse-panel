@@ -9,8 +9,9 @@ Older lists (for example docs/plans/BACKLOG.md) are copied into this file. Add n
 
 | ID | Type | Status | Title | Owner | Opened | Updated | GitLab |
 |---|---|---|---|---|---|---|---|
-| T-001 | todo | open | Switch restic backup, restore, and delete to start and poll the agent job in function.php | Claude | 2026-11-05 | 2026-11-05 | - |
-| T-002 | todo | open | Drop -r from restic_lib.php argv and pass the repo URL in the environment | Claude | 2026-11-05 | 2026-11-05 | - |
+| T-001 | todo | done | Switch restic backup, restore, and delete to start and poll the agent job in function.php. Done: each restic step runs as an agent job polled by the panel, capped at 10 minutes. | Claude | 2026-11-05 | 2026-11-05 | - |
+| T-002 | todo | done | Drop -r from restic_lib.php argv and pass the repo URL in the environment. Done: repo URL is RESTIC_REPOSITORY in the job environment. | Claude | 2026-11-05 | 2026-11-05 | - |
 | T-003 | todo | open | Install cron for cron-purge.php on core | User | 2026-11-05 | 2026-11-05 | - |
 | T-004 | todo | open | Confirm the DR denied-command check for restic-home-admin-ssh | User | 2026-11-05 | 2026-11-05 | - |
 | T-005 | goal | open | Move TODO.md, docs/FEATURES_TODO.md, docs/development/COPILOT_TODO.md, and docs/plans/BACKLOG.md items into this file | Claude | 2026-11-05 | 2026-11-05 | - |
+| T-006 | todo | open | Customer backups longer than 10 minutes: move job polling out of the web request so a long backup still records its snapshot | Claude | 2026-11-05 | 2026-11-05 | - |

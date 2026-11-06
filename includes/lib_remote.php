@@ -913,6 +913,48 @@ class GSPRemoteLibrary
 		return 0;
 	}
 
+	/// Starts a restic job on the agent. Returns 'started' on success, or the agent's
+	/// error word. Returns FALSE if the agent did not answer.
+	public function restic_job_start($job_id, $argv_json, $env_json)
+	{
+		$args = $this->encrypt_params($job_id, $argv_json, $env_json);
+		$this->add_enc_chk($args);
+		$request = xmlrpc_encode_request("restic_job_start", $args);
+		$values = $this->decode_restic_job_reply($this->sendRequest($request));
+		if ($values === FALSE || !isset($values[0]))
+			return FALSE;
+		return $values[0];
+	}
+
+	/// Reads a restic job. Returns array(state, exit, output), or FALSE if the agent did not answer.
+	/// state is running, done, lost or missing.
+	public function restic_job_status($job_id)
+	{
+		$args = $this->encryptParam($job_id);
+		$this->add_enc_chk($args);
+		$request = xmlrpc_encode_request("restic_job_status", $args);
+		$values = $this->decode_restic_job_reply($this->sendRequest($request));
+		if ($values === FALSE || !isset($values[0]))
+			return FALSE;
+		return array(
+			'state' => $values[0],
+			'exit' => isset($values[1]) ? $values[1] : '',
+			'output' => isset($values[2]) ? $values[2] : '',
+		);
+	}
+
+	/// The agent replies "1;" then one base64 line per value. Returns the decoded values, or FALSE.
+	private function decode_restic_job_reply($response)
+	{
+		@list($retval, $data_tmp) = @explode(";", (string)$response, 2);
+		if ($retval != 1 || $data_tmp === NULL)
+			return FALSE;
+		$values = array();
+		foreach (explode("\n", $data_tmp) as $line)
+			$values[] = base64_decode($line);
+		return $values;
+	}
+
 	public function exec($command)
 	{
 		$args = $this->encryptParam($command);
