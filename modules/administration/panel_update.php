@@ -17,7 +17,8 @@
 defined('GSP_PANEL_DIR') || define('GSP_PANEL_DIR', realpath(dirname(__FILE__) . '/../../'));
 defined('GSP_ROOT_DIR') || define('GSP_ROOT_DIR', GSP_PANEL_DIR);
 defined('GSP_WEBSITE_DIR') || define('GSP_WEBSITE_DIR', GSP_PANEL_DIR . '/modules/billing');
-defined('GSP_BACKUP_BASE') || define('GSP_BACKUP_BASE', GSP_ROOT_DIR . '/backups');
+// Outside the web root so database dumps are never served by Apache.
+defined('GSP_BACKUP_BASE') || define('GSP_BACKUP_BASE', '/var/lib/gse-panel/backups');
 defined('GSP_UPDATE_LOG') || define('GSP_UPDATE_LOG', GSP_ROOT_DIR . '/logs/update_trace.log');
 defined('GSP_VERSION_FILE') || define('GSP_VERSION_FILE', GSP_PANEL_DIR . '/includes/panel_version.php');
 defined('GSP_VERSION_JSON') || define('GSP_VERSION_JSON', GSP_ROOT_DIR . '/version.json');
