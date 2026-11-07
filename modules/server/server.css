@@ -6,3 +6,16 @@
 	box-shadow: 0 0 7px black !important;
 	overflow:hidden;
 }
+
+/* Compact agent details under each remote host row */
+.agent-details {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 18px;
+	align-items: center;
+	padding: 6px 8px;
+	font-size: 0.9em;
+}
+.agent-details a {
+	margin-left: auto;
+}

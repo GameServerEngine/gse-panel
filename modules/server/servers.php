@@ -122,33 +122,31 @@ function exec_gsp_module() {
 		$ftp_ip = empty( $server_row['ftp_ip'] ) ? $server_row['agent_ip'] : $server_row['ftp_ip'];
 		$agent_user = isset($server_row['gsp_user']) && $server_row['gsp_user'] !== '' ? $server_row['gsp_user'] : (isset($server_row['user']) ? $server_row['user'] : '');
 				$gsp_user = $agent_user !== '' ? gsp_agent_html($agent_user) : 'n/a';
-		$data = "<tr class='expand-child' >
-				   <td></td><td colspan='7'>
-					<b>". get_lang("gsp_user") .":</b> ".$gsp_user."<br />
-					<b>". get_lang("agent_ip_port") .":</b> ".$server_row['agent_ip'].":".$server_row['agent_port']."<br />
-					<b>". get_lang("remote_host_ftp_ip") .":</b> ".$ftp_ip."<br />
-					<b>". get_lang("remote_host_ftp_port") .":</b> ".$server_row['ftp_port']."<br />
-					<b>". get_lang("timeout") .":</b> ".$server_row['timeout']."&nbsp;". get_lang("seconds") ."<br />
-					<b>". get_lang("encryption_key") .":</b> ".gsp_agent_mask_secret($server_row['encryption_key'])."<br />
-					<b>". get_lang("display_public_ip") .":</b> ".checkDisplayPublicIP($server_row['display_public_ip'], $server_row['agent_ip'])."<br />
-					<b>".  get_lang("ips") .": </b><br>";
-
-		$remote_server_ips = $db->getRemoteServerIPs($server_row['remote_server_id']);
-		if ( empty($remote_server_ips) )
-		{
-			$data .= "<span class='failure'>". get_lang("no_ip_for_remote_host") ."</span>";
-		}
-		else
-		{
-			foreach ((array)$remote_server_ips as $ip_row)
-			{
-				$data .= gsp_agent_html($ip_row['ip'])."<br>";
+		$ip_list = $db->getRemoteServerIPs($server_row['remote_server_id']);
+		if (empty($ip_list)) {
+			$ip_text = "<span class='failure'>". get_lang("no_ip_for_remote_host") ."</span>";
+		} else {
+			$ip_items = array();
+			foreach ((array)$ip_list as $ip_row) {
+				$ip_items[] = gsp_agent_html($ip_row['ip']);
 			}
+			$ip_text = implode(', ', $ip_items);
 		}
-
-		$data .= "<br /><a href='?m=server&amp;p=firewall&amp;rhost_id=".$server_row['remote_server_id']."'>[". get_lang("firewall_settings") ."]</a>\n<br />
-				   </td>
-				   </tr>";
+		$detail_parts = array(
+			"<span><b>". get_lang("agent_ip_port") .":</b> ".gsp_agent_html($server_row['agent_ip']).":".(int)$server_row['agent_port']."</span>",
+			"<span><b>". get_lang("remote_host_ftp_ip") .":</b> ".gsp_agent_html($ftp_ip).":".(int)$server_row['ftp_port']."</span>",
+			"<span><b>". get_lang("timeout") .":</b> ".(int)$server_row['timeout']." ". get_lang("seconds") ."</span>",
+			"<span><b>". get_lang("encryption_key") .":</b> ".gsp_agent_mask_secret($server_row['encryption_key'])."</span>",
+			"<span><b>". get_lang("display_public_ip") .":</b> ".checkDisplayPublicIP($server_row['display_public_ip'], $server_row['agent_ip'])."</span>",
+			"<span><b>". get_lang("ips") .":</b> ".$ip_text."</span>",
+		);
+		if ($gsp_user !== 'n/a') {
+			array_unshift($detail_parts, "<span><b>". get_lang("gsp_user") .":</b> ".$gsp_user."</span>");
+		}
+		$data = "<tr class='expand-child'><td></td><td colspan='7'><div class='agent-details'>"
+			. implode('', $detail_parts)
+			. "<a href='?m=server&amp;p=firewall&amp;rhost_id=".(int)$server_row['remote_server_id']."'>[". get_lang("firewall_settings") ."]</a>"
+			. "</div></td></tr>";
 		echo $data;
 	}
 	echo "</tbody>";
