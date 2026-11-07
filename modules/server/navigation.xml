@@ -10,5 +10,4 @@
   <page key="port_blocks" file="port_blocks.php" access="admin" />
   <page key="firewall" file="firewall.php" access="admin" />
   <page key="mon_stats" file="mon_stats.php" access="admin" />
-  <page key="batch_update" file="batch_update.php" access="admin" />
 </navigation>

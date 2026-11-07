@@ -1190,6 +1190,14 @@ class GSPRemoteLibrary
 		return $this->decode_component_response($this->sendRequest($request));
 	}
 
+	public function agent_version()
+	{
+		$args = NULL;
+		$this->add_enc_chk($args);
+		$request = xmlrpc_encode_request("agent_version", $args);
+		return $this->decode_component_response($this->sendRequest($request));
+	}
+
 	public function agent_update_status()
 	{
 		$args = NULL;

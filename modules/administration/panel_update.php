@@ -1877,6 +1877,11 @@ print_success('Release source settings saved.');
 } elseif ($action === 'update_configured') {
 $update_cfg['channel'] = isset($_POST['gsp_update_channel']) ? trim((string)$_POST['gsp_update_channel']) : $update_cfg['channel'];
 $custom_release_zip_url = isset($_POST['gsp_update_custom_release_zip_url']) ? trim((string)$_POST['gsp_update_custom_release_zip_url']) : '';
+$panel_tag = isset($_POST['gsp_panel_release_tag']) ? trim((string)$_POST['gsp_panel_release_tag']) : '';
+if ($panel_tag !== '') {
+	$panel_source = gsp_release_source_settings('panel');
+	$custom_release_zip_url = gsp_release_archive_url($panel_source['repo_url'], $panel_tag);
+}
 $update_cfg['release_zip_url'] = $custom_release_zip_url;
 if ($update_cfg['release_zip_url'] === '') {
 $update_cfg['release_zip_url'] = gsp_release_channel_url($update_cfg['channel']);
@@ -1902,6 +1907,53 @@ print_success('Panel updated from release ZIP channel <strong>' . htmlspecialcha
 } else {
 print_failure('Update failed: ' . htmlspecialchars($result['error']));
 }
+} elseif ($action === 'update_agents') {
+	if (!function_exists('gsp_agent_perform_release_update')) {
+		require_once __DIR__ . '/../server/agent_helpers.php';
+	}
+	$ids = gsp_agent_sanitize_ids(isset($_POST['gsp_agent_ids']) ? $_POST['gsp_agent_ids'] : null);
+	$picked = array(
+		'agent_windows' => isset($_POST['gsp_agent_windows_tag']) ? trim((string)$_POST['gsp_agent_windows_tag']) : '',
+		'agent_linux' => isset($_POST['gsp_agent_linux_tag']) ? trim((string)$_POST['gsp_agent_linux_tag']) : '',
+	);
+	$checksums = array();
+	$outcomes = array();
+	foreach ($ids as $id) {
+		$row = $db->getRemoteServerById($id);
+		if (!$row) {
+			$outcomes[] = array('name' => '#' . $id, 'success' => false, 'message' => 'Agent not found.');
+			continue;
+		}
+		$snap = gsp_agent_get_snapshot($db, $id);
+		$os = (string)gsp_agent_snapshot_field($snap, 'os', '');
+		$release_component = gsp_release_component_for_agent(gsp_agent_component_from_os($os));
+		$tag = $picked[$release_component];
+		if ($tag === '') {
+			$outcomes[] = array('name' => $row['remote_server_name'], 'success' => false, 'message' => 'No release selected for this agent type.');
+			continue;
+		}
+		$src = gsp_release_source_settings($release_component);
+		$url = gsp_release_archive_url($src['repo_url'], $tag);
+		if (!array_key_exists($url, $checksums)) {
+			$checksums[$url] = gsp_release_archive_sha256($url);
+		}
+		if ($checksums[$url] === null) {
+			$outcomes[] = array('name' => $row['remote_server_name'], 'success' => false, 'message' => 'Could not download the release archive to check it.');
+			continue;
+		}
+		$outcomes[] = gsp_agent_perform_release_update($db, $row, $url, $checksums[$url], $tag);
+	}
+	echo "<h3>Agent Update Results</h3>\n";
+	if (empty($outcomes)) {
+		echo "<p class='failure'>No agents were selected.</p>\n";
+	} else {
+		echo "<table class='center'><tr><th>Agent</th><th>Result</th></tr>\n";
+		foreach ($outcomes as $o) {
+			$badge = $o['success'] ? "<span style='color:green;'>Started</span>" : "<span style='color:#a94442;'>Failed</span>";
+			echo "<tr><td>" . htmlspecialchars((string)$o['name']) . "</td><td>" . $badge . " " . htmlspecialchars((string)$o['message']) . "</td></tr>\n";
+		}
+		echo "</table>\n";
+	}
 } elseif ($action === 'revert') {
 $backup_ts = isset($_POST['gsp_revert_backup']) ? trim($_POST['gsp_revert_backup']) : '';
 $restore_apache = !empty($_POST['gsp_restore_apache']);
@@ -1974,47 +2026,124 @@ if (!empty($preflight_result['warnings'])) {
 echo "<p style='color:#8a6d3b;'><strong>Update preflight warnings:</strong><br>" . implode('<br>', array_map('htmlspecialchars', $preflight_result['warnings'])) . "</p>\n";
 }
 
-echo "<h3>Release ZIP Update</h3>\n";
-echo "<p>Panel updates download the selected release ZIP, extract it into temporary staging, validate the Panel payload root, and copy application files into the Panel folder. Existing config and runtime directories such as <code>upload/</code>, <code>cache/</code>, <code>log/</code>, and <code>temp/</code> are preserved.</p>\n";
-echo "<form method='POST'>\n";
-echo "<input type='hidden' name='gsp_update_csrf' value='" . htmlspecialchars($csrf_token) . "'>\n";
-echo "<table class='center'>\n";
-echo "<tr><td><strong>Release Channel</strong></td><td><select name='gsp_update_channel'>";
-foreach (['stable' => 'Stable', 'unstable' => 'Unstable'] as $channel_value => $channel_label) {
-$selected = ((string)$update_cfg['channel'] === $channel_value) ? " selected='selected'" : '';
-echo "<option value='" . htmlspecialchars($channel_value) . "'{$selected}>" . htmlspecialchars($channel_label) . "</option>";
+global $db;
+if (!function_exists('gsp_agent_perform_release_update')) {
+	require_once __DIR__ . '/../server/agent_helpers.php';
 }
-echo "</select></td></tr>\n";
-echo "<tr><td><strong>Derived Release ZIP URL</strong></td><td><code>" . htmlspecialchars(gsp_release_channel_url($update_cfg['channel'])) . "</code><br><small>Stable: <code>" . htmlspecialchars(gsp_release_channel_url('stable')) . "</code><br>Unstable: <code>" . htmlspecialchars(gsp_release_channel_url('unstable')) . "</code></small></td></tr>\n";
-echo "<tr><td><strong>Custom Release ZIP URL</strong></td><td><input type='text' name='gsp_update_custom_release_zip_url' value='" . htmlspecialchars(gsp_release_custom_url_value($update_cfg), ENT_QUOTES, 'UTF-8') . "' size='85'><br><small>Leave blank to use the selected channel. Use only for controlled development or test archives.</small></td></tr>\n";
-echo "</table>\n";
-echo "<p>\n";
-echo "<button type='submit' name='gsp_update_action' value='save_settings'>Save Settings</button> ";
-echo "<button type='submit' name='gsp_update_action' value='update_configured' onclick='return confirm(\"Download the selected release ZIP and update Panel files while preserving config and runtime directories?\");'>Update Panel</button>\n";
-echo "</p>\n";
-echo "</form>\n";
+$panel_src = gsp_release_source_settings('panel');
+$panel_tags = gsp_release_tag_options('panel');
+$agent_tags = array(
+	'agent_windows' => gsp_release_tag_options('agent_windows'),
+	'agent_linux' => gsp_release_tag_options('agent_linux'),
+);
+$panel_version = (string)gsp_get_current_version();
+$panel_latest = (is_array($panel_tags) && !empty($panel_tags)) ? $panel_tags[0] : '';
+$panel_update_available = $panel_latest !== '' && $panel_version !== '' && version_compare(ltrim($panel_latest, 'vV'), ltrim($panel_version, 'vV'), '>');
+$panel_date = trim((string)@shell_exec('git -C ' . escapeshellarg(gsp_detect_repo_root()) . ' log -1 --format=%cd --date=short 2>/dev/null'));
 
-echo "<h3>Git Release Sources</h3>\n";
-echo "<p>Repo URL and release channel per component. <strong>Stable</strong> is the newest release tag that is not a pre-release. <strong>Testing</strong> is the newest pre-release, or the head of the <code>testing</code> branch if there is no pre-release tag. GitLab/GitHub repo URLs are resolved through their releases API; any other git host falls back to tags. The panel never pulls a working tree &mdash; it downloads the resolved release archive and verifies its published SHA-256 checksum before staging it. Access tokens are never stored here: enter only the path to a secret file the panel can read.</p>\n";
-echo "<form method='POST'>\n";
+echo "<h3>Releases</h3>\n";
+echo "<p>Each component gets its releases from the git repo URL in its row. Nothing updates until you press an Update button. Agents update on demand only: the agent stops, installs the release, and starts again.</p>\n";
+echo "<form method='POST' id='form_save_sources'>\n";
 echo "<input type='hidden' name='gsp_update_action' value='save_release_sources'>\n";
 echo "<input type='hidden' name='gsp_update_csrf' value='" . htmlspecialchars($csrf_token) . "'>\n";
 echo "<table class='center'>\n";
+echo "<tr><th>Component</th><th>Git repo URL</th><th>Release</th><th>Token secret file</th></tr>\n";
 foreach (gsp_release_components() as $component) {
-$rcfg = gsp_release_source_settings($component);
-$label = gsp_release_component_label($component);
-echo "<tr><td colspan='2'><strong>" . htmlspecialchars($label) . "</strong></td></tr>\n";
-echo "<tr><td>Repo URL</td><td><input type='text' name='gsp_release_{$component}_repo_url' value='" . htmlspecialchars($rcfg['repo_url'], ENT_QUOTES, 'UTF-8') . "' size='70'></td></tr>\n";
-echo "<tr><td>Channel</td><td><select name='gsp_release_{$component}_channel'>";
-foreach (['stable' => 'Stable', 'testing' => 'Testing'] as $channel_value => $channel_label) {
-$selected = ($rcfg['channel'] === $channel_value) ? " selected='selected'" : '';
-echo "<option value='" . htmlspecialchars($channel_value) . "'{$selected}>" . htmlspecialchars($channel_label) . "</option>";
-}
-echo "</select></td></tr>\n";
-echo "<tr><td>Token Secret File</td><td><input type='text' name='gsp_release_{$component}_token_file' value='" . htmlspecialchars($rcfg['token_file'], ENT_QUOTES, 'UTF-8') . "' size='70' placeholder='/etc/gsp/secrets/" . htmlspecialchars($component) . "_token'><br><small>Absolute path to a file containing the access token, if the repo is private. Leave blank for a public repo.</small></td></tr>\n";
+	$rcfg = gsp_release_source_settings($component);
+	$is_panel = ($component === 'panel');
+	$form_attr = $is_panel ? 'form_update_panel' : 'form_update_agents';
+	$tags = $is_panel ? $panel_tags : $agent_tags[$component];
+	if ($is_panel) {
+		$sel_name = 'gsp_panel_release_tag';
+	} else {
+		$sel_name = ($component === 'agent_windows') ? 'gsp_agent_windows_tag' : 'gsp_agent_linux_tag';
+	}
+	echo "<tr><td><strong>" . htmlspecialchars(gsp_release_component_label($component)) . "</strong></td>";
+	echo "<td><input type='text' name='gsp_release_{$component}_repo_url' value='" . htmlspecialchars($rcfg['repo_url'], ENT_QUOTES, 'UTF-8') . "' size='55'></td>";
+	echo "<td><select name='" . $sel_name . "' form='" . $form_attr . "'>";
+	if (!is_array($tags) || empty($tags)) {
+		echo "<option value=''>No releases found</option>";
+	} else {
+		foreach ($tags as $tag) {
+			echo "<option value='" . htmlspecialchars($tag, ENT_QUOTES, 'UTF-8') . "'>" . htmlspecialchars($tag) . "</option>";
+		}
+	}
+	echo "</select></td>";
+	echo "<td><input type='text' name='gsp_release_{$component}_token_file' value='" . htmlspecialchars($rcfg['token_file'], ENT_QUOTES, 'UTF-8') . "' size='30' placeholder='/etc/gsp/secrets/" . htmlspecialchars($component) . "_token'>";
+	echo "<input type='hidden' name='gsp_release_{$component}_channel' value='stable'></td></tr>\n";
 }
 echo "</table>\n";
-echo "<p><button type='submit'>Save Release Sources</button></p>\n";
+echo "<p><button type='submit'>Save Sources</button></p>\n";
+echo "</form>\n";
+
+echo "<h3>Panel</h3>\n";
+echo "<table class='center'>\n";
+echo "<tr><td><strong>Installed version</strong></td><td>" . htmlspecialchars($panel_version !== '' ? $panel_version : 'unknown') . "</td></tr>\n";
+echo "<tr><td><strong>Installed date</strong></td><td>" . htmlspecialchars($panel_date !== '' ? $panel_date : 'unknown') . "</td></tr>\n";
+echo "<tr><td><strong>Branch id</strong></td><td>" . htmlspecialchars(gsp_get_current_branch() ?: 'unknown') . " &middot; " . htmlspecialchars(substr((string)gsp_get_git_commit(), 0, 12)) . "</td></tr>\n";
+echo "<tr><td><strong>Status</strong></td><td>";
+if ($panel_latest === '') {
+	echo "No releases found";
+} elseif ($panel_update_available) {
+	echo "<span style='color:#8a6d3b;'><strong>Update available:</strong> " . htmlspecialchars($panel_latest) . "</span>";
+} else {
+	echo "Up to date";
+}
+echo "</td></tr>\n";
+echo "</table>\n";
+echo "<form method='POST' id='form_update_panel'>\n";
+echo "<input type='hidden' name='gsp_update_action' value='update_configured'>\n";
+echo "<input type='hidden' name='gsp_update_csrf' value='" . htmlspecialchars($csrf_token) . "'>\n";
+echo "<button type='submit' onclick='return confirm(\"Update the Panel to the selected release? Config and runtime directories are preserved.\");'>Update Panel</button>\n";
+echo "</form>\n";
+
+echo "<h3>Agents</h3>\n";
+echo "<p>Tick the agents to update, then press Update Selected. Each agent type uses the release picked in the Releases table above.</p>\n";
+echo "<form method='POST' id='form_update_agents'>\n";
+echo "<input type='hidden' name='gsp_update_action' value='update_agents'>\n";
+echo "<input type='hidden' name='gsp_update_csrf' value='" . htmlspecialchars($csrf_token) . "'>\n";
+$all_agents = $db->getRemoteServers();
+$groups = array('windows_agent' => 'Windows agents', 'linux_agent' => 'Linux agents');
+foreach ($groups as $group_key => $group_label) {
+	echo "<h4>" . htmlspecialchars($group_label) . "</h4>\n";
+	echo "<table class='center'><tr>";
+	echo "<th><input type='checkbox' onclick=\"var c=this.checked;document.querySelectorAll('.grp_" . $group_key . " input[type=checkbox]').forEach(function(b){b.checked=c;});\"></th>";
+	echo "<th>ID</th><th>Agent</th><th>Address</th><th>OS</th><th>Version</th><th>Status</th></tr>\n";
+	$rows_found = 0;
+	foreach ((array)$all_agents as $row) {
+		$snap = gsp_agent_get_snapshot($db, $row['remote_server_id']);
+		$os = (string)gsp_agent_snapshot_field($snap, 'os', '');
+		if ($os === '') {
+			$os = (string)($row['server_os'] ?? '');
+		}
+		if (gsp_agent_component_from_os($os) !== $group_key) {
+			continue;
+		}
+		$rows_found++;
+		$ver = (string)gsp_agent_snapshot_field($snap, 'agent_version', '');
+		$release_component = gsp_release_component_for_agent($group_key);
+		$tags = $agent_tags[$release_component];
+		$latest = (is_array($tags) && !empty($tags)) ? $tags[0] : '';
+		$avail = ($latest !== '' && $ver !== '' && version_compare(ltrim($latest, 'vV'), ltrim($ver, 'vV'), '>'));
+		echo "<tr class='grp_" . $group_key . "'>";
+		echo "<td><input type='checkbox' name='gsp_agent_ids[]' value='" . (int)$row['remote_server_id'] . "'></td>";
+		echo "<td>" . (int)$row['remote_server_id'] . "</td>";
+		echo "<td>" . htmlspecialchars($row['remote_server_name']) . "</td>";
+		echo "<td>" . htmlspecialchars($row['agent_ip']) . ":" . (int)$row['agent_port'] . "</td>";
+		echo "<td>" . htmlspecialchars($os !== '' ? $os : 'unknown') . "</td>";
+		echo "<td>" . htmlspecialchars($ver !== '' ? $ver : 'unknown') . "</td>";
+		echo "<td>" . ($avail ? "<span style='color:#8a6d3b;'>Update available: " . htmlspecialchars($latest) . "</span>" : "Up to date") . "</td>";
+		echo "</tr>\n";
+	}
+	if ($rows_found === 0) {
+		echo "<tr><td colspan='7'>No " . htmlspecialchars(strtolower($group_label)) . " registered.</td></tr>\n";
+	}
+	echo "</table>\n";
+}
+echo "<p>";
+echo "<button type='submit' name='gsp_update_selected' value='1' onclick='return confirm(\"Update the selected agents? Each one stops, installs the release, and restarts.\");'>Update Selected</button> ";
+echo "<button type='button' onclick=\"if(confirm('Update ALL agents? Each one stops, installs the release, and restarts.')){document.querySelectorAll('input[name=\\'gsp_agent_ids[]\\']').forEach(function(b){b.checked=true;});document.getElementById('form_update_agents').submit();}\">Update All</button>";
+echo "</p>\n";
 echo "</form>\n";
 
 echo "<h3>Backup</h3>\n";

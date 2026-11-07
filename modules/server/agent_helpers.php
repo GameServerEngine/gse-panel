@@ -1,5 +1,10 @@
 <?php
 
+if (!defined('GSP_AGENT_PROTOCOL_VERSION')) {
+	define('GSP_AGENT_PROTOCOL_VERSION', 1);
+}
+
+
 require_once('includes/lib_remote.php');
 
 function gsp_agent_html($value)
@@ -266,43 +271,14 @@ function gsp_agent_payload_line($key, $value)
 	return $key . '=' . base64_encode((string)$value);
 }
 
-function gsp_agent_update_payload($db, $component, $os)
+function gsp_agent_release_payload($component, $archive_url, $checksum, $version, $os)
 {
-	// Windows agents accept only a release patch (patch_url + patch_sha256);
-	// the git-style fields below are ignored by them. When a patch URL is
-	// configured, send the patch payload for the Windows agent.
-	if ($component === 'windows_agent') {
-		$patch_url = trim((string)$db->getSetting('agent_update_windows_patch_url'));
-		if ($patch_url !== '') {
-			return implode("\n", array(
-				gsp_agent_payload_line('component', $component),
-				gsp_agent_payload_line('patch_url', $patch_url),
-				gsp_agent_payload_line('patch_sha256', strtolower(trim((string)$db->getSetting('agent_update_windows_patch_sha256')))),
-				gsp_agent_payload_line('target_version', trim((string)$db->getSetting('agent_update_windows_target_version'))),
-				gsp_agent_payload_line('timeout', 60),
-				gsp_agent_payload_line('requested_os', $os)
-			));
-		}
-	}
-
-	$repo = $db->getSetting('agent_update_repo_url');
-	$branch = $db->getSetting('agent_update_branch');
-	$linux_source = $db->getSetting('agent_update_linux_source_path');
-	$windows_source = $db->getSetting('agent_update_windows_source_path');
-
-	if (!$repo) $repo = ($component === 'windows_agent')
-		? 'https://git.runlevelsystems.com/GSE/Agent-Windows.git'
-		: 'https://git.runlevelsystems.com/GSE/Agent-Linux.git';
-	if (!$branch) $branch = 'unstable';
-	if (!$linux_source) $linux_source = '.';
-	if (!$windows_source) $windows_source = 'GSP';
-
-	$source = ($component === 'windows_agent') ? $windows_source : $linux_source;
-	return implode("\n", array(
+	return implode("
+", array(
 		gsp_agent_payload_line('component', $component),
-		gsp_agent_payload_line('repo_url', $repo),
-		gsp_agent_payload_line('branch', $branch),
-		gsp_agent_payload_line('source_path', $source),
+		gsp_agent_payload_line('archive_url', $archive_url),
+		gsp_agent_payload_line('checksum', strtolower((string)$checksum)),
+		gsp_agent_payload_line('version', $version),
 		gsp_agent_payload_line('timeout', 60),
 		gsp_agent_payload_line('requested_os', $os)
 	));
@@ -339,50 +315,39 @@ function gsp_agent_sanitize_ids($raw)
  * result array instead of printing to the page. Used by both the single-
  * agent interface and the Remote Servers batch update.
  */
-function gsp_agent_perform_update($db, array $remote_server_row)
+/**
+ * Sends one agent a release update (archive_url, checksum, version). The agent
+ * downloads, verifies, and installs the release itself and stops; it is not
+ * restarted here. Refused if the agent reports a protocol version this panel
+ * does not speak.
+ */
+function gsp_agent_perform_release_update($db, array $remote_server_row, $archive_url, $checksum, $version)
 {
 	$remote_server_id = (int)$remote_server_row['remote_server_id'];
 	$name = $remote_server_row['remote_server_name'];
 	$remote = gsp_agent_build_remote($remote_server_row);
-	$host_stat = $remote->status_chk();
-	if ($host_stat !== 1) {
-		return array(
-			'remote_server_id' => $remote_server_id,
-			'name' => $name,
-			'success' => false,
-			'message' => 'Agent is not reachable; update was not attempted.',
-		);
+	$fail = function ($message) use ($remote_server_id, $name) {
+		return array('remote_server_id' => $remote_server_id, 'name' => $name, 'success' => false, 'message' => $message);
+	};
+	if ($remote->status_chk() !== 1) {
+		return $fail('Agent is not reachable; update was not attempted.');
 	}
-
-	$snapshot = gsp_agent_get_snapshot($db, $remote_server_id);
-	$os = gsp_agent_snapshot_field($snapshot, 'os', '');
-	if ($os === '') {
-		$os = $remote->what_os();
+	$info = $remote->agent_version();
+	$os = (is_array($info) && !empty($info['os'])) ? (string)$info['os'] : (string)$remote->what_os();
+	$protocol = (is_array($info) && isset($info['protocol_version'])) ? (int)$info['protocol_version'] : null;
+	if ($protocol !== null && $protocol !== GSP_AGENT_PROTOCOL_VERSION) {
+		return $fail('Agent protocol ' . $protocol . ' does not match panel protocol ' . GSP_AGENT_PROTOCOL_VERSION . '; update was not attempted.');
 	}
 	$component = gsp_agent_component_from_os($os);
-	$payload = gsp_agent_update_payload($db, $component, $os);
+	$payload = gsp_agent_release_payload($component, $archive_url, $checksum, $version, $os);
 	$result = $remote->agent_self_update($payload);
-	$db->logger('Admin queued self-update (batch) for remote server ID:' . $remote_server_id . ' component ' . $component);
-
+	$db->logger('Admin requested release update ' . $version . ' for remote server ID:' . $remote_server_id . ' component ' . $component);
 	$success = !empty($result['success']);
-	$message = isset($result['message']) ? (string)$result['message'] : ($success ? 'Update queued.' : 'Update failed.');
-	$restart_requested = false;
-	if ($success) {
-		$restart_result = $remote->agent_restart();
-		$restart_requested = ($restart_result === 1);
-		$message = $restart_requested
-			? 'Agent update queued and agent restart requested.'
-			: 'Agent update queued, but requesting the agent restart failed.';
-		$db->logger('Admin requested agent restart after queued self-update (batch) for remote server ID:' . $remote_server_id);
-	}
-
 	return array(
 		'remote_server_id' => $remote_server_id,
 		'name' => $name,
 		'success' => $success,
-		'restart_requested' => $restart_requested,
-		'message' => $message,
-		'raw' => $result,
+		'message' => isset($result['message']) ? (string)$result['message'] : ($success ? 'Update started.' : 'Update failed.'),
 	);
 }
 

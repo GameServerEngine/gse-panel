@@ -320,6 +320,86 @@ function gsp_release_fetch_tags_live($repo_url, $token, $provider)
 }
 
 /**
+ * Release archive URL for a tag, in GitLab's archive format:
+ *   <repo>/-/archive/<tag>/<name>-<tag>.zip
+ */
+function gsp_release_archive_url($repo_url, $tag)
+{
+	$base = rtrim(preg_replace('#\.git$#', '', trim((string)$repo_url)), '/');
+	if (!preg_match('#/([^/]+)$#', $base, $m) || (string)$tag === '') {
+		return '';
+	}
+	return $base . '/-/archive/' . rawurlencode((string)$tag) . '/' . $m[1] . '-' . (string)$tag . '.zip';
+}
+
+/**
+ * Downloads a release archive and returns its SHA-256 (lowercase hex), or
+ * null if the download fails. The archive is removed afterwards.
+ */
+function gsp_release_archive_sha256($url)
+{
+	if ((string)$url === '' || !function_exists('curl_init')) {
+		return null;
+	}
+	$tmp = tempnam(sys_get_temp_dir(), 'gsp_rel_');
+	if ($tmp === false) {
+		return null;
+	}
+	$fh = fopen($tmp, 'wb');
+	if ($fh === false) {
+		@unlink($tmp);
+		return null;
+	}
+	$ch = curl_init($url);
+	curl_setopt($ch, CURLOPT_FILE, $fh);
+	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+	curl_setopt($ch, CURLOPT_FAILONERROR, true);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 300);
+	$ok = curl_exec($ch);
+	curl_close($ch);
+	fclose($fh);
+	if ($ok === false || filesize($tmp) === 0) {
+		@unlink($tmp);
+		return null;
+	}
+	$hash = hash_file('sha256', $tmp);
+	@unlink($tmp);
+	return $hash === false ? null : strtolower($hash);
+}
+
+/**
+ * Maps an agent build name (as the agent reports it) to its release component.
+ */
+function gsp_release_component_for_agent($agent_component)
+{
+	return $agent_component === 'windows_agent' ? 'agent_windows' : 'agent_linux';
+}
+
+/**
+ * Release tags for a component, newest first. Null if the repo cannot be read.
+ */
+function gsp_release_tag_options($component)
+{
+	$cfg = gsp_release_source_settings($component);
+	if ($cfg['repo_url'] === '') {
+		return null;
+	}
+	$token = gsp_read_release_token($cfg);
+	$provider = gsp_release_provider_from_url($cfg['repo_url']);
+	$rows = gsp_release_fetch_source_live($cfg['repo_url'], $token, $provider);
+	if (!is_array($rows)) {
+		return null;
+	}
+	$tags = array();
+	foreach ($rows as $row) {
+		if (!empty($row['tag'])) {
+			$tags[] = (string)$row['tag'];
+		}
+	}
+	return $tags;
+}
+
+/**
  * Production fetcher dispatch: github/gitlab use their releases API, anything
  * else falls back to git tags over the network.
  */

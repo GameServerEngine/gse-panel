@@ -62,14 +62,12 @@ function exec_gsp_module() {
 	gsp_agent_refresh_one_stale_snapshot($db, $servers, 300);
 
 	?>
-	<form method="post" action="?m=server&amp;p=batch_update">
 	<table id="servermonitor" class="tablesorter remote">
 		<thead>
 		<tr>
-			<th colspan="9" class="header sorter-false"><?php print_lang('configured_remote_hosts'); ?></th>
+			<th colspan="8" class="header sorter-false"><?php print_lang('configured_remote_hosts'); ?></th>
 		</tr>
 		<tr>
-			<th><input type="checkbox" id="agent_select_all" onclick="var boxes=document.getElementsByName('agent_ids[]');for(var i=0;i<boxes.length;i++){boxes[i].checked=this.checked;}" /></th>
 			<th>ID</th>
 			<th>Agent</th>
 			<th>Address</th>
@@ -101,7 +99,6 @@ function exec_gsp_module() {
 					"<a href='?m=server&amp;p=edit&amp;rhost_id=".$server_row['remote_server_id']."&amp;delete'>[". get_lang("delete") ."]</a>\n".
 					"<a href='?m=server&amp;p=log&amp;rhost_id=".$server_row['remote_server_id']."'>[". get_lang("view_log") ."]</a>\n".
 					"<a href='?m=server&amp;p=restart&amp;rhost_id=".$server_row['remote_server_id']."'>[". get_lang("restart") ."]</a>\n".
-					"<a href='?m=server&amp;p=agent_interface&amp;rhost_id=".$server_row['remote_server_id']."&amp;update_agent=1'>[Update Agent]</a>\n".
 					"<a href='?m=server&amp;p=reboot&amp;rhost_id=".$server_row['remote_server_id']."'>[". get_lang("reboot") ."]</a>\n";
 
 		$resource_text = "CPU: " . (is_numeric($cpu_percent) ? round($cpu_percent, 1) . '%' : 'n/a') . "<br />" .
@@ -112,7 +109,6 @@ function exec_gsp_module() {
 			gsp_agent_resource_badges($snapshot);
 
 		echo "<tr class='maintr'>";
-		echo "<td><input type='checkbox' name='agent_ids[]' value='".(int)$server_row['remote_server_id']."' /></td>";
 		echo "<td>".(int)$server_row['remote_server_id']."</td>";
 		echo "<td>".gsp_agent_html($server_row['remote_server_name'])."</td>";
 		echo "<td>".gsp_agent_html($server_row['agent_ip']).":".(int)$server_row['agent_port']."</td>";
@@ -127,7 +123,7 @@ function exec_gsp_module() {
 		$agent_user = isset($server_row['gsp_user']) && $server_row['gsp_user'] !== '' ? $server_row['gsp_user'] : (isset($server_row['user']) ? $server_row['user'] : '');
 				$gsp_user = $agent_user !== '' ? gsp_agent_html($agent_user) : 'n/a';
 		$data = "<tr class='expand-child' >
-				   <td></td><td></td><td colspan='7'>
+				   <td></td><td colspan='7'>
 					<b>". get_lang("gsp_user") .":</b> ".$gsp_user."<br />
 					<b>". get_lang("agent_ip_port") .":</b> ".$server_row['agent_ip'].":".$server_row['agent_port']."<br />
 					<b>". get_lang("remote_host_ftp_ip") .":</b> ".$ftp_ip."<br />
@@ -157,6 +153,4 @@ function exec_gsp_module() {
 	}
 	echo "</tbody>";
 	echo "</table>\n";
-	echo "<p><button type='submit'>Update Selected Agents</button></p>\n";
-	echo "</form>\n";
 }

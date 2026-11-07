@@ -74,26 +74,6 @@ function gsp_agent_force_stop_action($db, $remote_server, $remote)
 	gsp_agent_print_result($result);
 }
 
-function gsp_agent_update_action($db, $remote_server, $remote, $snapshot)
-{
-	if (empty($_POST['agent_update_confirm'])) {
-		return;
-	}
-	$os = is_array($snapshot) && !empty($snapshot['os']) ? $snapshot['os'] : $remote->what_os();
-	$component = gsp_agent_component_from_os($os);
-	$payload = gsp_agent_update_payload($db, $component, $os);
-	$result = $remote->agent_self_update($payload);
-	$db->logger('Admin queued self-update for remote server ID:' . $remote_server['remote_server_id'] . ' component ' . $component);
-	if (!empty($result['success'])) {
-		$restart_result = $remote->agent_restart();
-		$result['restart_requested'] = ($restart_result === 1) ? 1 : 0;
-		$result['restart_status'] = ($restart_result === 1) ? 'requested' : 'failed';
-		$result['message'] = 'Agent update queued and agent restart requested. The startup wrapper will apply the queued update when agent_auto_update is enabled.';
-		$db->logger('Admin requested agent restart after queued self-update for remote server ID:' . $remote_server['remote_server_id']);
-	}
-	gsp_agent_print_result($result);
-}
-
 function exec_gsp_module() {
 	global $view;
 	global $db;
@@ -123,12 +103,6 @@ function exec_gsp_module() {
 	}
 
 	gsp_agent_force_stop_action($db, $remote_server, $remote);
-	gsp_agent_update_action($db, $remote_server, $remote, $snapshot);
-
-	$update_status = null;
-	if (isset($_GET['update_status'])) {
-		$update_status = $remote->agent_update_status();
-	}
 
 	$os = gsp_agent_snapshot_field($snapshot, 'os', '');
 	$version = gsp_agent_snapshot_field($snapshot, 'agent_version', '');
@@ -155,27 +129,9 @@ function exec_gsp_module() {
 		<form method='post' style='display:inline;'><button name='refresh_snapshot' value='1'>Refresh Now</button></form>
 		<a href='?m=server&amp;p=log&amp;rhost_id=" . (int)$rhost_id . "'>[View Agent Log]</a>
 		<a href='?m=server&amp;p=restart&amp;rhost_id=" . (int)$rhost_id . "'>[Restart Agent]</a>
-		<a href='?m=server&amp;p=agent_interface&amp;rhost_id=" . (int)$rhost_id . "&amp;update_agent=1'>[Queue Update And Restart]</a>
-		<a href='?m=server&amp;p=agent_interface&amp;rhost_id=" . (int)$rhost_id . "&amp;update_status=1'>[View Update Status]</a>
 		<a href='?m=server&amp;p=reboot&amp;rhost_id=" . (int)$rhost_id . "'>[Reboot Host]</a>
 	</td></tr>";
 	echo "</table>";
-
-	if ($update_status !== null) {
-		echo "<h3>Agent Update Status</h3>";
-		gsp_agent_print_result($update_status);
-	}
-
-	if (isset($_GET['update_agent'])) {
-		$component = gsp_agent_component_from_os($os);
-		echo "<h3>Update Agent</h3>";
-		echo "<p class='note'>This queues a restart-time update on this agent and then requests a normal agent restart. The startup wrapper applies the queued update when agent_auto_update is enabled, preserving local config and runtime data.</p>";
-		echo "<form method='post' action='?m=server&amp;p=agent_interface&amp;rhost_id=" . (int)$rhost_id . "'>";
-		echo "<p>Detected target: " . gsp_agent_html($component) . " (" . gsp_agent_html($os ?: 'OS unknown') . ")</p>";
-		echo "<p><label><input type='checkbox' name='agent_update_confirm' value='1' required /> Confirm queued update and agent restart for this host.</label></p>";
-		echo "<p><button type='submit'>Queue Update And Restart Agent</button></p>";
-		echo "</form>";
-	}
 
 	$homes = $db->getGameHomesByRemoteServerId($rhost_id);
 	echo "<h3>Managed Game Servers</h3>";
