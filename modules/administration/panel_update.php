@@ -25,9 +25,9 @@ defined('GSP_MIGRATIONS_DIR') || define('GSP_MIGRATIONS_DIR', GSP_ROOT_DIR . '/s
 defined('GSP_CANONICAL_TIMESTAMP_FILE') || define('GSP_CANONICAL_TIMESTAMP_FILE', GSP_PANEL_DIR . '/modules/billing/timestamp.txt');
 defined('GSP_BILLING_TIMESTAMP_FILE') || define('GSP_BILLING_TIMESTAMP_FILE', GSP_PANEL_DIR . '/modules/billing/timestamp.txt');
 defined('GSP_LAST_UPDATE_FILE') || define('GSP_LAST_UPDATE_FILE', GSP_ROOT_DIR . '/LAST_UPDATE.txt');
-defined('GSP_DEFAULT_REPO_URL') || define('GSP_DEFAULT_REPO_URL', 'https://git.runlevelsystems.com/GSE/Panel.git');
+defined('GSP_DEFAULT_REPO_URL') || define('GSP_DEFAULT_REPO_URL', 'https://git.isaserver.net/workspace/gse-panel.git');
 defined('GSP_DEFAULT_BRANCH') || define('GSP_DEFAULT_BRANCH', 'unstable');
-defined('GSP_DEFAULT_RELEASE_BASE_URL') || define('GSP_DEFAULT_RELEASE_BASE_URL', 'https://git.runlevelsystems.com/GSE/Panel/archive');
+defined('GSP_DEFAULT_RELEASE_BASE_URL') || define('GSP_DEFAULT_RELEASE_BASE_URL', 'https://git.isaserver.net/workspace/gse-panel/-/archive');
 defined('GSP_DEFAULT_RELEASE_CHANNEL') || define('GSP_DEFAULT_RELEASE_CHANNEL', 'stable');
 defined('GSP_DEFAULT_REPO_ROOT') || define('GSP_DEFAULT_REPO_ROOT', GSP_PANEL_DIR);
 defined('GSP_DEFAULT_PANEL_PATH') || define('GSP_DEFAULT_PANEL_PATH', GSP_PANEL_DIR);
