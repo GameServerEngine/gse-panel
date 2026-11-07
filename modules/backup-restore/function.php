@@ -324,8 +324,8 @@ function restic_do_delete($cfg, $home_id)
     $snapshot_id = (string)(isset($_POST['snapshot_id']) ? $_POST['snapshot_id'] : '');
     if (!restic_snapshot_id_valid($snapshot_id))
         return array(FALSE, 'Pick a backup to delete.');
-    if (trim((string)(isset($_POST['confirm']) ? $_POST['confirm'] : '')) !== 'DELETE')
-        return array(FALSE, 'Type DELETE in the box to confirm.');
+    if (strcasecmp(trim((string)(isset($_POST['confirm']) ? $_POST['confirm'] : '')), 'DELETE') !== 0)
+        return array(FALSE, 'Type delete in the box to confirm.');
 
     $snap = restic_snapshot_row_for($home_id, $snapshot_id);
     if ($snap === NULL)
@@ -365,7 +365,7 @@ function restic_render_delete_confirm($cfg, $home_id)
     echo '<input type="hidden" name="home_id" value="' . (int)$home_id . '">';
     echo '<input type="hidden" name="restic_csrf" value="' . restic_h(restic_csrf_token()) . '">';
     echo '<input type="hidden" name="snapshot_id" value="' . restic_h($snapshot_id) . '">';
-    echo '<p><label>Type DELETE to confirm <input type="text" name="confirm" autocomplete="off"></label></p>';
+    echo '<p><label>Type delete to confirm <input type="text" name="confirm" autocomplete="off"></label></p>';
     echo '<button type="submit" name="dothis" value="cancel">Cancel</button>&emsp;';
     echo '<button type="submit" name="dothis" value="deleteNow">Delete this backup</button>';
     echo '</form></center>';
@@ -461,14 +461,14 @@ function restic_render_home($cfg, $home_id, $message = NULL, $ok = TRUE)
             echo '<input type="hidden" name="home_id" value="' . (int)$home_id . '">';
             echo '<input type="hidden" name="restic_csrf" value="' . restic_h(restic_csrf_token()) . '">';
             echo '<input type="hidden" name="snapshot_id" value="' . restic_h($row['snapshot_id']) . '">';
-            echo '<button type="submit" name="dothis" value="restoreConfirm">Restore</button>';
+            echo '<button type="submit" name="dothis" value="restoreConfirm" style="width:90px">Restore</button>';
             echo '</form>';
             if ($row['kind'] !== 'baseline') {
                 echo '<form method="POST" action="?m=backup-restore&amp;home_id=' . (int)$home_id . '" style="display:inline">';
                 echo '<input type="hidden" name="home_id" value="' . (int)$home_id . '">';
                 echo '<input type="hidden" name="restic_csrf" value="' . restic_h(restic_csrf_token()) . '">';
                 echo '<input type="hidden" name="snapshot_id" value="' . restic_h($row['snapshot_id']) . '">';
-                echo '<button type="submit" name="dothis" value="deleteConfirm">Delete</button>';
+                echo '<button type="submit" name="dothis" value="deleteConfirm" style="width:90px">Delete</button>';
                 echo '</form>';
             }
             echo '</td></tr>';

@@ -70,6 +70,7 @@ function exec_gsp_module() {
 		if ( $remote->is_screen_running(GSP_SCREEN_TYPE_HOME,$home_id) == 1 )
 		{
 			print_failure( get_lang("server_running_cant_update") );
+			echo create_back_button("gamemanager");
 			return;
 		}
 
