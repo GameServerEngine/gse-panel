@@ -204,18 +204,6 @@ function tag_select($name, $tags)
 }
 }
 
-if (!function_exists('default_repo_url')) {
-function default_repo_url($component)
-{
-	$defaults = array(
-		'panel' => 'https://git.isaserver.net/workspace/gse-panel.git',
-		'agent_windows' => 'https://git.isaserver.net/workspace/gse-agent-windows.git',
-		'agent_linux' => 'https://git.isaserver.net/workspace/gse-agent-linux.git',
-	);
-	return isset($defaults[$component]) ? $defaults[$component] : '';
-}
-}
-
 if (!function_exists('update_panel')) {
 function update_panel($db, array $update_cfg, $restart_nonce, $panel_tag)
 {

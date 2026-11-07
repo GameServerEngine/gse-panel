@@ -38,13 +38,25 @@ function gsp_is_valid_release_source_channel($channel)
  * Tokens are never stored in the settings table directly: only a path to a
  * secret file the panel reads at request time.
  */
+if (!function_exists('default_repo_url')) {
+function default_repo_url($component)
+{
+	$defaults = array(
+		'panel' => 'https://git.isaserver.net/workspace/gse-panel.git',
+		'agent_windows' => 'https://git.isaserver.net/workspace/gse-agent-windows.git',
+		'agent_linux' => 'https://git.isaserver.net/workspace/gse-agent-linux.git',
+	);
+	return isset($defaults[$component]) ? $defaults[$component] : '';
+}
+}
+
 function gsp_release_source_settings($component)
 {
 	global $settings;
 	$prefix = 'gsp_release_' . $component . '_';
 	return [
 		'component' => $component,
-		'repo_url' => !empty($settings[$prefix . 'repo_url']) ? trim((string)$settings[$prefix . 'repo_url']) : '',
+		'repo_url' => !empty($settings[$prefix . 'repo_url']) ? trim((string)$settings[$prefix . 'repo_url']) : default_repo_url($component),
 		'channel' => gsp_is_valid_release_source_channel($settings[$prefix . 'channel'] ?? '')
 			? (string)$settings[$prefix . 'channel']
 			: 'stable',
