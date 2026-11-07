@@ -1,212 +1,159 @@
-# GameServer Engine Panel
+# GameServer Engine (GSE) Panel
 
-The GameServer Engine (GSE) Panel is the management console and web control plane for hosted game servers.
+The GSE Panel is the management console and control plane for hosted game servers. It talks to Linux and Windows agents, which run the game servers on the host.
 
-Workspace reference: [`AGENTS.md`](../AGENTS.md)
+This README is the only documentation for the panel. The old `docs/` folder has been folded into this file and removed.
 
-The local workspace path still contains `GSP` for historical compatibility. Do not treat that directory name as the current public product name.
+Status: the `working` branch is in development. `testing` is for verification. Live is updated only by pulling from git, never by editing files on the server.
 
-The goal of this repository is to let customers manage hosted game servers with the same practical control they would expect on their own machine:
+## What the panel does
 
-- start, stop, restart, and monitor servers
+Customers manage hosted game servers with the same practical control they would have on their own machine:
+
+- start, stop, restart and monitor servers
 - edit config files and startup parameters
 - use FTP and file management tools
-- install mods, add-ons, and Workshop content
+- install mods, add-ons and Workshop content
 - schedule safe automation tasks
-- read logs and troubleshooting docs
-- get accurate server status reporting
-- keep billing, support, and provisioning tied to the server lifecycle
+- read logs
+- get accurate server status
+- keep billing, support and provisioning tied to the server lifecycle
 
-## Repository Layout
+## Components
+
+| Component | Where | Notes |
+| --- | --- | --- |
+| Panel | this repo | PHP 8.3. Loads modules from `modules/`, stores state in the database, talks to agents through `includes/lib_remote.php`. |
+| Linux agent | `gse-agent-linux` | Bash and Perl. Runs game servers on Linux hosts. |
+| Windows agent | `gse-agent-windows` | Perl and bash under a bundled Cygwin root. See that repo's README. |
+| Storefront | `modules/billing` | Customer storefront for Gameservers.World. Lives in this repo, not a separate one. |
+| Query libraries | `protocol/lgsl`, `protocol/GameQ` | Game server status queries. See "Game query protocols" below. |
+
+## Features
+
+### Server control
+- Start, stop and restart game servers from the Game Monitor, with status `STOPPED`, `STARTING`, `RUNNING` or `CRASHED`.
+- Status comes only from the agent's status file for each server. The panel does not check processes or screens itself.
+- A game is `RUNNING` only when its process is alive and its game port answers.
+- Crashes are reported with a reason, restarted automatically, and stop after a restart limit.
+- Bots (for example BattlEye/BEC) start once the game is running and stop when it stops.
+
+### Configuration
+- **Expert mode** (per server, on by default). When on, configuration is done in the game's own config files and the panel option fields are hidden. When off, the game's XML options appear as checkboxes, text boxes and dropdowns, and their values are written to the config files at startup.
+- Edit configuration files and startup parameters from the panel.
+- Extra startup parameters, CPU priority, and pre-start, post-start, pre-install and post-install commands.
+- The control password is hidden. It is set in `server.cfg`.
+
+### Files and FTP
+- File manager limited to each server's game folder. Paths show relative to that folder.
+- FTP over explicit TLS (FTPES), one account per game server, jailed to that server's folder.
+- Admin accounts are not tied to one folder.
+- The Game Monitor shows the FTP login under each server, next to its IP and port.
+
+### Content
+- Server content: install mods, add-ons and DLC from Steam, and configure them after install.
+- Mods are install variants set in the XML.
+- Installs and updates run in a screen session so they survive failures.
+
+### Scheduling
+- Scheduled tasks (cron) for start, stop, restart and update actions.
+
+### Updates
+- The Update page has three source rows: Panel, Windows agent and Linux agent. Each row has a git repo URL and a release dropdown, newest first.
+- The Panel row shows the installed version, date and branch, and an "update available" indicator. Update Panel installs the selected release.
+- Agent lists have per-row checkboxes, check-all, Update Selected and Update All. Agents download the release themselves through an on-demand helper.
+- Updates never run at startup. An agent updates only when you ask it to.
+- Rollback keeps only the current install. The previous version is the backup, not a history.
+- Panel and agent report a protocol version, so the panel can refuse to update an agent it cannot talk to safely.
+- The default repo is `git.isaserver.net/workspace/gse-panel`. The URL is a default; you can enter any git repo.
+
+### Game query protocols
+- Live status uses LGSL (154 game types locally) and GameQ (114 protocol classes locally).
+- Several games use query protocols that are out of date. This is tracked in issue #19.
+
+## Installation and reinstalling
+
+- A completed install blocks anonymous access to `install.php`.
+- Reinstalling requires an admin session and the maintenance gate.
+- A fresh server with no completed install lets the first visitor run the installer.
+
+## Repository layout
 
 ```text
 /
   index.php
   home.php
   install.php
-  includes/
-  modules/
-  protocol/
-  sql/
+  includes/      shared libraries, including lib_remote.php
+  modules/       panel modules (administration, server, update, billing, ftp, ...)
+  protocol/      LGSL and GameQ query libraries
+  sql/           schema and migrations
   themes/
-  docs/
+  cron/
+  lang/
 ```
 
-## Component Overview
+## Development workflow
 
-### Panel
+1. Work on the `working` branch in the dev repo.
+2. Keep each change scoped to one module.
+3. Run `php -l` on changed files and the module's tests before committing.
+4. Push to `working`. Merge to `testing` only when a version works well enough to build.
+5. Live is updated by git pull from `working` or `testing`, never by committing on the server.
 
-The Panel is the control layer. It loads modules from `modules/`, stores panel-side state in the database, and talks to the agents through `includes/lib_remote.php`.
+Stable means customer-ready. Unstable means in progress.
 
-### Agents And Storefront
-
-The Linux and Windows agents live in separate repositories. The canonical Gameservers.World customer storefront lives inside this repository at `modules/billing`; it is not a separate top-level repository and is not the whole Panel.
-
-### Container Platform Proof Of Concept
-
-The current container proof of concept is implemented in the Gameservers.World storefront:
-
-- Customer catalog and provisioning wizard: `modules/billing/container_poc.php`
-- Customer lifecycle actions: `modules/billing/container_action.php`
-- Admin management: `modules/billing/admin_container_poc.php`
-- Shared implementation: `modules/billing/includes/container_poc.php`
-- Database migration: `sql/migrations/0004_container_platform_poc.sql`
-
-The catalog is database-backed. The seeded default application is `None / Empty Container`, selected first, and application rows can describe icons, descriptions, versions, platforms, recommended/minimum resources, required ports, compatibility notes, container images, and optional Server Content install scripts. Provisioning creates a panel job, reserves ports, calls the authenticated Container Engine Agent `/v1/containers` API, queues a content job when selected, starts the container, and records the running container for the customer.
-
-## Documentation Overview
-
-Start with:
-
-- [`../AGENTS.md`](../AGENTS.md) - workspace-wide source of truth and repository routing
-- [docs/development/CODEX_GUIDE.md](docs/development/CODEX_GUIDE.md)
-- [docs/architecture/REPOSITORY_OVERVIEW.md](docs/architecture/REPOSITORY_OVERVIEW.md)
-- [docs/architecture/PANEL_AGENT_FLOW.md](docs/architecture/PANEL_AGENT_FLOW.md)
-- [docs/architecture/API_REFERENCE.md](docs/architecture/API_REFERENCE.md)
-- [docs/architecture/PANEL_AGENT_COMMANDS.md](docs/architecture/PANEL_AGENT_COMMANDS.md)
-- [docs/architecture/MODULE_DEPENDENCIES.md](docs/architecture/MODULE_DEPENDENCIES.md)
-- [docs/architecture/LIBRARY_REFERENCE.md](docs/architecture/LIBRARY_REFERENCE.md)
-- [docs/modules/MODULE_INDEX.md](docs/modules/MODULE_INDEX.md)
-- [docs/features/STATUS_SYSTEM.md](docs/features/STATUS_SYSTEM.md)
-- [docs/features/XML_SYSTEM.md](docs/features/XML_SYSTEM.md)
-- [docs/features/WORKSHOP_SYSTEM.md](docs/features/WORKSHOP_SYSTEM.md)
-- [docs/features/SCHEDULER_SYSTEM.md](docs/features/SCHEDULER_SYSTEM.md)
-- [docs/features/SCHEDULER_ACTIONS.md](docs/features/SCHEDULER_ACTIONS.md)
-- [docs/features/USER_API.md](docs/features/USER_API.md)
-- [docs/features/CONTAINER_PLATFORM_POC.md](docs/features/CONTAINER_PLATFORM_POC.md)
-
-Additional repository entry points:
-
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- [docs/PANEL_ARCHITECTURE.md](docs/PANEL_ARCHITECTURE.md)
-- [docs/AGENT_COMMUNICATION.md](docs/AGENT_COMMUNICATION.md)
-- [docs/REPOSITORY_STRUCTURE.md](docs/REPOSITORY_STRUCTURE.md)
-- [docs/COMMAND_FLOW.md](docs/COMMAND_FLOW.md)
-- [docs/UPDATE_POLICY.md](docs/UPDATE_POLICY.md)
-
-Additional architecture and decision records:
-
-- [docs/architecture/AI_GSP_ARCHITECTURE.md](docs/architecture/AI_GSP_ARCHITECTURE.md) - legacy filename retained for compatibility
-- [docs/decisions/](docs/decisions/)
-- [docs/development/GSP_PLATFORM_IMPROVEMENT_REPORT.md](docs/development/GSP_PLATFORM_IMPROVEMENT_REPORT.md)
-
-## Development Workflow
-
-1. Read the docs first.
-2. Find the relevant module, agent, or feature page.
-3. Inspect code only where the docs point you.
-4. Keep changes scoped to the module you are working on.
-5. Prefer safe, structured interfaces over ad hoc shell commands.
-6. Verify behavior in both Panel and agent paths when lifecycle or content flow is affected.
-
-## Branch Strategy
-
-Use a simple stable vs unstable model:
-
-- `stable` or release branches should only contain verified customer-facing behavior.
-- `unstable` or feature branches should hold active work, investigations, and partially complete features.
-
-If the repo uses different branch names in practice, keep the same concept:
-
-- stable = customer-ready
-- unstable = in progress
-
-## Stable vs Unstable
-
-Stable code should have:
-
-- accurate lifecycle and status reporting
-- working logs
-- safe file and FTP access
-- working scheduler actions
-- working backups and restore paths
-- documented Workshop/content flows
-
-Unstable code may exist for:
-
-- experimental features
-- partial module migrations
-- new XML capabilities
-- future improvements that are not yet customer-safe
-
-## Documentation Map
-
-- Architecture: `docs/architecture/`
-- Agents: `docs/agents/`
-- Games: `docs/games/`
-- Modules: `docs/modules/`
-- Features: `docs/features/`
-- Decisions: `docs/decisions/`
-- Development notes: `docs/development/`
-
-## Project Status and Where to Look
-
-- **To-do list (what's next):** [`TODO.md`](TODO.md)
-- **Change log (what's done):** [`CHANGELOG.md`](CHANGELOG.md)
-- **Active plans and decisions:** [`docs/plans/ACTIVE.md`](docs/plans/ACTIVE.md)
-- **Plan index:** [`docs/plans/README.md`](docs/plans/README.md)
-
-### Test environment
+## Test environment
 
 - Test panel: `https://dev.isaserver.net/panel/` (dev host, database `panel-testing`).
 - Database credentials are kept in the test copy's `includes/config.inc.php` and are not stored in this repository.
 
-### Reinstalling
+## Planned work
 
-A completed install blocks anonymous access to `install.php`. Reinstalling requires an admin session and the maintenance gate. A fresh server with no completed install lets the first visitor run the installer.
+From the feature backlog, grouped by area. Nothing here is a committed date.
 
-## Features
+**Server content**
+- Branch switching for 7 Days to Die Stable and Unstable (`betaname`). Choose per server; switching applies on the next update.
+- Steam DLC installed from Steam as an option on the same install.
+- Uninstall, with the server's files. Mods do not have this yet.
+- Pre-start and post-start commands run by server content, for example backing up the last log and deleting older logs.
 
-**Server control**
-- Start, stop and restart game servers from the Game Monitor, with accurate status: `STOPPED`, `STARTING`, `RUNNING`, `CRASHED`.
-- Status comes only from the agent's status file for each server. The panel does not check processes or screens itself.
-- Game and bot are monitored by the agent scheduler. The game is `RUNNING` only when its process is alive and its game port is answering.
-- Crashes are reported with a reason, restarted automatically, and stop after a restart limit.
-- Bots (for example BattlEye/BEC) start once the game is running and stop when it stops.
+**Game manager and start path**
+- CPU priority (nice level, per server). The panel saves it, but the game manager does not apply it yet.
+- Pre-start and post-start commands in the game manager. The old start path ran them; the current one does not.
+- Extra start parameters, shown only in Expert mode.
+- Expert mode: write option values into config files at startup when Expert mode is off, beyond the control password.
 
-**Configuration**
-- Expert mode (per server, on by default): configure the server in its config files. When it is off, the game's options appear in the panel as checkboxes, text boxes and dropdowns, and are written to the config files at start.
-- Edit configuration files and startup parameters from the panel.
-- Extra startup parameters, CPU priority, and pre-start, post-start, pre-install and post-install commands.
+**FTP**
+- An `ftp_users` table with one row per account, for server and admin accounts. Server rows link to it. Remove the old columns from `server_homes` once the links work.
+- FTP users page: add, edit, disable and delete, reading from that table.
+- Agent FTP account management: the Windows agent's `ftp_mgr` is not fully working. It needs redeploying to the KCWin agent and testing.
+- Per-server Windows accounts (for example `server49`), so each game runs as its own user and cannot reach admin files. Needs a permissions design and its own branch.
 
-**Files and FTP**
-- File manager limited to each server's game folder. Paths are shown relative to that folder.
-- FTP over explicit TLS (FTPES), one account per game server, restricted to that server's folder.
-- The Game Monitor shows the FTP login under each server, next to its IP and port.
+**Updates and protocols**
+- Scheduled updates: issue #16.
+- Protocol design for the panel-agent API, including the version handshake: issue #17.
+- Game query protocol updates for newer games and out-of-date RCON protocols: issue #19.
 
-**Content**
-- Server content: install mods, add-ons and DLC from Steam, and configure them after install.
-- Installs and updates run in a screen session so they survive failures.
+**Database**
+- Clean install migration: the `expert_mode` column and the FTP changes need to be in the module install step, so a new install gets the same schema as the live panel.
 
-**Scheduling**
-- Scheduled tasks (cron) for start, stop, restart and update actions.
+**Later**
+- Log rotation as a server-content post-start example.
+- Preset profiles of startup parameters, saved per server, once Expert mode works.
+- Per-customer ownership of server folders and FTP accounts.
+- Customer documentation: which settings are panel options and which are config-file edits.
+
+## Known issues
+
+- File manager heading shows the full path after a full sync. It was reapplied on core and needs a test.
+- Deprecation warnings from `str_replace()` on null values (`includes/functions.php`, and similar in the edit page). Cast to string.
+- The Monitor FTP row should be checked on every server after each deploy.
+- The agent FTP list on the FTP users page only shows while the KCWin agent answers.
+- Bots on some servers can exit and restart repeatedly. Under investigation.
+- The DayZ mod needs its own key files and the correct Steam app ID on each server.
+- Restarting a server from the panel can show "not running" while it restarts.
 
 ## Changelog
 
-### Unreleased (2026-10-22 to 2026-10-29)
-
-**Added**
-- Game manager on the Windows agent: states, crash restarts with a restart limit, and bot lifecycle.
-- Expert mode per server, with the control password hidden unless expert mode is off.
-- FTP login and password shown in the Game Monitor, and an FTP users page reading from the panel database.
-- FTP over TLS on the Windows agent, with one account per game server.
-- File manager jailed to the game folder, with relative paths.
-- A feature and todo list in `docs/FEATURES_TODO.md`.
-
-**Changed**
-- Games no longer run in screen. Installs and updates still do.
-- Game status now comes only from the agent's status file.
-- Arma 2 OA log path and config paths are relative to the game folder.
-- The control password is no longer shown in the server settings page.
-
-**Fixed**
-- Start failing with "Server already running" because of stale screen sessions.
-- Stopped servers showing as running after a stop.
-- Log view saying "not running" for a running server.
-- Scheduler dropping the game monitor when a task was changed, and running it every 5 minutes instead of every 5 seconds.
-- Null-value deprecation warnings on the edit page and the control password field.
-
-**Known issues**
-- Bots on some servers can exit and restart repeatedly; under investigation.
-- The DayZ mod needs its own key files and the correct Steam app ID on each server.
-- Restarting a server from the panel can show "not running" while it restarts.
+The running changelog is `CHANGELOG.md` at the repo root.
