@@ -7,7 +7,7 @@
   <game_name>DayZ</game_name>
   <os>
     <windows arch="x64">
-      <exe>DayZServer_x64.exe</exe>
+      <exe>DZSALModServer.exe</exe>
     </windows>
   </os>
   <query_port type="add">6</query_port>
@@ -92,6 +92,7 @@
     </param>
   </server_params>
   <post_install>
+		curl -fL -o DZSALModServer.exe https://github.com/GameServerEngine/DZSALModServer/raw/DZSALModServer/DZSALModServer.exe
 	</post_install>
   <pre_start>
 	</pre_start>
