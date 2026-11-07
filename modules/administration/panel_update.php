@@ -1561,7 +1561,8 @@ $file_info['stale_hits'][] = $path;
 if (preg_match('/^\s*(SSLCertificate(?:File|KeyFile))\s+(.+)$/i', $line, $m)) {
 $directive = $m[1];
 $path = trim($m[2], "\"' ");
-if ($path !== '' && (!file_exists($path) || @filesize($path) === 0)) {
+$unverified = $path !== '' && !file_exists($path) && !is_dir(dirname($path));
+if ($path !== '' && !$unverified && (!file_exists($path) || @filesize($path) === 0)) {
 $reason = !file_exists($path) ? 'missing' : 'empty';
 $msg = $vhost . ' ' . $directive . ' ' . $path . ' is ' . $reason;
 $issue = ['vhost' => $vhost, 'directive' => $directive, 'path' => $path, 'reason' => $reason, 'line' => ($line_number + 1), 'message' => $msg];
@@ -2082,6 +2083,23 @@ $panel_version = (string)gsp_get_current_version();
 $panel_known = ($panel_version !== '' && $panel_version !== 'unknown');
 $panel_latest = (is_array($panel_tags) && !empty($panel_tags)) ? $panel_tags[0] : '';
 
+echo "<details open><summary>Release sources (git repo URL per component)</summary>\n";
+echo "<form method='POST' id='form_save_sources'>\n";
+echo "<input type='hidden' name='gsp_update_action' value='save_release_sources'>\n";
+echo "<input type='hidden' name='gsp_update_csrf' value='" . htmlspecialchars($csrf_token) . "'>\n";
+echo "<table class='center'>\n";
+echo "<tr><th>Component</th><th>Git repo URL</th></tr>\n";
+foreach (gsp_release_components() as $component) {
+	$rcfg = gsp_release_source_settings($component);
+	$repo_value = ($rcfg['repo_url'] !== '') ? $rcfg['repo_url'] : default_repo_url($component);
+	echo "<tr><td><strong>" . htmlspecialchars(gsp_release_component_label($component)) . "</strong></td>";
+	echo "<td><input type='text' name='gsp_release_{$component}_repo_url' value='" . htmlspecialchars($repo_value, ENT_QUOTES, 'UTF-8') . "' size='55'></td>";
+	echo "<input type='hidden' name='gsp_release_{$component}_channel' value='stable'></td></tr>\n";
+}
+echo "</table>\n";
+echo "<p><button type='submit'>Save sources</button></p>\n";
+echo "</form>\n";
+echo "</details>\n";
 echo "<h3>Components</h3>\n";
 echo "<p>Tick the rows to update, check the install version on each row, then press Update selected. The panel updates first, then the agents. Nothing updates until you press the button.</p>\n";
 echo "<form method='POST' id='form_update_rows'>\n";
@@ -2124,24 +2142,6 @@ echo "</table>\n";
 echo "<p><button type='submit' onclick=\"return confirm('Update the selected rows? The panel updates first, then the agents. Each agent stops, installs its release, and restarts.');\">Update selected</button></p>\n";
 echo "</form>\n";
 
-echo "<details open><summary>Release sources (git repo URL and token file per component)</summary>\n";
-echo "<form method='POST' id='form_save_sources'>\n";
-echo "<input type='hidden' name='gsp_update_action' value='save_release_sources'>\n";
-echo "<input type='hidden' name='gsp_update_csrf' value='" . htmlspecialchars($csrf_token) . "'>\n";
-echo "<table class='center'>\n";
-echo "<tr><th>Component</th><th>Git repo URL</th><th>Token secret file</th></tr>\n";
-foreach (gsp_release_components() as $component) {
-	$rcfg = gsp_release_source_settings($component);
-	$repo_value = ($rcfg['repo_url'] !== '') ? $rcfg['repo_url'] : default_repo_url($component);
-	echo "<tr><td><strong>" . htmlspecialchars(gsp_release_component_label($component)) . "</strong></td>";
-	echo "<td><input type='text' name='gsp_release_{$component}_repo_url' value='" . htmlspecialchars($repo_value, ENT_QUOTES, 'UTF-8') . "' size='55'></td>";
-	echo "<td><input type='text' name='gsp_release_{$component}_token_file' value='" . htmlspecialchars($rcfg['token_file'], ENT_QUOTES, 'UTF-8') . "' size='30' placeholder='/etc/gsp/secrets/" . htmlspecialchars($component) . "_token'>";
-	echo "<input type='hidden' name='gsp_release_{$component}_channel' value='stable'></td></tr>\n";
-}
-echo "</table>\n";
-echo "<p><button type='submit'>Save sources</button></p>\n";
-echo "</form>\n";
-echo "</details>\n";
 
 echo "<h3>Backup</h3>\n";
 echo "<form method='POST'>\n";
