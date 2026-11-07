@@ -173,6 +173,136 @@ $root = realpath(GSP_PANEL_DIR);
 return $root !== false ? rtrim($root, '/') : rtrim(GSP_PANEL_DIR, '/');
 }
 
+if (!function_exists('gsp_ui_update_badge')) {
+function gsp_ui_update_badge($current, $latest)
+{
+	if ($latest === '') {
+		return 'No releases found';
+	}
+	if ($current === '' || $current === 'unknown') {
+		return "<span style='color:#8a6d3b;'>Version unknown</span>";
+	}
+	if (version_compare(ltrim($latest, 'vV'), ltrim($current, 'vV'), '>')) {
+		return "<span style='color:#8a6d3b;'><strong>Update available:</strong> " . htmlspecialchars($latest) . "</span>";
+	}
+	return 'Up to date';
+}
+}
+
+if (!function_exists('gsp_ui_tag_select')) {
+function gsp_ui_tag_select($name, $tags)
+{
+	$html = "<select name='" . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . "'>";
+	if (!is_array($tags) || empty($tags)) {
+		return $html . "<option value=''>No releases found</option></select>";
+	}
+	foreach ($tags as $tag) {
+		$t = htmlspecialchars((string)$tag, ENT_QUOTES, 'UTF-8');
+		$html .= "<option value='" . $t . "'>" . $t . "</option>";
+	}
+	return $html . "</select>";
+}
+}
+
+if (!function_exists('gsp_ui_default_repo_url')) {
+function gsp_ui_default_repo_url($component)
+{
+	$defaults = array(
+		'panel' => 'https://git.isaserver.net/workspace/gse-panel.git',
+		'agent_windows' => 'https://git.isaserver.net/workspace/gse-agent-windows.git',
+		'agent_linux' => 'https://git.isaserver.net/workspace/gse-agent-linux.git',
+	);
+	return isset($defaults[$component]) ? $defaults[$component] : '';
+}
+}
+
+if (!function_exists('gsp_ui_update_panel')) {
+function gsp_ui_update_panel($db, array $update_cfg, $restart_nonce, $panel_tag)
+{
+	$panel_tag = trim((string)$panel_tag);
+	if ($panel_tag === '') {
+		print_failure('Panel update skipped: no release picked on the Panel row.');
+		return;
+	}
+	$panel_source = gsp_release_source_settings('panel');
+	$custom_release_zip_url = gsp_release_archive_url($panel_source['repo_url'], $panel_tag);
+	$update_cfg['release_zip_url'] = $custom_release_zip_url;
+	$errors = gsp_validate_update_settings($update_cfg);
+	if (!empty($errors)) {
+		$result = array('success' => false, 'error' => implode(' | ', $errors));
+	} else {
+		$db->setSettings(array(
+			'gsp_update_channel' => $update_cfg['channel'],
+			'gsp_update_release_zip_url' => $custom_release_zip_url,
+			'gsp_update_branch' => $update_cfg['channel'],
+		));
+		if (!function_exists('gsp_do_configured_archive_update')) {
+			$result = array('success' => false, 'error' => 'Configured release ZIP updater helper is unavailable. Deploy the current modules/administration/panel_update.php and reload.');
+		} else {
+			$result = gsp_do_configured_archive_update($update_cfg, $restart_nonce);
+		}
+	}
+	if ($result['success']) {
+		print_success('Panel updated to <strong>' . htmlspecialchars($panel_tag) . '</strong>. ' . intval($result['files_copied']) . ' file(s) copied. Backup: <code>' . htmlspecialchars($result['backup_name']) . '</code>.');
+	} else {
+		print_failure('Panel update failed: ' . htmlspecialchars($result['error']));
+	}
+}
+}
+
+if (!function_exists('gsp_ui_update_agents')) {
+function gsp_ui_update_agents($db, array $ids, array $row_tags)
+{
+	if (!function_exists('gsp_agent_perform_release_update')) {
+		require_once __DIR__ . '/../server/agent_helpers.php';
+	}
+	$ids = gsp_agent_sanitize_ids($ids);
+	$checksums = array();
+	$outcomes = array();
+	foreach ($ids as $id) {
+		$row = $db->getRemoteServerById($id);
+		if (!$row) {
+			$outcomes[] = array('name' => '#' . $id, 'success' => false, 'message' => 'Agent not found.');
+			continue;
+		}
+		$snap = gsp_agent_get_snapshot($db, $id);
+		$os = (string)gsp_agent_snapshot_field($snap, 'os', '');
+		$group = gsp_agent_component_from_os($os);
+		if ($group !== 'windows_agent' && $group !== 'linux_agent') {
+			$outcomes[] = array('name' => $row['remote_server_name'], 'success' => false, 'message' => 'Operating system not recognised; cannot pick a release type.');
+			continue;
+		}
+		$release_component = gsp_release_component_for_agent($group);
+		$tag = isset($row_tags[$id]) ? trim((string)$row_tags[$id]) : '';
+		if ($tag === '') {
+			$outcomes[] = array('name' => $row['remote_server_name'], 'success' => false, 'message' => 'No release picked on this row.');
+			continue;
+		}
+		$src = gsp_release_source_settings($release_component);
+		$url = gsp_release_archive_url($src['repo_url'], $tag);
+		if (!array_key_exists($url, $checksums)) {
+			$checksums[$url] = gsp_release_archive_sha256($url);
+		}
+		if ($checksums[$url] === null) {
+			$outcomes[] = array('name' => $row['remote_server_name'], 'success' => false, 'message' => 'Could not download the release archive to check it.');
+			continue;
+		}
+		$outcomes[] = gsp_agent_perform_release_update($db, $row, $url, $checksums[$url], $tag);
+	}
+	echo "<h3>Agent Update Results</h3>\n";
+	if (empty($outcomes)) {
+		echo "<p class='failure'>No agents were selected.</p>\n";
+	} else {
+		echo "<table class='center'><tr><th>Agent</th><th>Result</th></tr>\n";
+		foreach ($outcomes as $o) {
+			$badge = $o['success'] ? "<span style='color:green;'>Started</span>" : "<span style='color:#a94442;'>Failed</span>";
+			echo "<tr><td>" . htmlspecialchars((string)$o['name']) . "</td><td>" . $badge . " " . htmlspecialchars((string)$o['message']) . "</td></tr>\n";
+		}
+		echo "</table>\n";
+	}
+}
+}
+
 function gsp_get_current_version()
 {
 if (file_exists(GSP_VERSION_FILE)) {
@@ -1779,136 +1909,6 @@ print_failure('Invalid security token. Please reload and try again.');
 	set_time_limit(0);
 	try {
 
-if (!function_exists('gsp_ui_update_badge')) {
-function gsp_ui_update_badge($current, $latest)
-{
-	if ($latest === '') {
-		return 'No releases found';
-	}
-	if ($current === '' || $current === 'unknown') {
-		return "<span style='color:#8a6d3b;'>Version unknown</span>";
-	}
-	if (version_compare(ltrim($latest, 'vV'), ltrim($current, 'vV'), '>')) {
-		return "<span style='color:#8a6d3b;'><strong>Update available:</strong> " . htmlspecialchars($latest) . "</span>";
-	}
-	return 'Up to date';
-}
-}
-
-if (!function_exists('gsp_ui_tag_select')) {
-function gsp_ui_tag_select($name, $tags)
-{
-	$html = "<select name='" . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . "'>";
-	if (!is_array($tags) || empty($tags)) {
-		return $html . "<option value=''>No releases found</option></select>";
-	}
-	foreach ($tags as $tag) {
-		$t = htmlspecialchars((string)$tag, ENT_QUOTES, 'UTF-8');
-		$html .= "<option value='" . $t . "'>" . $t . "</option>";
-	}
-	return $html . "</select>";
-}
-}
-
-if (!function_exists('gsp_ui_default_repo_url')) {
-function gsp_ui_default_repo_url($component)
-{
-	$defaults = array(
-		'panel' => 'https://git.isaserver.net/workspace/gse-panel.git',
-		'agent_windows' => 'https://git.isaserver.net/workspace/gse-agent-windows.git',
-		'agent_linux' => 'https://git.isaserver.net/workspace/gse-agent-linux.git',
-	);
-	return isset($defaults[$component]) ? $defaults[$component] : '';
-}
-}
-
-if (!function_exists('gsp_ui_update_panel')) {
-function gsp_ui_update_panel($db, array $update_cfg, $restart_nonce, $panel_tag)
-{
-	$panel_tag = trim((string)$panel_tag);
-	if ($panel_tag === '') {
-		print_failure('Panel update skipped: no release picked on the Panel row.');
-		return;
-	}
-	$panel_source = gsp_release_source_settings('panel');
-	$custom_release_zip_url = gsp_release_archive_url($panel_source['repo_url'], $panel_tag);
-	$update_cfg['release_zip_url'] = $custom_release_zip_url;
-	$errors = gsp_validate_update_settings($update_cfg);
-	if (!empty($errors)) {
-		$result = array('success' => false, 'error' => implode(' | ', $errors));
-	} else {
-		$db->setSettings(array(
-			'gsp_update_channel' => $update_cfg['channel'],
-			'gsp_update_release_zip_url' => $custom_release_zip_url,
-			'gsp_update_branch' => $update_cfg['channel'],
-		));
-		if (!function_exists('gsp_do_configured_archive_update')) {
-			$result = array('success' => false, 'error' => 'Configured release ZIP updater helper is unavailable. Deploy the current modules/administration/panel_update.php and reload.');
-		} else {
-			$result = gsp_do_configured_archive_update($update_cfg, $restart_nonce);
-		}
-	}
-	if ($result['success']) {
-		print_success('Panel updated to <strong>' . htmlspecialchars($panel_tag) . '</strong>. ' . intval($result['files_copied']) . ' file(s) copied. Backup: <code>' . htmlspecialchars($result['backup_name']) . '</code>.');
-	} else {
-		print_failure('Panel update failed: ' . htmlspecialchars($result['error']));
-	}
-}
-}
-
-if (!function_exists('gsp_ui_update_agents')) {
-function gsp_ui_update_agents($db, array $ids, array $row_tags)
-{
-	if (!function_exists('gsp_agent_perform_release_update')) {
-		require_once __DIR__ . '/../server/agent_helpers.php';
-	}
-	$ids = gsp_agent_sanitize_ids($ids);
-	$checksums = array();
-	$outcomes = array();
-	foreach ($ids as $id) {
-		$row = $db->getRemoteServerById($id);
-		if (!$row) {
-			$outcomes[] = array('name' => '#' . $id, 'success' => false, 'message' => 'Agent not found.');
-			continue;
-		}
-		$snap = gsp_agent_get_snapshot($db, $id);
-		$os = (string)gsp_agent_snapshot_field($snap, 'os', '');
-		$group = gsp_agent_component_from_os($os);
-		if ($group !== 'windows_agent' && $group !== 'linux_agent') {
-			$outcomes[] = array('name' => $row['remote_server_name'], 'success' => false, 'message' => 'Operating system not recognised; cannot pick a release type.');
-			continue;
-		}
-		$release_component = gsp_release_component_for_agent($group);
-		$tag = isset($row_tags[$id]) ? trim((string)$row_tags[$id]) : '';
-		if ($tag === '') {
-			$outcomes[] = array('name' => $row['remote_server_name'], 'success' => false, 'message' => 'No release picked on this row.');
-			continue;
-		}
-		$src = gsp_release_source_settings($release_component);
-		$url = gsp_release_archive_url($src['repo_url'], $tag);
-		if (!array_key_exists($url, $checksums)) {
-			$checksums[$url] = gsp_release_archive_sha256($url);
-		}
-		if ($checksums[$url] === null) {
-			$outcomes[] = array('name' => $row['remote_server_name'], 'success' => false, 'message' => 'Could not download the release archive to check it.');
-			continue;
-		}
-		$outcomes[] = gsp_agent_perform_release_update($db, $row, $url, $checksums[$url], $tag);
-	}
-	echo "<h3>Agent Update Results</h3>\n";
-	if (empty($outcomes)) {
-		echo "<p class='failure'>No agents were selected.</p>\n";
-	} else {
-		echo "<table class='center'><tr><th>Agent</th><th>Result</th></tr>\n";
-		foreach ($outcomes as $o) {
-			$badge = $o['success'] ? "<span style='color:green;'>Started</span>" : "<span style='color:#a94442;'>Failed</span>";
-			echo "<tr><td>" . htmlspecialchars((string)$o['name']) . "</td><td>" . $badge . " " . htmlspecialchars((string)$o['message']) . "</td></tr>\n";
-		}
-		echo "</table>\n";
-	}
-}
-}
-
 if ($action === 'preflight') {
 $preflight_result = gsp_preflight_check();
 if ($preflight_result['success']) {
@@ -2100,6 +2100,7 @@ echo "<form method='POST' id='form_update_rows'>\n";
 echo "<input type='hidden' name='gsp_update_action' value='update_selected'>\n";
 echo "<input type='hidden' name='gsp_update_csrf' value='" . htmlspecialchars($csrf_token) . "'>\n";
 echo "<script>function gspToggleAllRows(b){document.querySelectorAll('#form_update_rows input[name=\"gsp_row_check[]\"]').forEach(function(c){c.checked=b.checked;});}</script>\n";
+echo "<p><button type='submit' onclick=\"return confirm('Update the selected rows? The panel updates first, then the agents. Each agent stops, installs its release, and restarts.');\">Update selected</button></p>\n";
 echo "<table class='center'>\n";
 echo "<tr><th><input type='checkbox' title='Select all' onclick='gspToggleAllRows(this)'></th><th>Component</th><th>Current version</th><th>Install version</th><th>Update</th></tr>\n";
 echo "<tr><td><input type='checkbox' name='gsp_row_check[]' value='panel'></td>";
