@@ -12,6 +12,10 @@
  */
 
 const RESTIC_CUSTOMER_LIMIT = 3;
+
+// Upload cap in KiB/s for every backup run. 2048 KiB/s is about 2 MB/s (16 Mbit/s).
+// The KCWIN agent accepts this flag only before 'backup' and only from 256 to 8192.
+const RESTIC_UPLOAD_KBPS = 2048;
 const RESTIC_COMMENT_MAX = 200;
 const RESTIC_DELETE_DELAY_DAYS = 7;
 
@@ -69,14 +73,14 @@ function restic_game_home_path($home_id)
 
 // argv for `restic backup` of one game home directory. Passed to the agent as escaped arguments.
 // The path must be exactly this game's own folder (restic_game_home_path), nothing else.
-function restic_build_backup_argv($home_path, $home_id, $kind)
+function restic_build_backup_argv($home_path, $home_id, $kind, $upload_kbps = RESTIC_UPLOAD_KBPS)
 {
     if ($kind !== 'baseline' && $kind !== 'customer')
         return FALSE;
     if ($home_path !== restic_game_home_path($home_id))
         return FALSE;
     // Restore staging lives inside the game folder; keep it out of backups.
-    return array('restic', 'backup', $home_path,
+    return array('restic', '--limit-upload', (string)(int)$upload_kbps, 'backup', $home_path,
         '--exclude', $home_path . '\\restic-restore',
         '--tag', $kind, '--tag', 'home-' . (int)$home_id, '--json');
 }

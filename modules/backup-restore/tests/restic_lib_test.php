@@ -36,7 +36,7 @@ $game52 = 'C:\\GSE\\Agent\\home\\gameserver\\52';
 check('game home path', restic_game_home_path(52), $game52, $failures);
 check('game home path rejects bad id', restic_game_home_path('52;rm'), FALSE, $failures);
 check('backup argv for customer', restic_build_backup_argv($game52, 52, 'customer'),
-    array('restic', 'backup', $game52, '--exclude', $game52 . '\\restic-restore', '--tag', 'customer', '--tag', 'home-52', '--json'), $failures);
+    array('restic', '--limit-upload', '2048', 'backup', $game52, '--exclude', $game52 . '\\restic-restore', '--tag', 'customer', '--tag', 'home-52', '--json'), $failures);
 check('backup rejects other path', restic_build_backup_argv('/', 52, 'customer'), FALSE, $failures);
 check('backup rejects other game folder', restic_build_backup_argv($game52, 53, 'customer'), FALSE, $failures);
 check('unknown kind rejected', restic_build_backup_argv($game52, 52, 'auto'), FALSE, $failures);

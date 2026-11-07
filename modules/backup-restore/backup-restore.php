@@ -45,6 +45,13 @@ function exec_gsp_module()
             list($ok, $message) = restic_do_restore($cfg, $home_id);
             restic_render_home($cfg, $home_id, $message, $ok);
             break;
+        case 'deleteConfirm':
+            restic_render_delete_confirm($cfg, $home_id);
+            break;
+        case 'deleteNow':
+            list($ok, $message) = restic_do_delete($cfg, $home_id);
+            restic_render_home($cfg, $home_id, $message, $ok);
+            break;
         default:
             restic_render_home($cfg, $home_id);
     }

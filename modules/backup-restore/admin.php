@@ -6,6 +6,7 @@
  * table under restic_ keys. No passwords or keys are stored here.
  */
 require_once __DIR__ . '/restic_keys.php';
+require_once __DIR__ . '/restic_lib.php';
 
 function restic_admin_defaults()
 {

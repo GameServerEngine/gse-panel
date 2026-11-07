@@ -189,7 +189,8 @@ function restic_provision_home($home_id, $master)
     if ($hash === FALSE)
         return 'Could not prepare the backup account.';
 
-    $remote_cmd = 'sudo -n /usr/local/sbin/restic-home-admin set ' . escapeshellarg($rest_user);
+    // rest_user is built in code as home-<id> only, so it is sent without quotes.
+    $remote_cmd = 'sudo -n /usr/local/sbin/restic-home-admin set ' . $rest_user;
     $ssh = 'ssh -o BatchMode=yes -o ConnectTimeout=10 '
         . escapeshellarg($target_user . '@' . $target_host) . ' ' . escapeshellarg($remote_cmd);
     $rc = restic_pipe_stdin($ssh, $rest_user . ':' . $hash . "\n", $out);
@@ -314,6 +315,62 @@ function restic_do_restore($cfg, $home_id)
     return array(TRUE, 'Restore finished.');
 }
 
+// Deletes one saved customer backup: forgets it in the repo, then removes its panel row.
+// Returns array(ok, message).
+function restic_do_delete($cfg, $home_id)
+{
+    if (restic_configured_rest_base() === FALSE)
+        return array(FALSE, 'The backup server address is not set in Backup/Restore Admin.');
+    $snapshot_id = (string)(isset($_POST['snapshot_id']) ? $_POST['snapshot_id'] : '');
+    if (!restic_snapshot_id_valid($snapshot_id))
+        return array(FALSE, 'Pick a backup to delete.');
+    if (trim((string)(isset($_POST['confirm']) ? $_POST['confirm'] : '')) !== 'DELETE')
+        return array(FALSE, 'Type DELETE in the box to confirm.');
+
+    $snap = restic_snapshot_row_for($home_id, $snapshot_id);
+    if ($snap === NULL)
+        return array(FALSE, 'That backup does not belong to this game server.');
+    if ($snap['kind'] === 'baseline')
+        return array(FALSE, 'Baseline backups cannot be deleted from this page.');
+
+    $master = restic_master_key_load();
+    if ($master === FALSE)
+        return array(FALSE, 'Customer backups are not enabled.');
+    $row = restic_home_row($home_id);
+    $env = restic_home_env($master, $home_id, $row['rest_user']);
+    $res = restic_job_run($cfg, $env, restic_build_forget_argv(array($snapshot_id)));
+    if ($res === FALSE)
+        return array(FALSE, 'The game server did not answer. Nothing was deleted.');
+    if ($res[0] !== 0)
+        return array(FALSE, 'The delete failed on the game server (exit ' . $res[0] . ').');
+
+    restic_snapshot_forget_row($home_id, $snapshot_id);
+    return array(TRUE, 'Backup deleted.');
+}
+
+function restic_render_delete_confirm($cfg, $home_id)
+{
+    $snapshot_id = (string)(isset($_POST['snapshot_id']) ? $_POST['snapshot_id'] : '');
+    $snap = restic_snapshot_row_for($home_id, $snapshot_id);
+    echo '<center>';
+    if ($snap === NULL || !restic_snapshot_id_valid($snapshot_id) || $snap['kind'] === 'baseline') {
+        restic_render_notice('That backup cannot be deleted from this page.', FALSE);
+        echo '</center>';
+        return;
+    }
+    echo '<h3>Delete backup from ' . restic_h(date('Y-m-d H:i', (int)$snap['created_at'])) . '?</h3>';
+    echo '<p>Comment: ' . restic_h($snap['comment']) . '</p>';
+    echo '<p><strong>This removes the backup from the backup storage. It cannot be undone.</strong></p>';
+    echo '<form method="POST" action="?m=backup-restore&amp;home_id=' . (int)$home_id . '">';
+    echo '<input type="hidden" name="home_id" value="' . (int)$home_id . '">';
+    echo '<input type="hidden" name="restic_csrf" value="' . restic_h(restic_csrf_token()) . '">';
+    echo '<input type="hidden" name="snapshot_id" value="' . restic_h($snapshot_id) . '">';
+    echo '<p><label>Type DELETE to confirm <input type="text" name="confirm" autocomplete="off"></label></p>';
+    echo '<button type="submit" name="dothis" value="cancel">Cancel</button>&emsp;';
+    echo '<button type="submit" name="dothis" value="deleteNow">Delete this backup</button>';
+    echo '</form></center>';
+}
+
 // ---------- server deletion and purge ----------
 
 // Called when a game server is deleted: its snapshots stay for 7 days, then the purge removes them.
@@ -352,7 +409,7 @@ function restic_purge_remote($db, $rest_user)
     $target_user = (string)$db->getSetting('restic_target_user');
     if ($target_host === '' || $target_user === '')
         return FALSE;
-    $remote_cmd = 'sudo -n /usr/local/sbin/restic-home-admin purge ' . escapeshellarg($rest_user);
+    $remote_cmd = 'sudo -n /usr/local/sbin/restic-home-admin purge ' . $rest_user;
     $ssh = 'ssh -o BatchMode=yes -o ConnectTimeout=10 '
         . escapeshellarg($target_user . '@' . $target_host) . ' ' . escapeshellarg($remote_cmd);
     return restic_pipe_stdin($ssh, '', $out) === 0;
@@ -405,7 +462,16 @@ function restic_render_home($cfg, $home_id, $message = NULL, $ok = TRUE)
             echo '<input type="hidden" name="restic_csrf" value="' . restic_h(restic_csrf_token()) . '">';
             echo '<input type="hidden" name="snapshot_id" value="' . restic_h($row['snapshot_id']) . '">';
             echo '<button type="submit" name="dothis" value="restoreConfirm">Restore</button>';
-            echo '</form></td></tr>';
+            echo '</form>';
+            if ($row['kind'] !== 'baseline') {
+                echo '<form method="POST" action="?m=backup-restore&amp;home_id=' . (int)$home_id . '" style="display:inline">';
+                echo '<input type="hidden" name="home_id" value="' . (int)$home_id . '">';
+                echo '<input type="hidden" name="restic_csrf" value="' . restic_h(restic_csrf_token()) . '">';
+                echo '<input type="hidden" name="snapshot_id" value="' . restic_h($row['snapshot_id']) . '">';
+                echo '<button type="submit" name="dothis" value="deleteConfirm">Delete</button>';
+                echo '</form>';
+            }
+            echo '</td></tr>';
         }
         echo '</table>';
     }
