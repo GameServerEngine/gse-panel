@@ -1562,7 +1562,7 @@ $file_info['stale_hits'][] = $path;
 if (preg_match('/^\s*(SSLCertificate(?:File|KeyFile))\s+(.+)$/i', $line, $m)) {
 $directive = $m[1];
 $path = trim($m[2], "\"' ");
-$unverified = $path !== '' && !file_exists($path) && !is_dir(dirname($path));
+$unverified = $path !== '' && !file_exists($path) && !is_readable(dirname($path));
 if ($path !== '' && !$unverified && (!file_exists($path) || @filesize($path) === 0)) {
 $reason = !file_exists($path) ? 'missing' : 'empty';
 $msg = $vhost . ' ' . $directive . ' ' . $path . ' is ' . $reason;
