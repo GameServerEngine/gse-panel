@@ -60,7 +60,7 @@ const RESTIC_JOB_WAIT_SECONDS = 600;
 // Runs one restic command on the game's agent as a job and waits for it to finish.
 // Returns array(exit code, output), or FALSE if the agent did not start the job.
 // If the job is still running after the wait limit, returns array(-1, message).
-function restic_job_run($cfg, $env, $argv)
+function restic_job_run($cfg, $env, $argv, $on_start = NULL)
 {
     include_once __DIR__ . '/../../includes/lib_remote.php';
     set_time_limit(RESTIC_JOB_WAIT_SECONDS + 60);
@@ -69,6 +69,8 @@ function restic_job_run($cfg, $env, $argv)
     $job_id = bin2hex(random_bytes(16));
     if ($remote->restic_job_start($job_id, json_encode($argv), json_encode($env)) !== 'started')
         return FALSE;
+    if ($on_start !== NULL)
+        call_user_func($on_start, $job_id);
 
     $deadline = time() + RESTIC_JOB_WAIT_SECONDS;
     while (time() < $deadline) {
@@ -230,6 +232,10 @@ function restic_do_backup($cfg, $home_id)
         $row = restic_home_row($home_id);
     }
 
+    restic_reconcile_pending($cfg, $home_id, $master);
+    if (restic_pending_load($home_id) !== NULL)
+        return array(FALSE, 'A backup for this game server is still finishing. Try again in a few minutes.');
+
     $env = restic_home_env($master, $home_id, $row['rest_user']);
     // Create the repo the first time only: probe with `cat config`, init when that fails.
     $probe = restic_job_run($cfg, $env, restic_build_probe_argv());
@@ -241,9 +247,15 @@ function restic_do_backup($cfg, $home_id)
             return array(FALSE, 'The backup repository could not be created on the game server.');
     }
 
-    $res = restic_job_run($cfg, $env, restic_build_backup_argv(restic_game_home_path($home_id), $home_id, 'customer'));
+    $job_user = isset($_SESSION['loginuser']) ? (string)$_SESSION['loginuser'] : '';
+    $started = time();
+    $res = restic_job_run($cfg, $env, restic_build_backup_argv(restic_game_home_path($home_id), $home_id, 'customer'),
+        function ($job_id) use ($home_id, $comment, $job_user, $started) {
+            restic_pending_save($home_id, $job_id, $comment, $job_user, $started);
+        });
     if ($res === FALSE)
-        return array(FALSE, 'The game server did not answer. Nothing was backed up.');
+        return array(FALSE, 'The game server did not answer. If a backup had started, the panel will record it when it finishes.');
+    restic_pending_clear($home_id);
     if ($res[0] !== 0)
         return array(FALSE, 'The backup failed on the game server (exit ' . $res[0] . ').');
 
@@ -262,6 +274,71 @@ function restic_do_backup($cfg, $home_id)
 
 // Keeps the newest RESTIC_CUSTOMER_LIMIT customer snapshots. Baseline snapshots are never listed.
 // Returns a message for the user ('' when nothing needed removing).
+// ---------- pending customer backups ----------
+// A customer backup is saved as pending as soon as the game server accepts it. If the web
+// request ends before the job is read, the next visit or backup records it from the job result.
+
+function restic_pending_key($home_id)
+{
+    return 'restic_pending_job_' . (int)$home_id;
+}
+
+function restic_pending_save($home_id, $job_id, $comment, $user, $started)
+{
+    global $db;
+    $db->setSettings(array(restic_pending_key($home_id) => json_encode(array(
+        'job_id' => (string)$job_id,
+        'comment' => (string)$comment,
+        'user' => (string)$user,
+        'started_at' => (int)$started,
+    ))));
+}
+
+function restic_pending_clear($home_id)
+{
+    global $db;
+    $db->setSettings(array(restic_pending_key($home_id) => ''));
+}
+
+function restic_pending_load($home_id)
+{
+    global $db;
+    $raw = $db->getSetting(restic_pending_key($home_id));
+    if (!is_string($raw) || $raw === '')
+        return NULL;
+    $data = json_decode($raw, TRUE);
+    return (is_array($data) && isset($data['job_id'])) ? $data : NULL;
+}
+
+// Records a pending backup once its job has finished on the game server.
+// Returns a short note for the page, or '' when there is nothing to say.
+function restic_reconcile_pending($cfg, $home_id, $master)
+{
+    global $db;
+    $pending = restic_pending_load($home_id);
+    if ($pending === NULL)
+        return '';
+    include_once __DIR__ . '/../../includes/lib_remote.php';
+    $remote = new GSPRemoteLibrary($cfg['agent_ip'], $cfg['agent_port'], $cfg['encryption_key'], $cfg['timeout']);
+    $status = $remote->restic_job_status($pending['job_id']);
+    if ($status === FALSE)
+        return '';
+    if ($status['state'] === 'running')
+        return 'A backup is still finishing on the game server.';
+    restic_pending_clear($home_id);
+    if ($status['state'] !== 'done' || (int)$status['exit'] !== 0)
+        return 'A backup that was started earlier did not finish, so nothing was saved.';
+    $snapshot_id = restic_parse_backup_snapshot_id($status['output']);
+    if ($snapshot_id === NULL)
+        return 'A backup that was started earlier finished without a snapshot id, so nothing was saved.';
+    $db->query('INSERT INTO `GSP_DB_PREFIXrestic_snapshots` (`home_id`, `snapshot_id`, `kind`, `comment`, `created_by`, `created_at`) VALUES ('
+        . (int)$home_id . ", '" . $db->realEscapeSingle($snapshot_id) . "', 'customer', '"
+        . $db->realEscapeSingle($pending['comment']) . "', '" . $db->realEscapeSingle($pending['user']) . "', "
+        . (int)$pending['started_at'] . ')');
+    restic_prune_customers($cfg, $home_id, $master);
+    return 'A backup that was started earlier has been saved.';
+}
+
 function restic_prune_customers($cfg, $home_id, $master)
 {
     $customers = array();
@@ -428,6 +505,12 @@ function restic_render_home($cfg, $home_id, $message = NULL, $ok = TRUE)
     echo '<center>';
     if ($message !== NULL)
         restic_render_notice($message, $ok);
+    $master = restic_master_key_load();
+    if ($master !== FALSE && restic_ready() && restic_home_row($home_id) !== NULL) {
+        $note = restic_reconcile_pending($cfg, $home_id, $master);
+        if ($note !== '')
+            restic_render_notice($note, TRUE);
+    }
 
     if (!restic_ready()) {
         echo '<h3>Customer backups are not enabled.</h3>';
