@@ -173,8 +173,8 @@ $root = realpath(GSP_PANEL_DIR);
 return $root !== false ? rtrim($root, '/') : rtrim(GSP_PANEL_DIR, '/');
 }
 
-if (!function_exists('gsp_ui_update_badge')) {
-function gsp_ui_update_badge($current, $latest)
+if (!function_exists('update_badge')) {
+function update_badge($current, $latest)
 {
 	if ($latest === '') {
 		return 'No releases found';
@@ -189,8 +189,8 @@ function gsp_ui_update_badge($current, $latest)
 }
 }
 
-if (!function_exists('gsp_ui_tag_select')) {
-function gsp_ui_tag_select($name, $tags)
+if (!function_exists('tag_select')) {
+function tag_select($name, $tags)
 {
 	$html = "<select name='" . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . "'>";
 	if (!is_array($tags) || empty($tags)) {
@@ -204,8 +204,8 @@ function gsp_ui_tag_select($name, $tags)
 }
 }
 
-if (!function_exists('gsp_ui_default_repo_url')) {
-function gsp_ui_default_repo_url($component)
+if (!function_exists('default_repo_url')) {
+function default_repo_url($component)
 {
 	$defaults = array(
 		'panel' => 'https://git.isaserver.net/workspace/gse-panel.git',
@@ -216,8 +216,8 @@ function gsp_ui_default_repo_url($component)
 }
 }
 
-if (!function_exists('gsp_ui_update_panel')) {
-function gsp_ui_update_panel($db, array $update_cfg, $restart_nonce, $panel_tag)
+if (!function_exists('update_panel')) {
+function update_panel($db, array $update_cfg, $restart_nonce, $panel_tag)
 {
 	$panel_tag = trim((string)$panel_tag);
 	if ($panel_tag === '') {
@@ -250,8 +250,8 @@ function gsp_ui_update_panel($db, array $update_cfg, $restart_nonce, $panel_tag)
 }
 }
 
-if (!function_exists('gsp_ui_update_agents')) {
-function gsp_ui_update_agents($db, array $ids, array $row_tags)
+if (!function_exists('update_agents')) {
+function update_agents($db, array $ids, array $row_tags)
 {
 	if (!function_exists('gsp_agent_perform_release_update')) {
 		require_once __DIR__ . '/../server/agent_helpers.php';
@@ -2011,7 +2011,7 @@ if (empty($checked)) {
 echo "<p class='failure'>No rows selected. Tick the Panel or one or more agents first.</p>\n";
 } else {
 if (in_array('panel', $checked, true)) {
-gsp_ui_update_panel($db, $update_cfg, $restart_nonce, isset($row_tags['panel']) ? (string)$row_tags['panel'] : '');
+update_panel($db, $update_cfg, $restart_nonce, isset($row_tags['panel']) ? (string)$row_tags['panel'] : '');
 }
 $agent_ids = array();
 foreach ($checked as $c) {
@@ -2020,7 +2020,7 @@ $agent_ids[] = $c;
 }
 }
 if (!empty($agent_ids)) {
-gsp_ui_update_agents($db, $agent_ids, $row_tags);
+update_agents($db, $agent_ids, $row_tags);
 }
 }
 } elseif ($action === 'revert') {
@@ -2106,8 +2106,8 @@ echo "<tr><th><input type='checkbox' title='Select all' onclick='gspToggleAllRow
 echo "<tr><td><input type='checkbox' name='gsp_row_check[]' value='panel'></td>";
 echo "<td><strong>Panel</strong></td>";
 echo "<td>" . htmlspecialchars($panel_known ? $panel_version : 'unknown') . "</td>";
-echo "<td>" . gsp_ui_tag_select('gsp_row_tag[panel]', $panel_tags) . "</td>";
-echo "<td>" . gsp_ui_update_badge($panel_known ? $panel_version : '', $panel_latest) . "</td></tr>\n";
+echo "<td>" . tag_select('gsp_row_tag[panel]', $panel_tags) . "</td>";
+echo "<td>" . update_badge($panel_known ? $panel_version : '', $panel_latest) . "</td></tr>\n";
 
 $all_agents = (array)$db->getRemoteServers();
 if (empty($all_agents)) {
@@ -2129,8 +2129,8 @@ foreach ($all_agents as $row) {
 	echo "<tr><td><input type='checkbox' name='gsp_row_check[]' value='" . $rid . "'></td>";
 	echo "<td><strong>" . htmlspecialchars($row['remote_server_name']) . "</strong><br><small>" . htmlspecialchars($type_label) . " &middot; " . htmlspecialchars($row['agent_ip']) . ":" . (int)$row['agent_port'] . "</small></td>";
 	echo "<td>" . htmlspecialchars($ver !== '' ? $ver : 'unknown') . "</td>";
-	echo "<td>" . gsp_ui_tag_select('gsp_row_tag[' . $rid . ']', $tags) . "</td>";
-	echo "<td>" . gsp_ui_update_badge($ver, $latest) . "</td></tr>\n";
+	echo "<td>" . tag_select('gsp_row_tag[' . $rid . ']', $tags) . "</td>";
+	echo "<td>" . update_badge($ver, $latest) . "</td></tr>\n";
 }
 echo "</table>\n";
 echo "<p><button type='submit' onclick=\"return confirm('Update the selected rows? The panel updates first, then the agents. Each agent stops, installs its release, and restarts.');\">Update selected</button></p>\n";
@@ -2144,7 +2144,7 @@ echo "<table class='center'>\n";
 echo "<tr><th>Component</th><th>Git repo URL</th><th>Token secret file</th></tr>\n";
 foreach (gsp_release_components() as $component) {
 	$rcfg = gsp_release_source_settings($component);
-	$repo_value = ($rcfg['repo_url'] !== '') ? $rcfg['repo_url'] : gsp_ui_default_repo_url($component);
+	$repo_value = ($rcfg['repo_url'] !== '') ? $rcfg['repo_url'] : default_repo_url($component);
 	echo "<tr><td><strong>" . htmlspecialchars(gsp_release_component_label($component)) . "</strong></td>";
 	echo "<td><input type='text' name='gsp_release_{$component}_repo_url' value='" . htmlspecialchars($repo_value, ENT_QUOTES, 'UTF-8') . "' size='55'></td>";
 	echo "<td><input type='text' name='gsp_release_{$component}_token_file' value='" . htmlspecialchars($rcfg['token_file'], ENT_QUOTES, 'UTF-8') . "' size='30' placeholder='/etc/gsp/secrets/" . htmlspecialchars($component) . "_token'>";
