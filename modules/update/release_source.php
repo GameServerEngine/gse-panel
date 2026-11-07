@@ -42,9 +42,9 @@ if (!function_exists('default_repo_url')) {
 function default_repo_url($component)
 {
 	$defaults = array(
-		'panel' => 'https://git.isaserver.net/workspace/gse-panel.git',
-		'agent_windows' => 'https://git.isaserver.net/workspace/gse-agent-windows.git',
-		'agent_linux' => 'https://git.isaserver.net/workspace/gse-agent-linux.git',
+		'panel' => 'https://github.com/GameServerEngine/gse-panel.git',
+		'agent_windows' => 'https://github.com/GameServerEngine/gse-agent-windows.git',
+		'agent_linux' => 'https://github.com/GameServerEngine/gse-agent-linux.git',
 	);
 	return isset($defaults[$component]) ? $defaults[$component] : '';
 }
@@ -340,6 +340,9 @@ function gsp_release_archive_url($repo_url, $tag)
 	$base = rtrim(preg_replace('#\.git$#', '', trim((string)$repo_url)), '/');
 	if (!preg_match('#/([^/]+)$#', $base, $m) || (string)$tag === '') {
 		return '';
+	}
+	if (gsp_release_provider_from_url($base) === 'github') {
+		return $base . '/archive/refs/tags/' . rawurlencode((string)$tag) . '.zip';
 	}
 	return $base . '/-/archive/' . rawurlencode((string)$tag) . '/' . $m[1] . '-' . (string)$tag . '.zip';
 }

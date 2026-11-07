@@ -18,7 +18,7 @@ gsp_update_smoke_assert(function_exists('gsp_do_configured_archive_update'), 'co
 gsp_update_smoke_assert(function_exists('gsp_checkout_update_source'), 'release ZIP source helper is top-level');
 gsp_update_smoke_assert(function_exists('gsp_disable_ssl_vhost'), 'SSL vhost disable helper is top-level');
 gsp_update_smoke_assert($cfg['channel'] === 'stable', 'default release channel is stable');
-gsp_update_smoke_assert($cfg['release_zip_url'] === 'https://git.isaserver.net/workspace/gse-panel/-/archive/stable.zip', 'default release ZIP URL is stable archive');
+gsp_update_smoke_assert($cfg['release_zip_url'] === 'https://github.com/GameServerEngine/gse-panel/archive/refs/heads/stable.zip', 'default release ZIP URL is stable archive');
 gsp_update_smoke_assert($cfg['repo_root'] === $panelRoot, 'repository root is derived from the running Panel');
 gsp_update_smoke_assert($cfg['panel_path'] === $panelRoot, 'Panel path is derived from the running Panel');
 gsp_update_smoke_assert(!array_key_exists('backup_retention', $cfg), 'backup retention setting was removed; one restore point is always kept');
