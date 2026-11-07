@@ -92,7 +92,7 @@
     </param>
   </server_params>
   <post_install>
-		curl -fL -o DZSALModServer.exe https://github.com/GameServerEngine/DZSALModServer/raw/DZSALModServer/DZSALModServer.exe
+		curl -fL -o DZSALModServer.exe https://github.com/GameServerEngine/DZSALModServer/raw/222f43497a67d251648ed1d3e6a617e129d5e7aa/DZSALModServer.exe
 	</post_install>
   <pre_start>
 	</pre_start>
