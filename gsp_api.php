@@ -96,6 +96,7 @@ if(function_exists($function))
 	require_once INCLUDES.'config.inc.php';
 	require_once INCLUDES.'game_path_helpers.php';
 	require_once MODULES.'config_games/server_config_parser.php';
+	require_once INCLUDES.'api_token_helpers.php';
 	require_once INCLUDES.'api_functions.php';
 
 	// API tokens table
@@ -115,6 +116,8 @@ if(function_exists($function))
 		if(isset($_POST['token']))
 		{
 			$token = $_POST['token'];
+			if(gsp_api_token_is_locked())
+				output(array("status" => "429", "message" => "Too many failed attempts. Try again later."), $function);
 			$query = "SELECT user_id FROM ".API_TABLE." WHERE `token` = '".$db->real_escape_string($token)."';";
 			$result = $db->resultQuery($query);
 			if(isset($result[0]['user_id']))
@@ -129,6 +132,9 @@ if(function_exists($function))
 			output(array("status" => "300", "message" => "No token supplied"), $function);
 		}
 	}
+
+	if($function != 'api_token' and !$logged_in)
+		gsp_api_token_record_failure();
 
 	if($logged_in or $function == 'api_token')
 	{
@@ -230,11 +236,18 @@ function api_token()
 		$user = isset($request[1])?urldecode($request[1]):$_POST['user'];
 		$password = isset($request[2])?urldecode($request[2]):$_POST['password'];
 
+		if(gsp_api_token_is_locked())
+		{
+			$status = "429";
+			$message = "Too many failed attempts. Try again later.";
+			return array("status" => $status, "message" => $message);
+		}
+
 		$userInfo = $db->getUser($user);
 
 		if(isset($userInfo['users_passwd']) && md5($password) == $userInfo['users_passwd'])
 		{
-			$token = bin2hex(openssl_random_pseudo_bytes(32));
+			$token = gsp_api_new_token();
 			$old_token = $db->currentApiToken($userInfo['user_id']);
 			// Update cronjob passwords in the URLs
 			if($old_token and file_exists('modules/cron/shared_cron_functions.php')){
@@ -261,6 +274,7 @@ function api_token()
 		}
 		else
 		{
+			gsp_api_token_record_failure();
 			$status = "400";
 			$message = "Invalid login information";
 		}

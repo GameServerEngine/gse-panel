@@ -27,6 +27,7 @@
 
 require_once("includes/database.php");
 require_once("includes/port_allocator.php");
+require_once(__DIR__ . "/api_token_helpers.php");
 
 function real_escape_string_recursive(&$item, $key, $link){
     $item = $this->realEscapeSingle($item);
@@ -4204,7 +4205,7 @@ class GSPDatabaseMySQL extends GSPDatabase
 		++$this->queries_;
 		if(empty($tmp))
 		{
-			$token = bin2hex(openssl_random_pseudo_bytes(32));
+			$token = gsp_api_new_token();
 			$query ='INSERT INTO %sapi_tokens'.
 					' (user_id, token)'.
 					' VALUES'.
