@@ -342,6 +342,15 @@ function gsp_agent_perform_release_update($db, array $remote_server_row, $archiv
 	$payload = gsp_agent_release_payload($component, $archive_url, $checksum, $version, $os);
 	$result = $remote->agent_self_update($payload);
 	$db->logger('Admin requested release update ' . $version . ' for remote server ID:' . $remote_server_id . ' component ' . $component);
+	// The agent restarts itself during an update, so its reply can be lost. Count that as started; the status watch follows it.
+	if (isset($result['status']) && $result['status'] === 'agent_unreachable') {
+		return array(
+			'remote_server_id' => $remote_server_id,
+			'name' => $name,
+			'success' => true,
+			'message' => 'Update sent. The agent is restarting; watching its status.',
+		);
+	}
 	$success = !empty($result['success']);
 	return array(
 		'remote_server_id' => $remote_server_id,

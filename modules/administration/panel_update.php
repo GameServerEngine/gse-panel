@@ -268,6 +268,14 @@ function gsp_agent_watch_render($db)
             $st = gsp_agent_build_remote($row)->agent_update_status();
             if (is_array($st) && !empty($st['status'])) {
                 $status = (string)$st['status'];
+                // The agent restarts itself during an update, so a poll can get no reply. That is not a failure.
+                if ($status === 'agent_unreachable') {
+                    $status = '';
+                }
+                // Keep the version and resource snapshot current once the agent answers, so the page shows the new version.
+                if ($status !== '') {
+                    gsp_agent_refresh_snapshot($db, $row);
+                }
                 $msg = isset($st['message']) ? (string)$st['message'] : '';
                 $target = isset($st['version_target']) ? (string)$st['version_target'] : '';
                 $updated = isset($st['updated_at']) ? (string)$st['updated_at'] : '';
@@ -2199,6 +2207,10 @@ echo "<td>" . tag_select('gsp_row_tag[panel]', $panel_tags) . "</td>";
 echo "<td>" . update_badge($panel_known ? $panel_version : '', $panel_latest) . "</td></tr>\n";
 
 $all_agents = (array)$db->getRemoteServers();
+// Refresh each agent's version and resource snapshot on page load, so the table shows what the agent reports now.
+foreach ($all_agents as $agent_row) {
+	gsp_agent_refresh_snapshot($db, $agent_row);
+}
 if (empty($all_agents)) {
 	echo "<tr><td colspan='5'>No agents registered.</td></tr>\n";
 }
