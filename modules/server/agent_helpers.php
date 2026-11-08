@@ -323,8 +323,8 @@ function gsp_agent_sanitize_ids($raw)
  */
 function gsp_agent_perform_release_update($db, array $remote_server_row, $archive_url, $checksum, $version)
 {
-	$remote_server_id = (int)$remote_server_row['remote_server_id'];
-	$name = $remote_server_row['remote_server_name'];
+	$remote_server_id = (int)($remote_server_row['remote_server_id'] ?? 0);
+	$name = $remote_server_row['remote_server_name'] ?? ('#' . $remote_server_id);
 	$remote = gsp_agent_build_remote($remote_server_row);
 	$fail = function ($message) use ($remote_server_id, $name) {
 		return array('remote_server_id' => $remote_server_id, 'name' => $name, 'success' => false, 'message' => $message);

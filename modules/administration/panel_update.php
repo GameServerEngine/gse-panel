@@ -239,6 +239,78 @@ function update_panel($db, array $update_cfg, $restart_nonce, $panel_tag)
 }
 }
 
+if (!function_exists('gsp_agent_watch_render')) {
+function gsp_agent_watch_render($db)
+{
+    if (empty($_SESSION['gsp_agent_watch']) || !is_array($_SESSION['gsp_agent_watch'])) {
+        return;
+    }
+    if (!function_exists('gsp_agent_build_remote')) {
+        require_once __DIR__ . '/../server/agent_helpers.php';
+    }
+    $names = array();
+    foreach ((array)$db->getRemoteServers() as $r) {
+        $names[(int)$r['remote_server_id']] = $r['remote_server_name'];
+    }
+    $keep_polling = false;
+    $html = '';
+    foreach (array_keys($_SESSION['gsp_agent_watch']) as $id) {
+        $id = (int)$id;
+        $started = (int)$_SESSION['gsp_agent_watch'][$id];
+        $elapsed = time() - $started;
+        $name = isset($names[$id]) ? $names[$id] : ('#' . $id);
+        $status = '';
+        $msg = '';
+        $target = '';
+        $updated = '';
+        $row = $db->getRemoteServerById($id);
+        if ($row) {
+            $st = gsp_agent_build_remote($row)->agent_update_status();
+            if (is_array($st) && !empty($st['status'])) {
+                $status = (string)$st['status'];
+                $msg = isset($st['message']) ? (string)$st['message'] : '';
+                $target = isset($st['version_target']) ? (string)$st['version_target'] : '';
+                $updated = isset($st['updated_at']) ? (string)$st['updated_at'] : '';
+            }
+        }
+        // A state written before this update started is a previous attempt, not this one.
+        if ($status !== '' && $updated !== '' && (int)strtotime($updated) < $started - 5) {
+            $status = '';
+        }
+        $updated_age = ($updated !== '') ? (time() - (int)strtotime($updated)) : $elapsed;
+        if ($status === '') {
+            if ($elapsed < 900) {
+                $label = "<span style='color:#8a6d3b;'>Waiting for the agent to report progress (it may be restarting)&hellip;</span>";
+                $keep_polling = true;
+            } else {
+                $label = "<span style='color:#a94442;'>Failed</span> No response from the agent after 15 minutes. Check the agent log.";
+                unset($_SESSION['gsp_agent_watch'][$id]);
+            }
+        } elseif ($status === 'running' && $updated_age < 900) {
+            $label = "<span style='color:#8a6d3b;'>Updating</span> " . htmlspecialchars($msg);
+            $keep_polling = true;
+        } else {
+            if ($status === 'ok') {
+                $label = "<span style='color:green;'>Updated</span> ";
+            } elseif ($status === 'rolled_back') {
+                $label = "<span style='color:#a94442;'>Rolled back</span> ";
+            } else {
+                $label = "<span style='color:#a94442;'>Failed</span> ";
+            }
+            $label .= htmlspecialchars($msg);
+            unset($_SESSION['gsp_agent_watch'][$id]);
+        }
+        $html .= "<tr><td><strong>" . htmlspecialchars($name) . "</strong></td><td>" . $label . "</td><td>" . htmlspecialchars($target) . "</td><td><small>" . htmlspecialchars($updated) . "</small></td></tr>\n";
+    }
+    if ($html !== '') {
+        echo "<h3>Agent update progress</h3>\n<table class='center'><tr><th>Agent</th><th>Status</th><th>Target</th><th>Last update (UTC)</th></tr>\n" . $html . "</table>\n";
+    }
+    if ($keep_polling) {
+        echo "<script>setTimeout(function(){ window.location.replace(window.location.href); }, 4000);</script>\n";
+    }
+}
+}
+
 if (!function_exists('update_agents')) {
 function update_agents($db, array $ids, array $row_tags)
 {
@@ -246,6 +318,10 @@ function update_agents($db, array $ids, array $row_tags)
 		require_once __DIR__ . '/../server/agent_helpers.php';
 	}
 	$ids = gsp_agent_sanitize_ids($ids);
+	$names = array();
+	foreach ((array)$db->getRemoteServers() as $r) {
+		$names[(int)$r['remote_server_id']] = $r['remote_server_name'];
+	}
 	$checksums = array();
 	$outcomes = array();
 	foreach ($ids as $id) {
@@ -254,6 +330,8 @@ function update_agents($db, array $ids, array $row_tags)
 			$outcomes[] = array('name' => '#' . $id, 'success' => false, 'message' => 'Agent not found.');
 			continue;
 		}
+		$row['remote_server_id'] = (int)$id;
+		$row['remote_server_name'] = isset($names[(int)$id]) ? $names[(int)$id] : ('#' . $id);
 		$snap = gsp_agent_get_snapshot($db, $id);
 		$os = (string)gsp_agent_snapshot_field($snap, 'os', '');
 		$group = gsp_agent_component_from_os($os);
@@ -276,7 +354,11 @@ function update_agents($db, array $ids, array $row_tags)
 			$outcomes[] = array('name' => $row['remote_server_name'], 'success' => false, 'message' => 'Could not download the release archive to check it.');
 			continue;
 		}
-		$outcomes[] = gsp_agent_perform_release_update($db, $row, $url, $checksums[$url], $tag);
+		$res = gsp_agent_perform_release_update($db, $row, $url, $checksums[$url], $tag);
+		if (!empty($res['success'])) {
+			$_SESSION['gsp_agent_watch'][(int)$id] = time();
+		}
+		$outcomes[] = $res;
 	}
 	echo "<h3>Agent Update Results</h3>\n";
 	if (empty($outcomes)) {
@@ -2037,8 +2119,6 @@ print_failure('Revert failed: ' . htmlspecialchars($result['error']));
 	print_failure('Update action failed: ' . htmlspecialchars($e->getMessage()));
 	}
 	}
-$_SESSION['gsp_update_csrf'] = gsp_random_token();
-$csrf_token = $_SESSION['gsp_update_csrf'];
 }
 
 $current_version = gsp_get_current_version();
@@ -2061,6 +2141,8 @@ $preflight_result = gsp_preflight_check($update_cfg);
 }
 
 $ssl_issue_count = !empty($apache_scan_result['ssl_issues']) ? count($apache_scan_result['ssl_issues']) : 0;
+global $db;
+gsp_agent_watch_render($db);
 echo "<h2>Panel Updates</h2>\n";
 echo "<table class='administration-table'><tr><td>\n";
 if ($ssl_issue_count > 0) {

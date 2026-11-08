@@ -12,6 +12,11 @@
  *
  */
 
+if (!defined('GSP_RELEASE_USER_AGENT')) {
+	// GitHub rejects API requests that send no User-Agent (HTTP 403).
+	define('GSP_RELEASE_USER_AGENT', 'GSE-Panel-Update');
+}
+
 function gsp_release_components()
 {
 	return ['panel', 'agent_linux', 'agent_windows'];
@@ -239,6 +244,7 @@ function gsp_release_fetch_releases_live($repo_url, $token, $provider)
 		return null;
 	}
 	$ch = curl_init($api_url);
+	curl_setopt($ch, CURLOPT_USERAGENT, GSP_RELEASE_USER_AGENT);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
@@ -335,6 +341,44 @@ function gsp_release_fetch_tags_live($repo_url, $token, $provider)
  * Release archive URL for a tag, in GitLab's archive format:
  *   <repo>/-/archive/<tag>/<name>-<tag>.zip
  */
+/**
+ * On GitHub, a release can attach a .zip asset with only the files an update
+ * needs. Prefer that over the tag archive, which contains the whole repo.
+ * Returns '' when the release has no zip asset or the lookup fails.
+ */
+function gsp_release_asset_url($repo_url, $tag)
+{
+	$base = rtrim(preg_replace('#\.git$#', '', trim((string)$repo_url)), '/');
+	if ((string)$tag === '' || !function_exists('curl_init')) {
+		return '';
+	}
+	if (!preg_match('#github\.com/([^/]+)/([^/]+)$#', $base, $m)) {
+		return '';
+	}
+	$ch = curl_init('https://api.github.com/repos/' . $m[1] . '/' . $m[2] . '/releases/tags/' . rawurlencode((string)$tag));
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+	curl_setopt($ch, CURLOPT_USERAGENT, GSP_RELEASE_USER_AGENT);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/vnd.github+json'));
+	$body = curl_exec($ch);
+	$code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+	curl_close($ch);
+	if ($body === false || $code !== 200) {
+		return '';
+	}
+	$data = json_decode($body, true);
+	if (!is_array($data) || empty($data['assets']) || !is_array($data['assets'])) {
+		return '';
+	}
+	foreach ($data['assets'] as $asset) {
+		$name = isset($asset['name']) ? (string)$asset['name'] : '';
+		if (preg_match('/\.zip$/i', $name) && !empty($asset['browser_download_url'])) {
+			return (string)$asset['browser_download_url'];
+		}
+	}
+	return '';
+}
+
 function gsp_release_archive_url($repo_url, $tag)
 {
 	$base = rtrim(preg_replace('#\.git$#', '', trim((string)$repo_url)), '/');
@@ -342,6 +386,10 @@ function gsp_release_archive_url($repo_url, $tag)
 		return '';
 	}
 	if (gsp_release_provider_from_url($base) === 'github') {
+		$asset = gsp_release_asset_url($base, $tag);
+		if ($asset !== '') {
+			return $asset;
+		}
 		return $base . '/archive/refs/tags/' . rawurlencode((string)$tag) . '.zip';
 	}
 	return $base . '/-/archive/' . rawurlencode((string)$tag) . '/' . $m[1] . '-' . (string)$tag . '.zip';
@@ -366,6 +414,7 @@ function gsp_release_archive_sha256($url)
 		return null;
 	}
 	$ch = curl_init($url);
+	curl_setopt($ch, CURLOPT_USERAGENT, GSP_RELEASE_USER_AGENT);
 	curl_setopt($ch, CURLOPT_FILE, $fh);
 	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 	curl_setopt($ch, CURLOPT_FAILONERROR, true);
