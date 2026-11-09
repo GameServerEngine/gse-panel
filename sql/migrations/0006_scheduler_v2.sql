@@ -4,7 +4,7 @@
 -- keeps working. See docs/plans/scheduler-v2/PLAN.md.
 -- Safe to re-run: every CREATE uses IF NOT EXISTS.
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXscheduled_task` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXscheduled_task` (
   `task_id` int(11) NOT NULL AUTO_INCREMENT,
   `owner_id` int(11) NOT NULL COMMENT 'gsp_users.user_id of the owning customer',
   `home_id` int(11) NOT NULL COMMENT 'gsp_server_homes.home_id the task acts on',
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXscheduled_task` (
   KEY `idx_scheduled_task_next_run` (`enabled`, `next_run_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXscheduled_task_run` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXscheduled_task_run` (
   `run_id` int(11) NOT NULL AUTO_INCREMENT,
   `task_id` int(11) NOT NULL,
   `trigger` enum('schedule','manual','retry') NOT NULL DEFAULT 'schedule',
@@ -46,5 +46,5 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXscheduled_task_run` (
   KEY `idx_scheduled_task_run_task` (`task_id`, `started_at`),
   KEY `idx_scheduled_task_run_status` (`status`),
   CONSTRAINT `fk_scheduled_task_run_task` FOREIGN KEY (`task_id`)
-    REFERENCES `GSP_DB_PREFIXscheduled_task` (`task_id`) ON DELETE CASCADE
+    REFERENCES `DB_PREFIXscheduled_task` (`task_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

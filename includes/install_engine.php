@@ -500,6 +500,7 @@ function install_rewrite_schema_sql($sql, $table_prefix)
 {
     $sql = preg_replace('/\bCREATE\s+TABLE\s+`/i', 'CREATE TABLE IF NOT EXISTS `', (string)$sql);
     $sql = str_replace('TABLE_PREFIX_PLACEHOLDER', (string)$table_prefix, (string)$sql);
+    $sql = str_replace('DB_PREFIX', (string)$table_prefix, (string)$sql);
     return $sql;
 }
 

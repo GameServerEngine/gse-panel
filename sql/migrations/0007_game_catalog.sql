@@ -5,10 +5,10 @@
 -- Safe to re-run: every CREATE uses IF NOT EXISTS.
 -- MySQL 5.7 rule: no DEFAULT on TEXT columns (pricing_detail below).
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcatalog_offer` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXcatalog_offer` (
   `offer_id` int(11) NOT NULL AUTO_INCREMENT,
-  `home_cfg_id` int(11) NOT NULL COMMENT 'GSP_DB_PREFIXconfig_homes.home_cfg_id',
-  `remote_server_id` int(11) NOT NULL COMMENT 'GSP_DB_PREFIXremote_servers.remote_server_id (location)',
+  `home_cfg_id` int(11) NOT NULL COMMENT 'DB_PREFIXconfig_homes.home_cfg_id',
+  `remote_server_id` int(11) NOT NULL COMMENT 'DB_PREFIXremote_servers.remote_server_id (location)',
   `enabled` tinyint(1) NOT NULL DEFAULT 0,
   `pricing_mode` enum('per_slot','tiers','base_plus_extra') NOT NULL DEFAULT 'per_slot',
   `period_default` enum('daily','monthly','yearly') NOT NULL DEFAULT 'monthly',
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcatalog_offer` (
   KEY `idx_catalog_offer_enabled` (`enabled`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcatalog_tier` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXcatalog_tier` (
   `tier_id` int(11) NOT NULL AUTO_INCREMENT,
   `offer_id` int(11) NOT NULL,
   `tier_key` enum('small','medium','large','full') NOT NULL,
@@ -43,12 +43,12 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcatalog_tier` (
   PRIMARY KEY (`tier_id`),
   UNIQUE KEY `uniq_catalog_tier_offer_key` (`offer_id`, `tier_key`),
   CONSTRAINT `fk_catalog_tier_offer` FOREIGN KEY (`offer_id`)
-    REFERENCES `GSP_DB_PREFIXcatalog_offer` (`offer_id`) ON DELETE CASCADE
+    REFERENCES `DB_PREFIXcatalog_offer` (`offer_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcatalog_order_price` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXcatalog_order_price` (
   `lock_id` int(11) NOT NULL AUTO_INCREMENT,
-  `order_id` int(11) NOT NULL COMMENT 'GSP_DB_PREFIXbilling_orders.order_id',
+  `order_id` int(11) NOT NULL COMMENT 'DB_PREFIXbilling_orders.order_id',
   `offer_id` int(11) NOT NULL,
   `pricing_mode` varchar(32) NOT NULL,
   `period` varchar(16) NOT NULL,
@@ -72,12 +72,12 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcatalog_order_price` (
 SET @catalog_snapshot_exists = (
   SELECT COUNT(*) FROM information_schema.COLUMNS
   WHERE TABLE_SCHEMA = DATABASE()
-    AND TABLE_NAME = 'GSP_DB_PREFIXbilling_invoices'
+    AND TABLE_NAME = 'DB_PREFIXbilling_invoices'
     AND COLUMN_NAME = 'catalog_snapshot'
 );
 
 SET @catalog_snapshot_ddl = IF(@catalog_snapshot_exists = 0,
-  'ALTER TABLE `GSP_DB_PREFIXbilling_invoices` ADD COLUMN `catalog_snapshot` TEXT NULL COMMENT ''JSON: offer_id, pricing_mode, slots or tier_key, period'' AFTER `qty`',
+  'ALTER TABLE `DB_PREFIXbilling_invoices` ADD COLUMN `catalog_snapshot` TEXT NULL COMMENT ''JSON: offer_id, pricing_mode, slots or tier_key, period'' AFTER `qty`',
   'SELECT 1'
 );
 

@@ -3,7 +3,7 @@
 -- customer-to-agent container workflow can be demonstrated without rewriting
 -- existing provisioning logic.
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcontainer_locations` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXcontainer_locations` (
   `location_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(128) NOT NULL,
   `region_code` varchar(64) NOT NULL DEFAULT '',
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcontainer_locations` (
   KEY `idx_container_locations_enabled` (`enabled`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcontainer_agents` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXcontainer_agents` (
   `agent_id` int(11) NOT NULL AUTO_INCREMENT,
   `location_id` int(11) DEFAULT NULL,
   `name` varchar(128) NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcontainer_agents` (
   KEY `idx_container_agents_enabled_location` (`enabled`,`location_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcontainer_applications` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXcontainer_applications` (
   `application_id` int(11) NOT NULL AUTO_INCREMENT,
   `slug` varchar(80) NOT NULL,
   `name` varchar(160) NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcontainer_applications` (
   KEY `idx_container_applications_status_sort` (`status`,`sort_order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcontainer_plans` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXcontainer_plans` (
   `plan_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(128) NOT NULL,
   `cpu` decimal(8,2) NOT NULL,
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcontainer_plans` (
   UNIQUE KEY `uq_container_plans_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcontainer_port_pools` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXcontainer_port_pools` (
   `port_pool_id` int(11) NOT NULL AUTO_INCREMENT,
   `location_id` int(11) DEFAULT NULL,
   `name` varchar(128) NOT NULL,
@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcontainer_port_pools` (
   KEY `idx_container_port_pools_range` (`enabled`,`range_start`,`range_end`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcontainer_reserved_ports` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXcontainer_reserved_ports` (
   `reserved_port_id` int(11) NOT NULL AUTO_INCREMENT,
   `port_pool_id` int(11) DEFAULT NULL,
   `container_id` int(11) DEFAULT NULL,
@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcontainer_reserved_ports` (
   KEY `idx_container_reserved_job` (`job_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcontainer_provisioning_jobs` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXcontainer_provisioning_jobs` (
   `job_id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `application_id` int(11) DEFAULT NULL,
@@ -135,7 +135,7 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXcontainer_provisioning_jobs` (
   KEY `idx_container_jobs_agent` (`agent_id`,`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXmanaged_containers` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXmanaged_containers` (
   `container_id` int(11) NOT NULL AUTO_INCREMENT,
   `job_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -158,16 +158,16 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXmanaged_containers` (
   KEY `idx_managed_containers_user_status` (`user_id`,`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT IGNORE INTO `GSP_DB_PREFIXcontainer_locations` (`name`,`region_code`,`enabled`)
+INSERT IGNORE INTO `DB_PREFIXcontainer_locations` (`name`,`region_code`,`enabled`)
 VALUES ('Kansas City','us-central',1);
 
-INSERT IGNORE INTO `GSP_DB_PREFIXcontainer_plans` (`name`,`cpu`,`memory_mb`,`storage_gb`,`enabled`)
+INSERT IGNORE INTO `DB_PREFIXcontainer_plans` (`name`,`cpu`,`memory_mb`,`storage_gb`,`enabled`)
 VALUES ('POC Small',1,1024,10,1),('POC Medium',2,4096,30,1);
 
-INSERT IGNORE INTO `GSP_DB_PREFIXcontainer_port_pools` (`name`,`host_ip`,`range_start`,`range_end`,`enabled`)
+INSERT IGNORE INTO `DB_PREFIXcontainer_port_pools` (`name`,`host_ip`,`range_start`,`range_end`,`enabled`)
 VALUES ('POC Default Ports','0.0.0.0',30000,30100,1);
 
-INSERT IGNORE INTO `GSP_DB_PREFIXcontainer_applications`
+INSERT IGNORE INTO `DB_PREFIXcontainer_applications`
 (`slug`,`name`,`icon`,`short_description`,`version`,`supported_platform`,`recommended_cpu`,`recommended_memory_mb`,`recommended_storage_gb`,`minimum_cpu`,`minimum_memory_mb`,`minimum_storage_gb`,`required_ports_json`,`preferred_ports_json`,`default_port_block_size`,`compatibility_notes`,`container_image`,`install_interpreter`,`install_script`,`status`,`sort_order`)
 VALUES
 ('empty-container','None / Empty Container','','Blank managed container. Install applications later.','0.1','linux',1,1024,10,1,512,5,'[]','[]',0,'No server content is installed. Ports are optional.','alpine:latest','none',NULL,'active',0),

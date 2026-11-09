@@ -11,7 +11,7 @@ SET @column_exists = (
 );
 
 SET @ddl = IF(@column_exists = 0,
-  'ALTER TABLE `GSP_DB_PREFIXmodules` ADD COLUMN `enabled` TINYINT(1) NOT NULL DEFAULT 1 AFTER `db_version`',
+  'ALTER TABLE `DB_PREFIXmodules` ADD COLUMN `enabled` TINYINT(1) NOT NULL DEFAULT 1 AFTER `db_version`',
   'SELECT 1'
 );
 
@@ -19,4 +19,4 @@ PREPARE stmt FROM @ddl;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-UPDATE `GSP_DB_PREFIXmodules` SET `enabled` = 1 WHERE `enabled` IS NULL;
+UPDATE `DB_PREFIXmodules` SET `enabled` = 1 WHERE `enabled` IS NULL;

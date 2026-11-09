@@ -1,7 +1,7 @@
 -- Global port block allocation Phase 1 schema.
 -- Default prefix is gsp_. If an installation uses a custom prefix, replace gsp_ before applying.
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXport_pools` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXport_pools` (
   `pool_id` int(11) NOT NULL AUTO_INCREMENT,
   `pool_key` varchar(64) NOT NULL,
   `name` varchar(128) NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXport_pools` (
   KEY `idx_port_pools_range` (`range_start`,`range_end`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Global reusable port pool catalog';
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXport_pool_games` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXport_pool_games` (
   `pool_game_id` int(11) NOT NULL AUTO_INCREMENT,
   `pool_id` int(11) NOT NULL,
   `home_cfg_id` int(11) NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXport_pool_games` (
   KEY `idx_pool_games_pool` (`pool_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Game config to global port pool mappings';
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXgame_port_offsets` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXgame_port_offsets` (
   `offset_id` int(11) NOT NULL AUTO_INCREMENT,
   `home_cfg_id` int(11) NOT NULL,
   `port_role` enum('primary','query','rcon','web','steam','peer','admin','filetransfer','query_ssh','custom') NOT NULL,
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXgame_port_offsets` (
   KEY `idx_game_port_offsets_fit` (`fits_standard_block`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Normalized per-game port offsets imported from XML or review';
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXstatic_port_reservations` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXstatic_port_reservations` (
   `reservation_id` int(11) NOT NULL AUTO_INCREMENT,
   `scope` enum('ip','remote_server','global') NOT NULL DEFAULT 'ip',
   `ip_id` int(11) NULL DEFAULT NULL,
@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXstatic_port_reservations` (
   KEY `idx_static_res_service` (`service_name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Static host and service port reservations';
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXhome_port_blocks` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXhome_port_blocks` (
   `block_id` bigint(20) NOT NULL AUTO_INCREMENT,
   `home_id` int(11) NULL DEFAULT NULL,
   `ip_id` int(11) NOT NULL,
@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXhome_port_blocks` (
   KEY `idx_home_port_blocks_primary` (`ip_id`,`primary_port`,`status`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Whole port-block allocation ledger';
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXport_allocation_events` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXport_allocation_events` (
   `event_id` bigint(20) NOT NULL AUTO_INCREMENT,
   `block_id` bigint(20) NULL DEFAULT NULL,
   `home_id` int(11) NULL DEFAULT NULL,
@@ -125,7 +125,7 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXport_allocation_events` (
   KEY `idx_port_events_type_time` (`event_type`,`created_at`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Port allocation audit events';
 
-INSERT INTO `GSP_DB_PREFIXport_pools`
+INSERT INTO `DB_PREFIXport_pools`
   (`pool_key`,`name`,`purpose`,`base_port`,`range_start`,`range_end`,`block_size`,`priority`,`enabled`,`allow_manual`,`notes`)
 VALUES
   ('arma-dayz-2302','Arma/DayZ 2302','game',2302,2302,2399,10,10,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md'),
@@ -150,6 +150,6 @@ ON DUPLICATE KEY UPDATE
   `notes`=VALUES(`notes`),
   `updated_at`=NOW();
 
-INSERT INTO `GSP_DB_PREFIXsettings` (`setting`,`value`)
+INSERT INTO `DB_PREFIXsettings` (`setting`,`value`)
 VALUES ('port_block_size','10')
 ON DUPLICATE KEY UPDATE `value`=`value`;
