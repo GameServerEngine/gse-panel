@@ -724,7 +724,6 @@ function exec_module()
 	echo "</form></td></tr>";
 	echo "<tr><td colspan='2' class='info'>". get_lang("change_control_password_info") ."</td></tr>";
 	}
-	echo "<tr><td class='right'>" . get_lang("expert_mode") . ":</td><td class='left'>" . (!empty($home_info['expert_mode']) ? "ON - configure in the config files" : "OFF - configure in the panel") . " <a href='?m=user_games&amp;p=edit&amp;home_id=" . $home_id . "&amp;expert_mode=" . (!empty($home_info['expert_mode']) ? "0" : "1") . "'>" . (!empty($home_info['expert_mode']) ? "Turn expert mode off" : "Turn expert mode on") . "</a></td></tr>";
 	if ( $isAdmin && $ftp_installed )
 	{
 		// Forms to enable/disable ftp account
@@ -840,6 +839,10 @@ document.addEventListener('DOMContentLoaded', function() {
 			 "<tr><td  colspan='2' class='info'>". get_lang("server_expiration_date_info") ."</td></tr>";
 	}
 
+	echo "</table>";
+	echo "<h3>". get_lang("expert_mode") ."</h3>";
+	echo "<table class='center' id='expert_mode_settings' >";
+	echo "<tr><td class='right'>" . get_lang("expert_mode") . ":</td><td class='left'>" . (!empty($home_info['expert_mode']) ? "ON - configure in the config files" : "OFF - configure in the panel") . " <a href='?m=user_games&amp;p=edit&amp;home_id=" . $home_id . "&amp;expert_mode=" . (!empty($home_info['expert_mode']) ? "0" : "1") . "'>" . (!empty($home_info['expert_mode']) ? "Turn expert mode off" : "Turn expert mode on") . "</a></td></tr>";
 	echo "</table>";
 
 	if ( $isAdmin )
