@@ -442,6 +442,83 @@ function release_component_for_agent($agent_component)
 /**
  * Release tags for a component, newest first. Null if the repo cannot be read.
  */
+function is_valid_release_branch($branch)
+{
+	$branch = (string)$branch;
+	if ($branch === '' || strlen($branch) > 100 || $branch[0] === '-') {
+		return false;
+	}
+	return preg_match('#^[A-Za-z0-9._/-]+$#', $branch) === 1 && strpos($branch, '..') === false;
+}
+
+/**
+ * Archive URL for a branch head, in the same host formats as release_archive_url().
+ */
+function release_branch_archive_url($repo_url, $branch)
+{
+	$base = rtrim(preg_replace('#\.git$#', '', trim((string)$repo_url)), '/');
+	if (!is_valid_release_branch($branch) || !preg_match('#/([^/]+)$#', $base, $m)) {
+		return '';
+	}
+	if (release_provider_from_url($base) === 'github') {
+		return $base . '/archive/refs/heads/' . str_replace('%2F', '/', rawurlencode($branch)) . '.zip';
+	}
+	return $base . '/-/archive/' . rawurlencode($branch) . '/' . $m[1] . '-' . str_replace('/', '-', $branch) . '.zip';
+}
+
+/**
+ * Branch names on the component's git remote. Cached for 10 minutes.
+ * Returns null when the remote cannot be reached.
+ */
+function release_branch_options($component)
+{
+	$cfg = release_source_settings($component);
+	if ($cfg['repo_url'] === '') {
+		return null;
+	}
+	$cache = sys_get_temp_dir() . '/gse-branches-' . md5($cfg['repo_url']) . '.json';
+	if (is_file($cache) && (time() - filemtime($cache)) < 600) {
+		$cached = json_decode((string)file_get_contents($cache), true);
+		if (is_array($cached)) {
+			return $cached;
+		}
+	}
+	$url = $cfg['repo_url'];
+	$token = read_release_token($cfg);
+	if ($token !== '' && preg_match('#^https://(.+)$#', $url, $m)) {
+		$url = 'https://' . rawurlencode('oauth2') . ':' . rawurlencode($token) . '@' . $m[1];
+	}
+	$out = array();
+	$ret = 0;
+	exec('git ls-remote --heads ' . escapeshellarg($url) . ' 2>/dev/null', $out, $ret);
+	if ($ret !== 0) {
+		return null;
+	}
+	$branches = array();
+	foreach ($out as $line) {
+		if (preg_match('#refs/heads/(.+)$#', $line, $m) && is_valid_release_branch($m[1])) {
+			$branches[] = $m[1];
+		}
+	}
+	$branches = array_values(array_unique($branches));
+	sort($branches);
+	@file_put_contents($cache, json_encode($branches));
+	return $branches;
+}
+
+/**
+ * A branch may be installed when it has a valid name and, if the remote list is
+ * available, appears in it.
+ */
+function release_branch_allowed($component, $branch)
+{
+	if (!is_valid_release_branch($branch)) {
+		return false;
+	}
+	$list = release_branch_options($component);
+	return $list === null || in_array($branch, $list, true);
+}
+
 function release_tag_options($component)
 {
 	$cfg = release_source_settings($component);

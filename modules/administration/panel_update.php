@@ -205,16 +205,44 @@ function tag_select($name, $tags)
 }
 }
 
+if (!function_exists('branch_select')) {
+function branch_select($name, $branches)
+{
+	$live = is_array($branches);
+	$list = $live ? $branches : array('working', 'testing', 'unstable', 'stable');
+	$html = '<select name="' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '"><option value="">(release above)</option>';
+	foreach ($list as $b) {
+		$t = htmlspecialchars((string)$b, ENT_QUOTES, 'UTF-8');
+		$html .= '<option value="' . $t . '">' . $t . '</option>';
+	}
+	$html .= '</select>';
+	if (!$live) {
+		$html .= '<br><small>Branch list not live: remote unreachable, showing known names.</small>';
+	}
+	return $html;
+}
+}
+
 if (!function_exists('update_panel')) {
-function update_panel($db, array $update_cfg, $restart_nonce, $panel_tag)
+function update_panel($db, array $update_cfg, $restart_nonce, $panel_tag, $panel_branch = '')
 {
 	$panel_tag = trim((string)$panel_tag);
-	if ($panel_tag === '') {
+	if ($panel_tag === '' && trim((string)$panel_branch) === '') {
 		print_failure('Panel update skipped: no release picked on the Panel row.');
 		return;
 	}
 	$panel_source = release_source_settings('panel');
-	$custom_release_zip_url = release_archive_url($panel_source['repo_url'], $panel_tag);
+	$panel_branch = trim((string)$panel_branch);
+	if ($panel_branch !== '') {
+		if (!release_branch_allowed('panel', $panel_branch)) {
+			print_failure('Panel update skipped: that branch is not on the panel repo.');
+			return;
+		}
+		$custom_release_zip_url = release_branch_archive_url($panel_source['repo_url'], $panel_branch);
+		$panel_tag = 'branch ' . $panel_branch;
+	} else {
+		$custom_release_zip_url = release_archive_url($panel_source['repo_url'], $panel_tag);
+	}
 	$update_cfg['release_zip_url'] = $custom_release_zip_url;
 	$errors = validate_update_settings($update_cfg);
 	if (!empty($errors)) {
@@ -320,7 +348,7 @@ function agent_watch_render($db)
 }
 
 if (!function_exists('update_agents')) {
-function update_agents($db, array $ids, array $row_tags)
+function update_agents($db, array $ids, array $row_tags, array $row_branches = array())
 {
 	if (!function_exists('agent_perform_release_update')) {
 		require_once __DIR__ . '/../server/agent_helpers.php';
@@ -349,12 +377,22 @@ function update_agents($db, array $ids, array $row_tags)
 		}
 		$release_component = release_component_for_agent($group);
 		$tag = isset($row_tags[$id]) ? trim((string)$row_tags[$id]) : '';
-		if ($tag === '') {
+		if ($tag === '' && trim((string)(isset($row_branches[$id]) ? $row_branches[$id] : '')) === '') {
 			$outcomes[] = array('name' => $row['remote_server_name'], 'success' => false, 'message' => 'No release picked on this row.');
 			continue;
 		}
 		$src = release_source_settings($release_component);
-		$url = release_archive_url($src['repo_url'], $tag);
+		$branch = isset($row_branches[$id]) ? trim((string)$row_branches[$id]) : '';
+		if ($branch !== '') {
+			if (!release_branch_allowed($release_component, $branch)) {
+				$outcomes[] = array('name' => $row['remote_server_name'], 'success' => false, 'message' => 'That branch is not on this agent repo.');
+				continue;
+			}
+			$url = release_branch_archive_url($src['repo_url'], $branch);
+			$tag = 'branch ' . $branch;
+		} else {
+			$url = release_archive_url($src['repo_url'], $tag);
+		}
 		if (!array_key_exists($url, $checksums)) {
 			$checksums[$url] = release_archive_sha256($url);
 		}
@@ -2087,11 +2125,12 @@ print_success('Release source settings saved.');
 } elseif ($action === 'update_selected') {
 $checked = isset($_POST['row_check']) ? array_map('strval', (array)$_POST['row_check']) : array();
 $row_tags = (isset($_POST['row_tag']) && is_array($_POST['row_tag'])) ? $_POST['row_tag'] : array();
+$row_branches_post = (isset($_POST['row_branch']) && is_array($_POST['row_branch'])) ? $_POST['row_branch'] : array();
 if (empty($checked)) {
 echo "<p class='failure'>No rows selected. Tick the Panel or one or more agents first.</p>\n";
 } else {
 if (in_array('panel', $checked, true)) {
-update_panel($db, $update_cfg, $restart_nonce, isset($row_tags['panel']) ? (string)$row_tags['panel'] : '');
+update_panel($db, $update_cfg, $restart_nonce, isset($row_tags['panel']) ? (string)$row_tags['panel'] : '', isset($row_branches_post['panel']) ? (string)$row_branches_post['panel'] : '');
 }
 $agent_ids = array();
 foreach ($checked as $c) {
@@ -2100,7 +2139,7 @@ $agent_ids[] = $c;
 }
 }
 if (!empty($agent_ids)) {
-update_agents($db, $agent_ids, $row_tags);
+update_agents($db, $agent_ids, $row_tags, $row_branches_post);
 }
 }
 } elseif ($action === 'revert') {
@@ -2173,6 +2212,11 @@ $agent_tags = array(
 $panel_version = (string)get_current_version();
 $panel_known = ($panel_version !== '' && $panel_version !== 'unknown');
 $panel_latest = (is_array($panel_tags) && !empty($panel_tags)) ? $panel_tags[0] : '';
+$panel_branches = release_branch_options('panel');
+$agent_branches = array(
+	'agent_windows' => release_branch_options('agent_windows'),
+	'agent_linux' => release_branch_options('agent_linux'),
+);
 
 echo "<details open><summary>Release sources (git repo URL per component)</summary>\n";
 echo "<form method='POST' id='form_save_sources'>\n";
@@ -2197,13 +2241,14 @@ echo "<form method='POST' id='form_update_rows'>\n";
 echo "<input type='hidden' name='update_action' value='update_selected'>\n";
 echo "<input type='hidden' name='update_csrf' value='" . htmlspecialchars($csrf_token) . "'>\n";
 echo "<script>function toggleAllRows(b){document.querySelectorAll('#form_update_rows input[name=\"row_check[]\"]').forEach(function(c){c.checked=b.checked;});}</script>\n";
-echo "<p><button type='submit' onclick=\"return confirm('Update the selected rows? The panel updates first, then the agents. Each agent stops, installs its release, and restarts.');\">Update selected</button></p>\n";
+echo "<script>function confirmSelectedRows(){var lines=[];document.querySelectorAll('#form_update_rows input[type=checkbox]').forEach(function(c){if(c.name.indexOf('row_check')!==0||!c.checked){return;}var row=c.closest('tr');var name=row.querySelector('strong').textContent;var b=row.querySelector('select[name^=row_branch]');var t=row.querySelector('select[name^=row_tag]');var pick=(b&&b.value)?'branch '+b.value:(t?t.value:'');lines.push(name+': '+(pick||'no release picked'));});if(!lines.length){alert('No rows selected.');return false;}return confirm('Update the selected rows?  '+lines.join('  |  ')+'  The panel updates first, then the agents. Each agent stops, installs its release, and restarts.');}</script>";
+echo "<p><button type='submit' onclick=\"return confirmSelectedRows();\">Update selected</button></p>\n";
 echo "<table class='center'>\n";
 echo "<tr><th><input type='checkbox' title='Select all' onclick='toggleAllRows(this)'></th><th>Component</th><th>Current version</th><th>Install version</th><th>Update</th></tr>\n";
 echo "<tr><td><input type='checkbox' name='row_check[]' value='panel'></td>";
 echo "<td><strong>Panel</strong></td>";
 echo "<td>" . htmlspecialchars($panel_known ? $panel_version : 'unknown') . "</td>";
-echo "<td>" . tag_select('row_tag[panel]', $panel_tags) . "</td>";
+echo "<td>" . tag_select('row_tag[panel]', $panel_tags) . "<br>Branch: " . branch_select('row_branch[panel]', $panel_branches) . "</td>";
 echo "<td>" . update_badge($panel_known ? $panel_version : '', $panel_latest) . "</td></tr>\n";
 
 $all_agents = (array)$db->getRemoteServers();
@@ -2230,11 +2275,11 @@ foreach ($all_agents as $row) {
 	echo "<tr><td><input type='checkbox' name='row_check[]' value='" . $rid . "'></td>";
 	echo "<td><strong>" . htmlspecialchars($row['remote_server_name']) . "</strong><br><small>" . htmlspecialchars($type_label) . " &middot; " . htmlspecialchars($row['agent_ip']) . ":" . (int)$row['agent_port'] . "</small></td>";
 	echo "<td>" . htmlspecialchars($ver !== '' ? $ver : 'unknown') . "</td>";
-	echo "<td>" . tag_select('row_tag[' . $rid . ']', $tags) . "</td>";
+	echo "<td>" . tag_select('row_tag[' . $rid . ']', $tags) . "<br>Branch: " . branch_select('row_branch[' . $rid . ']', (($release_component !== '' && isset($agent_branches[$release_component])) ? $agent_branches[$release_component] : null)) . "</td>";
 	echo "<td>" . update_badge($ver, $latest) . "</td></tr>\n";
 }
 echo "</table>\n";
-echo "<p><button type='submit' onclick=\"return confirm('Update the selected rows? The panel updates first, then the agents. Each agent stops, installs its release, and restarts.');\">Update selected</button></p>\n";
+echo "<p><button type='submit' onclick=\"return confirmSelectedRows();\">Update selected</button></p>\n";
 echo "</form>\n";
 
 
