@@ -1,12 +1,13 @@
 <?php
 /*
  * API page: shows the logged-in user's API token, lets them regenerate it,
- * and shows ready-to-use API commands for one of their servers.
+ * and shows ready-to-copy API commands filled in from the database.
  * The command names come from the endpoint list at the top of api.php.
  */
 
-// Commands that take a remote_server_id. Each entry: endpoint => extra parameters.
-function api_page_server_commands()
+// Machine-level commands (admin only). Each entry: endpoint => input fields the user fills in.
+// Argument names match get_function_args() in includes/api_functions.php.
+function api_page_machine_commands()
 {
 	return array(
 		'server/status' => array(),
@@ -15,31 +16,49 @@ function api_page_server_commands()
 		'server/add_ip' => array('ip'),
 		'server/remove_ip' => array('ip'),
 		'server/edit_ip' => array('old_ip', 'new_ip'),
-		'user_games/create' => array('server_name', 'home_cfg_id', 'mod_cfg_id', 'ip', 'port', 'control_password', 'enable_ftp', 'ftp_password', 'slots', 'affinity', 'nice', 'assign_to_username'),
 	);
 }
 
-// Commands that need only the token.
-function api_page_general_commands()
+// Game-server commands. Each one needs token, ip, port and mod_key.
+function api_page_game_commands()
 {
-	return array('server/list', 'user_games/list_servers');
+	return array('gamemanager/start', 'gamemanager/stop', 'gamemanager/restart');
 }
 
-// Admins can use every remote server. Other users can use the servers their game homes run on.
-function api_page_servers_for_user($user_id, $is_admin)
+// Returns array(machine_id => array('name' => ..., 'games' => array(...))).
+// Admins get every machine. Other users get only the machines that host one of their game servers.
+// Ownership uses getHomesFor('user_and_group'), the same call the Game Monitor uses.
+function api_page_machines_for_user($user_id, $is_admin)
 {
 	global $db;
 
+	$machines = array();
 	if ($is_admin)
-		$rows = $db->getRemoteServers();
+	{
+		foreach ((array)$db->getRemoteServers() as $row)
+			$machines[$row['remote_server_id']] = array('name' => $row['remote_server_name'], 'games' => array());
+		$homes = $db->getHomesFor('admin', $user_id);
+	}
 	else
-		$rows = $db->getHomesFor('user_and_group', $user_id);
+		$homes = $db->getHomesFor('user_and_group', $user_id);
 
-	$servers = array();
-	foreach ((array)$rows as $row)
-		$servers[$row['remote_server_id']] = $row['remote_server_name'];
-	asort($servers);
-	return $servers;
+	foreach ((array)$homes as $home)
+	{
+		$machine_id = $home['remote_server_id'];
+		if (!isset($machines[$machine_id]))
+			$machines[$machine_id] = array('name' => $home['remote_server_name'], 'games' => array());
+		// A game server with no IP and port yet cannot be controlled through the API.
+		if (empty($home['ip']) || empty($home['port']))
+			continue;
+		$machines[$machine_id]['games'][] = array(
+			'name' => $home['home_name'],
+			'ip' => $home['ip'],
+			'port' => $home['port'],
+			'mod_key' => isset($home['mod_key']) ? $home['mod_key'] : ''
+		);
+	}
+	uasort($machines, function ($a, $b) { return strcasecmp($a['name'], $b['name']); });
+	return $machines;
 }
 
 function api_page_base_url()
@@ -50,14 +69,23 @@ function api_page_base_url()
 	return $scheme . '://' . $host . $dir . '/api.php';
 }
 
-function api_page_command_line($endpoint, $params, $remote_server_id)
+// Builds one curl line. $values is an ordered list of name => value pairs.
+function api_page_command_line($endpoint, $values)
 {
-	$line = 'curl -X POST "' . api_page_base_url() . '?' . $endpoint . '" -d "token=YOUR_TOKEN"';
-	if ($remote_server_id !== null)
-		$line .= ' -d "remote_server_id=' . (int)$remote_server_id . '"';
-	foreach ($params as $param)
-		$line .= ' -d "' . $param . '=..."';
+	$line = 'curl -X POST "' . api_page_base_url() . '?' . $endpoint . '"';
+	foreach ($values as $name => $value)
+		$line .= ' -d "' . $name . '=' . $value . '"';
 	return $line;
+}
+
+// Prints one command in a box with its own Copy button.
+function api_page_show_command($label, $line)
+{
+	echo "<div class='api_command' style='margin-bottom:8px'>";
+	echo "<strong>" . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . "</strong>";
+	echo "<pre class='api_command_text' style='margin:2px 0'>" . htmlspecialchars($line, ENT_QUOTES, 'UTF-8') . "</pre>";
+	echo "<button type='button' class='btn btn-default btn-xs api_command_copy'>" . get_lang('api_page_copy') . "</button>";
+	echo "</div>";
 }
 
 // Handles the Regenerate button. Returns a message to show, or '' when nothing was submitted.
@@ -99,37 +127,76 @@ function api_page_show_token($token)
 	</script>";
 }
 
-function api_page_show_commands($servers)
+// Machine-level commands, admin only. Fields the user must fill in are shown as YOUR_<NAME> labels.
+function api_page_show_machine_commands($token, $machine_id)
+{
+	echo "<h4>" . get_lang('api_page_machine_commands') . "</h4>";
+	echo "<p>" . get_lang('api_page_machine_commands_info') . "</p>";
+	foreach (api_page_machine_commands() as $endpoint => $inputs)
+	{
+		$values = array('token' => $token, 'remote_server_id' => (int)$machine_id);
+		foreach ($inputs as $input)
+			$values[$input] = 'ENTER_' . strtoupper($input);
+		api_page_show_command($endpoint, api_page_command_line($endpoint, $values));
+	}
+}
+
+function api_page_show_game_commands($token, $game)
+{
+	echo "<div class='box box-default'><div class='box-header with-border'>";
+	echo "<h3 class='box-title'>" . htmlspecialchars($game['name'], ENT_QUOTES, 'UTF-8') . " (" . htmlspecialchars($game['ip'] . ':' . $game['port'], ENT_QUOTES, 'UTF-8') . ")</h3>";
+	echo "</div><div class='box-body'>";
+	foreach (api_page_game_commands() as $endpoint)
+	{
+		$values = array('token' => $token, 'ip' => $game['ip'], 'port' => (int)$game['port'], 'mod_key' => $game['mod_key']);
+		api_page_show_command($endpoint, api_page_command_line($endpoint, $values));
+	}
+	echo "</div></div>";
+}
+
+function api_page_show_commands($token, $machines, $is_admin)
 {
 	echo "<h3>" . get_lang('api_page_commands') . "</h3>";
-	if (empty($servers))
+	if (empty($machines))
 	{
 		echo "<p>" . get_lang('api_page_no_servers') . "</p>";
 		return;
 	}
 
 	echo "<p>" . get_lang('api_page_commands_info') . "</p>";
-	echo "<select id='api_server_select'><option value=''>" . get_lang('api_page_select_server') . "</option>";
-	foreach ($servers as $id => $name)
-		echo "<option value='" . (int)$id . "'>" . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . "</option>";
+	echo "<select id='api_machine_select' class='form-control' style='width:auto'><option value=''>" . get_lang('api_page_select_machine') . "</option>";
+	foreach ($machines as $id => $machine)
+		echo "<option value='" . (int)$id . "'>" . htmlspecialchars($machine['name'], ENT_QUOTES, 'UTF-8') . "</option>";
 	echo "</select>";
 
-	// One hidden block per server, so no extra request is needed when the selection changes.
-	foreach ($servers as $id => $name)
+	// One hidden block per machine, so no extra request is needed when the selection changes.
+	foreach ($machines as $id => $machine)
 	{
-		echo "<div class='api_server_commands' id='api_server_" . (int)$id . "' style='display:none'><pre>";
-		foreach (api_page_server_commands() as $endpoint => $params)
-			echo htmlspecialchars(api_page_command_line($endpoint, $params, $id), ENT_QUOTES, 'UTF-8') . "\n";
-		foreach (api_page_general_commands() as $endpoint)
-			echo htmlspecialchars(api_page_command_line($endpoint, array(), null), ENT_QUOTES, 'UTF-8') . "\n";
-		echo "</pre></div>";
+		echo "<div class='api_machine_commands' id='api_machine_" . (int)$id . "' style='display:none'>";
+		if ($is_admin)
+			api_page_show_machine_commands($token, $id);
+		echo "<h4>" . get_lang('api_page_game_commands') . "</h4>";
+		if (empty($machine['games']))
+			echo "<p>" . get_lang('api_page_no_games') . "</p>";
+		foreach ($machine['games'] as $game)
+			api_page_show_game_commands($token, $game);
+		echo "</div>";
 	}
 
 	echo "<script>
-	$('#api_server_select').change(function() {
-		$('.api_server_commands').hide();
+	$('#api_machine_select').change(function() {
+		$('.api_machine_commands').hide();
 		if ($(this).val() !== '')
-			$('#api_server_' + $(this).val()).show();
+			$('#api_machine_' + $(this).val()).show();
+	});
+	$('.api_command_copy').click(function() {
+		var text = $(this).siblings('.api_command_text')[0];
+		var range = document.createRange();
+		range.selectNodeContents(text);
+		var selection = window.getSelection();
+		selection.removeAllRanges();
+		selection.addRange(range);
+		document.execCommand('copy');
 	});
 	</script>";
 }
@@ -146,7 +213,9 @@ function exec_module()
 	echo api_page_handle_regenerate($user_id);
 
 	// Read the token after any regenerate, so the page shows the new one.
-	api_page_show_token($db->getApiToken($user_id));
-	api_page_show_commands(api_page_servers_for_user($user_id, $db->isAdmin($user_id)));
+	$token = $db->getApiToken($user_id);
+	api_page_show_token($token);
+	$is_admin = $db->isAdmin($user_id);
+	api_page_show_commands($token, api_page_machines_for_user($user_id, $is_admin), $is_admin);
 }
 ?>

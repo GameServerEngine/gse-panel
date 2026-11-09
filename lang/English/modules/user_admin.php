@@ -118,7 +118,11 @@ define('LANG_api_page_token_regenerated', "A new API token was created. The old 
 define('LANG_api_page_regenerate_failed', "The API token could not be regenerated.");
 define('LANG_api_page_bad_form_token', "The form token is not valid. Reload the page and try again.");
 define('LANG_api_page_commands', "API commands");
-define('LANG_api_page_commands_info', "Choose a server. Replace YOUR_TOKEN with the token shown above, and replace ... with your own values.");
-define('LANG_api_page_select_server', "Select a server...");
+define('LANG_api_page_commands_info', "Choose a machine. Every command is filled in with your token and your server details, so you can copy it as it is.");
+define('LANG_api_page_select_machine', "Select a machine...");
+define('LANG_api_page_machine_commands', "Machine commands");
+define('LANG_api_page_machine_commands_info', "Replace the words that start with ENTER_ with your own value before you run the command.");
+define('LANG_api_page_game_commands', "Game servers");
+define('LANG_api_page_no_games', "There are no game servers with an IP and port on this machine.");
 define('LANG_api_page_no_servers', "You do not have any servers yet, so there are no server commands to show.");
 ?>
