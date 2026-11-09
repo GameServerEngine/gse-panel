@@ -35,9 +35,8 @@
  */
 
 /**
- * Needed for error handling
+ * Error objects are returned on failure. PEAR is not required; see Crypt_XXTEA_Error.
  */
-require_once 'PEAR.php';
 
 // {{{ constants
 
@@ -57,6 +56,24 @@ define('CRYPT_XXTEA_DELTA', 0x9E3779B9);
  * @version    Release: 0.9.0
  * @link       http://pear.php.net/package/Crypt_XXTEA
  */
+/**
+ * Error value returned by Crypt_XXTEA on failure (replaces PEAR_Error).
+ */
+class Crypt_XXTEA_Error
+{
+    public $message;
+
+    public function __construct($message)
+    {
+        $this->message = $message;
+    }
+
+    public function getMessage()
+    {
+        return $this->message;
+    }
+}
+
 class Crypt_XXTEA {
     // {{{ properties
 
@@ -90,12 +107,12 @@ class Crypt_XXTEA {
         } elseif (is_array($key)) {
             $k = $key;
         } else {
-            return PEAR::raiseError('The secret key must be a string or long integer array.');
+            return new Crypt_XXTEA_Error('The secret key must be a string or long integer array.');
         }
         if (count((array)$k) > 4) {
-            return PEAR::raiseError('The secret key cannot be more than 16 characters or 4 long values.');
+            return new Crypt_XXTEA_Error('The secret key cannot be more than 16 characters or 4 long values.');
         } elseif (count((array)$k) == 0) {
-            return PEAR::raiseError('The secret key cannot be empty.');
+            return new Crypt_XXTEA_Error('The secret key cannot be empty.');
         } elseif (count((array)$k) < 4) {
             for ($i = count((array)$k); $i < 4; $i++) {
                 $k[$i] = 0;
@@ -130,14 +147,14 @@ class Crypt_XXTEA {
      */
     function encrypt($plaintext) {
         if ($this->_key == null) {
-            return PEAR::raiseError('Secret key is undefined.');
+            return new Crypt_XXTEA_Error('Secret key is undefined.');
         }
         if (is_string($plaintext)) {
             return $this->_encryptString($plaintext);
         } elseif (is_array($plaintext)) {
             return $this->_encryptArray($plaintext);
         } else {
-            return PEAR::raiseError('The plain text must be a string or long integer array.');
+            return new Crypt_XXTEA_Error('The plain text must be a string or long integer array.');
         }
     }
 
@@ -157,14 +174,14 @@ class Crypt_XXTEA {
      */
     function decrypt($chipertext) {
         if ($this->_key == null) {
-            return PEAR::raiseError('Secret key is undefined.');
+            return new Crypt_XXTEA_Error('Secret key is undefined.');
         }
         if (is_string($chipertext)) {
             return $this->_decryptString($chipertext);
         } elseif (is_array($chipertext)) {
             return $this->_decryptArray($chipertext);
         } else {
-            return PEAR::raiseError('The chiper text must be a string or long integer array.');
+            return new Crypt_XXTEA_Error('The chiper text must be a string or long integer array.');
         }
     }
 

@@ -43,7 +43,7 @@ function ticketHeader($info)
 </div>';
 }
 
-function ticketMessage($messageData, $uid, $loggedInAdmin = false, $ratingsEnabled)
+function ticketMessage($messageData, $uid, $loggedInAdmin = false, $ratingsEnabled = false)
 {
     $date = new DateTime($messageData['date']);
     $tid = $messageData['ticket_id'];

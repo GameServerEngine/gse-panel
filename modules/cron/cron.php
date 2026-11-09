@@ -257,7 +257,7 @@ function exec_module()
 <?php
 	if ( !empty($remote_servers_offline) )
 	{
-		$offline_servers = server . " (" . offline . "):";
+		$offline_servers = LANG_server . " (" . LANG_offline . "):";
 		foreach ((array)$remote_servers_offline as $remote_server_offline)
 		{
 			$offline_servers .= " " . $remote_server_offline['remote_server_name'] . ",";

@@ -261,7 +261,7 @@ function get_remote_server_selector($r_servers, $remote_servers_offline, $remote
 	foreach ((array)$r_servers as $r_server)
 	{
 		$selected = ($remote_server_id and $remote_server_id == $r_server['remote_server_id']) ? 'selected="selected"' : '';
-		$offline = isset($remote_servers_offline[$r_server['remote_server_id']]) ? ' (' . offline . ')' : '';
+		$offline = isset($remote_servers_offline[$r_server['remote_server_id']]) ? ' (' . LANG_offline . ')' : '';
 		$select_rserver .= "<option value='". $r_server['remote_server_id'] . "' $selected>" . $r_server['remote_server_name'] . "$offline</option>\n";
 	}
 	return $select_rserver .= "</select>\n";
