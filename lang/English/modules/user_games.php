@@ -45,6 +45,7 @@ define('LANG_change_home_info', "The location of the installed game server. Exam
 define('LANG_game_server_name', "Game server name");
 define('LANG_change_name_info', "The name of the server to help users to identify it.");
 define('LANG_game_control_password', "Game control password");
+define('LANG_expert_mode', "Expert mode");
 define('LANG_change_control_password_info', "Control password is for example rcon password.");
 define('LANG_available_mods', "Available mods");
 define('LANG_note_no_mods', "No mod(s) available for this game.");

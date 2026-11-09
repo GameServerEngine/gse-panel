@@ -709,7 +709,13 @@ function billing_run_provision_body()
 			// Status values: Active (provisioned & current), Invoiced (renewal invoice open),
 			//                 Expired (past due and awaiting deletion)
 			// end_date / next_invoice_date: when the next renewal invoice should be generated
-			if ($already_provisioned)
+			$is_open_ended_demo = (($order['payment_txid'] ?? '') === 'admin-created') && empty($order['end_date']);
+			if ($is_open_ended_demo)
+			{
+				// Admin-created demo: no expiration until one is set on the configure page.
+				$end_date_str = null;
+			}
+			elseif ($already_provisioned)
 			{
 				$existing_end = strtotime((string)($order['end_date'] ?? ''));
 				if ($existing_end === false || $existing_end <= 0) {
@@ -732,6 +738,9 @@ function billing_run_provision_body()
 			}
 			if (!isset($end_date_str)) {
 				$end_date_str = date('Y-m-d H:i:s', $end_date);
+			}
+			if ($is_open_ended_demo) {
+				$end_date_str = null;
 			}
 
 			if ($home_id <= 0) {

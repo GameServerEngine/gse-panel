@@ -419,9 +419,15 @@ class BillingLifecycleService
             if (!$order) {
                 throw new RuntimeException('order_not_found');
             }
-            $endDate = (string)($context['end_date'] ?? $order['end_date'] ?? date('Y-m-d H:i:s'));
-            if (strtotime($endDate) === false) {
-                $endDate = self::addPeriod(date('Y-m-d H:i:s'), $order);
+            $endSource = array_key_exists('end_date', $context) ? $context['end_date'] : ($order['end_date'] ?? null);
+            if ($endSource === null || $endSource === '') {
+                // Open-ended (demo) order: keep it without an expiration.
+                $endDate = null;
+            } else {
+                $endDate = (string)$endSource;
+                if (strtotime($endDate) === false) {
+                    $endDate = self::addPeriod(date('Y-m-d H:i:s'), $order);
+                }
             }
 
             $orderUpdate = [
