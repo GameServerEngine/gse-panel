@@ -24,7 +24,7 @@
 
 define("DEFAULT_REFRESH_TIME","2");
 
-class GSPView {
+class View {
 
     private string $meta = '';
     private string $title = 'Gameserver Engine Panel';
@@ -50,9 +50,9 @@ class GSPView {
 	function menu(){}
 
     function printView($cleared = false, $dataType = "html") {
-        global $db, $GSPLangPre;
+        global $db, $LangPre;
 
-        if ( is_object($db) && array_key_exists( "GSPDatabase", class_parents($db) ) ) {
+        if ( is_object($db) && array_key_exists( "Database", class_parents($db) ) ) {
             $panel_settings = $db->getSettings();
         }
 
@@ -101,9 +101,9 @@ class GSPView {
 		$this->title = $title == "" ? $this->title : $this->title . " [$title]";
 
 		// Dump defined constants to json (for language javascript)
-		$jsonStrConsts = getGSPLangConstantsJSON();
+		$jsonStrConsts = getLangConstantsJSON();
 		if($jsonStrConsts !== false){
-			$this->header_code .= '<script type="text/javascript">var langConsts = ' . $jsonStrConsts . ';' . "\n" . 'var langConstPrefix = "' . $GSPLangPre . '";</script>' . "\n";
+			$this->header_code .= '<script type="text/javascript">var langConsts = ' . $jsonStrConsts . ';' . "\n" . 'var langConstPrefix = "' . $LangPre . '";</script>' . "\n";
 		}
 
 		// Include jQuery, jQuery UI, and our global CSS file in the header code
@@ -131,7 +131,7 @@ class GSPView {
 		$javascript .= '</script>' . "\n";
 
 		// Include global JS for modules
-		if(is_object($db) && array_key_exists("GSPDatabase", class_parents($db))){
+		if(is_object($db) && array_key_exists("Database", class_parents($db))){
 			foreach($db->getInstalledModules() as $m)
 			{
 				$global_js_file = 'js/' . MODULES . "{$m['folder']}_global.js";
@@ -215,10 +215,10 @@ class GSPView {
 
         $footer = "";
 
-        if ( is_object($db) && array_key_exists( "GSPDatabase", class_parents($db) ) ) {
+        if ( is_object($db) && array_key_exists( "Database", class_parents($db) ) ) {
             $footer .= "<div class=\"footer center\">";
             $footer .= get_lang_f('cur_theme', !empty($_SESSION['users_theme']) ? $_SESSION['users_theme'] : @$panel_settings['theme']) . " - " . $db->getNbOfQueries()." ".get_lang('queries_executed');
-            $footer .= "<br />".get_lang('copyright')." &copy; <a href=\"\">Gameserver Engine</a> " . date("Y") . " - ".get_lang('all_rights_reserved')." - <span class='versionInfo'>".get_lang('show_version')."</span><br /><div class='inline-block GSPVersionArea'><span class='version hide'>" . get_lang('version') . ":</span>&nbsp; <span class='hide versionNumber'>".@$panel_settings['gsp_version']."</span> <span class='copyVersionResult' lang='" . get_lang('copied') . "'></span></div></div>";
+            $footer .= "<br />".get_lang('copyright')." &copy; <a href=\"\">Gameserver Engine</a> " . date("Y") . " - ".get_lang('all_rights_reserved')." - <span class='versionInfo'>".get_lang('show_version')."</span><br /><div class='inline-block VersionArea'><span class='version hide'>" . get_lang('version') . ":</span>&nbsp; <span class='hide versionNumber'>".@$panel_settings['panel_version']."</span> <span class='copyVersionResult' lang='" . get_lang('copied') . "'></span></div></div>";
         }
         else
         {
@@ -229,13 +229,13 @@ class GSPView {
         $footer .= '<div class="mangificWrapper hide"><div class="white-popup"><div class="magnificTitle"></div><div class="magnificSubTitle"></div><div class="magnificContentsDiv"></div><button title="Close (Esc)" type="button" class="mfp-close">&times;</button></div></div>';
 
 		// GSP version descriptor (reads version.json written by the update system)
-		$gsp_vfile = dirname(__FILE__) . '/../version.json';
-		if (file_exists($gsp_vfile)) {
-			$gsp_vdata = json_decode(file_get_contents($gsp_vfile), true);
-			if (is_array($gsp_vdata)) {
-				$_vtype   = $gsp_vdata['installed_type']   ?? 'unknown';
-				$_vsource = $gsp_vdata['installed_source'] ?? '';
-				$_vcommit = $gsp_vdata['installed_commit'] ?? '';
+		$vfile = dirname(__FILE__) . '/../version.json';
+		if (file_exists($vfile)) {
+			$vdata = json_decode(file_get_contents($vfile), true);
+			if (is_array($vdata)) {
+				$_vtype   = $vdata['installed_type']   ?? 'unknown';
+				$_vsource = $vdata['installed_source'] ?? '';
+				$_vcommit = $vdata['installed_commit'] ?? '';
 				if ($_vtype === 'cutting-edge')    $type_label = 'Cutting Edge';
 				elseif ($_vtype === 'development') $type_label = 'Development';
 				elseif ($_vtype === 'release')     $type_label = 'Release';

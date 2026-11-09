@@ -28,9 +28,9 @@ function scm_ensure_workshop_schema($db)
 	}
 	$schema_checked = true;
 
-	$db->query("ALTER TABLE `".GSP_DB_PREFIX."addons` MODIFY `addon_type` VARCHAR(32) NOT NULL");
+	$db->query("ALTER TABLE `".TABLE_PREFIX_PLACEHOLDER."addons` MODIFY `addon_type` VARCHAR(32) NOT NULL");
 	$ok = (bool)$db->query(
-		"CREATE TABLE IF NOT EXISTS `".GSP_DB_PREFIX."server_content_workshop` (
+		"CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."server_content_workshop` (
 			`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
 			`home_id` INT NOT NULL,
 			`home_cfg_id` INT NOT NULL,
@@ -57,7 +57,7 @@ function scm_ensure_workshop_schema($db)
 	);
 
 	// Idempotently add content_id column (db_version 6).
-	$wk_table = $db->realEscapeSingle(GSP_DB_PREFIX . 'server_content_workshop');
+	$wk_table = $db->realEscapeSingle(TABLE_PREFIX_PLACEHOLDER . 'server_content_workshop');
 	$col_check = $db->resultQuery(
 		"SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
 		  WHERE TABLE_SCHEMA = DATABASE()
@@ -66,7 +66,7 @@ function scm_ensure_workshop_schema($db)
 	);
 	if (empty($col_check)) {
 		$db->query(
-			"ALTER TABLE `".GSP_DB_PREFIX."server_content_workshop`
+			"ALTER TABLE `".TABLE_PREFIX_PLACEHOLDER."server_content_workshop`
 			 ADD COLUMN `content_id` INT NULL AFTER `id`,
 			 ADD KEY `idx_content_id` (`content_id`)"
 		);
@@ -89,12 +89,12 @@ function scm_ensure_workshop_schema($db)
 			    AND COLUMN_NAME  = '{$escaped_col}'"
 		);
 		if (empty($col_check)) {
-			$db->query("ALTER TABLE `".GSP_DB_PREFIX."server_content_workshop` ADD COLUMN `{$col}` {$definition}");
+			$db->query("ALTER TABLE `".TABLE_PREFIX_PLACEHOLDER."server_content_workshop` ADD COLUMN `{$col}` {$definition}");
 		}
 	}
 
 	$db->query(
-		"CREATE TABLE IF NOT EXISTS `".GSP_DB_PREFIX."server_content_workshop_catalog` (
+		"CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."server_content_workshop_catalog` (
 			`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
 			`workshop_id` VARCHAR(64) NOT NULL,
 			`app_id` VARCHAR(32) NOT NULL DEFAULT '',
@@ -115,7 +115,7 @@ function scm_ensure_workshop_schema($db)
 			KEY `idx_last_installed` (`last_installed`)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
 	);
-	$catalog_table = $db->realEscapeSingle(GSP_DB_PREFIX . 'server_content_workshop_catalog');
+	$catalog_table = $db->realEscapeSingle(TABLE_PREFIX_PLACEHOLDER . 'server_content_workshop_catalog');
 	foreach (array(
 		'author' => "VARCHAR(255) NULL AFTER `title`",
 		'thumbnail_url' => "VARCHAR(512) NULL AFTER `author`",
@@ -128,7 +128,7 @@ function scm_ensure_workshop_schema($db)
 			    AND COLUMN_NAME  = '{$escaped_col}'"
 		);
 		if (empty($col_check)) {
-			$db->query("ALTER TABLE `".GSP_DB_PREFIX."server_content_workshop_catalog` ADD COLUMN `{$col}` {$definition}");
+			$db->query("ALTER TABLE `".TABLE_PREFIX_PLACEHOLDER."server_content_workshop_catalog` ADD COLUMN `{$col}` {$definition}");
 		}
 	}
 
@@ -155,7 +155,7 @@ function scm_get_workshop_saved_count($db, $home_id)
 		return 0;
 	}
 	$rows = $db->resultQuery(
-		"SELECT COUNT(*) AS cnt FROM `".GSP_DB_PREFIX."server_content_workshop` WHERE home_id=".$home_id." AND install_state<>'removed'"
+		"SELECT COUNT(*) AS cnt FROM `".TABLE_PREFIX_PLACEHOLDER."server_content_workshop` WHERE home_id=".$home_id." AND install_state<>'removed'"
 	);
 	if (!is_array($rows) || !isset($rows[0]['cnt'])) {
 		return 0;
@@ -170,7 +170,7 @@ function scm_get_workshop_rows($db, $home_id)
 		return array();
 	}
 	$rows = $db->resultQuery(
-		"SELECT * FROM `".GSP_DB_PREFIX."server_content_workshop` WHERE home_id=".$home_id." ORDER BY load_order ASC, created_at DESC, workshop_item_id ASC"
+		"SELECT * FROM `".TABLE_PREFIX_PLACEHOLDER."server_content_workshop` WHERE home_id=".$home_id." ORDER BY load_order ASC, created_at DESC, workshop_item_id ASC"
 	);
 	return is_array($rows) ? $rows : array();
 }
@@ -204,7 +204,7 @@ function scm_workshop_set_enabled($db, $home_id, array $item_ids, $enabled)
 		$escaped_ids[] = "'" . $db->realEscapeSingle((string)$item_id) . "'";
 	}
 	return (bool)$db->query(
-		"UPDATE `".GSP_DB_PREFIX."server_content_workshop`
+		"UPDATE `".TABLE_PREFIX_PLACEHOLDER."server_content_workshop`
 		    SET enabled=" . ((int)$enabled ? 1 : 0) . ", updated_at=NOW()
 		  WHERE home_id=".(int)$home_id." AND workshop_item_id IN (".implode(",", $escaped_ids).")"
 	);
@@ -228,7 +228,7 @@ function scm_workshop_set_update_policy($db, $home_id, array $item_ids, $policy)
 		$escaped_ids[] = "'" . $db->realEscapeSingle((string)$item_id) . "'";
 	}
 	return (bool)$db->query(
-		"UPDATE `".GSP_DB_PREFIX."server_content_workshop`
+		"UPDATE `".TABLE_PREFIX_PLACEHOLDER."server_content_workshop`
 		    SET update_policy='" . $db->realEscapeSingle($policy) . "',
 		        pending_action=" . ($pending === '' ? "NULL" : "'" . $db->realEscapeSingle($pending) . "'") . ",
 		        updated_at=NOW()
@@ -281,7 +281,7 @@ function scm_get_workshop_catalog_rows($db, $app_id = '', $sort = 'last_installe
 		$limit = 50;
 	}
 	$rows = $db->resultQuery(
-		"SELECT * FROM `".GSP_DB_PREFIX."server_content_workshop_catalog`
+		"SELECT * FROM `".TABLE_PREFIX_PLACEHOLDER."server_content_workshop_catalog`
 		  {$where}
 		  ORDER BY " . scm_workshop_catalog_sort_sql($sort) . "
 		  LIMIT {$limit}"
@@ -377,7 +377,7 @@ function scm_workshop_record_catalog_items($db, $workshop_app_id, array $item_id
 		}
 		$install_path = isset($detail['target_path_resolved']) ? (string)$detail['target_path_resolved'] : '';
 		$db->query(
-			"INSERT INTO `".GSP_DB_PREFIX."server_content_workshop_catalog`
+			"INSERT INTO `".TABLE_PREFIX_PLACEHOLDER."server_content_workshop_catalog`
 				(workshop_id, app_id, title, author, thumbnail_url, install_count, first_seen, last_installed, last_updated, game_key, local_cache_path)
 			 VALUES (
 				'".$db->realEscapeSingle($item_id)."',
@@ -482,8 +482,8 @@ function scm_path_is_under_home($home_path, $candidate_path)
 	if ($home_path === '' || $candidate_path === '') {
 		return false;
 	}
-	if (function_exists('gsp_remote_path_has_parent_segment') &&
-		(gsp_remote_path_has_parent_segment($home_path) || gsp_remote_path_has_parent_segment($candidate_path))) {
+	if (function_exists('remote_path_has_parent_segment') &&
+		(remote_path_has_parent_segment($home_path) || remote_path_has_parent_segment($candidate_path))) {
 		return false;
 	}
 	return strpos($candidate_path.'/', $home_path.'/') === 0;
@@ -492,7 +492,7 @@ function scm_path_is_under_home($home_path, $candidate_path)
 function scm_get_workshop_manifest_path(array $home_info)
 {
 	$home_path = rtrim(clean_path((string)$home_info['home_path']), '/');
-	$manifest_path = clean_path($home_path . '/gsp_server_content/workshop_manifest.json');
+	$manifest_path = clean_path($home_path . '/server_content/workshop_manifest.json');
 	if (!scm_path_is_under_home($home_path, $manifest_path)) {
 		return false;
 	}
@@ -579,7 +579,7 @@ function scm_get_agent_managed_workshop_script_path(array $home_info)
 {
 	$home_path = rtrim(clean_path((string)$home_info['home_path']), '/');
 	$filename = 'workshop_job_' . date('Ymd_His') . '_' . mt_rand(1000, 9999) . '.sh';
-	$remote_path = clean_path($home_path . '/gsp_server_content/jobs/workshop/' . $filename);
+	$remote_path = clean_path($home_path . '/server_content/jobs/workshop/' . $filename);
 	if (!scm_path_is_under_home($home_path, $remote_path)) {
 		return false;
 	}
@@ -728,7 +728,7 @@ function scm_resolve_server_bot_runtime_fields(array $fields, array $home_info, 
 
 function scm_seed_server_bot_catalog($db)
 {
-	$prefix = GSP_DB_PREFIX;
+	$prefix = TABLE_PREFIX_PLACEHOLDER;
 	$packages = array(
 		array(
 			'name' => 'BEC - BattlEye Extended Controls',
@@ -1039,7 +1039,7 @@ function scm_build_workshop_runtime_context($db, array $home_info, $server_xml, 
 		return false;
 	}
 	$path_error = '';
-	$home_info = gsp_with_game_root($home_info, $server_xml, $path_error);
+	$home_info = with_game_root($home_info, $server_xml, $path_error);
 	if ($home_info === false) {
 		$message = 'Invalid game directory for this server: ' . $path_error;
 		return false;
@@ -1138,7 +1138,7 @@ function scm_build_placeholder_map(array $home_info, array $server_context = arr
 	$game_root = isset($home_info['game_root']) ? rtrim(clean_path((string)$home_info['game_root']), '/') : '';
 	if ($game_root === '' && isset($home_info['game_key'])) {
 		$path_error = '';
-		$resolved_game_root = gsp_resolve_game_root($management_home, (string)$home_info['game_key'], $path_error);
+		$resolved_game_root = resolve_game_root($management_home, (string)$home_info['game_key'], $path_error);
 		if ($resolved_game_root !== false) {
 			$game_root = $resolved_game_root;
 		}
@@ -1256,7 +1256,7 @@ function scm_ensure_phase2_schema($db)
 		return true;
 	}
 	$phase2_checked = true;
-	$prefix = GSP_DB_PREFIX;
+	$prefix = TABLE_PREFIX_PLACEHOLDER;
 
 	// ── Extend addons table ───────────────────────────────────────────────────
 	$new_columns = array(
@@ -1392,8 +1392,8 @@ function scm_get_manifest_rows($db, $home_id)
 		        a.bot_working_dir AS addon_bot_working_dir,
 		        a.bot_executable AS addon_bot_executable,
 		        a.bot_arguments AS addon_bot_arguments
-		   FROM `".GSP_DB_PREFIX."server_content_manifest` m
-		   LEFT JOIN `".GSP_DB_PREFIX."addons` a ON a.addon_id = m.addon_id
+		   FROM `".TABLE_PREFIX_PLACEHOLDER."server_content_manifest` m
+		   LEFT JOIN `".TABLE_PREFIX_PLACEHOLDER."addons` a ON a.addon_id = m.addon_id
 		  WHERE m.home_id = {$home_id}
 		  ORDER BY m.install_state ASC, m.installed_at DESC"
 	);
@@ -1463,7 +1463,7 @@ function scm_record_install_done($db, $history_id, $state = 'installed', $result
 		return false;
 	}
 	return (bool)$db->query(
-		"UPDATE `".GSP_DB_PREFIX."server_content_install_history`
+		"UPDATE `".TABLE_PREFIX_PLACEHOLDER."server_content_install_history`
 		    SET install_state = '{$state}',
 		        result_code   = {$result_code},
 		        log_output    = '{$log_output}',
@@ -1508,7 +1508,7 @@ function scm_upsert_manifest($db, $home_id, $addon_id, array $fields = array())
 	}
 
 	return (bool)$db->query(
-		"INSERT INTO `".GSP_DB_PREFIX."server_content_manifest`
+		"INSERT INTO `".TABLE_PREFIX_PLACEHOLDER."server_content_manifest`
 		    (`home_id`,`addon_id`,`content_type`,`install_method`,`content_version`,`install_state`,`enabled`,`pending_action`,`install_path`,`source_url`,`checksum_sha256`,`installed_by`,`installed_at`,`updated_at`,`bot_working_dir`,`bot_executable`,`bot_arguments`)
 		 VALUES
 		    ({$home_id},{$addon_id},'{$content_type}','{$install_method}','{$content_version}','{$install_state}',{$enabled}," . ($pending_action === '' ? "NULL" : "'{$pending_action}'") . ",'{$install_path}','{$source_url}','{$checksum}',{$installed_by},NOW(),NOW(),'{$bot_working_dir}','{$bot_executable}','{$bot_arguments}')
@@ -1532,7 +1532,7 @@ function scm_upsert_manifest($db, $home_id, $addon_id, array $fields = array())
 
 function scm_server_bot_generated_marker()
 {
-	return '# GSE_SERVER_CONTENT_SERVER_BOT_GENERATED';
+	return '# SERVER_CONTENT_SERVER_BOT_GENERATED';
 }
 
 function scm_server_bot_also_run_path(array $home_info, $server_xml)
@@ -1673,8 +1673,8 @@ function scm_get_enabled_server_bot_rows($db, $home_id)
 		        a.bot_working_dir AS addon_bot_working_dir,
 		        a.bot_executable AS addon_bot_executable,
 		        a.bot_arguments AS addon_bot_arguments
-		   FROM `".GSP_DB_PREFIX."server_content_manifest` m
-		   INNER JOIN `".GSP_DB_PREFIX."addons` a ON a.addon_id = m.addon_id
+		   FROM `".TABLE_PREFIX_PLACEHOLDER."server_content_manifest` m
+		   INNER JOIN `".TABLE_PREFIX_PLACEHOLDER."addons` a ON a.addon_id = m.addon_id
 		  WHERE m.home_id = {$home_id}
 		    AND (m.enabled = 1 OR m.enabled IS NULL)
 		    AND m.install_state IN ('installed','updated')
@@ -1711,8 +1711,8 @@ function scm_server_bot_run_optional_script($remote, array $home_info, $script, 
 		$message = 'Unable to resolve server home for Server Bot script.';
 		return false;
 	}
-	$output = $remote->exec("cd " . escapeshellarg($home_path) . " && /bin/bash -lc " . escapeshellarg($script) . " ; echo __GSP_SCRIPT_EXIT:$?");
-	if (!is_string($output) || !preg_match('/__GSP_SCRIPT_EXIT:(\d+)/', $output, $matches) || (int)$matches[1] !== 0) {
+	$output = $remote->exec("cd " . escapeshellarg($home_path) . " && /bin/bash -lc " . escapeshellarg($script) . " ; echo __SCRIPT_EXIT:$?");
+	if (!is_string($output) || !preg_match('/__SCRIPT_EXIT:(\d+)/', $output, $matches) || (int)$matches[1] !== 0) {
 		$message = 'Server Bot script failed.';
 		return false;
 	}
@@ -1725,7 +1725,7 @@ function scm_server_bot_resolve_install_path(array $home_info, $install_folder)
 	$game_root = rtrim(clean_path((string)(isset($home_info['game_root']) ? $home_info['game_root'] : '')), '/');
 	if ($game_root === '' && isset($home_info['game_key'])) {
 		$path_error = '';
-		$resolved_game_root = gsp_resolve_game_root($home_path, (string)$home_info['game_key'], $path_error);
+		$resolved_game_root = resolve_game_root($home_path, (string)$home_info['game_key'], $path_error);
 		if ($resolved_game_root !== false) {
 			$game_root = $resolved_game_root;
 		}
@@ -1784,9 +1784,9 @@ function scm_server_bot_run_download_action($remote, array $home_info, array $ad
 	$cmd = "mkdir -p " . escapeshellarg($install_path)
 		. " && (curl -fsSL " . escapeshellarg($url) . " -o " . escapeshellarg($target)
 		. " || wget -q " . escapeshellarg($url) . " -O " . escapeshellarg($target) . ")"
-		. " && chmod 755 " . escapeshellarg($target) . " >/dev/null 2>&1 || true; test -f " . escapeshellarg($target) . " && echo __GSP_DOWNLOAD_OK";
+		. " && chmod 755 " . escapeshellarg($target) . " >/dev/null 2>&1 || true; test -f " . escapeshellarg($target) . " && echo __DOWNLOAD_OK";
 	$output = $remote->exec($cmd);
-	if (!is_string($output) || strpos($output, '__GSP_DOWNLOAD_OK') === false) {
+	if (!is_string($output) || strpos($output, '__DOWNLOAD_OK') === false) {
 		$message = 'Server Bot download failed.';
 		return false;
 	}
@@ -1813,8 +1813,8 @@ function scm_server_bot_manifest_action($db, $remote, array $home_info, $server_
 		        a.path AS addon_path,
 		        a.content_version AS addon_content_version,
 		        a.checksum_sha256 AS addon_checksum_sha256
-		   FROM `".GSP_DB_PREFIX."server_content_manifest` m
-		   INNER JOIN `".GSP_DB_PREFIX."addons` a ON a.addon_id = m.addon_id
+		   FROM `".TABLE_PREFIX_PLACEHOLDER."server_content_manifest` m
+		   INNER JOIN `".TABLE_PREFIX_PLACEHOLDER."addons` a ON a.addon_id = m.addon_id
 		  WHERE m.id = {$manifest_id} AND m.home_id = {$home_id}
 		  LIMIT 1"
 	);
@@ -1879,14 +1879,14 @@ function scm_server_bot_manifest_action($db, $remote, array $home_info, $server_
 		return false;
 	}
 	if ($action === 'enable') {
-		$db_ok = $db->query("UPDATE `".GSP_DB_PREFIX."server_content_manifest` SET enabled=1, install_state='installed', pending_action=NULL, updated_at=NOW() WHERE id={$manifest_id}");
+		$db_ok = $db->query("UPDATE `".TABLE_PREFIX_PLACEHOLDER."server_content_manifest` SET enabled=1, install_state='installed', pending_action=NULL, updated_at=NOW() WHERE id={$manifest_id}");
 	}
 	elseif ($action === 'disable') {
-		$db_ok = $db->query("UPDATE `".GSP_DB_PREFIX."server_content_manifest` SET enabled=0, install_state='disabled', pending_action=NULL, updated_at=NOW() WHERE id={$manifest_id}");
+		$db_ok = $db->query("UPDATE `".TABLE_PREFIX_PLACEHOLDER."server_content_manifest` SET enabled=0, install_state='disabled', pending_action=NULL, updated_at=NOW() WHERE id={$manifest_id}");
 	}
 	elseif ($action === 'update') {
 		$db_ok = $db->query(
-			"UPDATE `".GSP_DB_PREFIX."server_content_manifest`
+			"UPDATE `".TABLE_PREFIX_PLACEHOLDER."server_content_manifest`
 			    SET install_state='updated',
 			        content_version='".$db->realEscapeSingle(isset($row['addon_content_version']) ? $row['addon_content_version'] : $row['content_version'])."',
 			        checksum_sha256='".$db->realEscapeSingle(isset($row['addon_checksum_sha256']) ? $row['addon_checksum_sha256'] : $row['checksum_sha256'])."',
@@ -1906,7 +1906,7 @@ function scm_server_bot_manifest_action($db, $remote, array $home_info, $server_
 			scm_regenerate_server_bot_also_run($db, $remote, $home_info, $server_xml, $error);
 			return false;
 		}
-		$db_ok = $db->query("DELETE FROM `".GSP_DB_PREFIX."server_content_manifest` WHERE id={$manifest_id} AND home_id={$home_id}");
+		$db_ok = $db->query("DELETE FROM `".TABLE_PREFIX_PLACEHOLDER."server_content_manifest` WHERE id={$manifest_id} AND home_id={$home_id}");
 	}
 	else {
 		$message = 'Invalid Server Bot action.';

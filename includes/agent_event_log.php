@@ -1,6 +1,6 @@
 <?php
 
-function gsp_agent_event_allowed_types() {
+function agent_event_allowed_types() {
 	return array(
 		'server_process_stopped',
 		'server_process_started',
@@ -24,16 +24,16 @@ function gsp_agent_event_allowed_types() {
 	);
 }
 
-function gsp_agent_event_allowed_severities() {
+function agent_event_allowed_severities() {
 	return array('info', 'notice', 'warning', 'error', 'critical', 'success');
 }
 
-function gsp_agent_event_header($name) {
+function agent_event_header($name) {
 	$key = 'HTTP_' . strtoupper(str_replace('-', '_', $name));
 	return isset($_SERVER[$key]) ? $_SERVER[$key] : '';
 }
 
-function gsp_agent_event_json_response($status, $payload) {
+function agent_event_json_response($status, $payload) {
 	if (!headers_sent()) {
 		header('Content-Type: application/json; charset=UTF-8', true, $status);
 	}
@@ -41,18 +41,18 @@ function gsp_agent_event_json_response($status, $payload) {
 	exit;
 }
 
-function gsp_agent_event_fail($status, $code, $message) {
+function agent_event_fail($status, $code, $message) {
 	error_log("GSP agent event rejected: $code $message");
-	gsp_agent_event_json_response($status, array('ok' => false, 'error' => $code));
+	agent_event_json_response($status, array('ok' => false, 'error' => $code));
 }
 
-function gsp_agent_event_text($value, $max = 255) {
+function agent_event_text($value, $max = 255) {
 	$value = is_scalar($value) ? (string)$value : '';
 	$value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $value);
 	return substr($value, 0, $max);
 }
 
-function gsp_agent_event_validate($event) {
+function agent_event_validate($event) {
 	$errors = array();
 	if (!is_array($event)) {
 		return array('payload must be an object');
@@ -63,10 +63,10 @@ function gsp_agent_event_validate($event) {
 	if (empty($event['timestamp_utc'])) {
 		$errors[] = 'missing timestamp_utc';
 	}
-	if (empty($event['event_type']) || !in_array($event['event_type'], gsp_agent_event_allowed_types(), true)) {
+	if (empty($event['event_type']) || !in_array($event['event_type'], agent_event_allowed_types(), true)) {
 		$errors[] = 'invalid event_type';
 	}
-	if (empty($event['severity']) || !in_array($event['severity'], gsp_agent_event_allowed_severities(), true)) {
+	if (empty($event['severity']) || !in_array($event['severity'], agent_event_allowed_severities(), true)) {
 		$errors[] = 'invalid severity';
 	}
 	if (isset($event['remote_server_id']) && $event['remote_server_id'] !== '' && !is_numeric($event['remote_server_id'])) {
@@ -78,28 +78,28 @@ function gsp_agent_event_validate($event) {
 	return $errors;
 }
 
-function gsp_agent_event_authenticate($db, $raw_body) {
-	$remote_server_id = gsp_agent_event_header('X-GSP-Agent-Id');
-	$timestamp = gsp_agent_event_header('X-GSP-Agent-Timestamp');
-	$signature = gsp_agent_event_header('X-GSP-Agent-Signature');
+function agent_event_authenticate($db, $raw_body) {
+	$remote_server_id = agent_event_header('X-GSP-Agent-Id');
+	$timestamp = agent_event_header('X-GSP-Agent-Timestamp');
+	$signature = agent_event_header('X-GSP-Agent-Signature');
 	if (!is_numeric($remote_server_id) || !preg_match('/^\d{10}$/', $timestamp)) {
-		gsp_agent_event_fail(401, 'auth_headers_missing', 'Missing or invalid agent authentication headers.');
+		agent_event_fail(401, 'auth_headers_missing', 'Missing or invalid agent authentication headers.');
 	}
 	if (abs(time() - (int)$timestamp) > 300) {
-		gsp_agent_event_fail(401, 'stale_timestamp', 'Agent event timestamp outside allowed request window.');
+		agent_event_fail(401, 'stale_timestamp', 'Agent event timestamp outside allowed request window.');
 	}
 	$remote = $db->getRemoteServer((int)$remote_server_id);
 	if (!$remote || empty($remote['encryption_key'])) {
-		gsp_agent_event_fail(401, 'unknown_agent', 'Unknown remote server.');
+		agent_event_fail(401, 'unknown_agent', 'Unknown remote server.');
 	}
 	$expected = 'sha256=' . hash_hmac('sha256', $timestamp . '.' . $raw_body, $remote['encryption_key']);
 	if (!hash_equals($expected, $signature)) {
-		gsp_agent_event_fail(401, 'bad_signature', 'Agent signature verification failed.');
+		agent_event_fail(401, 'bad_signature', 'Agent signature verification failed.');
 	}
 	return $remote;
 }
 
-function gsp_agent_event_home_belongs_to_remote($db, $home_id, $remote_server_id) {
+function agent_event_home_belongs_to_remote($db, $home_id, $remote_server_id) {
 	if (!is_numeric($home_id) || (int)$home_id <= 0) {
 		return true;
 	}
@@ -110,12 +110,12 @@ function gsp_agent_event_home_belongs_to_remote($db, $home_id, $remote_server_id
 	return (int)$home['remote_server_id'] === (int)$remote_server_id;
 }
 
-function gsp_agent_event_format_message($event) {
-	$name = gsp_agent_event_text($event['game_server_name'] ?? $event['server_name'] ?? $event['game_name'] ?? 'server', 120);
+function agent_event_format_message($event) {
+	$name = agent_event_text($event['game_server_name'] ?? $event['server_name'] ?? $event['game_name'] ?? 'server', 120);
 	$home_id = isset($event['home_id']) && $event['home_id'] !== '' ? (int)$event['home_id'] : 0;
-	$port = gsp_agent_event_text($event['game_port'] ?? $event['port'] ?? '', 16);
-	$pid = gsp_agent_event_text($event['detected_process_pid'] ?? $event['tracked_pid'] ?? $event['pid'] ?? '', 32);
-	$attempt = gsp_agent_event_text($event['restart_attempt_number'] ?? '', 16);
+	$port = agent_event_text($event['game_port'] ?? $event['port'] ?? '', 16);
+	$pid = agent_event_text($event['detected_process_pid'] ?? $event['tracked_pid'] ?? $event['pid'] ?? '', 32);
+	$attempt = agent_event_text($event['restart_attempt_number'] ?? '', 16);
 	$base = "Agent event for server '$name'";
 	if ($home_id > 0) {
 		$base .= " (home ID $home_id)";
@@ -154,37 +154,37 @@ function gsp_agent_event_format_message($event) {
 		case 'restart_attempt_limit_reached':
 			return "$base: restart attempt limit reached.";
 		case 'agent_event_delivery_failed':
-			return "Agent event delivery failed on " . gsp_agent_event_text($event['agent_hostname'] ?? 'agent', 120) . ".";
+			return "Agent event delivery failed on " . agent_event_text($event['agent_hostname'] ?? 'agent', 120) . ".";
 		case 'agent_event_queue_replayed':
-			return "Agent event queue replayed by " . gsp_agent_event_text($event['agent_hostname'] ?? 'agent', 120) . ".";
+			return "Agent event queue replayed by " . agent_event_text($event['agent_hostname'] ?? 'agent', 120) . ".";
 	}
-	return $base . ': ' . gsp_agent_event_text($event['message'] ?? $event['event_type'], 250);
+	return $base . ': ' . agent_event_text($event['message'] ?? $event['event_type'], 250);
 }
 
-function gsp_agent_event_insert($db, $event, $remote) {
+function agent_event_insert($db, $event, $remote) {
 	$remote_server_id = (int)$remote['remote_server_id'];
 	$home_id = isset($event['home_id']) && is_numeric($event['home_id']) ? (int)$event['home_id'] : null;
-	if (!gsp_agent_event_home_belongs_to_remote($db, $home_id, $remote_server_id)) {
-		gsp_agent_event_fail(403, 'home_remote_mismatch', 'Home does not belong to reporting remote server.');
+	if (!agent_event_home_belongs_to_remote($db, $home_id, $remote_server_id)) {
+		agent_event_fail(403, 'home_remote_mismatch', 'Home does not belong to reporting remote server.');
 	}
 	if ($db->loggerEventExists($event['event_uuid'])) {
 		return array('ok' => true, 'duplicate' => true);
 	}
-	$agent_label = gsp_agent_event_text($event['agent_hostname'] ?? $remote['remote_server_name'] ?? $remote['agent_ip'] ?? 'agent', 120);
-	$actor = trim(gsp_agent_event_text(($event['agent_os'] ?? 'Agent') . ': ' . $agent_label, 120));
+	$agent_label = agent_event_text($event['agent_hostname'] ?? $remote['remote_server_name'] ?? $remote['agent_ip'] ?? 'agent', 120);
+	$actor = trim(agent_event_text(($event['agent_os'] ?? 'Agent') . ': ' . $agent_label, 120));
 	$metadata = $event;
 	unset($metadata['password'], $metadata['steam_password'], $metadata['encryption_key'], $metadata['database_password']);
-	$db->loggerEx(gsp_agent_event_format_message($event), array(
+	$db->loggerEx(agent_event_format_message($event), array(
 		'user_id' => 0,
 		'ip' => $agent_label,
 		'source_type' => 'agent',
 		'category' => 'server_lifecycle',
-		'event_type' => gsp_agent_event_text($event['event_type'], 80),
-		'severity' => gsp_agent_event_text($event['severity'], 20),
+		'event_type' => agent_event_text($event['event_type'], 80),
+		'severity' => agent_event_text($event['severity'], 20),
 		'remote_server_id' => $remote_server_id,
 		'home_id' => $home_id,
-		'event_uuid' => gsp_agent_event_text($event['event_uuid'], 64),
-		'correlation_id' => gsp_agent_event_text($event['correlation_id'] ?? '', 64),
+		'event_uuid' => agent_event_text($event['event_uuid'], 64),
+		'correlation_id' => agent_event_text($event['correlation_id'] ?? '', 64),
 		'actor' => $actor,
 		'metadata_json' => json_encode($metadata)
 	));

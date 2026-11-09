@@ -22,7 +22,7 @@
  *
  */
 
-function exec_gsp_module()
+function exec_module()
 {
 	require_once(MODULES."/litefm/litefm.php");
 
@@ -97,7 +97,7 @@ function exec_gsp_module()
 	}
 
 	set_time_limit(0);
-	$remote = new GSPRemoteLibrary($home_cfg['agent_ip'], $home_cfg['agent_port'], $home_cfg['encryption_key'], $home_cfg['timeout']);
+	$remote = new RemoteLibrary($home_cfg['agent_ip'], $home_cfg['agent_port'], $home_cfg['encryption_key'], $home_cfg['timeout']);
 	$fp = fopen("$downloads_folder/$did", "w");
 	$filePath = litefm_safe_join_home_path(litefm_payload_root($home_cfg), isset($_SESSION['download'][$did]['fileph']) ? $_SESSION['download'][$did]['fileph'] : '');
 	if ($filePath === false)

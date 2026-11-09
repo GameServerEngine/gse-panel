@@ -25,7 +25,7 @@
 require_once('modules/editconfigfiles/functions.php');
 require_once("modules/config_games/server_config_parser.php");
 
-function exec_gsp_module()
+function exec_module()
 {
     global $db, $view;
 
@@ -52,7 +52,7 @@ function exec_gsp_module()
         return;
     }
 
-    $server_xml = read_server_config(SERVER_CONFIG_LOCATION .'/'. $server_home['home_cfg_file'], gsp_os_for_install_row($server_home));
+    $server_xml = read_server_config(SERVER_CONFIG_LOCATION .'/'. $server_home['home_cfg_file'], os_for_install_row($server_home));
 
     $files = getFilesInXML($server_xml->configuration_files);
 

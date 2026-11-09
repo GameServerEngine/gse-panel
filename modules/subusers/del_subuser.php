@@ -26,7 +26,7 @@
 //  own3mall
 
 
-function exec_gsp_module() {
+function exec_module() {
     require_once ("includes/functions.php");
     global $db;
     global $view;

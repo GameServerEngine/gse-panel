@@ -28,7 +28,7 @@ function server_content_collect_workshop_ids($db, $home_id, $pending_only = fals
 		$where .= " AND pending_action='install_on_restart'";
 	}
 	$rows = $db->resultQuery(
-		"SELECT workshop_item_id FROM `".GSP_DB_PREFIX."server_content_workshop`
+		"SELECT workshop_item_id FROM `".TABLE_PREFIX_PLACEHOLDER."server_content_workshop`
 		 WHERE {$where}"
 	);
 	$item_ids = array();
@@ -47,8 +47,8 @@ function server_content_collect_manifest_addon_rows($db, $home_id)
 {
 	$rows = $db->resultQuery(
 		"SELECT m.addon_id, m.install_method, m.content_version, m.install_state, a.name, a.url
-		   FROM `".GSP_DB_PREFIX."server_content_manifest` m
-		   LEFT JOIN `".GSP_DB_PREFIX."addons` a ON a.addon_id = m.addon_id
+		   FROM `".TABLE_PREFIX_PLACEHOLDER."server_content_manifest` m
+		   LEFT JOIN `".TABLE_PREFIX_PLACEHOLDER."addons` a ON a.addon_id = m.addon_id
 		  WHERE m.home_id=".(int)$home_id."
 		    AND m.install_state <> 'uninstalled'
 		  ORDER BY m.updated_at DESC, m.installed_at DESC"
@@ -58,7 +58,7 @@ function server_content_collect_manifest_addon_rows($db, $home_id)
 
 function server_content_create_remote(array $home_info)
 {
-	return new GSPRemoteLibrary(
+	return new RemoteLibrary(
 		$home_info['agent_ip'],
 		$home_info['agent_port'],
 		$home_info['encryption_key'],
@@ -79,7 +79,7 @@ function server_content_result($status, $message, array $details = array())
 function server_content_record_installed_content_state(array $home_info, array $state)
 {
 	$home_path = rtrim(clean_path((string)$home_info['home_path']), '/');
-	$file_path = clean_path($home_path . '/gsp_server_content/installed_content.json');
+	$file_path = clean_path($home_path . '/server_content/installed_content.json');
 	if (!scm_path_is_under_home($home_path, $file_path)) {
 		return false;
 	}
@@ -113,7 +113,7 @@ function server_content_build_manifest($home_id, $content_type, $action, $items 
 		return false;
 	}
 	$home_path = rtrim(clean_path((string)$home_info['home_path']), '/');
-	$manifest_dir = clean_path($home_path . '/gsp_server_content/manifests');
+	$manifest_dir = clean_path($home_path . '/server_content/manifests');
 	$file_stub = preg_replace('/[^a-z0-9_\-]+/i', '_', (string)$content_type . '_' . (string)$action);
 	if ($file_stub === '' || $file_stub === null) {
 		$file_stub = 'manifest';
@@ -151,7 +151,7 @@ function server_content_resolve_script_path(array $home_info, $script_key, array
 	if (isset($options['script_path'])) {
 		$script_path = trim((string)$options['script_path']);
 	}
-	$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
+	$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file'], os_for_install_row($home_info));
 	if ($server_xml === false) {
 		return array(false, false);
 	}
@@ -192,12 +192,12 @@ function server_content_execute_manifest($home_id, $manifest_path, $script_key, 
 			return server_content_result('failed', 'Server content script was not found on agent host.', array('script_path' => $script_path));
 		}
 	}
-	$command = "bash " . escapeshellarg($script_path) . " " . escapeshellarg((string)$manifest_path) . " ; echo __GSP_SERVER_CONTENT_EXIT:$?";
+	$command = "bash " . escapeshellarg($script_path) . " " . escapeshellarg((string)$manifest_path) . " ; echo __SERVER_CONTENT_EXIT:$?";
 	$output = $remote->exec($command);
 	if (!is_string($output) || $output === '') {
 		return server_content_result('failed', 'Server content script did not return output.', array('script_path' => $script_path));
 	}
-	if (!preg_match('/__GSP_SERVER_CONTENT_EXIT:(\d+)/', $output, $matches)) {
+	if (!preg_match('/__SERVER_CONTENT_EXIT:(\d+)/', $output, $matches)) {
 		return server_content_result('failed', 'Server content script exit marker was not found.', array('output' => trim($output)));
 	}
 	$exit_code = (int)$matches[1];
@@ -257,7 +257,7 @@ function server_content_install_updates($home_id, $options = array())
 	}
 
 	if (!empty($workshop_ids)) {
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file'], os_for_install_row($home_info));
 		if ($server_xml === false) {
 			return server_content_result('failed', 'Unable to load server XML configuration for Workshop update.');
 		}
@@ -359,7 +359,7 @@ function server_content_install_updates($home_id, $options = array())
 function server_content_home_is_running(array $home_info)
 {
 	$remote = server_content_create_remote($home_info);
-	return ($remote->is_screen_running(GSP_SCREEN_TYPE_HOME, $home_info['home_id']) == 1);
+	return ($remote->is_screen_running(SCREEN_TYPE_HOME, $home_info['home_id']) == 1);
 }
 
 function server_content_install_updates_if_stopped($home_id, $options = array())
@@ -406,12 +406,12 @@ function server_content_restart_home($home_id, $options = array())
 	if ($home_info === false) {
 		return server_content_result('failed', 'Invalid server home.');
 	}
-	$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
+	$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file'], os_for_install_row($home_info));
 	if ($server_xml === false) {
 		return server_content_result('failed', 'Could not load server XML for restart.');
 	}
 	$path_error = '';
-	$home_info = gsp_with_game_root($home_info, $server_xml, $path_error);
+	$home_info = with_game_root($home_info, $server_xml, $path_error);
 	if ($home_info === false) {
 		return server_content_result('failed', 'Invalid game directory for restart: ' . $path_error);
 	}
@@ -446,7 +446,7 @@ function server_content_restart_home($home_id, $options = array())
 	}
 	$restart_reason = (isset($options['triggered_by']) && $options['triggered_by'] === 'scheduler') ? 'scheduled_restart' : 'panel_restart';
 
-	$lifecycle_payload = gsp_lifecycle_start_payload($db, $remote, $home_info, $server_xml, $mod_id, $ip, $port, $start_cmd, $preStart, $envVars, $replace_text_results, $restart_reason);
+	$lifecycle_payload = lifecycle_start_payload($db, $remote, $home_info, $server_xml, $mod_id, $ip, $port, $start_cmd, $preStart, $envVars, $replace_text_results, $restart_reason);
 	if (isset($lifecycle_payload['error'])) {
 		return server_content_result('restart_required', 'Update completed but automatic restart failed: ' . $lifecycle_payload['error']);
 	}

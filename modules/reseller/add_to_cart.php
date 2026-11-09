@@ -22,7 +22,7 @@
  *
  */
 
-function exec_gsp_module()
+function exec_module()
 {
 	global $db;
 	$settings = $db->getSettings();
@@ -30,7 +30,7 @@ function exec_gsp_module()
 	$service_id = $_REQUEST['service_id'];
 
 	// Query for Selected service info.
-	$services = $db->resultQuery("SELECT DISTINCT * FROM GSP_DB_PREFIXreseller_services WHERE service_id=".$service_id);
+	$services = $db->resultQuery("SELECT DISTINCT * FROM TABLE_PREFIX_PLACEHOLDERreseller_services WHERE service_id=".$service_id);
 	$service = $services[0];
 	//Compiling info about invoice to create an invoice order.
 
@@ -53,7 +53,7 @@ function exec_gsp_module()
 
 	if( isset( $_POST['code'] ) and $_POST['code'] != "" )
 	{
-		$discount_info = $db->resultQuery("SELECT DISTINCT percentage FROM GSP_DB_PREFIXreseller_discount_codes WHERE code='".$_POST['code']."'");
+		$discount_info = $db->resultQuery("SELECT DISTINCT percentage FROM TABLE_PREFIX_PLACEHOLDERreseller_discount_codes WHERE code='".$_POST['code']."'");
 		if(!empty($discount_info))
 		{
 			$discount_percentage = $discount_info[0]['percentage'];

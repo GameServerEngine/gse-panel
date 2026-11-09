@@ -22,7 +22,7 @@
  *
  */
 
-function exec_gsp_module()
+function exec_module()
 {
 	// Using the refreshed class
 	if( isset($_GET['get_cronevents']) )
@@ -31,7 +31,7 @@ function exec_gsp_module()
 		global $db;
 		$remote_server_id = $_GET['r_server_id'];
 		$remote_server = $db->getRemoteServer($remote_server_id);
-		$remote = new GSPRemoteLibrary($remote_server['agent_ip'], $remote_server['agent_port'], $remote_server['encryption_key'], $remote_server['timeout'] );
+		$remote = new RemoteLibrary($remote_server['agent_ip'], $remote_server['agent_port'], $remote_server['encryption_key'], $remote_server['timeout'] );
 		if($remote->status_chk() != 1)
 		{
 			print_failure(get_lang("agent_offline"));

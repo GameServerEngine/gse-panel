@@ -29,7 +29,7 @@ function create_selection($selection,$flag)
         <td align='left'><input id='".clean_id_string($selection)."' type='checkbox' name='".$selection."' value='1' checked='checked' /></td></tr><tr>
 		<td align='left' class='info' colspan='2'>".get_lang($selection.'_info')."</td></tr>";
 }
-function exec_gsp_module()
+function exec_module()
 {
     global $db,$view,$settings;
 	echo "<h2>".get_lang('rs_assign_servers')."</h2>";
@@ -65,9 +65,9 @@ function exec_gsp_module()
 		$mod_cfg_id = $_POST['mod_cfg_id'];
 		$max_players = $_POST['max_players'];
 		$web_user_id = trim($_POST['web_user_id']);
-		$qry_accounts = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_accounts WHERE account_id=".$_POST['account_id']);
+		$qry_accounts = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE account_id=".$_POST['account_id']);
 		$account = $qry_accounts[0];
-		$qry_service = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_services WHERE service_id=".$account['service_id']);
+		$qry_service = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_services WHERE service_id=".$account['service_id']);
 		$service = $qry_service[0];
 		$max_access_rights = $service['max_access_rights'];
 		$start_port = $service['start_port'];
@@ -110,21 +110,21 @@ function exec_gsp_module()
 				}
 				foreach ( $remote_servers as $server )
 				{
-					if($server['remote_server_id'] == $rserver_id) $gsp_user = $server['gsp_user'];
+					if($server['remote_server_id'] == $rserver_id) $remote_user = $server['user'];
 				}
 				foreach ( $users as $user )
 				{
 					if($user['user_id'] == $web_user_id) $web_user = $user['users_login'];
 				}
 				$ftppassword = genRandomString(8);
-				$game_path = "/home/".$gsp_user."/";
+				$game_path = "/home/".$remote_user."/";
 				if ( ( $new_home_id = $db->addGameHome($rserver_id,$web_user_id,$home_cfg_id,
 					clean_path($game_path),$server_name,$control_password,$ftppassword) )!== FALSE )
 				{
 					$db->assignHomeTo("user",$web_user_id,$new_home_id,$access_rights);
 					$home_info = $db->getGameHomeWithoutMods($new_home_id);
 					require_once('includes/lib_remote.php');
-					$remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key']);
+					$remote = new RemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key']);
 					if($ftp)
 					{
 						$host_stat = $remote->status_chk();
@@ -164,7 +164,7 @@ function exec_gsp_module()
 						else
 						{
 							$update_available_slots = $account['available_slots'] - $max_players;
-							$db->query("UPDATE GSP_DB_PREFIXreseller_accounts SET available_slots=".$update_available_slots." WHERE account_id=".$account['account_id']);
+							$db->query("UPDATE TABLE_PREFIX_PLACEHOLDERreseller_accounts SET available_slots=".$update_available_slots." WHERE account_id=".$account['account_id']);
 
 							$status = "ADDDATE(DATE(NOW() + INTERVAL ".$assigned_months." MONTH), 1)";
 
@@ -175,7 +175,7 @@ function exec_gsp_module()
 												account_id=VALUES(account_id),
 												assigned_slots=VALUES(assigned_slots),
 												status=VALUES(status);',
-												'GSP_DB_PREFIX',
+												'TABLE_PREFIX_PLACEHOLDER',
 												$db->real_escape_string($home_id),
 												$db->real_escape_string($web_user_id),
 												$db->real_escape_string($account['account_id']),
@@ -192,10 +192,10 @@ function exec_gsp_module()
 							else
 							{
 								// Getting pre and post commands
-								$game_mod_precmd = $db->resultQuery("SELECT DISTINCT precmd FROM GSP_DB_PREFIXgame_mods WHERE mod_id='$mod_id'");
+								$game_mod_precmd = $db->resultQuery("SELECT DISTINCT precmd FROM TABLE_PREFIX_PLACEHOLDERgame_mods WHERE mod_id='$mod_id'");
 								if($game_mod_precmd[0]['precmd'] === NULL OR empty($game_mod_precmd[0]['precmd']))
 								{
-									$config_mod_precmd = $db->resultQuery("SELECT DISTINCT def_precmd FROM GSP_DB_PREFIXconfig_mods WHERE mod_cfg_id='$mod_cfg_id'");
+									$config_mod_precmd = $db->resultQuery("SELECT DISTINCT def_precmd FROM TABLE_PREFIX_PLACEHOLDERconfig_mods WHERE mod_cfg_id='$mod_cfg_id'");
 									if ($config_mod_precmd[0]['def_precmd'] === NULL OR empty($config_mod_precmd[0]['def_precmd']))
 										$precmd = "";
 									else
@@ -205,10 +205,10 @@ function exec_gsp_module()
 									$precmd = $game_mod_precmd[0]['precmd'];
 
 
-								$game_mod_postcmd = $db->resultQuery("SELECT DISTINCT postcmd FROM GSP_DB_PREFIXgame_mods WHERE mod_id='$mod_id'");
+								$game_mod_postcmd = $db->resultQuery("SELECT DISTINCT postcmd FROM TABLE_PREFIX_PLACEHOLDERgame_mods WHERE mod_id='$mod_id'");
 								if($game_mod_postcmd[0]['postcmd'] === NULL OR empty($game_mod_postcmd[0]['postcmd']))
 								{
-									$config_mod_postcmd = $db->resultQuery("SELECT DISTINCT def_postcmd FROM GSP_DB_PREFIXconfig_mods WHERE mod_cfg_id='$mod_cfg_id'");
+									$config_mod_postcmd = $db->resultQuery("SELECT DISTINCT def_postcmd FROM TABLE_PREFIX_PLACEHOLDERconfig_mods WHERE mod_cfg_id='$mod_cfg_id'");
 									if ($config_mod_postcmd[0]['def_postcmd'] === NULL OR empty($config_mod_postcmd[0]['def_postcmd']))
 										$postcmd = "";
 									else
@@ -218,9 +218,9 @@ function exec_gsp_module()
 									$postcmd = $game_mod_postcmd[0]['postcmd'];
 
 								$home_info = $db->getGameHome($home_id);
-								$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
+								$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], os_for_install_row($home_info));
 								$path_error = '';
-								$home_info = gsp_with_game_root($home_info, $server_xml, $path_error);
+								$home_info = with_game_root($home_info, $server_xml, $path_error);
 								if ($home_info === false) {
 									print_failure('Invalid game directory for this server: ' . htmlentities($path_error));
 									return;
@@ -266,7 +266,7 @@ function exec_gsp_module()
 									else
 										$postInstallCMD = $postcmd;
 
-									$postInstallCMD .= "\n{GSP_LOCK_FILE} " . $home_info['game_root'] . "/" . ($server_xml->exe_location ? $server_xml->exe_location . "/" : "") . $server_xml->server_exec_name;
+									$postInstallCMD .= "\n{LOCK_FILE} " . $home_info['game_root'] . "/" . ($server_xml->exe_location ? $server_xml->exe_location . "/" : "") . $server_xml->server_exec_name;
 
 									$remote->steam_cmd($home_info['home_id'],$home_info['game_root'],$installer_name,$modname,
 													   $betaname,$betapwd,$login,$pass,$settings['steam_guard'],
@@ -291,7 +291,7 @@ function exec_gsp_module()
 									elseif( preg_match("/linux/", $server_xml->game_key) )
 										$os = "linux";
 
-									$full_url = "$url/gsp_game_installer/$rs_name/$os/";
+									$full_url = "$url/game_installer/$rs_name/$os/";
 									$remote->start_rsync_install($home_id,$home_info['game_root'],"$full_url",$exec_folder_path,$exec_path,$precmd,$postcmd);
 									print_success(get_lang('server_added_successfully_installing'));
 									unset($_POST);
@@ -321,9 +321,9 @@ function exec_gsp_module()
 
 	if( isset($_POST['account_id']) )
 	{
-		$qry_accounts = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_accounts WHERE user_id=".$_SESSION['user_id']." AND account_id=".$_POST['account_id']);
+		$qry_accounts = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE user_id=".$_SESSION['user_id']." AND account_id=".$_POST['account_id']);
 		$account = $qry_accounts[0];
-		$qry_service = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_services WHERE service_id=".$account['service_id']);
+		$qry_service = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_services WHERE service_id=".$account['service_id']);
 		$service = $qry_service[0];
 		$invoice_duration_string = $account['qty'] > 1 ? $account['invoice_duration']."s" : $account['invoice_duration'];
 		echo "<h4>" . $service['service_name'] . "&nbsp;/&nbsp;" . $account['qty'] . " " . get_lang( $invoice_duration_string ) . "&nbsp;&nbsp;&nbsp;[".get_lang_f( 'available_slots', $account['available_slots'] ).
@@ -336,14 +336,14 @@ function exec_gsp_module()
 	echo "<table class='center'>";
 	if( !isset($_POST['account_id']) )
 	{
-		$accounts = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_accounts WHERE user_id=".$_SESSION['user_id']. "");
+		$accounts = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE user_id=".$_SESSION['user_id']. "");
 		if( ! empty( $accounts ) )
 		{
 			echo "<tr><td align=right><b>".get_lang('select_reseller_account')."</b></td><td align=left><select onchange=".'"this.form.submit()"'." name='account_id'>\n";
 			echo "<option></option>\n";
 			foreach( $accounts as $account )
 			{
-				$qry_service = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_services WHERE service_id=".$account['service_id']);
+				$qry_service = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_services WHERE service_id=".$account['service_id']);
 				$service = $qry_service[0];
 					echo "<option value='".$account['account_id']."'>".
 						$service['service_name']." (".get_lang_f('available_slots', $account['available_slots'])."&nbsp;/&nbsp;".get_lang_f('available_months', $account['available_months']).")</option>\n";
@@ -370,7 +370,7 @@ function exec_gsp_module()
 			$rhost_id = $service['remote_server_id'];
 			$remote_server = $db->getRemoteServer($rhost_id);
 			require_once('includes/lib_remote.php');
-			$remote = new GSPRemoteLibrary($remote_server['agent_ip'],$remote_server['agent_port'],$remote_server['encryption_key']);
+			$remote = new RemoteLibrary($remote_server['agent_ip'],$remote_server['agent_port'],$remote_server['encryption_key']);
 			$host_stat = $remote->status_chk();
 			if( $host_stat === 1)
 				$os = $remote->what_os();
@@ -478,7 +478,7 @@ function exec_gsp_module()
 			<select name="mod_cfg_id" onchange="this.form.submit()" >
 			<option></option>
 			<?php
-			$mod_qry = $db->resultQuery("SELECT DISTINCT mod_cfg_id, mod_name, game_name FROM GSP_DB_PREFIXconfig_mods NATURAL JOIN GSP_DB_PREFIXconfig_homes WHERE home_cfg_id=" . $_POST['home_cfg_id']);
+			$mod_qry = $db->resultQuery("SELECT DISTINCT mod_cfg_id, mod_name, game_name FROM TABLE_PREFIX_PLACEHOLDERconfig_mods NATURAL JOIN TABLE_PREFIX_PLACEHOLDERconfig_homes WHERE home_cfg_id=" . $_POST['home_cfg_id']);
 			foreach($mod_qry as $array_mods)
 			{
 				if($array_mods['mod_name'] == "none")$array_mods['mod_name']=$array_mods['game_name'];
@@ -498,8 +498,8 @@ function exec_gsp_module()
 		}
 		elseif( ! isset( $_POST['max_players'] ) )
 		{
-			$cfg_info = $db->resultQuery("SELECT DISTINCT home_cfg_file FROM GSP_DB_PREFIXconfig_homes WHERE home_cfg_id=" . $_POST['home_cfg_id']);
-			$server_xml = read_server_config(SERVER_CONFIG_LOCATION.$cfg_info[0]['home_cfg_file'], gsp_os_for_install_row($cfg_info[0]));
+			$cfg_info = $db->resultQuery("SELECT DISTINCT home_cfg_file FROM TABLE_PREFIX_PLACEHOLDERconfig_homes WHERE home_cfg_id=" . $_POST['home_cfg_id']);
+			$server_xml = read_server_config(SERVER_CONFIG_LOCATION.$cfg_info[0]['home_cfg_file'], os_for_install_row($cfg_info[0]));
 
 			if( isset( $server_xml->installer )  )
 			{

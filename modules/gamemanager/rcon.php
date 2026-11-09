@@ -31,7 +31,7 @@ function send_command($command, $remote, $server_xml, $home_info, $home_id, $ip,
 	{
 		include_once("MinecraftRcon.class.php");
 		$path_error = '';
-		$game_root = gsp_resolve_game_root_for_home($home_info, $server_xml, $path_error);
+		$game_root = resolve_game_root_for_home($home_info, $server_xml, $path_error);
 		if ($game_root === false) {
 			return FALSE;
 		}

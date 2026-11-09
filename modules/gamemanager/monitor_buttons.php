@@ -63,7 +63,7 @@ if (preg_match("/u/",$server_home['access_rights']))
 	$hasSteamAutoUpdate = true;
 /*
 
-	$module_buttons[] = "<a class='monitorbutton getAPILinks' hassteam='" . ($hasSteamAutoUpdate ? 'true' : 'false') . "' hasrcon='" . ($server_xml->control_protocol || ($server_xml->lgsl_query_name and $server_xml->lgsl_query_name == "7dtd") || ($server_xml->gameq_query_name and $server_xml->gameq_query_name == "minecraft") ? 'true' : 'false') . "' copyfail='" . get_lang("auto_update_copy_me_fail") . "' copysuccess='" . get_lang("auto_update_copy_me_success") . "' autoupdatetext='" . get_lang("auto_update_title_popup") . "' copyme='" . get_lang("auto_update_copy_me") . "' token='".$db->getApiToken($_SESSION['user_id'])."' ip='".$server_home['ip']."' port='".$server_home['port']."' modkey='".$server_home['mod_key']."' panelurl='" . getGSPSiteURL() . "'>
+	$module_buttons[] = "<a class='monitorbutton getAPILinks' hassteam='" . ($hasSteamAutoUpdate ? 'true' : 'false') . "' hasrcon='" . ($server_xml->control_protocol || ($server_xml->lgsl_query_name and $server_xml->lgsl_query_name == "7dtd") || ($server_xml->gameq_query_name and $server_xml->gameq_query_name == "minecraft") ? 'true' : 'false') . "' copyfail='" . get_lang("auto_update_copy_me_fail") . "' copysuccess='" . get_lang("auto_update_copy_me_success") . "' autoupdatetext='" . get_lang("auto_update_title_popup") . "' copyme='" . get_lang("auto_update_copy_me") . "' token='".$db->getApiToken($_SESSION['user_id'])."' ip='".$server_home['ip']."' port='".$server_home['port']."' modkey='".$server_home['mod_key']."' panelurl='" . getSiteURL() . "'>
 		<img src='" . check_theme_image("images/auto_update.png") . "' title='". get_lang("show_api_actions") . "'>
 		<span>". get_lang("show_api_actions") . "</span>
 		</a>";
@@ -71,8 +71,8 @@ if (preg_match("/u/",$server_home['access_rights']))
 }
 
 
-$gsp_session_role = isset($_SESSION['users_role']) ? $_SESSION['users_role'] : (isset($_SESSION['users_role']) ? $_SESSION['users_role'] : "");
-if($gsp_session_role == "admin")
+$session_role = isset($_SESSION['users_role']) ? $_SESSION['users_role'] : (isset($_SESSION['users_role']) ? $_SESSION['users_role'] : "");
+if($session_role == "admin")
 {
 	if ( $db->isModuleEnabled('rcon') AND ( ( $server_xml->control_protocol and preg_match("/^(rcon|lcon|rcon2|armabe)$/" ,$server_xml->control_protocol) ) OR
 		 ( $server_xml->gameq_query_name and $server_xml->gameq_query_name == 'minecraft' ) ) )

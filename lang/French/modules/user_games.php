@@ -25,7 +25,7 @@
 define('LANG_add_mods_note', "Vous devez ajouter des mods après avoir assigné le serveur à un utilisateur. Cela peut être fait en éditant le serveur.");
 define('LANG_game_servers', "Serveurs de Jeux");
 define('LANG_game_path', "Chemin du Serveur de Jeu");
-define('LANG_game_path_info', "Le chemin absolu du serveur. Exemple: /home/gsp_agent/GSP_User_Files/my_server/");
+define('LANG_game_path_info', "Le chemin absolu du serveur. Exemple: /home/agent/User_Files/my_server/");
 define('LANG_game_server_name_info', "Le nom du serveur aide les utilisateurs à identifier leurs serveurs.");
 define('LANG_control_password', "Mot de passe de contrôle");
 define('LANG_control_password_info', "Ce mot de passe est utilisé pour le contrôle du serveur, comme le RCON. Si le mot de passe est vide, d'autres moyens seront utilisés.");
@@ -41,7 +41,7 @@ define('LANG_game_configurations', "page de configuration du Jeu");
 define('LANG_add_remote_server', "Ajouter un serveur.");
 define('LANG_wine_games', "Jeux sous WINE");
 define('LANG_home_path', "Chemin du serveur");
-define('LANG_change_home_info', "L'emplacement du serveur de jeu installé. Exemple: /home/gsp_agent/GSP_User_Files/my_server/");
+define('LANG_change_home_info', "L'emplacement du serveur de jeu installé. Exemple: /home/agent/User_Files/my_server/");
 define('LANG_game_server_name', "Nom du serveur de jeu");
 define('LANG_change_name_info', "Le nom du serveur pour aider les utilisateurs à l'identifier.");
 define('LANG_game_control_password', "Mot de passe de contrôle du jeu");

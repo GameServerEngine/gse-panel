@@ -23,7 +23,7 @@ $(document).ready(function()
 	// hide plaintext passwords
 	$('#servermonitor .expand-child').each(function()
 	{
-		var regex = new RegExp(`(\s*)<b>${langConsts['GSP_LANG_mysql_root_passwd']}:<\/b> (.*?)<br>`, "m");
+		var regex = new RegExp(`(\s*)<b>${langConsts['LANG_mysql_root_passwd']}:<\/b> (.*?)<br>`, "m");
 		var dbInfos = $(this).find('td:first-of-type');
 
 		var pass = dbInfos.html().match(regex)[2];
@@ -32,7 +32,7 @@ $(document).ready(function()
 		{
 			$(dbInfos).html(function(index,html)
 			{
-				return html.replace(regex, '<b>' + langConsts['GSP_LANG_mysql_root_passwd'] + '</b>: <span class="pass">'+pass+'</span><br>');
+				return html.replace(regex, '<b>' + langConsts['LANG_mysql_root_passwd'] + '</b>: <span class="pass">'+pass+'</span><br>');
 			});
 		}
 	});

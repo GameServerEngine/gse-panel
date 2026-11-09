@@ -4,7 +4,7 @@
 // declaring the page function a second time.
 require_once __DIR__ . '/create_servers.php';
 
-function exec_gsp_module()
+function exec_module()
 {
 	global $db,$view,$settings,$table_prefix,$db_host,$db_user,$db_pass,$db_name,$db_port;
 	$db_prefix = isset($table_prefix) ? $table_prefix : '';
@@ -338,7 +338,7 @@ function exec_gsp_module()
 				));
 
 				//Create the remote connection
-				$remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
+				$remote = new RemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
 
 				//Reassign the server
 				$db->assignHomeTo( "user", $user_id, $home_id, $access_rights );
@@ -493,7 +493,7 @@ function exec_gsp_module()
 
 				//Create the remote connection
 				if (!$order_failed) {
-					$remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
+					$remote = new RemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
 				}
 
 				//Get Full home info in 1 array

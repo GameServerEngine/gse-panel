@@ -411,7 +411,7 @@ $(document).ready(function()
 		var boxClass = 'login-box';
 		var headerContent = '\
 		<!--<h1>' + headTitle + '</h1>-->\
-		<img src="themes/AdminLTE/dist/img/gsp_logo_dark.svg" class="brand-image">\
+		<img src="themes/AdminLTE/dist/img/logo_dark.svg" class="brand-image">\
 		';
 
 		if(new_form !== undefined)
@@ -458,7 +458,7 @@ $(document).ready(function()
 						"disableTimeOut" : true,
 						"closeButton": true,
 					});
-					toastr.error('', langConsts['GSP_LANG_maintenance_mode_on'], {
+					toastr.error('', langConsts['LANG_maintenance_mode_on'], {
 						"timeOut": 0,
 						"extendedTimeOut": 0,
 						"preventDuplicates": true,
@@ -931,12 +931,12 @@ $(document).ready(function()
 
 
 		/* *** Footer Mod *** */
-		$('.main-footer .GSPVersionArea').addClass('d-none');
+		$('.main-footer .VersionArea').addClass('d-none');
 		$('.main-footer a').attr('target', '_blank').addClass('text-dark');
 		$('.main-footer .footer').html($('.main-footer .footer').html().replace("Theme - ", "Theme for GSP by <a href='https://www.ondsen.ch' target='_blank' class='text-dark'>oNdsen</a> - "))
 		$('.main-footer .footer.center').removeClass('center');
-		$('.main-footer .GSPVersionArea .version').remove()
-		$('.main-footer .GSPVersionArea').removeClass('inline-block').addClass('d-inline-block');
+		$('.main-footer .VersionArea .version').remove()
+		$('.main-footer .VersionArea').removeClass('inline-block').addClass('d-inline-block');
 		$('.main-footer .footer > br').last().remove()
 	}
 
@@ -1173,17 +1173,17 @@ $(window).load(function()
 
 	$('.main-footer .versionInfo').click(function()
 	{
-		$('.GSPVersionArea, .GSPVersionArea .version, .GSPVersionArea .versionNumber').removeClass('d-none').removeClass('hide');
+		$('.VersionArea, .VersionArea .version, .VersionArea .versionNumber').removeClass('d-none').removeClass('hide');
 
 		// add blink class to versionNumber
-		$('.GSPVersionArea .versionNumber').addClass('shortblink');
+		$('.VersionArea .versionNumber').addClass('shortblink');
 		// remove after 4 seconds
 		setTimeout(function(){
-			$('.GSPVersionArea .versionNumber').removeClass('shortblink');
+			$('.VersionArea .versionNumber').removeClass('shortblink');
 		}, 4000);
 
-		var copy = copyToClipboard($('.GSPVersionArea .versionNumber'));
-		toastr.info('"' + copy + '" ' + $('.GSPVersionArea .copyVersionResult').attr('lang'));
+		var copy = copyToClipboard($('.VersionArea .versionNumber'));
+		toastr.info('"' + copy + '" ' + $('.VersionArea .copyVersionResult').attr('lang'));
 	});
 	// circular notifications
 	if($('body > #notification').length > 0)
@@ -1287,7 +1287,7 @@ function themeChanger(changeTo, save = false)
 
 		if(!localStorage.getItem('themeLogo'))
 		{
-			$('img.brand-image').attr('src', 'themes/AdminLTE/dist/img/gsp_logo_dark.svg');
+			$('img.brand-image').attr('src', 'themes/AdminLTE/dist/img/logo_dark.svg');
 		}
 
 		$('link[href*="jquery-ui.min"]').attr('href', 'themes/AdminLTE/plugins/jquery-ui/jquery-ui.min.dark.css');
@@ -1318,7 +1318,7 @@ function themeChanger(changeTo, save = false)
 
 		if(!localStorage.getItem('themeLogo'))
 		{
-			$('img.brand-image').attr('src', 'themes/AdminLTE/dist/img/gsp_logo_light.svg');
+			$('img.brand-image').attr('src', 'themes/AdminLTE/dist/img/logo_light.svg');
 		}
 
 		$('link[href*="jquery-ui.min"]').attr('href', 'themes/AdminLTE/plugins/jquery-ui/jquery-ui.min.light.css');
@@ -1349,7 +1349,7 @@ function themeChanger(changeTo, save = false)
 
 		if(!localStorage.getItem('themeLogo'))
 		{
-			$('img.brand-image').attr('src', 'themes/AdminLTE/dist/img/gsp_logo_dark.svg');
+			$('img.brand-image').attr('src', 'themes/AdminLTE/dist/img/logo_dark.svg');
 		}
 
 		$('link[href*="jquery-ui.min"]').attr('href', 'themes/AdminLTE/plugins/jquery-ui/jquery-ui.min.light.css');

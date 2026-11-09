@@ -6,7 +6,7 @@
 
 require_once __DIR__ . '/includes/action_security.php';
 
-function exec_gsp_module()
+function exec_module()
 {
 	global $db, $view;
 	$user_id = $_SESSION['user_id'];
@@ -18,16 +18,16 @@ function exec_gsp_module()
 	// Get Active (paid) but not yet provisioned orders for this user
 	if ($isAdmin) {
 		$orders = $db->resultQuery("SELECT o.*, s.service_name, u.users_login
-									FROM GSP_DB_PREFIXbilling_orders o
-									LEFT JOIN GSP_DB_PREFIXbilling_services s ON o.service_id = s.service_id
-									LEFT JOIN GSP_DB_PREFIXusers u ON o.user_id = u.user_id
+									FROM TABLE_PREFIX_PLACEHOLDERbilling_orders o
+									LEFT JOIN TABLE_PREFIX_PLACEHOLDERbilling_services s ON o.service_id = s.service_id
+									LEFT JOIN TABLE_PREFIX_PLACEHOLDERusers u ON o.user_id = u.user_id
 									WHERE o.status = 'Active'
 									  AND (o.home_id = '0' OR o.home_id = '')
 									ORDER BY o.order_date DESC");
 	} else {
 		$orders = $db->resultQuery("SELECT o.*, s.service_name
-									FROM GSP_DB_PREFIXbilling_orders o
-									LEFT JOIN GSP_DB_PREFIXbilling_services s ON o.service_id = s.service_id
+									FROM TABLE_PREFIX_PLACEHOLDERbilling_orders o
+									LEFT JOIN TABLE_PREFIX_PLACEHOLDERbilling_services s ON o.service_id = s.service_id
 									WHERE o.user_id = ".$db->realEscapeSingle($user_id)."
 									  AND o.status = 'Active'
 									  AND (o.home_id = '0' OR o.home_id = '')

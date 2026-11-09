@@ -48,7 +48,7 @@ header('Location: /modules/billing/cart.php');
 - `Website/` – storefront runtime, payment handlers, provisioning bridge.
 - `modules/config_games/server_configs/` – authoritative XML metadata for every supported game.
 - `modules/` – control-panel modules.
-- `includes/` & `gsp_api.php` – database layer, shared helpers, remote agent operations.
+- `includes/` & `api.php` – database layer, shared helpers, remote agent operations.
 
 ## 2) Planning mode (default)
 While scoping multi-file work, do **not** emit PHP/SQL/XML or run shell commands unless a maintainer explicitly says “Generate code now.” Plans should cover:
@@ -59,11 +59,11 @@ While scoping multi-file work, do **not** emit PHP/SQL/XML or run shell commands
 ## 3) Scope & principles
 - **Single session across panel + storefront.** Every billing page must call `session_name('gameserverpanel_web')` before `session_start()`. Always keep `$_SESSION['user_id']`, `$_SESSION['users_login']`, `$_SESSION['users_group']`, and `$_SESSION['website_user_id']` in sync so that logging into either surface signs the visitor into both.
 - **Auth reuse.** Preferred order when verifying credentials: `users_pass_hash` (modern hash) → legacy `users_passwd` (MD5). Upgrading to a modern hash is allowed so long as panel logins keep working.
-- **Bridge for panel helpers.** Use `Website/includes/panel_bridge.php` to load panel classes (`GSPDatabase`, `GSPRemoteLibrary`, XML parsers) when the storefront needs to provision servers or read panel-only metadata. Do not reinvent ad-hoc copies of panel logic.
-- **Storefront runtime.** Public pages continue to use mysqli with credentials from `Website/includes/config.inc.php`. Provisioning steps may request an `GSPDatabase` handle from the bridge.
+- **Bridge for panel helpers.** Use `Website/includes/panel_bridge.php` to load panel classes (`Database`, `RemoteLibrary`, XML parsers) when the storefront needs to provision servers or read panel-only metadata. Do not reinvent ad-hoc copies of panel logic.
+- **Storefront runtime.** Public pages continue to use mysqli with credentials from `Website/includes/config.inc.php`. Provisioning steps may request an `Database` handle from the bridge.
 - **Provisioning pipeline.** Always funnel server creation or renewals through the shared provisioner (`Website/includes/provisioner.php`). This helper wraps the old `create_servers.php` logic and ensures PayPal captures, cron jobs, and panel clicks all follow the same code path.
 - **Catalog = XML.** Never hardcode game metadata. Parse `modules/config_games/server_configs/*.xml` at runtime; new XMLs must show up automatically.
-- **Regions/Nodes = live DB.** Pull nodes/locations from the panel DB (`gsp_remote_servers`, etc.). Respect admin enable/disable flags and never mirror node lists into flat files.
+- **Regions/Nodes = live DB.** Pull nodes/locations from the panel DB (`remote_servers`, etc.). Respect admin enable/disable flags and never mirror node lists into flat files.
 - **Game XML wiki parity.** We ship a PHP-rendered XML notes page inside the Panel/billing docs so maintainers can edit XMLs without leaving the repo.
 
 ## 4) Functional requirements
@@ -92,7 +92,7 @@ While scoping multi-file work, do **not** emit PHP/SQL/XML or run shell commands
 - Keep audit logs in `Website/logs/` whenever automatic provisioning, renewals, refunds, or coupon adjustments happen.
 
 ## 5) Data model alignment (no DDL during planning)
-- Use panel tables as the source of truth (`gsp_billing_orders`, `gsp_billing_services`, `gsp_billing_invoices`, `gsp_game_mods`, etc.).
+- Use panel tables as the source of truth (`billing_orders`, `billing_services`, `billing_invoices`, `game_mods`, etc.).
 - Multi-remote fields (`remote_server_id`, IP IDs) already exist—never introduce duplicates in the storefront DB.
 - When you truly need schema changes, follow the naming conventions, provide migrations under `Website/sql/`, and describe the plan first.
 

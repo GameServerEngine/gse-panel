@@ -28,7 +28,7 @@ if (!$db) {
     die('DB connection failed');
 }
 mysqli_set_charset($db, 'utf8mb4');
-$prefix = $table_prefix ?? 'gsp_';
+$prefix = $table_prefix ?? '';
 $repo   = new BillingRepository($db, $prefix);
 $lifecycle = new BillingLifecycleService($repo);
 $csrf = billing_action_csrf_token('billing_admin_invoice_csrf');

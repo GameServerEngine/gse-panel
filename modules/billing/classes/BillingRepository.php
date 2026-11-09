@@ -9,7 +9,7 @@ class BillingRepository
     private string $prefix;
     private array $columnCache = [];
 
-    public function __construct(mysqli $db, string $prefix = 'gsp_')
+    public function __construct(mysqli $db, string $prefix = '')
     {
         $this->db     = $db;
         $this->prefix = $prefix;

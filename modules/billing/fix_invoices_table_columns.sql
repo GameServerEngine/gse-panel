@@ -1,11 +1,10 @@
--- Fix missing columns / indexes for GSP_DB_PREFIXbilling_invoices
+-- Fix missing columns / indexes for TABLE_PREFIX_PLACEHOLDERbilling_invoices
 -- Safe script: checks information_schema and adds each missing column/index using prepared statements.
 -- IMPORTANT: Run on the target database (use the panel DB). Make a backup before running.
--- Table prefix is hardcoded to gsp_ for standalone billing module
 
 -- Use the current database
 SET @db = DATABASE();
-SET @tbl = 'gsp_billing_invoices';
+SET @tbl = 'billing_invoices';
 
 -- Helper: add a column if missing
 -- Usage pattern below; repeated for every column we expect from module.php

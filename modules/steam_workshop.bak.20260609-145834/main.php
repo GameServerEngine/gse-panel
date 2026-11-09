@@ -29,7 +29,7 @@ echo '<link rel="stylesheet" type="text/css" href="css/xbbcode/xbbcode.css">'."\
 	 '<script type="text/javascript" src="js/xbbcode/xbbcode.js"></script>'."\n".
 	 '<script type="text/javascript" src="js/modules/steam_workshop.js"></script>';
 
-function exec_gsp_module()
+function exec_module()
 {
 
 	Global $db,$view,$settings;
@@ -117,7 +117,7 @@ function exec_gsp_module()
 
 		if($xml !== false)
 		{
-			$remote = new GSPRemoteLibrary($home_cfg['agent_ip'],$home_cfg['agent_port'],$home_cfg['encryption_key'], $home_cfg['timeout']);
+			$remote = new RemoteLibrary($home_cfg['agent_ip'],$home_cfg['agent_port'],$home_cfg['encryption_key'], $home_cfg['timeout']);
 
 			if($remote->status_chk() !== 1)
 			{
@@ -126,7 +126,7 @@ function exec_gsp_module()
 
 			if(isset($_GET['show_log']))
 			{
-				$update_active = $remote->get_log(GSP_SCREEN_TYPE_UPDATE,$home_id,clean_path($home_cfg['home_path']),$log_txt);
+				$update_active = $remote->get_log(SCREEN_TYPE_UPDATE,$home_id,clean_path($home_cfg['home_path']),$log_txt);
 				if ( $update_active == 1 )
 				{
 					if(isset($_POST['sgc']))

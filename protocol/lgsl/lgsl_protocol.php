@@ -4061,11 +4061,11 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		$ip = $server['b']['ip'];
 		$port = $server['b']['c_port'];
 		$home_info = $server_home = $db->getGameHomeByIP($ip, $port);
-		$remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
+		$remote = new RemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], os_for_install_row($home_info));
 		$data = "";
 		$home_id = sprintf('%09d', $home_info['home_id']);
-		$screenlog = "screenlog.GSP_HOME_".$home_id;
+		$screenlog = "screenlog.HOME_".$home_id;
 		$home_log = $remote->remote_readfile($home_info['home_path'].'/'.$server_xml->exe_location.$screenlog,$data);
 		$data = substr($data, -10000, 10000);
 		if ( !empty($data) )
@@ -4140,7 +4140,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 				}
 				$server['s']['players'] = $i;
 			}
-			$screen_running = $remote->is_screen_running(GSP_SCREEN_TYPE_HOME,$home_info['home_id']) === 1;
+			$screen_running = $remote->is_screen_running(SCREEN_TYPE_HOME,$home_info['home_id']) === 1;
 			if($screen_running)
 			{
 				return TRUE;
@@ -4194,7 +4194,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		$ip = $server['b']['ip'];
 		$port = $server['b']['c_port'];
 		$home_info = $server_home = $db->getGameHomeByIP($ip, $port);
-		$remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
+		$remote = new RemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
 		$data = "";
 		$data = $remote->exec("VBoxManage showvminfo \"".$home_info['home_name']."\"");
 		if ( !empty($data) )
@@ -4241,7 +4241,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			$server['s']['players'] = $i;
 			$server['s']['playersmax'] = $i;
 		}
-		$screen_running = $remote->is_screen_running(GSP_SCREEN_TYPE_HOME,$home_info['home_id']) === 1;
+		$screen_running = $remote->is_screen_running(SCREEN_TYPE_HOME,$home_info['home_id']) === 1;
 		if($screen_running)
 		{
 			return TRUE;
@@ -4429,7 +4429,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		if(is_array($home_info) && !empty($home_info))
 		{
 			require_once('includes/lib_remote.php');
-			$remote = new GSPRemoteLibrary($home_info['agent_ip'], $home_info['agent_port'], $home_info['encryption_key'], $home_info['timeout']);
+			$remote = new RemoteLibrary($home_info['agent_ip'], $home_info['agent_port'], $home_info['encryption_key'], $home_info['timeout']);
 			$http_reply = $remote->remote_query('lgsl', $server['b']['type'], $server['b']['ip'], $server['b']['c_port'], $server['b']['q_port'], $server['b']['s_port']);
 			if($http_reply == NULL) exit("REMOTE LGSL: BAD RESPONSE");
 		}

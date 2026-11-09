@@ -26,7 +26,7 @@ require_once("modules/config_games/server_config_parser.php");
 require_once("modules/steam_workshop/functions.php");
 require_once('includes/form_table_class.php');
 
-function exec_gsp_module()
+function exec_module()
 {
 	Global $db,$view;
 	echo '<h2>Steam Workshop</h2>';
@@ -57,14 +57,14 @@ function exec_gsp_module()
 
 	if($home_cfg)
 	{
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_cfg['home_cfg_file'], gsp_os_for_install_row($home_cfg));
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_cfg['home_cfg_file'], os_for_install_row($home_cfg));
 		if($server_xml === FALSE)
 		{
 			print_failure(get_lang_f('failed_reading_xml_file', SERVER_CONFIG_LOCATION."/".$home_cfg['home_cfg_file']));
 			return;
 		}
 		$path_error = '';
-		$home_cfg = gsp_with_game_root($home_cfg, $server_xml, $path_error);
+		$home_cfg = with_game_root($home_cfg, $server_xml, $path_error);
 		if ($home_cfg === false) {
 			print_failure('Invalid game directory for this server: ' . htmlentities($path_error));
 			return;
@@ -124,7 +124,7 @@ function exec_gsp_module()
 
 		if($xml !== false)
 		{
-			$remote = new GSPRemoteLibrary($home_cfg['agent_ip'],$home_cfg['agent_port'],$home_cfg['encryption_key'], $home_cfg['timeout']);
+			$remote = new RemoteLibrary($home_cfg['agent_ip'],$home_cfg['agent_port'],$home_cfg['encryption_key'], $home_cfg['timeout']);
 
 			if($remote->status_chk() !== 1)
 			{

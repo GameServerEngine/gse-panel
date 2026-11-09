@@ -35,10 +35,10 @@ ini_set('display_startup_errors', '1');
 ini_set('log_errors', '1');
 
 // Apply the initial level from the constant; may be overridden from DB later.
-gsp_apply_debug_level(DEBUG_LEVEL);
+apply_debug_level(DEBUG_LEVEL);
 
 // Accumulated non-fatal errors collected by the custom handler
-$GLOBALS['_gsp_debug_errors'] = [];
+$GLOBALS['_debug_errors'] = [];
 
 /**
  * Apply an error-reporting level for GSP debug mode.
@@ -51,9 +51,9 @@ $GLOBALS['_gsp_debug_errors'] = [];
  *
  * Safe to call multiple times (e.g. once from config, once after DB load).
  */
-function gsp_apply_debug_level(int $level): void
+function apply_debug_level(int $level): void
 {
-	$GLOBALS['_gsp_debug_level'] = $level;
+	$GLOBALS['_debug_level'] = $level;
 
     switch ($level) {
         case 0:
@@ -83,7 +83,7 @@ function gsp_apply_debug_level(int $level): void
  * Fatal errors (E_ERROR, E_PARSE …) are handled by the shutdown function.
  */
 set_error_handler(function (int $errno, string $errstr, string $errfile, int $errline): bool {
-    $activeLevel = (int)($GLOBALS['_gsp_debug_level'] ?? DEBUG_LEVEL);
+    $activeLevel = (int)($GLOBALS['_debug_level'] ?? DEBUG_LEVEL);
 
     if ($activeLevel <= 1) {
         return true;
@@ -112,7 +112,7 @@ set_error_handler(function (int $errno, string $errstr, string $errfile, int $er
 
     $type = $levels[$errno] ?? "Error (#{$errno})";
 
-    $GLOBALS['_gsp_debug_errors'][] = [
+    $GLOBALS['_debug_errors'][] = [
         'type'    => $type,
         'message' => $errstr,
         'file'    => $errfile,
@@ -135,7 +135,7 @@ register_shutdown_function(function (): void {
     $fatalTypes = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_CORE_WARNING, E_COMPILE_WARNING];
     $hasFatal = $fatal && in_array($fatal['type'], $fatalTypes, true);
 
-    $nonFatalErrors = $GLOBALS['_gsp_debug_errors'] ?? [];
+    $nonFatalErrors = $GLOBALS['_debug_errors'] ?? [];
 
     if (!$hasFatal && empty($nonFatalErrors)) {
         return;
@@ -146,7 +146,7 @@ register_shutdown_function(function (): void {
         ob_end_flush();
     }
 
-    echo gsp_debug_render_panel($hasFatal ? $fatal : null, $nonFatalErrors);
+    echo debug_render_panel($hasFatal ? $fatal : null, $nonFatalErrors);
 });
 
 /**
@@ -156,7 +156,7 @@ register_shutdown_function(function (): void {
  * @param array      $nonFatals   Array of non-fatal error entries
  * @return string
  */
-function gsp_debug_render_panel(?array $fatal, array $nonFatals): string
+function debug_render_panel(?array $fatal, array $nonFatals): string
 {
     $docRoot  = defined('DOCUMENT_ROOT') ? DOCUMENT_ROOT : ($_SERVER['DOCUMENT_ROOT'] ?? '');
     $stripLen = strlen($docRoot);

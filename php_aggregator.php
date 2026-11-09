@@ -3,7 +3,7 @@
 
 /********** CONFIG (panel DB) **********/
 require_once __DIR__ . '/includes/config.inc.php'; // sets $db_host, $db_user, $db_pass, $db_name, $table_prefix
-$TABLE_PREFIX = $table_prefix ?? 'gsp_';
+$TABLE_PREFIX = $table_prefix ?? '';
 $AUTO_REFRESH_SECONDS = 30; // set 0 to disable auto-refresh
 /***************************************/
 

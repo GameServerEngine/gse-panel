@@ -26,7 +26,7 @@
  * Saves an uploaded panel logo to images/logo.png. PNG only, 2 MB max.
  * Leaves the current logo alone when no file was chosen.
  */
-function gsp_settings_save_panel_logo()
+function settings_save_panel_logo()
 {
 	if (!isset($_FILES['panel_logo']) || $_FILES['panel_logo']['error'] === UPLOAD_ERR_NO_FILE) {
 		return;
@@ -52,12 +52,12 @@ function gsp_settings_save_panel_logo()
 	echo "<div class='success'>Logo saved.</div>";
 }
 
-function exec_gsp_module()
+function exec_module()
 {
 	require_once('includes/form_table_class.php');
 	global $db,$view;
-	if (!function_exists('gsp_settings_port_block_size')) {
-		function gsp_settings_port_block_size($value)
+	if (!function_exists('settings_port_block_size')) {
+		function settings_port_block_size($value)
 		{
 			$value = intval($value);
 			return ($value >= 1 && $value <= 1000) ? $value : 10;
@@ -68,7 +68,7 @@ function exec_gsp_module()
 	{
 		$ssl = (isset($_POST['smtp_secure']) and $_POST['smtp_secure'] == 'ssl') ? 1 : 0;
 		$tls = (isset($_POST['smtp_secure']) and $_POST['smtp_secure'] == 'tls') ? 1 : 0;
-		gsp_settings_save_panel_logo();
+		settings_save_panel_logo();
 		$settings = array("panel_name" => $_REQUEST['panel_name'],
 			"header_code" => $_REQUEST['header_code'],
 			"maintenance_mode" => $_REQUEST['maintenance_mode'],
@@ -106,7 +106,7 @@ function exec_gsp_module()
 			"custom_github_update_username" => $_REQUEST['custom_github_update_username'],
 			"show_server_id_game_monitor" => $_REQUEST['show_server_id_game_monitor'],
 			"default_game_server_home_path_prefix" => $_REQUEST['default_game_server_home_path_prefix'],
-			"port_block_size" => gsp_settings_port_block_size($_REQUEST['port_block_size'] ?? 10),
+			"port_block_size" => settings_port_block_size($_REQUEST['port_block_size'] ?? 10),
 			"use_authorized_hosts" => $_REQUEST['use_authorized_hosts'],
 			"allow_setting_cpu_affinity" => $_REQUEST['allow_setting_cpu_affinity'],
 			"regex_invalid_file_name_chars" => addslashes($_REQUEST['regex_invalid_file_name_chars']),
@@ -226,7 +226,7 @@ function exec_gsp_module()
 	$ft->add_field('on_off','show_server_id_game_monitor',@$row['show_server_id_game_monitor']);
 
 	$ft->add_field('string','default_game_server_home_path_prefix',@$row['default_game_server_home_path_prefix']);
-	$ft->add_field('string','port_block_size',gsp_settings_port_block_size($row['port_block_size'] ?? 10), 8, "inputmode='numeric'");
+	$ft->add_field('string','port_block_size',settings_port_block_size($row['port_block_size'] ?? 10), 8, "inputmode='numeric'");
 
 	// Use authorized hosts for API - this should be disabled by default since using the KEY alone should be secure enough
 	$ft->add_field('on_off','use_authorized_hosts',@$row['use_authorized_hosts']);

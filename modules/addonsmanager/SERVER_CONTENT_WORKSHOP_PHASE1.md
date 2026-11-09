@@ -15,10 +15,10 @@ Phase 1 adds manual Workshop ID support inside the existing `addonsmanager` modu
   - Remove Selected
   - Update All
 - Panel generates a per-server manifest at:
-  - `%home_path%/gsp_server_content/workshop_manifest.json`
+  - `%home_path%/server_content/workshop_manifest.json`
 - Panel generates an approved per-job handler only, never a user-supplied command/path.
 - The generated job is written under:
-  - `%home_path%/gsp_server_content/jobs/workshop/workshop_job_<timestamp>_<random>.sh`
+  - `%home_path%/server_content/jobs/workshop/workshop_job_<timestamp>_<random>.sh`
 - The generated job writes a temporary SteamCMD runscript and invokes SteamCMD with `+runscript`.
 - Static Workshop script paths in XML are deprecated for the primary workflow.
 - The agent does not need `generic_steam_workshop_linux.sh` or `generic_steam_workshop_windows_cygwin.sh` to exist on disk.
@@ -40,9 +40,9 @@ Phase 1 adds manual Workshop ID support inside the existing `addonsmanager` modu
 
 Phase 1 introduces:
 
-- `GSP_DB_PREFIXserver_content_workshop`
+- `TABLE_PREFIX_PLACEHOLDERserver_content_workshop`
 
-and keeps `GSP_DB_PREFIXaddons.addon_type` at `VARCHAR(32)` so `workshop` is valid.
+and keeps `TABLE_PREFIX_PLACEHOLDERaddons.addon_type` at `VARCHAR(32)` so `workshop` is valid.
 
 ## Game/admin config TODO (next phase hardening)
 

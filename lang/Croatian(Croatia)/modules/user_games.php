@@ -25,7 +25,7 @@
 define('LANG_add_mods_note', "Možete dodati modove nakon dodavanja servera korisniku. To se može učiniti uređivanjem servera.");
 define('LANG_game_servers', "Serveri");
 define('LANG_game_path', "Putanje Igre");
-define('LANG_game_path_info', "Apsolutno putanje servera. Primjer: /home/ogpbot/GSP_User_Files / My_Server");
+define('LANG_game_path_info', "Apsolutno putanje servera. Primjer: /home/ogpbot/User_Files / My_Server");
 define('LANG_game_server_name_info', "Ime servera pomaže korisnicima da identificiraju svoje servere.");
 define('LANG_control_password', "Upravljačka lozinka");
 define('LANG_control_password_info', "Ova se lozinka koristi za kontrolu servera, kao što je RCON lozinka. Ako je lozinka prazna, upotrebljavaju se druga sredstva.");

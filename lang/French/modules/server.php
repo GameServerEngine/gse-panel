@@ -29,7 +29,7 @@ define('LANG_remote_host_info', "L&apos;hôte distant doit avoir un nom d&apos;h
 define('LANG_remote_host_port', "Port de l'hôte distant");
 define('LANG_remote_host_port_info', "Le port depuis lequel l&apos;Agent GSP écoute sur l&apos;hôte distant. Défaut: 12679.");
 define('LANG_remote_host_name', "Nom de l'hôte distant");
-define('LANG_gsp_user', "Nom d'utilisateur de l'Agent GSP");
+define('LANG_user', "Nom d'utilisateur de l'Agent GSP");
 define('LANG_remote_host_name_info', "Le nom de l&apos;hôte distant sera utilisé pour faciliter sa reconnaissance dans tout le Panneau.");
 define('LANG_add_remote_host', "Ajouter un hôte distant");
 define('LANG_remote_encryption_key', "Clé de chiffrement distante");
@@ -45,7 +45,7 @@ define('LANG_note_remote_host', "Un hôte distant est un serveur où l'Agent GSP
 define('LANG_ip_administration', "Administration IP &amp; Serveur :: GameServer Panel");
 define('LANG_unknown_error', "Erreur inconnue - status_chk a retourné");
 define('LANG_remote_host_user_name', "Utilisateur UNIX");
-define('LANG_remote_host_user_name_info', "Utilisateur qui fait tourner l'Agent. Exemple: gsp_agent");
+define('LANG_remote_host_user_name_info', "Utilisateur qui fait tourner l'Agent. Exemple: agent");
 define('LANG_remote_host_ftp_ip', "IP FTP");
 define('LANG_remote_host_ftp_ip_info', "L&apos;adresse <b>IP</b> du serveur FTP pour cet Agent.");
 define('LANG_remote_host_ftp_port', "Port FTP");

@@ -25,7 +25,7 @@
 require_once("modules/config_games/server_config_parser.php");
 require_once('includes/lib_remote.php');
 require_once('modules/fast_download/functions.php');
-function exec_gsp_module()
+function exec_module()
 {
 	global $db,$view;
 	echo "<h2>".get_lang("fast_dl")."</h2>\n";
@@ -71,7 +71,7 @@ function exec_gsp_module()
 			return;
 		}
 
-		$remote = new GSPRemoteLibrary($server_home['agent_ip'],
+		$remote = new RemoteLibrary($server_home['agent_ip'],
 									   $server_home['agent_port'],
 									   $server_home['encryption_key'],
 									   $server_home['timeout']);

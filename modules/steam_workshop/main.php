@@ -37,7 +37,7 @@ function steam_workshop_render_nav($home_key)
 		 "</div>";
 }
 
-function exec_gsp_module()
+function exec_module()
 {
 
 	Global $db,$view,$settings;
@@ -64,14 +64,14 @@ function exec_gsp_module()
 
 	if($home_cfg)
 	{
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_cfg['home_cfg_file'], gsp_os_for_install_row($home_cfg));
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_cfg['home_cfg_file'], os_for_install_row($home_cfg));
 		if($server_xml === FALSE)
 		{
 			print_failure(get_lang_f('failed_reading_xml_file', SERVER_CONFIG_LOCATION."/".$home_cfg['home_cfg_file']));
 			return;
 		}
 		$path_error = '';
-		$home_cfg = gsp_with_game_root($home_cfg, $server_xml, $path_error);
+		$home_cfg = with_game_root($home_cfg, $server_xml, $path_error);
 		if ($home_cfg === false) {
 			print_failure('Invalid game directory for this server: ' . htmlentities($path_error));
 			return;
@@ -133,7 +133,7 @@ function exec_gsp_module()
 			if($search_query !== '')
 				$search_results = steam_workshop_search_items($workshop_id, $search_query, $search_error);
 
-			$remote = new GSPRemoteLibrary($home_cfg['agent_ip'],$home_cfg['agent_port'],$home_cfg['encryption_key'], $home_cfg['timeout']);
+			$remote = new RemoteLibrary($home_cfg['agent_ip'],$home_cfg['agent_port'],$home_cfg['encryption_key'], $home_cfg['timeout']);
 
 			if($remote->status_chk() !== 1)
 			{
@@ -142,7 +142,7 @@ function exec_gsp_module()
 
 			if(isset($_GET['show_log']))
 			{
-				$update_active = $remote->get_log(GSP_SCREEN_TYPE_UPDATE,$home_id,clean_path($home_cfg['home_path']),$log_txt);
+				$update_active = $remote->get_log(SCREEN_TYPE_UPDATE,$home_id,clean_path($home_cfg['home_path']),$log_txt);
 				if ( $update_active == 1 && !steam_workshop_log_is_terminal($log_txt) )
 				{
 					if(isset($_POST['sgc']))

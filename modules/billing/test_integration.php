@@ -10,7 +10,7 @@
  * 4. Sample order status counts
  */
 
-function exec_gsp_module()
+function exec_module()
 {
 	global $db;
 
@@ -57,7 +57,7 @@ function exec_gsp_module()
 	);
 
 	foreach ((array)$tables as $table => $desc) {
-		$result = $db->query("SHOW TABLES LIKE 'GSP_DB_PREFIX".$table."'");
+		$result = $db->query("SHOW TABLES LIKE 'TABLE_PREFIX_PLACEHOLDER".$table."'");
 		if ($result && $db->num_rows($result) > 0) {
 			echo "<div class='success'>✓ $table - $desc</div>";
 		} else {
@@ -67,7 +67,7 @@ function exec_gsp_module()
 
 	// Test 4: Order status counts
 	echo "<h3>4. Order Statistics</h3>";
-	$stats = $db->resultQuery("SELECT status, COUNT(*) as count FROM GSP_DB_PREFIXbilling_orders GROUP BY status");
+	$stats = $db->resultQuery("SELECT status, COUNT(*) as count FROM TABLE_PREFIX_PLACEHOLDERbilling_orders GROUP BY status");
 
 	if (!empty($stats)) {
 		echo "<table class='tablesorter'>";
@@ -103,9 +103,9 @@ function exec_gsp_module()
 	// normalize_billing_order_status.sql has been run — include them here.
 	echo "<h3>7. Active Orders Ready for Provisioning</h3>";
 	if ($isAdmin) {
-		$paid_orders = $db->resultQuery("SELECT COUNT(*) as count FROM GSP_DB_PREFIXbilling_orders WHERE status IN ('Active','paid')");
+		$paid_orders = $db->resultQuery("SELECT COUNT(*) as count FROM TABLE_PREFIX_PLACEHOLDERbilling_orders WHERE status IN ('Active','paid')");
 	} else {
-		$paid_orders = $db->resultQuery("SELECT COUNT(*) as count FROM GSP_DB_PREFIXbilling_orders WHERE status IN ('Active','paid') AND user_id=".$db->realEscapeSingle($user_id));
+		$paid_orders = $db->resultQuery("SELECT COUNT(*) as count FROM TABLE_PREFIX_PLACEHOLDERbilling_orders WHERE status IN ('Active','paid') AND user_id=".$db->realEscapeSingle($user_id));
 	}
 
 	if (!empty($paid_orders)) {
@@ -122,7 +122,7 @@ function exec_gsp_module()
 	echo "<h3>8. Module Loading Test</h3>";
 	echo "<p>If you can see this page, the module loading mechanism is working correctly!</p>";
 	echo "<div class='success'>✓ Navigation system functional</div>";
-	echo "<div class='success'>✓ exec_gsp_module() called successfully</div>";
+	echo "<div class='success'>✓ exec_module() called successfully</div>";
 
 	// Summary
 	echo "<h3>Integration Status Summary</h3>";

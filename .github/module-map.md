@@ -6,18 +6,18 @@ This file captures how the control panel, storefront, agents, and helper scripts
 
 | Area | Key files | Responsibilities | Downstream callers |
 | --- | --- | --- | --- |
-| Database bootstrap | `includes/functions.php`, `includes/database_mysqli.php` | Creates the `GSPDatabase` instance and exposes helpers such as `resultQuery()`, `addGameHome()`, and logging. | Every panel page, `Website/Website/includes/panel_bridge.php`, cron jobs. |
+| Database bootstrap | `includes/functions.php`, `includes/database_mysqli.php` | Creates the `Database` instance and exposes helpers such as `resultQuery()`, `addGameHome()`, and logging. | Every panel page, `Website/Website/includes/panel_bridge.php`, cron jobs. |
 | Session helpers | `includes/helpers.php` (`startSession()`) | Sets `session_name('gameserverpanel_web')`, sanitizes request vars, loads locales. | `index.php`, `home.php`, provisioning pages, storefront session bridge. |
 | Remote control | `includes/lib_remote.php` | Wraps agent RPC (install/update, FTP user management, rsync, SteamCMD). | `modules/gamemanager/*`, `Website/create_servers.php`, cron jobs. |
 | XML parser | `modules/config_games/server_config_parser.php` | Converts `modules/config_games/server_configs/*.xml` into PHP arrays used for provisioning and pricing metadata. | `modules/gamemanager`, `Website/` (catalog + provisioner), cron installers. |
-| API surface | `gsp_api.php`, `includes/api_functions.php` | HTTP API for third-party tooling. Exposes operations such as starting/stopping homes, querying stats. | Mobile apps, automated provisioning, selected billing workflows. |
+| API surface | `api.php`, `includes/api_functions.php` | HTTP API for third-party tooling. Exposes operations such as starting/stopping homes, querying stats. | Mobile apps, automated provisioning, selected billing workflows. |
 | Cron/automation | `scripts/` (`cron-shop.php`, `status/*`, etc.) | Suspends/unsuspends services, refreshes status caches, runs backups. | Triggered via system cron or panel scheduler. |
 
 ## High-level flows
 
 1. **Auth/session** – Driven by `index.php` (panel) and `Website/login.php` (storefront). Both set `$_SESSION['user_id']`, `users_login`, `users_group`, and `website_user_id`. The shared session cookie `gameserverpanel_web` means logging into either surface immediately authenticates the other.
 2. **Catalog** – `modules/config_games` hosts XML definitions. Panel modules (`gamemanager`, `config_games`) and storefront pages (`serverlist.php`, `order.php`, documentation pages, and the XML-notes mirror) parse these files for display and provisioning metadata.
-3. **Provisioning** – Orders land in `gsp_billing_orders`. `Website/create_servers.php` allocates homes, assigns nodes/IPs, configures mods, kicks off SteamCMD/rsync/manual installers, and then syncs the resulting `home_id` back into `billing_orders`, `billing_invoices`, and `billing_transactions` so paid services never stay orphaned. The same provisioner is invoked by:
+3. **Provisioning** – Orders land in `billing_orders`. `Website/create_servers.php` allocates homes, assigns nodes/IPs, configures mods, kicks off SteamCMD/rsync/manual installers, and then syncs the resulting `home_id` back into `billing_orders`, `billing_invoices`, and `billing_transactions` so paid services never stay orphaned. The same provisioner is invoked by:
    - PayPal capture endpoint (`Website/api/capture_order.php`).
    - Panel module page `home.php?m=billing&p=provision_servers`.
    - Cron/repair actions in `Website/cron-shop.php`.
@@ -37,10 +37,10 @@ This file captures how the control panel, storefront, agents, and helper scripts
 | `server` | `modules/server/*` | Remote server management (agents, IPs, ports, reinstall keys). Billing uses these tables for available nodes/locations. |
 | `modulemanager` | Manage module install/uninstall/menus. Billing module registers `navigation.xml` to surface `create_servers.php` & admin pages. |
 | `tickets`, `support` | Support ticketing/email utilities. | Pulls user info and logger records. |
-| `extras`, `addonsmanager` | Workshop/add-on management. Server Content workshop installs now share validation/runtime helpers across admin, user, and API flows, and sync bundled workshop scripts into each home’s `gsp_server_content/scripts/workshop/` directory before execution. | Hooks into game homes after provisioning and uses agent-side SteamCMD copy/install workflows. |
+| `extras`, `addonsmanager` | Workshop/add-on management. Server Content workshop installs now share validation/runtime helpers across admin, user, and API flows, and sync bundled workshop scripts into each home’s `server_content/scripts/workshop/` directory before execution. | Hooks into game homes after provisioning and uses agent-side SteamCMD copy/install workflows. |
 | `litefm`, `ftp`, `TS3Admin` | File managers and TeamSpeak controllers. | Depend on homes and remote server credentials set during provisioning. |
 | `news`, `circular`, `faq` | Content modules for panel UI. | Use standard MVC wrappers, share session/auth. |
-| `cron` | Scheduler UI feeding `scripts/` commands. | Maintains job metadata that OS cron reads, including scheduler-triggered Server Content actions via `gsp_api.php?server_content/run_scheduled_action` and `modules/addonsmanager/server_content_actions.php`. |
+| `cron` | Scheduler UI feeding `scripts/` commands. | Maintains job metadata that OS cron reads, including scheduler-triggered Server Content actions via `api.php?server_content/run_scheduled_action` and `modules/addonsmanager/server_content_actions.php`. |
 
 ## Storefront (`modules/billing` runtime + `Website/` compatibility wrappers)
 
@@ -64,14 +64,14 @@ This file captures how the control panel, storefront, agents, and helper scripts
 
 ## Data touchpoints
 
-- **Users** – `gsp_users` table is shared. Registration uses `Website/register.php`, admin pages use `modules/user_admin`. Password upgrades must not break panel logins.
-- **Billing tables** – `gsp_billing_services`, `gsp_billing_orders`, `gsp_billing_invoices`, `gsp_billing_coupons`. Admin edits (pricing, enable/disable, locations) are done via `adminserverlist.php`; automation uses `cron-shop.php`.
-- **Homes/Mods/IPs** – Stored in `gsp_game_homes`, `gsp_game_mods`, `gsp_remote_server_ips`. Provisioner writes to these tables; `gamemanager`, `litefm`, `ftp`, and `user_games` read them.
-- **Logging** – `$db->logger()` writes to `gsp_logs`. Storefront-specific logs live in `Website/logs/` for quick inspection (payment capture, provisioning outcomes, coupon usage).
+- **Users** – `users` table is shared. Registration uses `Website/register.php`, admin pages use `modules/user_admin`. Password upgrades must not break panel logins.
+- **Billing tables** – `billing_services`, `billing_orders`, `billing_invoices`, `billing_coupons`. Admin edits (pricing, enable/disable, locations) are done via `adminserverlist.php`; automation uses `cron-shop.php`.
+- **Homes/Mods/IPs** – Stored in `game_homes`, `game_mods`, `remote_server_ips`. Provisioner writes to these tables; `gamemanager`, `litefm`, `ftp`, and `user_games` read them.
+- **Logging** – `$db->logger()` writes to `logs`. Storefront-specific logs live in `Website/logs/` for quick inspection (payment capture, provisioning outcomes, coupon usage).
 
 ## Usage tips
 
-1. **Need a DB object inside `Website/`?** Include `Website/includes/panel_bridge.php` and call `billing_get_panel_db()`. It sets up constants, loads helpers, and caches the `GSPDatabase` instance so multi-call flows (e.g., capture → provision → email) reuse it.
+1. **Need a DB object inside `Website/`?** Include `Website/includes/panel_bridge.php` and call `billing_get_panel_db()`. It sets up constants, loads helpers, and caches the `Database` instance so multi-call flows (e.g., capture → provision → email) reuse it.
 2. **Want to change provisioning?** Update `Website/includes/provisioner.php` once. `create_servers.php`, PayPal webhooks, cron jobs, and admin repair flows all use it.
 3. **Working on XML or documentation?** Update the XML file under `modules/config_games/server_configs/`, regenerate docs if needed, and keep the PHP XML-notes mirror (`Website/docs/xml_notes.php`) accurate so the admin link stays trustworthy.
 4. **Need to know who uses a table?** Search `.github/module-map.md` first; the table above lists the canonical readers/writers for each major schema.

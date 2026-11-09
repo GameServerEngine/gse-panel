@@ -7,7 +7,7 @@
 define('IN_GSP', true);
 require_once __DIR__.'/includes/config.inc.php';
 require_once __DIR__.'/includes/functions.php';
-require_once __DIR__.'/includes/lib_remote.php'; // GSPRemoteLibrary
+require_once __DIR__.'/includes/lib_remote.php'; // RemoteLibrary
 require_once __DIR__.'/includes/classes/db.php'; // $db
 
 /* ========== CONFIG ========== */
@@ -137,7 +137,7 @@ if (method_exists($db, 'getRemoteServers')) {
   $rows = $db->getRemoteServers();
 } else {
   // Fallback SQL (prefix best-effort)
-  $prefix = defined('GSP_DB_PREFIX') ? GSP_DB_PREFIX : (defined('GSP_DB_TABLE_PREFIX') ? GSP_DB_TABLE_PREFIX : 'gsp_');
+  $prefix = defined('TABLE_PREFIX_PLACEHOLDER') ? TABLE_PREFIX_PLACEHOLDER : (defined('DB_TABLE_PREFIX') ? DB_TABLE_PREFIX : '');
   $rows = $db->resultQuery("SELECT remote_server_id, hostname, agent_ip, agent_port FROM {$prefix}remote_servers ORDER BY hostname");
 }
 
@@ -154,8 +154,8 @@ foreach ((array)$rows as $h) {
 
   if ($up) {
     try {
-      // GSPRemoteLibrary signature normally: (ip, port, encryption_key) — falls back to global if omitted.
-      $remote = new GSPRemoteLibrary($agent_ip, $agent_port);
+      // RemoteLibrary signature normally: (ip, port, encryption_key) — falls back to global if omitted.
+      $remote = new RemoteLibrary($agent_ip, $agent_port);
       $raw    = fetch_agent_stats($remote);
       if (is_array($raw)) $stats = normalize_stats($raw);
     } catch (Throwable $e) {

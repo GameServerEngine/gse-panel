@@ -27,7 +27,7 @@
 
 require_once(dirname(__FILE__) . '/register_helpers.php');
 
-function exec_gsp_module()
+function exec_module()
 {
 	global $db,$view,$settings;
 

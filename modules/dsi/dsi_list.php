@@ -29,7 +29,7 @@ require_once("modules/config_games/server_config_parser.php");
 require_once('includes/lib_remote.php');
 require_once('protocol/lgsl/lgsl_protocol.php');
 require_once('protocol/GameQ/GameQ.php');
-function exec_gsp_module(){
+function exec_module(){
 	global $db;
 	$online = isset( $_POST['online'] ) ? TRUE : FALSE;
 	$server_homes = $db->getIpPorts();
@@ -81,8 +81,8 @@ function exec_gsp_module(){
 		// Get display IP
 		$public_ip = checkDisplayPublicIP($server_home['display_public_ip'],$server_home['ip'] != $server_home['agent_ip'] ? $server_home['ip'] : $server_home['agent_ip']);
 
-		$remote = new GSPRemoteLibrary($server_home['agent_ip'], $server_home['agent_port'], $server_home['encryption_key'], $server_home['timeout']);
-		$screen_running = $remote->is_screen_running(GSP_SCREEN_TYPE_HOME,$server_home['home_id']) === 1;
+		$remote = new RemoteLibrary($server_home['agent_ip'], $server_home['agent_port'], $server_home['encryption_key'], $server_home['timeout']);
+		$screen_running = $remote->is_screen_running(SCREEN_TYPE_HOME,$server_home['home_id']) === 1;
 		if($screen_running) $servers_running++;
 		if( ( $online and $screen_running ) OR ( isset( $_GET['home_id-mod_id-ip-port'] )
 						 and $_GET['home_id-mod_id-ip-port'] ==
@@ -92,7 +92,7 @@ function exec_gsp_module(){
 			$port = $server_home['port'];
 
 			$url = false;
-			$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file'], gsp_os_for_install_row($server_home));
+			$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file'], os_for_install_row($server_home));
 			if ($server_xml->protocol == "lgsl"){
 				list($c_port, $q_port, $s_port) = lgsl_port_conversion($server_xml->lgsl_query_name, $port, "", "");
 				$url = lgsl_software_link($server_xml->lgsl_query_name, $public_ip, $c_port, $q_port, $s_port);

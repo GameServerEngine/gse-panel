@@ -107,12 +107,12 @@ function get_agent_server_status($remote, $server_xml, $home_id, $server_ip, $se
 	return $agent_status;
 }
 
-function gsp_agent_screen_running($remote, $home_id)
+function agent_screen_running($remote, $home_id)
 {
 	if (!method_exists($remote, 'is_screen_running')) {
 		return null;
 	}
-	$result = $remote->is_screen_running(GSP_SCREEN_TYPE_HOME, $home_id);
+	$result = $remote->is_screen_running(SCREEN_TYPE_HOME, $home_id);
 	if ($result === 1) {
 		return true;
 	}
@@ -122,7 +122,7 @@ function gsp_agent_screen_running($remote, $home_id)
 	return null;
 }
 
-function gsp_agent_port_listening($remote, $server_port)
+function agent_port_listening($remote, $server_port)
 {
 	$server_port = (int)$server_port;
 	if ($server_port <= 0 || !method_exists($remote, 'exec')) {
@@ -133,12 +133,12 @@ function gsp_agent_port_listening($remote, $server_port)
 		. '| tr -d "\r" '
 		. '| grep -Eai "(LISTEN|LISTENING|UDP|tcp|udp)" '
 		. '| grep -E ' . escapeshellarg($port_pattern) . ' >/dev/null '
-		. '&& echo GSP_PORT_LISTENING || echo GSP_PORT_CLOSED';
+		. '&& echo PORT_LISTENING || echo PORT_CLOSED';
 	$output = $remote->exec($command);
-	if (strpos((string)$output, 'GSP_PORT_LISTENING') !== false) {
+	if (strpos((string)$output, 'PORT_LISTENING') !== false) {
 		return true;
 	}
-	if (strpos((string)$output, 'GSP_PORT_CLOSED') !== false) {
+	if (strpos((string)$output, 'PORT_CLOSED') !== false) {
 		return false;
 	}
 	return null;
@@ -146,10 +146,10 @@ function gsp_agent_port_listening($remote, $server_port)
 
 function is_agent_status_online($agent_status)
 {
-	return is_array($agent_status) && isset($agent_status['status']) && in_array(strtoupper($agent_status['status']), array('ONLINE', 'RUNNING'), true) && gsp_agent_status_has_runtime_evidence($agent_status);
+	return is_array($agent_status) && isset($agent_status['status']) && in_array(strtoupper($agent_status['status']), array('ONLINE', 'RUNNING'), true) && agent_status_has_runtime_evidence($agent_status);
 }
 
-function gsp_agent_status_has_runtime_evidence($agent_status)
+function agent_status_has_runtime_evidence($agent_status)
 {
 	if (!is_array($agent_status)) {
 		return false;
@@ -167,7 +167,7 @@ function gsp_agent_status_has_runtime_evidence($agent_status)
 	return false;
 }
 
-function gsp_agent_status_has_desired_state($agent_status)
+function agent_status_has_desired_state($agent_status)
 {
 	if (!is_array($agent_status)) {
 		return false;
@@ -189,17 +189,17 @@ function is_agent_status_active($agent_status)
 	if (!in_array($status, array('STARTING', 'ONLINE', 'RUNNING', 'STOPPING', 'UNRESPONSIVE'), true)) {
 		return false;
 	}
-	if (gsp_agent_status_has_runtime_evidence($agent_status)) {
+	if (agent_status_has_runtime_evidence($agent_status)) {
 		return true;
 	}
-	return !gsp_agent_status_has_desired_state($agent_status);
+	return !agent_status_has_desired_state($agent_status);
 }
 
-function gsp_lifecycle_remote_stop_verified($remote, $server_xml, array $home_info, $ip, $port, $control_password = null, $control_type = null, $force = false)
+function lifecycle_remote_stop_verified($remote, $server_xml, array $home_info, $ip, $port, $control_password = null, $control_type = null, $force = false)
 {
 	$control_password = $control_password === null ? (isset($home_info['control_password']) ? $home_info['control_password'] : '') : $control_password;
 	$control_type = $control_type === null ? (isset($server_xml->control_protocol_type) ? $server_xml->control_protocol_type : '') : $control_type;
-	$payload = gsp_lifecycle_stop_payload($home_info, $server_xml, $ip, $port, $force);
+	$payload = lifecycle_stop_payload($home_info, $server_xml, $ip, $port, $force);
 	if ($force && method_exists($remote, 'remote_force_stop_server')) {
 		$result = $remote->remote_force_stop_server($home_info['home_id'], $ip, $port, $home_info['management_home'], $payload);
 	} elseif (method_exists($remote, 'remote_stop_server_result')) {
@@ -210,7 +210,7 @@ function gsp_lifecycle_remote_stop_verified($remote, $server_xml, array $home_in
 	}
 	$agent_status = get_agent_server_status($remote, $server_xml, $home_info['home_id'], $ip, $port, 'STOPPING');
 	$result['status_evidence'] = $agent_status;
-	if (!gsp_lifecycle_status_is_verified_stopped($agent_status)) {
+	if (!lifecycle_status_is_verified_stopped($agent_status)) {
 		$result['success'] = 0;
 		$result['status'] = 'stop_not_verified';
 		if (empty($result['message'])) {
@@ -220,9 +220,9 @@ function gsp_lifecycle_remote_stop_verified($remote, $server_xml, array $home_in
 	return $result;
 }
 
-function gsp_lifecycle_print_failure($result, $fallback)
+function lifecycle_print_failure($result, $fallback)
 {
-	$message = gsp_lifecycle_result_message($result, $fallback);
+	$message = lifecycle_result_message($result, $fallback);
 	if (is_array($result) && isset($result['status_evidence']['last_error']) && $result['status_evidence']['last_error'] !== '') {
 		$message .= ' ' . $result['status_evidence']['last_error'];
 	}
@@ -232,7 +232,7 @@ function gsp_lifecycle_print_failure($result, $fallback)
 function get_start_cmd($remote,$server_xml,$home_info,$mod_id,$ip,$port,$db)
 {
 	$path_error = '';
-	$home_info = gsp_with_game_root($home_info, $server_xml, $path_error);
+	$home_info = with_game_root($home_info, $server_xml, $path_error);
 	if ($home_info === false) {
 		return false;
 	}
@@ -249,7 +249,7 @@ function get_start_cmd($remote,$server_xml,$home_info,$mod_id,$ip,$port,$db)
 	$cli_param_data['IP'] = $ip;
 	$cli_param_data['PORT'] = $port;
 	$cli_param_data['HOSTNAME'] = $home_info['home_name'];
-	$cli_param_data['PID_FILE'] = "gsp_game_startup.pid";
+	$cli_param_data['PID_FILE'] = "game_startup.pid";
 
 	// Linux
 	if( preg_match("/Linux/", $os) )
@@ -428,20 +428,20 @@ function exec_operation( $action, $home_id, $mod_id, $ip, $port, $override = fal
     if( $home_info === FALSE )
         return FALSE;
 
-    $server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
+    $server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], os_for_install_row($home_info));
 
     if ( !$server_xml )
         return FALSE;
 
 	$path_error = '';
-	$home_info = gsp_with_game_root($home_info, $server_xml, $path_error);
+	$home_info = with_game_root($home_info, $server_xml, $path_error);
 	if ($home_info === false) {
 		return FALSE;
 	}
 	$game_run_dir = clean_path((string)$server_xml->exe_location);
 
 	require_once('includes/lib_remote.php');
-	$remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
+	$remote = new RemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
 	$os = $remote->what_os();
 
 	if ( $action != "stop" )
@@ -460,7 +460,7 @@ function exec_operation( $action, $home_id, $mod_id, $ip, $port, $override = fal
 
 	if ( $action == "stop" )
 	{
-		$stop_result = gsp_lifecycle_remote_stop_verified($remote, $server_xml, $home_info, $ip, $port, $home_info['control_password'], $server_xml->control_protocol_type);
+		$stop_result = lifecycle_remote_stop_verified($remote, $server_xml, $home_info, $ip, $port, $home_info['control_password'], $server_xml->control_protocol_type);
 		if ( empty($stop_result['success']) )
 			return FALSE;
 		else
@@ -516,9 +516,9 @@ function exec_operation( $action, $home_id, $mod_id, $ip, $port, $override = fal
 			$server_home = $home_info;
 			if(	isset($server_xml->lgsl_query_name) )
 				require_once('protocol/lgsl/lgsl_protocol.php');
-			gsp_lifecycle_begin_replace_text_tracking();
+			lifecycle_begin_replace_text_tracking();
 			require_once("modules/gamemanager/cfg_text_replace.php");
-			$replace_text_results = gsp_lifecycle_replace_text_results();
+			$replace_text_results = lifecycle_replace_text_results();
 		}
 
 		// Run pre-start commands
@@ -549,7 +549,7 @@ function exec_operation( $action, $home_id, $mod_id, $ip, $port, $override = fal
 			}
 		}
 
-		$lifecycle_payload = gsp_lifecycle_start_payload($db, $remote, $home_info, $server_xml, $mod_id, $ip, $port, $start_cmd, $preStart, $envVars, $replace_text_results, 'panel_restart');
+		$lifecycle_payload = lifecycle_start_payload($db, $remote, $home_info, $server_xml, $mod_id, $ip, $port, $start_cmd, $preStart, $envVars, $replace_text_results, 'panel_restart');
 		if (isset($lifecycle_payload['error'])) {
 			return FALSE;
 		}
@@ -593,9 +593,9 @@ function exec_operation( $action, $home_id, $mod_id, $ip, $port, $override = fal
 			$server_home = $home_info;
 			if(	isset($server_xml->lgsl_query_name) )
 				require_once('protocol/lgsl/lgsl_protocol.php');
-			gsp_lifecycle_begin_replace_text_tracking();
+			lifecycle_begin_replace_text_tracking();
 			require_once("modules/gamemanager/cfg_text_replace.php");
-			$replace_text_results = gsp_lifecycle_replace_text_results();
+			$replace_text_results = lifecycle_replace_text_results();
 		}
 
 		// Run pre-start commands
@@ -626,7 +626,7 @@ function exec_operation( $action, $home_id, $mod_id, $ip, $port, $override = fal
 			}
 		}
 
-		$lifecycle_payload = gsp_lifecycle_start_payload($db, $remote, $home_info, $server_xml, $mod_id, $ip, $port, $start_cmd, $preStart, $envVars, $replace_text_results);
+		$lifecycle_payload = lifecycle_start_payload($db, $remote, $home_info, $server_xml, $mod_id, $ip, $port, $start_cmd, $preStart, $envVars, $replace_text_results);
 		if (isset($lifecycle_payload['error'])) {
 			return FALSE;
 		}
@@ -755,16 +755,16 @@ function get_server_billing_expiration_html(int $home_id): string
 	// statuses ('installed', 'paid', 'suspended') are not matched here.
 	// Run normalize_billing_order_status.sql to migrate any legacy rows first.
 	//
-	// GSP_DB_PREFIX is replaced at runtime by the panel DB wrapper (str_replace).
+	// TABLE_PREFIX_PLACEHOLDER is replaced at runtime by the panel DB wrapper (str_replace).
 	// Server-level 'never expires' flag (server_expiration_date X or empty).
-	$flagRows = $db->resultQuery("SELECT server_expiration_date FROM GSP_DB_PREFIXserver_homes WHERE home_id = '" . intval($home_id) . "'");
+	$flagRows = $db->resultQuery("SELECT server_expiration_date FROM TABLE_PREFIX_PLACEHOLDERserver_homes WHERE home_id = '" . intval($home_id) . "'");
 	if (is_array($flagRows) && isset($flagRows[0]['server_expiration_date']) && in_array(trim((string)$flagRows[0]['server_expiration_date']), array('X', ''), true)) {
 		return "<span style='color:green;'>Never Expires</span>";
 	}
 
 	$rows = $db->resultQuery(
 		"SELECT end_date
-		   FROM GSP_DB_PREFIXbilling_orders
+		   FROM TABLE_PREFIX_PLACEHOLDERbilling_orders
 		  WHERE home_id = '" . intval($home_id) . "'
 		    AND home_id != '0'
 		    AND status IN ('Active','Invoiced')

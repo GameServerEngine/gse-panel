@@ -1,7 +1,7 @@
 <?php
 // Regression test: the agent's answer decides server status.
 // Run: php tests/status_sync_test.php   (exit 0 = all passed)
-if (!defined('GSP_SCREEN_TYPE_HOME')) { define('GSP_SCREEN_TYPE_HOME', 'HOME'); }
+if (!defined('SCREEN_TYPE_HOME')) { define('SCREEN_TYPE_HOME', 'HOME'); }
 require_once(__DIR__ . '/../modules/gamemanager/home_handling_functions.php');
 
 class StubRemote

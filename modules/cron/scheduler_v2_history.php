@@ -17,7 +17,7 @@
 
 require_once('modules/cron/scheduler_v2_catalog.php');
 
-function exec_gsp_module()
+function exec_module()
 {
 	global $db;
 

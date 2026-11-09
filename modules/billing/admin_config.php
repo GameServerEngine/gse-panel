@@ -48,8 +48,8 @@ $cfgVals = [
 ];
 
 // Computed full webhook URL for display
-$computedWebhookUrl = function_exists('gsp_paypal_get_full_webhook_url')
-    ? gsp_paypal_get_full_webhook_url()
+$computedWebhookUrl = function_exists('paypal_get_full_webhook_url')
+    ? paypal_get_full_webhook_url()
     : rtrim($cfgVals['SITE_BASE_URL'], '/') . $cfgVals['paypal_webhook_path'];
 
 // Detect panel-mode (DB settings are managed by the panel)
@@ -408,7 +408,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
       $port_int = intval($db_port ?? 3306) ?: 3306;
       $diag_db  = @mysqli_connect($db_host ?? 'localhost', $db_user ?? '', $db_pass ?? '', $db_name ?? '', $port_int);
       if ($diag_db) {
-          $pfx_diag = $table_prefix ?? 'gsp_';
+          $pfx_diag = $table_prefix ?? '';
           mysqli_set_charset($diag_db, 'utf8mb4');
 
           $res = @mysqli_query($diag_db, "SELECT paypal_event_id, event_type, processing_status, created_at FROM `{$pfx_diag}billing_paypal_webhook_events` ORDER BY id DESC LIMIT 5");

@@ -29,7 +29,7 @@ define('LANG_remote_host_info', "Fjernhost skal være et pingable værtsnavn!");
 define('LANG_remote_host_port', "Fjernvært Port");
 define('LANG_remote_host_port_info', "The port that is listened by the GSP Agent on remote host. Default: 12679.");
 define('LANG_remote_host_name', "Fjernværtens Navn");
-define('LANG_gsp_user', "GSP Agent Username");
+define('LANG_user', "GSP Agent Username");
 define('LANG_remote_host_name_info', "Fjernværtens navn er brugt til, at hjælpe brugere til at identificere deres servere.");
 define('LANG_add_remote_host', "Tilføj Fjernværten");
 define('LANG_remote_encryption_key', "Fjernværtens Krypterings nøgle");

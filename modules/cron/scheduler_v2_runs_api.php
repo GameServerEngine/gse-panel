@@ -2,7 +2,7 @@
 /*
  * Scheduler v2 phase P1: read-only run-history JSON API.
  *
- * Deliberately kept separate from gsp_api.php: that dispatcher is the
+ * Deliberately kept separate from api.php: that dispatcher is the
  * token-authenticated surface remote agents call, and is shared by every
  * existing module. This file instead reuses the Panel's own logged-in web
  * session (same auth as any other home.php?m=... page), so it only needs to
@@ -13,7 +13,7 @@
 
 require_once('modules/cron/scheduler_v2_catalog.php');
 
-function exec_gsp_module()
+function exec_module()
 {
 	global $db;
 

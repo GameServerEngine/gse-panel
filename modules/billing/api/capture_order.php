@@ -101,7 +101,7 @@ if (!$mysqli) {
 }
 mysqli_set_charset($mysqli, 'utf8mb4');
 
-$prefix = $table_prefix ?? 'gsp_';
+$prefix = $table_prefix ?? '';
 $repo   = new BillingRepository($mysqli, $prefix);
 $lifecycle = new BillingLifecycleService($repo);
 

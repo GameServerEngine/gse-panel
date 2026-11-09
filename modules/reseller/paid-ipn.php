@@ -27,7 +27,7 @@ require_once("functions.php");
 require_once("lib_remote.php");
 require_once("lang.php");
 require_once("modules/config_games/server_config_parser.php");
-gspLang();
+lang();
 
 /* Query DB */
 $db = createDatabaseConnection($db_type, $db_host, $db_user, $db_pass, $db_name, $table_prefix);
@@ -114,17 +114,17 @@ if ($verified AND isset( $ipn['payment_status'] ) )
 				  WHERE cart_id=".$ipn['item_number'];
 		$db->query($query);
 
-		$cart_accounts = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_accounts WHERE cart_id=".$ipn['item_number']);
+		$cart_accounts = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE cart_id=".$ipn['item_number']);
 		foreach ( $cart_accounts as $account )
 		{
 			$months = $account['invoice_duration'] == "month" ? 1 : 12;
 			$total_months = $months * $account['qty'];
 
-			$db->query("UPDATE GSP_DB_PREFIXreseller_accounts
+			$db->query("UPDATE TABLE_PREFIX_PLACEHOLDERreseller_accounts
 						SET available_months=".$total_months.
 					   " WHERE account_id=".$account['account_id'] );
 
-			$db->query( "UPDATE GSP_DB_PREFIXreseller_accounts ".
+			$db->query( "UPDATE TABLE_PREFIX_PLACEHOLDERreseller_accounts ".
 						"SET status=ADDDATE(DATE(NOW() + INTERVAL ".$total_months." MONTH), 1) ".
 						"WHERE account_id=".$account['account_id'] );
 		}
@@ -144,17 +144,17 @@ if ($verified AND isset( $ipn['payment_status'] ) )
 				  WHERE cart_id=".$ipn['item_number'];
 		$db->query($query);
 
-		$cart_accounts = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_accounts WHERE cart_id=".$ipn['item_number']);
+		$cart_accounts = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE cart_id=".$ipn['item_number']);
 		foreach ( $cart_accounts as $account )
 		{
 			$months = $account['invoice_duration'] == "month" ? 1 : 12;
 			$total_months = $months * $account['qty'];
 
-			$db->query("UPDATE GSP_DB_PREFIXreseller_accounts
+			$db->query("UPDATE TABLE_PREFIX_PLACEHOLDERreseller_accounts
 						SET available_months=0 ".
 					   "WHERE account_id=".$account['account_id'] );
 
-			$db->query( "UPDATE GSP_DB_PREFIXreseller_accounts ".
+			$db->query( "UPDATE TABLE_PREFIX_PLACEHOLDERreseller_accounts ".
 						"SET status=0 ".
 						"WHERE account_id=".$account['account_id'] );
 		}

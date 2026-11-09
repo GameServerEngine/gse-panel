@@ -29,7 +29,7 @@ define('LANG_remote_host_info', "The remote host must be a pingable hostname!");
 define('LANG_remote_host_port', "Remote Host Port");
 define('LANG_remote_host_port_info', "The port that is listened by the GSP Agent on remote host. Default: 12679.");
 define('LANG_remote_host_name', "Remote Host Name");
-define('LANG_gsp_user', "GSP Agent Username");
+define('LANG_user', "GSP Agent Username");
 define('LANG_remote_host_name_info', "Remote host name is used to help users to identify their servers.");
 define('LANG_add_remote_host', "Add Remote Host");
 define('LANG_remote_encryption_key', "Remote Encryption Key");

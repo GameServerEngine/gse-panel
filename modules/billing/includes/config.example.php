@@ -18,7 +18,7 @@ $db_port = "3306";          // MySQL port (default 3306)
 $db_user = "your_db_user";
 $db_pass = "your_db_password";
 $db_name = "your_db_name";  // Panel database name (e.g. "gsp" or "panel")
-$table_prefix = "gsp_";     // Table prefix used in the panel database
+$table_prefix = "";     // Table prefix used in the panel database
 $db_type = "mysql";
 
 # --- Site base URL ---

@@ -22,13 +22,13 @@
  *
 */
 
-if (!defined('GSP_WEBSITE_DOCS_BASE_URL')) {
-	define('GSP_WEBSITE_DOCS_BASE_URL', 'https://gameservers.world/docs/');
+if (!defined('WEBSITE_DOCS_BASE_URL')) {
+	define('WEBSITE_DOCS_BASE_URL', 'https://gameservers.world/docs/');
 }
 
-function gsp_support_docs_url_for_game_key($game_key)
+function support_docs_url_for_game_key($game_key)
 {
-	$baseDocsUrl = rtrim(GSP_WEBSITE_DOCS_BASE_URL, '/');
+	$baseDocsUrl = rtrim(WEBSITE_DOCS_BASE_URL, '/');
 	$game_key = trim((string)$game_key);
 	if ($game_key !== '') {
 		$docPath = __DIR__ . '/../billing/docs/' . $game_key . '/index.php';
@@ -39,7 +39,7 @@ function gsp_support_docs_url_for_game_key($game_key)
 	return $baseDocsUrl . '/';
 }
 
-function exec_gsp_module() {
+function exec_module() {
 
 	global $db, $settings;
 
@@ -98,11 +98,11 @@ if (!empty($webhook)) {
 	} // end if submit
 	echo '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />';
 	echo "<h2>".get_lang('support')."</h2>";
-	$defaultDocsUrl = GSP_WEBSITE_DOCS_BASE_URL;
+	$defaultDocsUrl = WEBSITE_DOCS_BASE_URL;
 	if (!empty($server_homes) && is_array($server_homes)) {
 		foreach ((array)$server_homes as $server_home_row) {
 			if (!empty($server_home_row['game_key'])) {
-				$defaultDocsUrl = gsp_support_docs_url_for_game_key($server_home_row['game_key']);
+				$defaultDocsUrl = support_docs_url_for_game_key($server_home_row['game_key']);
 				break;
 			}
 		}
@@ -127,7 +127,7 @@ if (!empty($webhook)) {
 	echo get_lang('select_server').":<br /><select name='gameserver' id='gameserver'>";
 	foreach ((array)$server_homes as $server_home)
 	{
-		$docUrl = gsp_support_docs_url_for_game_key($server_home['game_key'] ?? '');
+		$docUrl = support_docs_url_for_game_key($server_home['game_key'] ?? '');
 		echo "<option value='".htmlspecialchars($server_home['home_name'], ENT_QUOTES)."' data-doc-url='".htmlspecialchars($docUrl, ENT_QUOTES)."'>".htmlspecialchars($server_home['home_name'], ENT_QUOTES)."</option>";
 	}
 	echo "</select><br /><br />";
@@ -172,7 +172,7 @@ if (!empty($webhook)) {
 	$(document).ready(function(){
 		function updateSupportDocLink(){
 			var selected = $('#gameserver option:selected');
-			var url = selected.data('doc-url') || '<?php echo GSP_WEBSITE_DOCS_BASE_URL; ?>';
+			var url = selected.data('doc-url') || '<?php echo WEBSITE_DOCS_BASE_URL; ?>';
 			$('#support-doc-link').attr('href', url);
 		}
 		$('#gameserver').on('change', updateSupportDocLink);

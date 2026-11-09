@@ -20,7 +20,7 @@ $(document).ready(function()
 
 	$('.main a[href$="&back"]').each(function()
 	{
-		$(this).removeClass('btn-secondary').addClass('btn btn-sm btn-success').text('.. ' + langConsts['GSP_LANG_level_up'].replace(/\^/g, '')).prepend('<i class="fas fa-level-up-alt mr-1"></i>');
+		$(this).removeClass('btn-secondary').addClass('btn btn-sm btn-success').text('.. ' + langConsts['LANG_level_up'].replace(/\^/g, '')).prepend('<i class="fas fa-level-up-alt mr-1"></i>');
 	});
 
 	/* *** Long Name Fix *** */

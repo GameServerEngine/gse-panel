@@ -1,10 +1,10 @@
 <?php
 /**
- * Pure pricing calculator for the game catalog (GSP_DB_PREFIXcatalog_offer /
- * GSP_DB_PREFIXcatalog_tier). No database access, no side effects — the
+ * Pure pricing calculator for the game catalog (TABLE_PREFIX_PLACEHOLDERcatalog_offer /
+ * TABLE_PREFIX_PLACEHOLDERcatalog_tier). No database access, no side effects — the
  * database-facing code loads an offer row (plus its tiers, for the "tiers"
  * mode) into the arrays this file expects, calls catalog_calculate_price(),
- * and persists the result onto the order via GSP_DB_PREFIXcatalog_order_price.
+ * and persists the result onto the order via TABLE_PREFIX_PLACEHOLDERcatalog_order_price.
  *
  * $offer keys used: pricing_mode, slot_min_qty, slot_max_qty,
  *   per_slot_price_{daily,monthly,year}, base_slots,
@@ -118,7 +118,7 @@ if (!function_exists('catalog_calculate_price')) {
 
 /**
  * Default tier slot counts (25/50/75/100% of max slots), used to seed
- * GSP_DB_PREFIXcatalog_tier rows from an offer's slot_max_qty.
+ * TABLE_PREFIX_PLACEHOLDERcatalog_tier rows from an offer's slot_max_qty.
  */
 if (!function_exists('catalog_default_tier_slots')) {
     function catalog_default_tier_slots(int $maxSlots): array

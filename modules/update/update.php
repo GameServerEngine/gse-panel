@@ -22,7 +22,7 @@
  *
  */
 
-function exec_gsp_module()
+function exec_module()
 {
 	if ($_SESSION['users_role'] !== 'admin') {
 		print_failure(get_lang('no_access'));
@@ -30,15 +30,15 @@ function exec_gsp_module()
 	}
 
 	require_once(dirname(__FILE__) . '/../administration/panel_update.php');
-	if (!function_exists('gsp_panel_update_section')) {
+	if (!function_exists('panel_update_section')) {
 		print_failure('Update module is unavailable because the updater helper file did not load correctly.');
 		return;
 	}
 	try {
-		gsp_panel_update_section();
+		panel_update_section();
 	} catch (Throwable $e) {
-		if (function_exists('gsp_update_log')) {
-			gsp_update_log('Unhandled update page error: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+		if (function_exists('update_log')) {
+			update_log('Unhandled update page error: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
 		}
 		print_failure('Update module failed: ' . htmlspecialchars($e->getMessage()));
 	}

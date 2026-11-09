@@ -26,7 +26,7 @@ require_once("includes/lib_remote.php");
 require_once("modules/config_games/server_config_parser.php");
 require_once("modules/gamemanager/update_actions.php");
 
-function exec_gsp_module() {
+function exec_module() {
 
 	global $db;
 	global $view;
@@ -53,11 +53,11 @@ function exec_gsp_module() {
 
 	echo "<h2>Updating game server <em>".htmlentities($home_info['home_name'])."</em></h2>";
 
-	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
+	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], os_for_install_row($home_info));
 
 	$use_steamcmd = ((string)$server_xml->installer === "steamcmd");
 
-	$remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'], $home_info['timeout']);
+	$remote = new RemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'], $home_info['timeout']);
 	$host_stat = $remote->status_chk();
 	if( $host_stat === 0 )
 	{
@@ -67,7 +67,7 @@ function exec_gsp_module() {
 	}
 	else
 	{
-		if ( $remote->is_screen_running(GSP_SCREEN_TYPE_HOME,$home_id) == 1 )
+		if ( $remote->is_screen_running(SCREEN_TYPE_HOME,$home_id) == 1 )
 		{
 			print_failure( get_lang("server_running_cant_update") );
 			echo create_back_button("gamemanager");
@@ -75,7 +75,7 @@ function exec_gsp_module() {
 		}
 
 		$log_txt = '';
-		$update_active = $remote->get_log(GSP_SCREEN_TYPE_UPDATE,
+		$update_active = $remote->get_log(SCREEN_TYPE_UPDATE,
 			// Note exec location should not be added here as the log is in root where steam is executed.
 			$home_id,clean_path($home_info['home_path']),
 			$log_txt);

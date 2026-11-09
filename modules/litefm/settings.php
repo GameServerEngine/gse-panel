@@ -23,7 +23,7 @@
  */
 
 require_once(MODULES."/litefm/functions.php");
-function exec_gsp_module()
+function exec_module()
 {
 	require_once('includes/form_table_class.php');
 	global $db;

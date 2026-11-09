@@ -35,7 +35,7 @@ define('LANG_assign_game_homes', "Αναθέστε διακομιστές παι
 define('LANG_user', "Χρήστης");
 define('LANG_group', "Ομάδα");
 define('LANG_start', "Ξεκίνησε");
-define('LANG_gsp_agent_ip', "Διεύθυνση IP του GSP Agent");
+define('LANG_agent_ip', "Διεύθυνση IP του GSP Agent");
 define('LANG_max_players', "Μέγιστος Αριθμός Παικτών");
 define('LANG_max', "Μέγιστο");
 define('LANG_ip_and_port', "Διεύθυνση IP και Θύρα");
@@ -89,7 +89,7 @@ define('LANG_player_name', "Όνομα Παίκτη");
 define('LANG_score', "Σκορ");
 define('LANG_time', "Ώρα");
 define('LANG_no_rights_to_stop_server', "Δεν έχετε τα δικαιώματα να σταματήσετε αυτό το διακομιστή.");
-define('LANG_no_gsp_lgsl_support', "Αυτός ο διακομιστής (που εκτελεί: %s) δεν υποστηρίζει το LGSL στο GSP και δεν είναι δυνατή η εμφάνιση των στατιστικών του.");
+define('LANG_no_lgsl_support', "Αυτός ο διακομιστής (που εκτελεί: %s) δεν υποστηρίζει το LGSL στο GSP και δεν είναι δυνατή η εμφάνιση των στατιστικών του.");
 define('LANG_server_status', "Ο διακομιστής στο %s είναι %s.");
 define('LANG_server_stopped', "Ο διακομιστής '%s' έχει σταματήσει.");
 define('LANG_if_want_to_start_homes', "Αν θέλετε να ξεκινήσετε διακομιστές παιχνιδιών, πηγαίνετε στο %s.");

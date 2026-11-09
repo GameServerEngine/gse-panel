@@ -4,10 +4,10 @@
  * Best-effort static schema drift guard. Does NOT require a live database.
  *
  * Statically parses every module's module.php for CREATE TABLE IF NOT EXISTS
- * statements inside its install_queries (both `gsp_foo` literal-prefix and
- * `".GSP_DB_PREFIX."foo` / `GSP_DB_PREFIXfoo` placeholder-prefix styles are
+ * statements inside its install_queries (both `foo` literal-prefix and
+ * `".TABLE_PREFIX_PLACEHOLDER."foo` / `TABLE_PREFIX_PLACEHOLDERfoo` placeholder-prefix styles are
  * recognized, matching includes/install_engine.php's own
- * gsp_install_extract_panel_table_suffixes() convention) and asserts every
+ * install_extract_panel_table_suffixes() convention) and asserts every
  * such table name also appears in install/gse_panel.sql, the canonical
  * schema dump.
  *
@@ -62,7 +62,7 @@ foreach (scandir($modules_dir) as $entry) {
     }
 
     foreach ($matches[0] as $snippet) {
-        $suffixes = gsp_install_extract_panel_table_suffixes($snippet);
+        $suffixes = install_extract_panel_table_suffixes($snippet);
         if (empty($suffixes)) {
             continue;
         }
@@ -73,7 +73,7 @@ foreach (scandir($modules_dir) as $entry) {
             continue;
         }
         $checked++;
-        $table_name = 'gsp_' . $table_suffix;
+        $table_name = $table_suffix;
         if (strpos($schema_sql, '`' . $table_name . '`') === false) {
             $missing[] = array('module' => $entry, 'table' => $table_name);
         }

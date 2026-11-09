@@ -22,7 +22,7 @@
  *
  */
 
-function exec_gsp_module() {
+function exec_module() {
 	@$arch = $_POST['arch'];
 	@$os = $_POST['os'];
 	@$protocol = $_POST['protocol'];

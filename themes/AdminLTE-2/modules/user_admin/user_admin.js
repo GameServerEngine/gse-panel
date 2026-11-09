@@ -12,13 +12,13 @@ $(document).ready(function()
 
 	$('.main .userListTable tr').each(function()
 	{
-		if($(this).find('td:nth-child(3)').text().toLowerCase()==langConsts['GSP_LANG_user'].toLowerCase())
+		if($(this).find('td:nth-child(3)').text().toLowerCase()==langConsts['LANG_user'].toLowerCase())
 		{
-			$(this).find('td:nth-child(3)').html('<span class="badge badge-info">'+langConsts['GSP_LANG_user']+'</span>');
+			$(this).find('td:nth-child(3)').html('<span class="badge badge-info">'+langConsts['LANG_user']+'</span>');
 		}
-		else if($(this).find('td:nth-child(3)').text().toLowerCase()==langConsts['GSP_LANG_admin'].toLowerCase())
+		else if($(this).find('td:nth-child(3)').text().toLowerCase()==langConsts['LANG_admin'].toLowerCase())
 		{
-			$(this).find('td:nth-child(3)').html('<span class="badge badge-danger">'+langConsts['GSP_LANG_admin']+'</span>');
+			$(this).find('td:nth-child(3)').html('<span class="badge badge-danger">'+langConsts['LANG_admin']+'</span>');
 		}
 
 		var thisUserId = $(this).attr('uid');

@@ -24,7 +24,7 @@
  */
 
 require_once('modules/server/agent_helpers.php');
-function exec_gsp_module() {
+function exec_module() {
 
 	global $view;
 	global $db;
@@ -58,8 +58,8 @@ function exec_gsp_module() {
 
 	$tr = 0;
 
-	gsp_agent_ensure_snapshot_table($db);
-	gsp_agent_refresh_one_stale_snapshot($db, $servers, 300);
+	agent_ensure_snapshot_table($db);
+	agent_refresh_one_stale_snapshot($db, $servers, 300);
 
 	?>
 	<table id="servermonitor" class="tablesorter remote">
@@ -81,19 +81,19 @@ function exec_gsp_module() {
 		<tbody> <?php
 	foreach ((array)$servers as $server_row)
 	{
-		$remote = gsp_agent_build_remote($server_row);
+		$remote = agent_build_remote($server_row);
 		$host_stat = $remote->status_chk();
-		$snapshot = gsp_agent_get_snapshot($db, $server_row['remote_server_id']);
-		$home_count = gsp_agent_count_homes($db, $server_row['remote_server_id']);
-		$os = gsp_agent_snapshot_field($snapshot, 'os', '');
+		$snapshot = agent_get_snapshot($db, $server_row['remote_server_id']);
+		$home_count = agent_count_homes($db, $server_row['remote_server_id']);
+		$os = agent_snapshot_field($snapshot, 'os', '');
 		if ($os === '' || strtolower((string)$os) === 'unknown') {
 			$os = (string)($server_row['server_os'] ?? '');
 		}
-		$version = gsp_agent_snapshot_field($snapshot, 'agent_version', '');
-		$cpu_percent = gsp_agent_snapshot_field($snapshot, 'cpu_percent', '');
-		$ram_percent = gsp_agent_snapshot_field($snapshot, 'ram_percent', '');
-		$disk_percent = gsp_agent_snapshot_field($snapshot, 'disk_percent', '');
-		$load_average = gsp_agent_snapshot_field($snapshot, 'load_average', '');
+		$version = agent_snapshot_field($snapshot, 'agent_version', '');
+		$cpu_percent = agent_snapshot_field($snapshot, 'cpu_percent', '');
+		$ram_percent = agent_snapshot_field($snapshot, 'ram_percent', '');
+		$disk_percent = agent_snapshot_field($snapshot, 'disk_percent', '');
+		$load_average = agent_snapshot_field($snapshot, 'load_average', '');
 		$buttons = "<a href='?m=server&amp;p=agent_interface&amp;rhost_id=".$server_row['remote_server_id']."'>[Manage Agent]</a>\n".
 					"<a href='?m=server&amp;p=edit&amp;rhost_id=".$server_row['remote_server_id']."&amp;edit'>[". get_lang("edit") ."]</a>\n".
 					"<a href='?m=server&amp;p=edit&amp;rhost_id=".$server_row['remote_server_id']."&amp;delete'>[". get_lang("delete") ."]</a>\n".
@@ -104,44 +104,44 @@ function exec_gsp_module() {
 		$resource_text = "CPU: " . (is_numeric($cpu_percent) ? round($cpu_percent, 1) . '%' : 'n/a') . "<br />" .
 			"RAM: " . (is_numeric($ram_percent) ? round($ram_percent, 1) . '%' : 'n/a') . "<br />" .
 			"Disk: " . (is_numeric($disk_percent) ? round($disk_percent, 1) . '%' : 'n/a') . "<br />" .
-			"Load: " . ($load_average !== '' ? gsp_agent_html($load_average) : 'n/a') . "<br />" .
-			"Snapshot: " . gsp_agent_format_age($snapshot) . "<br />" .
-			gsp_agent_resource_badges($snapshot);
+			"Load: " . ($load_average !== '' ? agent_html($load_average) : 'n/a') . "<br />" .
+			"Snapshot: " . agent_format_age($snapshot) . "<br />" .
+			agent_resource_badges($snapshot);
 
 		echo "<tr class='maintr'>";
 		echo "<td>".(int)$server_row['remote_server_id']."</td>";
-		echo "<td>".gsp_agent_html($server_row['remote_server_name'])."</td>";
-		echo "<td>".gsp_agent_html($server_row['agent_ip']).":".(int)$server_row['agent_port']."</td>";
-		echo "<td>".gsp_agent_status_label($host_stat)."</td>";
-		echo "<td>".gsp_agent_html($os ?: 'unknown')."<br />".gsp_agent_html($version ?: 'version unknown')."</td>";
+		echo "<td>".agent_html($server_row['remote_server_name'])."</td>";
+		echo "<td>".agent_html($server_row['agent_ip']).":".(int)$server_row['agent_port']."</td>";
+		echo "<td>".agent_status_label($host_stat)."</td>";
+		echo "<td>".agent_html($os ?: 'unknown')."<br />".agent_html($version ?: 'version unknown')."</td>";
 		echo "<td>".(int)$home_count."</td>";
 		echo "<td>".$resource_text."</td>";
 		echo "<td>".$buttons."</td>";
 		echo "</tr>";
 
 		$ftp_ip = empty( $server_row['ftp_ip'] ) ? $server_row['agent_ip'] : $server_row['ftp_ip'];
-		$agent_user = isset($server_row['gsp_user']) && $server_row['gsp_user'] !== '' ? $server_row['gsp_user'] : (isset($server_row['user']) ? $server_row['user'] : '');
-				$gsp_user = $agent_user !== '' ? gsp_agent_html($agent_user) : 'n/a';
+		$agent_user = isset($server_row['user']) && $server_row['user'] !== '' ? $server_row['user'] : (isset($server_row['user']) ? $server_row['user'] : '');
+				$remote_user = $agent_user !== '' ? agent_html($agent_user) : 'n/a';
 		$ip_list = $db->getRemoteServerIPs($server_row['remote_server_id']);
 		if (empty($ip_list)) {
 			$ip_text = "<span class='failure'>". get_lang("no_ip_for_remote_host") ."</span>";
 		} else {
 			$ip_items = array();
 			foreach ((array)$ip_list as $ip_row) {
-				$ip_items[] = gsp_agent_html($ip_row['ip']);
+				$ip_items[] = agent_html($ip_row['ip']);
 			}
 			$ip_text = implode(', ', $ip_items);
 		}
 		$detail_parts = array(
-			"<span><b>". get_lang("agent_ip_port") .":</b> ".gsp_agent_html($server_row['agent_ip']).":".(int)$server_row['agent_port']."</span>",
-			"<span><b>". get_lang("remote_host_ftp_ip") .":</b> ".gsp_agent_html($ftp_ip).":".(int)$server_row['ftp_port']."</span>",
+			"<span><b>". get_lang("agent_ip_port") .":</b> ".agent_html($server_row['agent_ip']).":".(int)$server_row['agent_port']."</span>",
+			"<span><b>". get_lang("remote_host_ftp_ip") .":</b> ".agent_html($ftp_ip).":".(int)$server_row['ftp_port']."</span>",
 			"<span><b>". get_lang("timeout") .":</b> ".(int)$server_row['timeout']." ". get_lang("seconds") ."</span>",
-			"<span><b>". get_lang("encryption_key") .":</b> ".gsp_agent_mask_secret($server_row['encryption_key'])."</span>",
+			"<span><b>". get_lang("encryption_key") .":</b> ".agent_mask_secret($server_row['encryption_key'])."</span>",
 			"<span><b>". get_lang("display_public_ip") .":</b> ".checkDisplayPublicIP($server_row['display_public_ip'], $server_row['agent_ip'])."</span>",
 			"<span><b>". get_lang("ips") .":</b> ".$ip_text."</span>",
 		);
-		if ($gsp_user !== 'n/a') {
-			array_unshift($detail_parts, "<span><b>". get_lang("gsp_user") .":</b> ".$gsp_user."</span>");
+		if ($remote_user !== 'n/a') {
+			array_unshift($detail_parts, "<span><b>". get_lang("user") .":</b> ".$remote_user."</span>");
 		}
 		$data = "<tr class='expand-child'><td></td><td colspan='7'><div class='agent-details'>"
 			. implode('', $detail_parts)

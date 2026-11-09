@@ -16,7 +16,7 @@ $(document).ready(function()
 	// better remove link buttons
 	$('.remove-button').each(function()
 	{
-		$(this).replaceWith('<button class="btn btn-sm btn-danger"><i class="fas fa-trash mr-1"></i>'+langConsts['GSP_LANG_delete']+'</button>')
+		$(this).replaceWith('<button class="btn btn-sm btn-danger"><i class="fas fa-trash mr-1"></i>'+langConsts['LANG_delete']+'</button>')
 	});
 });
 

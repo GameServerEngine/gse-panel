@@ -19,8 +19,8 @@
 // ----------------------------------------------------------------------------------
 // Basic settings
 // ----------------------------------------------------------------------------------
-function lang_str($gsp_lang){
-	switch ( $gsp_lang ){
+function lang_str($lang){
+	switch ( $lang ){
 		case "Danish":
 			return "da";
 			break;

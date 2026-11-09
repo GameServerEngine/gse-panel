@@ -24,7 +24,7 @@ class BillingService
     /**
      * Calculate pricing for a new order.
      *
-     * @param array  $service     Row from GSP_DB_PREFIXbilling_services
+     * @param array  $service     Row from TABLE_PREFIX_PLACEHOLDERbilling_services
      * @param string $rateType    'daily' | 'monthly' | 'yearly'
      * @param int    $players     Number of player slots
      * @param int    $qty         Duration quantity (e.g. 2 = 2 months)

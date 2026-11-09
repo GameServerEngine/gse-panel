@@ -25,10 +25,10 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXban_list`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERban_list`
 --
 
-CREATE TABLE `GSP_DB_PREFIXban_list` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERban_list` (
   `client_ip` varchar(255) NOT NULL,
   `logging_attempts` int(11) NOT NULL DEFAULT '0',
   `banned_until` varchar(16) NOT NULL DEFAULT '0'
@@ -37,10 +37,10 @@ CREATE TABLE `GSP_DB_PREFIXban_list` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXmachines`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERmachines`
 --
 
-CREATE TABLE `GSP_DB_PREFIXmachines` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmachines` (
   `id` int(11) NOT NULL,
   `machine_id` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
   `hostname` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -51,10 +51,10 @@ CREATE TABLE `GSP_DB_PREFIXmachines` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXmachine_samples`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERmachine_samples`
 --
 
-CREATE TABLE `GSP_DB_PREFIXmachine_samples` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmachine_samples` (
   `id` bigint(20) NOT NULL,
   `machine_id` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
   `ts` datetime NOT NULL,
@@ -80,10 +80,10 @@ CREATE TABLE `GSP_DB_PREFIXmachine_samples` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXprocess_samples`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERprocess_samples`
 --
 
-CREATE TABLE `GSP_DB_PREFIXprocess_samples` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERprocess_samples` (
   `id` bigint(20) NOT NULL,
   `machine_id` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
   `ts` datetime NOT NULL,
@@ -106,10 +106,10 @@ CREATE TABLE `GSP_DB_PREFIXprocess_samples` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXaddons`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERaddons`
 --
 
-CREATE TABLE `GSP_DB_PREFIXaddons` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERaddons` (
   `addon_id` int(10) UNSIGNED NOT NULL,
   `name` varchar(80) NOT NULL,
   `url` varchar(200) NOT NULL,
@@ -123,10 +123,10 @@ CREATE TABLE `GSP_DB_PREFIXaddons` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXadminexternallinks`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERadminexternallinks`
 --
 
-CREATE TABLE `GSP_DB_PREFIXadminexternallinks` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERadminexternallinks` (
   `link_id` int(10) UNSIGNED NOT NULL,
   `name` varchar(80) NOT NULL,
   `url` varchar(200) NOT NULL,
@@ -136,10 +136,10 @@ CREATE TABLE `GSP_DB_PREFIXadminexternallinks` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXadminlte_serverstats`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERadminlte_serverstats`
 --
 
-CREATE TABLE `GSP_DB_PREFIXadminlte_serverstats` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERadminlte_serverstats` (
   `home_id` int(4) NOT NULL,
   `users_online` int(4) NOT NULL,
   `current_stamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -148,10 +148,10 @@ CREATE TABLE `GSP_DB_PREFIXadminlte_serverstats` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXadminlte_settings`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERadminlte_settings`
 --
 
-CREATE TABLE `GSP_DB_PREFIXadminlte_settings` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERadminlte_settings` (
   `id` int(20) NOT NULL,
   `user` int(4) NOT NULL,
   `name` varchar(255) NOT NULL,
@@ -161,10 +161,10 @@ CREATE TABLE `GSP_DB_PREFIXadminlte_settings` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXapi_tokens`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERapi_tokens`
 --
 
-CREATE TABLE `GSP_DB_PREFIXapi_tokens` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERapi_tokens` (
   `user_id` int(11) NOT NULL,
   `token` varchar(64) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -172,10 +172,10 @@ CREATE TABLE `GSP_DB_PREFIXapi_tokens` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXarrange_ports`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERarrange_ports`
 --
 
-CREATE TABLE `GSP_DB_PREFIXarrange_ports` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERarrange_ports` (
   `range_id` int(11) NOT NULL,
   `ip_id` int(11) NOT NULL,
   `home_cfg_id` int(11) NOT NULL,
@@ -187,10 +187,10 @@ CREATE TABLE `GSP_DB_PREFIXarrange_ports` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXport_pools`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERport_pools`
 --
 
-CREATE TABLE `GSP_DB_PREFIXport_pools` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERport_pools` (
   `pool_id` int(11) NOT NULL,
   `pool_key` varchar(64) NOT NULL,
   `name` varchar(128) NOT NULL,
@@ -210,10 +210,10 @@ CREATE TABLE `GSP_DB_PREFIXport_pools` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXport_pool_games`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERport_pool_games`
 --
 
-CREATE TABLE `GSP_DB_PREFIXport_pool_games` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERport_pool_games` (
   `pool_game_id` int(11) NOT NULL,
   `pool_id` int(11) NOT NULL,
   `home_cfg_id` int(11) NOT NULL,
@@ -230,10 +230,10 @@ CREATE TABLE `GSP_DB_PREFIXport_pool_games` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXgame_port_offsets`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERgame_port_offsets`
 --
 
-CREATE TABLE `GSP_DB_PREFIXgame_port_offsets` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERgame_port_offsets` (
   `offset_id` int(11) NOT NULL,
   `home_cfg_id` int(11) NOT NULL,
   `port_role` enum('primary','query','rcon','web','steam','peer','admin','filetransfer','query_ssh','custom') NOT NULL,
@@ -252,10 +252,10 @@ CREATE TABLE `GSP_DB_PREFIXgame_port_offsets` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXstatic_port_reservations`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations`
 --
 
-CREATE TABLE `GSP_DB_PREFIXstatic_port_reservations` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations` (
   `reservation_id` int(11) NOT NULL,
   `scope` enum('ip','remote_server','global') NOT NULL DEFAULT 'ip',
   `ip_id` int(11) DEFAULT NULL,
@@ -275,10 +275,10 @@ CREATE TABLE `GSP_DB_PREFIXstatic_port_reservations` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXhome_port_blocks`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERhome_port_blocks`
 --
 
-CREATE TABLE `GSP_DB_PREFIXhome_port_blocks` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERhome_port_blocks` (
   `block_id` bigint(20) NOT NULL,
   `home_id` int(11) DEFAULT NULL,
   `ip_id` int(11) NOT NULL,
@@ -301,10 +301,10 @@ CREATE TABLE `GSP_DB_PREFIXhome_port_blocks` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXport_allocation_events`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERport_allocation_events`
 --
 
-CREATE TABLE `GSP_DB_PREFIXport_allocation_events` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERport_allocation_events` (
   `event_id` bigint(20) NOT NULL,
   `block_id` bigint(20) DEFAULT NULL,
   `home_id` int(11) DEFAULT NULL,
@@ -321,20 +321,20 @@ CREATE TABLE `GSP_DB_PREFIXport_allocation_events` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXbackup_restore`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERbackup_restore`
 --
 
-CREATE TABLE `GSP_DB_PREFIXbackup_restore` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbackup_restore` (
   `id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXbilling_coupons`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERbilling_coupons`
 --
 
-CREATE TABLE `GSP_DB_PREFIXbilling_coupons` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_coupons` (
   `coupon_id` int(11) NOT NULL,
   `code` varchar(50) NOT NULL,
   `name` varchar(255) NOT NULL DEFAULT '',
@@ -354,10 +354,10 @@ CREATE TABLE `GSP_DB_PREFIXbilling_coupons` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXbilling_invoices`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERbilling_invoices`
 --
 
-CREATE TABLE `GSP_DB_PREFIXbilling_invoices` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices` (
   `invoice_id` int(11) NOT NULL,
   `order_id` int(11) NOT NULL DEFAULT '0',
   `user_id` int(11) NOT NULL,
@@ -387,10 +387,10 @@ CREATE TABLE `GSP_DB_PREFIXbilling_invoices` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXbilling_orders`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERbilling_orders`
 --
 
-CREATE TABLE `GSP_DB_PREFIXbilling_orders` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_orders` (
   `order_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `service_id` int(11) NOT NULL,
@@ -416,10 +416,10 @@ CREATE TABLE `GSP_DB_PREFIXbilling_orders` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXbilling_services`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERbilling_services`
 --
 
-CREATE TABLE `GSP_DB_PREFIXbilling_services` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_services` (
   `service_id` int(11) NOT NULL,
   `home_cfg_id` int(11) NOT NULL,
   `mod_cfg_id` int(11) NOT NULL,
@@ -443,10 +443,10 @@ CREATE TABLE `GSP_DB_PREFIXbilling_services` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXcircular`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERcircular`
 --
 
-CREATE TABLE `GSP_DB_PREFIXcircular` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERcircular` (
   `circular_id` int(11) NOT NULL,
   `subject` text NOT NULL,
   `message` text NOT NULL,
@@ -456,10 +456,10 @@ CREATE TABLE `GSP_DB_PREFIXcircular` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXcircular_recipients`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERcircular_recipients`
 --
 
-CREATE TABLE `GSP_DB_PREFIXcircular_recipients` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERcircular_recipients` (
   `user_id` int(11) NOT NULL,
   `circular_id` int(11) NOT NULL,
   `status` tinyint(4) NOT NULL
@@ -468,10 +468,10 @@ CREATE TABLE `GSP_DB_PREFIXcircular_recipients` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXconfig_homes`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERconfig_homes`
 --
 
-CREATE TABLE `GSP_DB_PREFIXconfig_homes` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERconfig_homes` (
   `home_cfg_id` int(20) NOT NULL,
   `game_key` varchar(64) NOT NULL,
   `game_name` varchar(255) NOT NULL,
@@ -481,10 +481,10 @@ CREATE TABLE `GSP_DB_PREFIXconfig_homes` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXconfig_mods`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERconfig_mods`
 --
 
-CREATE TABLE `GSP_DB_PREFIXconfig_mods` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERconfig_mods` (
   `mod_cfg_id` int(50) NOT NULL,
   `home_cfg_id` varchar(50) NOT NULL,
   `mod_key` varchar(100) NOT NULL COMMENT 'mod short name - used by the game server for startup commands - ex cstrike',
@@ -496,10 +496,10 @@ CREATE TABLE `GSP_DB_PREFIXconfig_mods` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXgame_mods`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERgame_mods`
 --
 
-CREATE TABLE `GSP_DB_PREFIXgame_mods` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERgame_mods` (
   `mod_id` int(50) NOT NULL,
   `home_id` int(255) NOT NULL,
   `mod_cfg_id` int(11) NOT NULL,
@@ -514,10 +514,10 @@ CREATE TABLE `GSP_DB_PREFIXgame_mods` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXhome_ip_ports`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERhome_ip_ports`
 --
 
-CREATE TABLE `GSP_DB_PREFIXhome_ip_ports` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERhome_ip_ports` (
   `ip_id` int(11) NOT NULL,
   `port` int(11) NOT NULL,
   `home_id` int(11) NOT NULL,
@@ -527,10 +527,10 @@ CREATE TABLE `GSP_DB_PREFIXhome_ip_ports` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXlgsl`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERlgsl`
 --
 
-CREATE TABLE `GSP_DB_PREFIXlgsl` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERlgsl` (
   `id` int(11) NOT NULL,
   `type` varchar(50) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   `ip` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
@@ -548,10 +548,10 @@ CREATE TABLE `GSP_DB_PREFIXlgsl` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXlogger`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERlogger`
 --
 
-CREATE TABLE `GSP_DB_PREFIXlogger` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERlogger` (
   `log_id` int(10) UNSIGNED NOT NULL,
   `date` varchar(20) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -562,10 +562,10 @@ CREATE TABLE `GSP_DB_PREFIXlogger` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXmaster_server_homes`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERmaster_server_homes`
 --
 
-CREATE TABLE `GSP_DB_PREFIXmaster_server_homes` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmaster_server_homes` (
   `home_id` int(11) NOT NULL,
   `home_cfg_id` int(11) NOT NULL,
   `remote_server_id` int(11) NOT NULL
@@ -574,10 +574,10 @@ CREATE TABLE `GSP_DB_PREFIXmaster_server_homes` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXmodules`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERmodules`
 --
 
-CREATE TABLE `GSP_DB_PREFIXmodules` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmodules` (
   `id` smallint(5) UNSIGNED NOT NULL,
   `title` varchar(100) NOT NULL DEFAULT '',
   `folder` varchar(100) NOT NULL DEFAULT '',
@@ -589,10 +589,10 @@ CREATE TABLE `GSP_DB_PREFIXmodules` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXmodule_access_rights`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERmodule_access_rights`
 --
 
-CREATE TABLE `GSP_DB_PREFIXmodule_access_rights` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmodule_access_rights` (
   `module_id` int(11) NOT NULL COMMENT 'This references to modules.id',
   `flag` char(1) NOT NULL,
   `description` varchar(64) NOT NULL
@@ -601,10 +601,10 @@ CREATE TABLE `GSP_DB_PREFIXmodule_access_rights` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXmodule_menus`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERmodule_menus`
 --
 
-CREATE TABLE `GSP_DB_PREFIXmodule_menus` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmodule_menus` (
   `module_id` int(11) NOT NULL COMMENT 'This references to modules.id',
   `subpage` varchar(64) NOT NULL DEFAULT '',
   `group` varchar(32) NOT NULL,
@@ -615,10 +615,10 @@ CREATE TABLE `GSP_DB_PREFIXmodule_menus` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXmysql_databases`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERmysql_databases`
 --
 
-CREATE TABLE `GSP_DB_PREFIXmysql_databases` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmysql_databases` (
   `db_id` int(11) NOT NULL,
   `mysql_server_id` int(11) NOT NULL,
   `home_id` int(11) NOT NULL,
@@ -631,10 +631,10 @@ CREATE TABLE `GSP_DB_PREFIXmysql_databases` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXmysql_servers`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERmysql_servers`
 --
 
-CREATE TABLE `GSP_DB_PREFIXmysql_servers` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmysql_servers` (
   `mysql_server_id` int(11) NOT NULL,
   `remote_server_id` int(11) NOT NULL,
   `mysql_name` varchar(100) NOT NULL,
@@ -647,10 +647,10 @@ CREATE TABLE `GSP_DB_PREFIXmysql_servers` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXnotification`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERnotification`
 --
 
-CREATE TABLE `GSP_DB_PREFIXnotification` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERnotification` (
   `notification_id` int(11) NOT NULL,
   `subject` text NOT NULL,
   `message` text NOT NULL,
@@ -660,10 +660,10 @@ CREATE TABLE `GSP_DB_PREFIXnotification` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXnotification_recipients`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERnotification_recipients`
 --
 
-CREATE TABLE `GSP_DB_PREFIXnotification_recipients` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERnotification_recipients` (
   `user_id` int(11) NOT NULL,
   `notification_id` int(11) NOT NULL,
   `status` tinyint(4) NOT NULL
@@ -672,10 +672,10 @@ CREATE TABLE `GSP_DB_PREFIXnotification_recipients` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXrcon_presets`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERrcon_presets`
 --
 
-CREATE TABLE `GSP_DB_PREFIXrcon_presets` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERrcon_presets` (
   `preset_id` int(50) NOT NULL,
   `name` varchar(20) NOT NULL,
   `command` varchar(100) NOT NULL,
@@ -686,13 +686,13 @@ CREATE TABLE `GSP_DB_PREFIXrcon_presets` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXremote_servers`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERremote_servers`
 --
 
-CREATE TABLE `GSP_DB_PREFIXremote_servers` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERremote_servers` (
   `remote_server_id` int(11) NOT NULL,
   `remote_server_name` varchar(100) NOT NULL,
-  `GSP_DB_PREFIXuser` varchar(100) NOT NULL,
+  `TABLE_PREFIX_PLACEHOLDERuser` varchar(100) NOT NULL,
   `agent_ip` varchar(255) NOT NULL,
   `agent_port` int(11) NOT NULL,
   `ftp_port` int(11) NOT NULL,
@@ -708,10 +708,10 @@ CREATE TABLE `GSP_DB_PREFIXremote_servers` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXremote_server_ips`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERremote_server_ips`
 --
 
-CREATE TABLE `GSP_DB_PREFIXremote_server_ips` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERremote_server_ips` (
   `ip_id` int(11) NOT NULL,
   `remote_server_id` int(11) NOT NULL,
   `ip` varchar(255) NOT NULL
@@ -720,10 +720,10 @@ CREATE TABLE `GSP_DB_PREFIXremote_server_ips` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXreseller_accounts`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERreseller_accounts`
 --
 
-CREATE TABLE `GSP_DB_PREFIXreseller_accounts` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_accounts` (
   `account_id` int(11) NOT NULL,
   `service_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -741,10 +741,10 @@ CREATE TABLE `GSP_DB_PREFIXreseller_accounts` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXreseller_carts`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERreseller_carts`
 --
 
-CREATE TABLE `GSP_DB_PREFIXreseller_carts` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_carts` (
   `cart_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `paid` int(11) DEFAULT NULL,
@@ -755,10 +755,10 @@ CREATE TABLE `GSP_DB_PREFIXreseller_carts` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXreseller_discount_codes`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERreseller_discount_codes`
 --
 
-CREATE TABLE `GSP_DB_PREFIXreseller_discount_codes` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_discount_codes` (
   `discount_id` int(11) NOT NULL,
   `service_id` int(11) NOT NULL,
   `percentage` int(11) NOT NULL,
@@ -769,10 +769,10 @@ CREATE TABLE `GSP_DB_PREFIXreseller_discount_codes` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXreseller_homes`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERreseller_homes`
 --
 
-CREATE TABLE `GSP_DB_PREFIXreseller_homes` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_homes` (
   `home_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `account_id` int(11) NOT NULL,
@@ -783,10 +783,10 @@ CREATE TABLE `GSP_DB_PREFIXreseller_homes` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXreseller_services`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERreseller_services`
 --
 
-CREATE TABLE `GSP_DB_PREFIXreseller_services` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_services` (
   `service_id` int(11) NOT NULL,
   `service_name` varchar(60) NOT NULL,
   `slot_max_qty` int(11) NOT NULL,
@@ -802,10 +802,10 @@ CREATE TABLE `GSP_DB_PREFIXreseller_services` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXserver_homes`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERserver_homes`
 --
 
-CREATE TABLE `GSP_DB_PREFIXserver_homes` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` (
   `home_id` int(50) NOT NULL,
   `remote_server_id` int(11) NOT NULL,
   `user_id_main` int(11) NOT NULL,
@@ -825,10 +825,10 @@ CREATE TABLE `GSP_DB_PREFIXserver_homes` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXserver_status`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERserver_status`
 --
 
-CREATE TABLE `GSP_DB_PREFIXserver_status` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERserver_status` (
   `status_id` int(11) NOT NULL,
   `remote_server_id` int(11) NOT NULL,
   `server_name` varchar(255) NOT NULL,
@@ -845,10 +845,10 @@ CREATE TABLE `GSP_DB_PREFIXserver_status` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXsettings`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERsettings`
 --
 
-CREATE TABLE `GSP_DB_PREFIXsettings` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERsettings` (
   `setting` varchar(63) NOT NULL,
   `value` varchar(1024) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -856,10 +856,10 @@ CREATE TABLE `GSP_DB_PREFIXsettings` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXstatus_cache`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERstatus_cache`
 --
 
-CREATE TABLE `GSP_DB_PREFIXstatus_cache` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERstatus_cache` (
   `date_timestamp` char(16) NOT NULL,
   `ip_id` char(3) NOT NULL,
   `port` char(6) NOT NULL,
@@ -869,10 +869,10 @@ CREATE TABLE `GSP_DB_PREFIXstatus_cache` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXtickets`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERtickets`
 --
 
-CREATE TABLE `GSP_DB_PREFIXtickets` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERtickets` (
   `tid` int(11) NOT NULL,
   `uid` varchar(32) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -889,10 +889,10 @@ CREATE TABLE `GSP_DB_PREFIXtickets` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXticket_attachments`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERticket_attachments`
 --
 
-CREATE TABLE `GSP_DB_PREFIXticket_attachments` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERticket_attachments` (
   `attachment_id` int(11) NOT NULL,
   `ticket_id` int(11) NOT NULL,
   `reply_id` int(11) DEFAULT NULL,
@@ -903,10 +903,10 @@ CREATE TABLE `GSP_DB_PREFIXticket_attachments` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXticket_messages`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERticket_messages`
 --
 
-CREATE TABLE `GSP_DB_PREFIXticket_messages` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERticket_messages` (
   `reply_id` int(11) NOT NULL,
   `ticket_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -920,10 +920,10 @@ CREATE TABLE `GSP_DB_PREFIXticket_messages` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXticket_settings`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERticket_settings`
 --
 
-CREATE TABLE `GSP_DB_PREFIXticket_settings` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERticket_settings` (
   `id` int(11) NOT NULL,
   `setting_name` varchar(32) NOT NULL,
   `setting_value` text NOT NULL
@@ -932,10 +932,10 @@ CREATE TABLE `GSP_DB_PREFIXticket_settings` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXts3_homes`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERts3_homes`
 --
 
-CREATE TABLE `GSP_DB_PREFIXts3_homes` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERts3_homes` (
   `ts3_id` int(50) NOT NULL,
   `rserver_id` int(50) NOT NULL,
   `ip` varchar(20) NOT NULL,
@@ -948,10 +948,10 @@ CREATE TABLE `GSP_DB_PREFIXts3_homes` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXtshock`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERtshock`
 --
 
-CREATE TABLE `GSP_DB_PREFIXtshock` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERtshock` (
   `token_id` int(11) NOT NULL,
   `ip` varchar(255) NOT NULL,
   `port` int(11) NOT NULL,
@@ -961,20 +961,20 @@ CREATE TABLE `GSP_DB_PREFIXtshock` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXupdate_blacklist`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERupdate_blacklist`
 --
 
-CREATE TABLE `GSP_DB_PREFIXupdate_blacklist` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERupdate_blacklist` (
   `file_path` varchar(1000) DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXusers`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERusers`
 --
 
-CREATE TABLE `GSP_DB_PREFIXusers` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERusers` (
   `user_id` int(11) NOT NULL,
   `users_login` varchar(255) NOT NULL,
   `users_passwd` varchar(255) NOT NULL,
@@ -999,10 +999,10 @@ CREATE TABLE `GSP_DB_PREFIXusers` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXuser_groups`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERuser_groups`
 --
 
-CREATE TABLE `GSP_DB_PREFIXuser_groups` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_groups` (
   `user_id` int(11) NOT NULL,
   `role_id` int(11) DEFAULT NULL,
   `group_id` int(11) NOT NULL
@@ -1011,10 +1011,10 @@ CREATE TABLE `GSP_DB_PREFIXuser_groups` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXuser_group_homes`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERuser_group_homes`
 --
 
-CREATE TABLE `GSP_DB_PREFIXuser_group_homes` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_homes` (
   `home_id` int(11) NOT NULL,
   `group_id` int(11) NOT NULL,
   `access_rights` varchar(63) DEFAULT NULL,
@@ -1024,10 +1024,10 @@ CREATE TABLE `GSP_DB_PREFIXuser_group_homes` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXuser_group_info`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERuser_group_info`
 --
 
-CREATE TABLE `GSP_DB_PREFIXuser_group_info` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_info` (
   `group_id` int(11) NOT NULL,
   `group_name` varchar(255) DEFAULT NULL,
   `main_user_id` int(11) DEFAULT NULL
@@ -1036,10 +1036,10 @@ CREATE TABLE `GSP_DB_PREFIXuser_group_info` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXuser_group_remote_servers`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERuser_group_remote_servers`
 --
 
-CREATE TABLE `GSP_DB_PREFIXuser_group_remote_servers` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_remote_servers` (
   `remote_server_id` int(11) NOT NULL,
   `group_id` int(11) NOT NULL,
   `access_rights` varchar(63) DEFAULT NULL
@@ -1048,10 +1048,10 @@ CREATE TABLE `GSP_DB_PREFIXuser_group_remote_servers` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXuser_homes`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERuser_homes`
 --
 
-CREATE TABLE `GSP_DB_PREFIXuser_homes` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_homes` (
   `home_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `access_rights` varchar(63) DEFAULT NULL,
@@ -1061,10 +1061,10 @@ CREATE TABLE `GSP_DB_PREFIXuser_homes` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXuser_role_info`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERuser_role_info`
 --
 
-CREATE TABLE `GSP_DB_PREFIXuser_role_info` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_role_info` (
   `role_id` int(11) NOT NULL,
   `role_name` varchar(100) DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -1072,10 +1072,10 @@ CREATE TABLE `GSP_DB_PREFIXuser_role_info` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXwidgets`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERwidgets`
 --
 
-CREATE TABLE `GSP_DB_PREFIXwidgets` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERwidgets` (
   `id` int(11) NOT NULL,
   `column_id` int(11) NOT NULL,
   `sort_no` int(11) NOT NULL,
@@ -1086,10 +1086,10 @@ CREATE TABLE `GSP_DB_PREFIXwidgets` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `GSP_DB_PREFIXwidgets_users`
+-- Table structure for table `TABLE_PREFIX_PLACEHOLDERwidgets_users`
 --
 
-CREATE TABLE `GSP_DB_PREFIXwidgets_users` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERwidgets_users` (
   `user_id` int(11) NOT NULL,
   `widget_id` int(11) NOT NULL,
   `column_id` int(11) NOT NULL,
@@ -1103,99 +1103,99 @@ CREATE TABLE `GSP_DB_PREFIXwidgets_users` (
 --
 
 --
--- Indexes for table `GSP_DB_PREFIXban_list`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERban_list`
 --
-ALTER TABLE `GSP_DB_PREFIXban_list`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERban_list`
   ADD PRIMARY KEY (`client_ip`);
 
 --
--- Indexes for table `GSP_DB_PREFIXmachines`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERmachines`
 --
-ALTER TABLE `GSP_DB_PREFIXmachines`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmachines`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uniq_machine` (`machine_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXmachine_samples`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERmachine_samples`
 --
-ALTER TABLE `GSP_DB_PREFIXmachine_samples`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmachine_samples`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_machine_ts` (`machine_id`,`ts`),
   ADD KEY `idx_ts` (`ts`);
 
 --
--- Indexes for table `GSP_DB_PREFIXprocess_samples`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERprocess_samples`
 --
-ALTER TABLE `GSP_DB_PREFIXprocess_samples`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERprocess_samples`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_proc_server` (`machine_id`,`server_name`,`ts`),
   ADD KEY `idx_proc_pid` (`machine_id`,`pid`,`ts`),
   ADD KEY `idx_ts` (`ts`);
 
 --
--- Indexes for table `GSP_DB_PREFIXaddons`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERaddons`
 --
-ALTER TABLE `GSP_DB_PREFIXaddons`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERaddons`
   ADD PRIMARY KEY (`addon_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXadminexternallinks`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERadminexternallinks`
 --
-ALTER TABLE `GSP_DB_PREFIXadminexternallinks`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERadminexternallinks`
   ADD PRIMARY KEY (`link_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXadminlte_settings`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERadminlte_settings`
 --
-ALTER TABLE `GSP_DB_PREFIXadminlte_settings`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERadminlte_settings`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `UniqueSetting` (`user`,`name`);
 
 --
--- Indexes for table `GSP_DB_PREFIXapi_tokens`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERapi_tokens`
 --
-ALTER TABLE `GSP_DB_PREFIXapi_tokens`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERapi_tokens`
   ADD PRIMARY KEY (`user_id`),
   ADD UNIQUE KEY `user_id` (`user_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXarrange_ports`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERarrange_ports`
 --
-ALTER TABLE `GSP_DB_PREFIXarrange_ports`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERarrange_ports`
   ADD PRIMARY KEY (`range_id`),
   ADD UNIQUE KEY `ip_id` (`ip_id`,`home_cfg_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXport_pools`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERport_pools`
 --
-ALTER TABLE `GSP_DB_PREFIXport_pools`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERport_pools`
   ADD PRIMARY KEY (`pool_id`),
   ADD UNIQUE KEY `uq_port_pools_key` (`pool_key`),
   ADD KEY `idx_port_pools_enabled_priority` (`enabled`,`priority`),
   ADD KEY `idx_port_pools_range` (`range_start`,`range_end`);
 
 --
--- Indexes for table `GSP_DB_PREFIXport_pool_games`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERport_pool_games`
 --
-ALTER TABLE `GSP_DB_PREFIXport_pool_games`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERport_pool_games`
   ADD PRIMARY KEY (`pool_game_id`),
   ADD UNIQUE KEY `uq_pool_game_role` (`home_cfg_id`,`pool_id`,`role`),
   ADD KEY `idx_pool_games_home_role_priority` (`home_cfg_id`,`role`,`priority`),
   ADD KEY `idx_pool_games_pool` (`pool_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXgame_port_offsets`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERgame_port_offsets`
 --
-ALTER TABLE `GSP_DB_PREFIXgame_port_offsets`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERgame_port_offsets`
   ADD PRIMARY KEY (`offset_id`),
   ADD UNIQUE KEY `uq_game_port_offset` (`home_cfg_id`,`port_role`,`token_name`),
   ADD KEY `idx_game_port_offsets_home` (`home_cfg_id`),
   ADD KEY `idx_game_port_offsets_fit` (`fits_standard_block`);
 
 --
--- Indexes for table `GSP_DB_PREFIXstatic_port_reservations`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations`
 --
-ALTER TABLE `GSP_DB_PREFIXstatic_port_reservations`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations`
   ADD PRIMARY KEY (`reservation_id`),
   ADD UNIQUE KEY `uq_static_res_exact` (`scope`,`ip_id`,`remote_server_id`,`service_name`,`port_start`,`port_end`,`protocol`),
   ADD KEY `idx_static_res_ip_range` (`ip_id`,`port_start`,`port_end`,`status`),
@@ -1203,9 +1203,9 @@ ALTER TABLE `GSP_DB_PREFIXstatic_port_reservations`
   ADD KEY `idx_static_res_service` (`service_name`);
 
 --
--- Indexes for table `GSP_DB_PREFIXhome_port_blocks`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERhome_port_blocks`
 --
-ALTER TABLE `GSP_DB_PREFIXhome_port_blocks`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERhome_port_blocks`
   ADD PRIMARY KEY (`block_id`),
   ADD KEY `idx_home_port_blocks_home` (`home_id`,`status`),
   ADD KEY `idx_home_port_blocks_ip_range` (`ip_id`,`block_start`,`block_end`,`status`),
@@ -1213,24 +1213,24 @@ ALTER TABLE `GSP_DB_PREFIXhome_port_blocks`
   ADD KEY `idx_home_port_blocks_primary` (`ip_id`,`primary_port`,`status`);
 
 --
--- Indexes for table `GSP_DB_PREFIXport_allocation_events`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERport_allocation_events`
 --
-ALTER TABLE `GSP_DB_PREFIXport_allocation_events`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERport_allocation_events`
   ADD PRIMARY KEY (`event_id`),
   ADD KEY `idx_port_events_home_time` (`home_id`,`created_at`),
   ADD KEY `idx_port_events_ip_time` (`ip_id`,`created_at`),
   ADD KEY `idx_port_events_type_time` (`event_type`,`created_at`);
 
 --
--- Indexes for table `GSP_DB_PREFIXbackup_restore`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERbackup_restore`
 --
-ALTER TABLE `GSP_DB_PREFIXbackup_restore`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbackup_restore`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXbilling_coupons`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERbilling_coupons`
 --
-ALTER TABLE `GSP_DB_PREFIXbilling_coupons`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_coupons`
   ADD PRIMARY KEY (`coupon_id`),
   ADD UNIQUE KEY `code` (`code`),
   ADD UNIQUE KEY `idx_code` (`code`),
@@ -1238,9 +1238,9 @@ ALTER TABLE `GSP_DB_PREFIXbilling_coupons`
   ADD KEY `idx_created_by` (`created_by`);
 
 --
--- Indexes for table `GSP_DB_PREFIXbilling_invoices`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERbilling_invoices`
 --
-ALTER TABLE `GSP_DB_PREFIXbilling_invoices`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices`
   ADD PRIMARY KEY (`invoice_id`),
   ADD KEY `order_id` (`order_id`),
   ADD KEY `user_id` (`user_id`),
@@ -1250,289 +1250,289 @@ ALTER TABLE `GSP_DB_PREFIXbilling_invoices`
   ADD KEY `idx_coupon` (`coupon_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXbilling_orders`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERbilling_orders`
 --
-ALTER TABLE `GSP_DB_PREFIXbilling_orders`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_orders`
   ADD PRIMARY KEY (`order_id`),
   ADD KEY `idx_user_id` (`user_id`),
   ADD KEY `idx_status` (`status`),
   ADD KEY `idx_home_id` (`home_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXbilling_services`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERbilling_services`
 --
-ALTER TABLE `GSP_DB_PREFIXbilling_services`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_services`
   ADD PRIMARY KEY (`service_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXcircular`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERcircular`
 --
-ALTER TABLE `GSP_DB_PREFIXcircular`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERcircular`
   ADD PRIMARY KEY (`circular_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXcircular_recipients`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERcircular_recipients`
 --
-ALTER TABLE `GSP_DB_PREFIXcircular_recipients`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERcircular_recipients`
   ADD PRIMARY KEY (`user_id`,`circular_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXconfig_homes`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERconfig_homes`
 --
-ALTER TABLE `GSP_DB_PREFIXconfig_homes`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERconfig_homes`
   ADD PRIMARY KEY (`home_cfg_id`),
   ADD UNIQUE KEY `game_key` (`game_key`);
 
 --
--- Indexes for table `GSP_DB_PREFIXconfig_mods`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERconfig_mods`
 --
-ALTER TABLE `GSP_DB_PREFIXconfig_mods`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERconfig_mods`
   ADD PRIMARY KEY (`mod_cfg_id`),
   ADD UNIQUE KEY `home_cfg_id` (`home_cfg_id`,`mod_key`);
 
 --
--- Indexes for table `GSP_DB_PREFIXgame_mods`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERgame_mods`
 --
-ALTER TABLE `GSP_DB_PREFIXgame_mods`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERgame_mods`
   ADD PRIMARY KEY (`mod_id`),
   ADD UNIQUE KEY `home_id` (`home_id`,`mod_cfg_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXhome_ip_ports`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERhome_ip_ports`
 --
-ALTER TABLE `GSP_DB_PREFIXhome_ip_ports`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERhome_ip_ports`
   ADD PRIMARY KEY (`ip_id`,`port`);
 
 --
--- Indexes for table `GSP_DB_PREFIXlgsl`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERlgsl`
 --
-ALTER TABLE `GSP_DB_PREFIXlgsl`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERlgsl`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXlogger`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERlogger`
 --
-ALTER TABLE `GSP_DB_PREFIXlogger`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERlogger`
   ADD PRIMARY KEY (`log_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXmaster_server_homes`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERmaster_server_homes`
 --
-ALTER TABLE `GSP_DB_PREFIXmaster_server_homes`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmaster_server_homes`
   ADD PRIMARY KEY (`remote_server_id`,`home_cfg_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXmodules`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERmodules`
 --
-ALTER TABLE `GSP_DB_PREFIXmodules`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmodules`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `folder` (`folder`);
 
 --
--- Indexes for table `GSP_DB_PREFIXmodule_access_rights`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERmodule_access_rights`
 --
-ALTER TABLE `GSP_DB_PREFIXmodule_access_rights`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmodule_access_rights`
   ADD UNIQUE KEY `flag` (`flag`);
 
 --
--- Indexes for table `GSP_DB_PREFIXmodule_menus`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERmodule_menus`
 --
-ALTER TABLE `GSP_DB_PREFIXmodule_menus`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmodule_menus`
   ADD PRIMARY KEY (`module_id`,`subpage`,`group`);
 
 --
--- Indexes for table `GSP_DB_PREFIXmysql_databases`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERmysql_databases`
 --
-ALTER TABLE `GSP_DB_PREFIXmysql_databases`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmysql_databases`
   ADD PRIMARY KEY (`db_id`),
   ADD UNIQUE KEY `mysql_server_id` (`mysql_server_id`,`db_name`),
   ADD UNIQUE KEY `mysql_server_id_2` (`mysql_server_id`,`db_user`);
 
 --
--- Indexes for table `GSP_DB_PREFIXmysql_servers`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERmysql_servers`
 --
-ALTER TABLE `GSP_DB_PREFIXmysql_servers`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmysql_servers`
   ADD PRIMARY KEY (`mysql_server_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXnotification`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERnotification`
 --
-ALTER TABLE `GSP_DB_PREFIXnotification`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERnotification`
   ADD PRIMARY KEY (`notification_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXnotification_recipients`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERnotification_recipients`
 --
-ALTER TABLE `GSP_DB_PREFIXnotification_recipients`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERnotification_recipients`
   ADD PRIMARY KEY (`user_id`,`notification_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXrcon_presets`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERrcon_presets`
 --
-ALTER TABLE `GSP_DB_PREFIXrcon_presets`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERrcon_presets`
   ADD PRIMARY KEY (`preset_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXremote_servers`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERremote_servers`
 --
-ALTER TABLE `GSP_DB_PREFIXremote_servers`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERremote_servers`
   ADD PRIMARY KEY (`remote_server_id`),
   ADD UNIQUE KEY `agent_ip` (`agent_ip`,`agent_port`);
 
 --
--- Indexes for table `GSP_DB_PREFIXremote_server_ips`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERremote_server_ips`
 --
-ALTER TABLE `GSP_DB_PREFIXremote_server_ips`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERremote_server_ips`
   ADD PRIMARY KEY (`ip_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXreseller_accounts`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERreseller_accounts`
 --
-ALTER TABLE `GSP_DB_PREFIXreseller_accounts`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_accounts`
   ADD PRIMARY KEY (`account_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXreseller_carts`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERreseller_carts`
 --
-ALTER TABLE `GSP_DB_PREFIXreseller_carts`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_carts`
   ADD PRIMARY KEY (`cart_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXreseller_discount_codes`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERreseller_discount_codes`
 --
-ALTER TABLE `GSP_DB_PREFIXreseller_discount_codes`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_discount_codes`
   ADD PRIMARY KEY (`discount_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXreseller_homes`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERreseller_homes`
 --
-ALTER TABLE `GSP_DB_PREFIXreseller_homes`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_homes`
   ADD PRIMARY KEY (`home_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXreseller_services`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERreseller_services`
 --
-ALTER TABLE `GSP_DB_PREFIXreseller_services`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_services`
   ADD PRIMARY KEY (`service_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXserver_homes`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERserver_homes`
 --
-ALTER TABLE `GSP_DB_PREFIXserver_homes`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes`
   ADD PRIMARY KEY (`home_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXserver_status`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERserver_status`
 --
-ALTER TABLE `GSP_DB_PREFIXserver_status`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_status`
   ADD PRIMARY KEY (`status_id`),
   ADD UNIQUE KEY `unique_server` (`remote_server_id`),
   ADD KEY `idx_remote_server` (`remote_server_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXsettings`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERsettings`
 --
-ALTER TABLE `GSP_DB_PREFIXsettings`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERsettings`
   ADD PRIMARY KEY (`setting`);
 
 --
--- Indexes for table `GSP_DB_PREFIXtickets`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERtickets`
 --
-ALTER TABLE `GSP_DB_PREFIXtickets`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERtickets`
   ADD PRIMARY KEY (`tid`),
   ADD UNIQUE KEY `uid` (`uid`);
 
 --
--- Indexes for table `GSP_DB_PREFIXticket_attachments`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERticket_attachments`
 --
-ALTER TABLE `GSP_DB_PREFIXticket_attachments`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERticket_attachments`
   ADD PRIMARY KEY (`attachment_id`),
   ADD UNIQUE KEY `unique_name` (`unique_name`);
 
 --
--- Indexes for table `GSP_DB_PREFIXticket_messages`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERticket_messages`
 --
-ALTER TABLE `GSP_DB_PREFIXticket_messages`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERticket_messages`
   ADD PRIMARY KEY (`reply_id`),
-  ADD KEY `GSP_DB_PREFIXticket_messages_fk0` (`ticket_id`);
+  ADD KEY `TABLE_PREFIX_PLACEHOLDERticket_messages_fk0` (`ticket_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXticket_settings`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERticket_settings`
 --
-ALTER TABLE `GSP_DB_PREFIXticket_settings`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERticket_settings`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `setting_name` (`setting_name`);
 
 --
--- Indexes for table `GSP_DB_PREFIXts3_homes`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERts3_homes`
 --
-ALTER TABLE `GSP_DB_PREFIXts3_homes`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERts3_homes`
   ADD PRIMARY KEY (`ts3_id`),
   ADD UNIQUE KEY `rserver_id` (`rserver_id`,`vserver_id`,`user_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXtshock`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERtshock`
 --
-ALTER TABLE `GSP_DB_PREFIXtshock`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERtshock`
   ADD PRIMARY KEY (`token_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXupdate_blacklist`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERupdate_blacklist`
 --
-ALTER TABLE `GSP_DB_PREFIXupdate_blacklist`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERupdate_blacklist`
   ADD UNIQUE KEY `file_path` (`file_path`),
   ADD UNIQUE KEY `file_path_2` (`file_path`);
 
 --
--- Indexes for table `GSP_DB_PREFIXusers`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERusers`
 --
-ALTER TABLE `GSP_DB_PREFIXusers`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERusers`
   ADD PRIMARY KEY (`users_login`),
   ADD UNIQUE KEY `id` (`user_id`),
   ADD UNIQUE KEY `email` (`users_email`);
 
 --
--- Indexes for table `GSP_DB_PREFIXuser_groups`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERuser_groups`
 --
-ALTER TABLE `GSP_DB_PREFIXuser_groups`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERuser_groups`
   ADD PRIMARY KEY (`user_id`,`group_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXuser_group_homes`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERuser_group_homes`
 --
-ALTER TABLE `GSP_DB_PREFIXuser_group_homes`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_homes`
   ADD PRIMARY KEY (`home_id`,`group_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXuser_group_info`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERuser_group_info`
 --
-ALTER TABLE `GSP_DB_PREFIXuser_group_info`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_info`
   ADD PRIMARY KEY (`group_id`),
   ADD UNIQUE KEY `group_name` (`group_name`);
 
 --
--- Indexes for table `GSP_DB_PREFIXuser_group_remote_servers`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERuser_group_remote_servers`
 --
-ALTER TABLE `GSP_DB_PREFIXuser_group_remote_servers`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_remote_servers`
   ADD PRIMARY KEY (`remote_server_id`,`group_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXuser_homes`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERuser_homes`
 --
-ALTER TABLE `GSP_DB_PREFIXuser_homes`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERuser_homes`
   ADD PRIMARY KEY (`user_id`,`home_id`);
 
 --
--- Indexes for table `GSP_DB_PREFIXuser_role_info`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERuser_role_info`
 --
-ALTER TABLE `GSP_DB_PREFIXuser_role_info`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERuser_role_info`
   ADD PRIMARY KEY (`role_id`),
   ADD UNIQUE KEY `role_name` (`role_name`);
 
 --
--- Indexes for table `GSP_DB_PREFIXwidgets`
+-- Indexes for table `TABLE_PREFIX_PLACEHOLDERwidgets`
 --
-ALTER TABLE `GSP_DB_PREFIXwidgets`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERwidgets`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -1540,285 +1540,285 @@ ALTER TABLE `GSP_DB_PREFIXwidgets`
 --
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXmachines`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERmachines`
 --
-ALTER TABLE `GSP_DB_PREFIXmachines`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmachines`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXmachine_samples`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERmachine_samples`
 --
-ALTER TABLE `GSP_DB_PREFIXmachine_samples`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmachine_samples`
   MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXprocess_samples`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERprocess_samples`
 --
-ALTER TABLE `GSP_DB_PREFIXprocess_samples`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERprocess_samples`
   MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXaddons`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERaddons`
 --
-ALTER TABLE `GSP_DB_PREFIXaddons`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERaddons`
   MODIFY `addon_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXadminexternallinks`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERadminexternallinks`
 --
-ALTER TABLE `GSP_DB_PREFIXadminexternallinks`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERadminexternallinks`
   MODIFY `link_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXadminlte_settings`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERadminlte_settings`
 --
-ALTER TABLE `GSP_DB_PREFIXadminlte_settings`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERadminlte_settings`
   MODIFY `id` int(20) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXarrange_ports`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERarrange_ports`
 --
-ALTER TABLE `GSP_DB_PREFIXarrange_ports`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERarrange_ports`
   MODIFY `range_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXport_pools`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERport_pools`
 --
-ALTER TABLE `GSP_DB_PREFIXport_pools`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERport_pools`
   MODIFY `pool_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXport_pool_games`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERport_pool_games`
 --
-ALTER TABLE `GSP_DB_PREFIXport_pool_games`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERport_pool_games`
   MODIFY `pool_game_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXgame_port_offsets`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERgame_port_offsets`
 --
-ALTER TABLE `GSP_DB_PREFIXgame_port_offsets`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERgame_port_offsets`
   MODIFY `offset_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXstatic_port_reservations`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations`
 --
-ALTER TABLE `GSP_DB_PREFIXstatic_port_reservations`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations`
   MODIFY `reservation_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXhome_port_blocks`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERhome_port_blocks`
 --
-ALTER TABLE `GSP_DB_PREFIXhome_port_blocks`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERhome_port_blocks`
   MODIFY `block_id` bigint(20) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXport_allocation_events`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERport_allocation_events`
 --
-ALTER TABLE `GSP_DB_PREFIXport_allocation_events`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERport_allocation_events`
   MODIFY `event_id` bigint(20) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXbackup_restore`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERbackup_restore`
 --
-ALTER TABLE `GSP_DB_PREFIXbackup_restore`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbackup_restore`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXbilling_coupons`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERbilling_coupons`
 --
-ALTER TABLE `GSP_DB_PREFIXbilling_coupons`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_coupons`
   MODIFY `coupon_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXbilling_invoices`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERbilling_invoices`
 --
-ALTER TABLE `GSP_DB_PREFIXbilling_invoices`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices`
   MODIFY `invoice_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXbilling_orders`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERbilling_orders`
 --
-ALTER TABLE `GSP_DB_PREFIXbilling_orders`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_orders`
   MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXbilling_services`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERbilling_services`
 --
-ALTER TABLE `GSP_DB_PREFIXbilling_services`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_services`
   MODIFY `service_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXcircular`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERcircular`
 --
-ALTER TABLE `GSP_DB_PREFIXcircular`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERcircular`
   MODIFY `circular_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXconfig_homes`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERconfig_homes`
 --
-ALTER TABLE `GSP_DB_PREFIXconfig_homes`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERconfig_homes`
   MODIFY `home_cfg_id` int(20) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXconfig_mods`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERconfig_mods`
 --
-ALTER TABLE `GSP_DB_PREFIXconfig_mods`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERconfig_mods`
   MODIFY `mod_cfg_id` int(50) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXgame_mods`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERgame_mods`
 --
-ALTER TABLE `GSP_DB_PREFIXgame_mods`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERgame_mods`
   MODIFY `mod_id` int(50) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXlgsl`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERlgsl`
 --
-ALTER TABLE `GSP_DB_PREFIXlgsl`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERlgsl`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXlogger`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERlogger`
 --
-ALTER TABLE `GSP_DB_PREFIXlogger`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERlogger`
   MODIFY `log_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXmodules`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERmodules`
 --
-ALTER TABLE `GSP_DB_PREFIXmodules`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmodules`
   MODIFY `id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXmysql_databases`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERmysql_databases`
 --
-ALTER TABLE `GSP_DB_PREFIXmysql_databases`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmysql_databases`
   MODIFY `db_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXmysql_servers`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERmysql_servers`
 --
-ALTER TABLE `GSP_DB_PREFIXmysql_servers`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmysql_servers`
   MODIFY `mysql_server_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXnotification`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERnotification`
 --
-ALTER TABLE `GSP_DB_PREFIXnotification`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERnotification`
   MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXrcon_presets`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERrcon_presets`
 --
-ALTER TABLE `GSP_DB_PREFIXrcon_presets`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERrcon_presets`
   MODIFY `preset_id` int(50) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXremote_servers`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERremote_servers`
 --
-ALTER TABLE `GSP_DB_PREFIXremote_servers`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERremote_servers`
   MODIFY `remote_server_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXremote_server_ips`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERremote_server_ips`
 --
-ALTER TABLE `GSP_DB_PREFIXremote_server_ips`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERremote_server_ips`
   MODIFY `ip_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXreseller_accounts`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERreseller_accounts`
 --
-ALTER TABLE `GSP_DB_PREFIXreseller_accounts`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_accounts`
   MODIFY `account_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXreseller_carts`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERreseller_carts`
 --
-ALTER TABLE `GSP_DB_PREFIXreseller_carts`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_carts`
   MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXreseller_discount_codes`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERreseller_discount_codes`
 --
-ALTER TABLE `GSP_DB_PREFIXreseller_discount_codes`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_discount_codes`
   MODIFY `discount_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXreseller_services`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERreseller_services`
 --
-ALTER TABLE `GSP_DB_PREFIXreseller_services`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_services`
   MODIFY `service_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXserver_homes`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERserver_homes`
 --
-ALTER TABLE `GSP_DB_PREFIXserver_homes`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes`
   MODIFY `home_id` int(50) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXserver_status`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERserver_status`
 --
-ALTER TABLE `GSP_DB_PREFIXserver_status`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_status`
   MODIFY `status_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXtickets`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERtickets`
 --
-ALTER TABLE `GSP_DB_PREFIXtickets`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERtickets`
   MODIFY `tid` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXticket_attachments`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERticket_attachments`
 --
-ALTER TABLE `GSP_DB_PREFIXticket_attachments`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERticket_attachments`
   MODIFY `attachment_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXticket_messages`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERticket_messages`
 --
-ALTER TABLE `GSP_DB_PREFIXticket_messages`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERticket_messages`
   MODIFY `reply_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXticket_settings`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERticket_settings`
 --
-ALTER TABLE `GSP_DB_PREFIXticket_settings`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERticket_settings`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXts3_homes`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERts3_homes`
 --
-ALTER TABLE `GSP_DB_PREFIXts3_homes`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERts3_homes`
   MODIFY `ts3_id` int(50) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXtshock`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERtshock`
 --
-ALTER TABLE `GSP_DB_PREFIXtshock`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERtshock`
   MODIFY `token_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXusers`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERusers`
 --
-ALTER TABLE `GSP_DB_PREFIXusers`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERusers`
   MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXuser_group_info`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERuser_group_info`
 --
-ALTER TABLE `GSP_DB_PREFIXuser_group_info`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_info`
   MODIFY `group_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXuser_role_info`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERuser_role_info`
 --
-ALTER TABLE `GSP_DB_PREFIXuser_role_info`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERuser_role_info`
   MODIFY `role_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `GSP_DB_PREFIXwidgets`
+-- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERwidgets`
 --
-ALTER TABLE `GSP_DB_PREFIXwidgets`
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERwidgets`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -1826,19 +1826,19 @@ ALTER TABLE `GSP_DB_PREFIXwidgets`
 --
 
 --
--- Constraints for table `GSP_DB_PREFIXticket_messages`
+-- Constraints for table `TABLE_PREFIX_PLACEHOLDERticket_messages`
 --
-ALTER TABLE `GSP_DB_PREFIXticket_messages`
-  ADD CONSTRAINT `GSP_DB_PREFIXticket_messages_fk0` FOREIGN KEY (`ticket_id`) REFERENCES `GSP_DB_PREFIXtickets` (`tid`);
+ALTER TABLE `TABLE_PREFIX_PLACEHOLDERticket_messages`
+  ADD CONSTRAINT `TABLE_PREFIX_PLACEHOLDERticket_messages_fk0` FOREIGN KEY (`ticket_id`) REFERENCES `TABLE_PREFIX_PLACEHOLDERtickets` (`tid`);
 -- Core tables created at runtime by the update runner and addons helpers,
 -- plus the customer restic tables. Part of the base schema, not install_queries.
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXschema_migrations` (
+CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERschema_migrations` (
   `migration_id` VARCHAR(191) NOT NULL,
   `applied_at` DATETIME NOT NULL,
   PRIMARY KEY (`migration_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXserver_content_workshop_catalog` (
+CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERserver_content_workshop_catalog` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `workshop_id` VARCHAR(64) NOT NULL,
   `app_id` VARCHAR(32) NOT NULL DEFAULT '',
@@ -1859,7 +1859,7 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXserver_content_workshop_catalog` (
   KEY `idx_last_installed` (`last_installed`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXrestic_homes` (
+CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERrestic_homes` (
   `home_id` INT UNSIGNED NOT NULL PRIMARY KEY,
   `rest_user` VARCHAR(64) NOT NULL,
   `repo_state` VARCHAR(20) NOT NULL DEFAULT 'pending',
@@ -1867,7 +1867,7 @@ CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXrestic_homes` (
   `delete_after` INT UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXrestic_snapshots` (
+CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERrestic_snapshots` (
   `snapshot_row_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `home_id` INT UNSIGNED NOT NULL,
   `snapshot_id` VARCHAR(64) NOT NULL,

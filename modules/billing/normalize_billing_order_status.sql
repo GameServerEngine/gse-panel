@@ -1,6 +1,6 @@
 -- normalize_billing_order_status.sql
 --
--- One-time migration: standardize GSP_DB_PREFIXbilling_orders.status to the canonical
+-- One-time migration: standardize TABLE_PREFIX_PLACEHOLDERbilling_orders.status to the canonical
 -- three-value set used by cron-shop.php, create_servers.php, and the game
 -- monitor expiration lookup:
 --
@@ -19,7 +19,6 @@
 -- 'Expired') are left unchanged.
 --
 -- Compatible with MySQL 5.7+ and MariaDB 10.2+.
--- IMPORTANT: Replace <PREFIX> below with your table prefix (e.g. gsp_ or gsp_) (standalone billing module context).
 -- Run ONCE on an existing installation; safe to run again (no-op on clean data).
 
 -- 'installed' → 'Active'

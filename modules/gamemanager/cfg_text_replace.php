@@ -37,7 +37,7 @@ $server_home["incremental"] = $db->incrementalNumByHomeId( $server_home["home_id
 $server_home["map"] = isset($cli_param_data['MAP']) ? $cli_param_data['MAP'] : $last_param['map'];
 
 $path_error = '';
-$server_home = gsp_with_game_root($server_home, $server_xml, $path_error);
+$server_home = with_game_root($server_home, $server_xml, $path_error);
 if ($server_home === false) {
 	print_failure('Invalid game directory for this server: ' . htmlentities($path_error));
 	return;
@@ -132,7 +132,7 @@ print_r($file_replacements);
 echo "</xmp>"; */
 
 require_once('includes/lib_remote.php');
-$remote = new GSPRemoteLibrary($server_home['agent_ip'], $server_home['agent_port'], $server_home['encryption_key'], $server_home['timeout']);
+$remote = new RemoteLibrary($server_home['agent_ip'], $server_home['agent_port'], $server_home['encryption_key'], $server_home['timeout']);
 
 foreach ((array)$file_replacements as $filepath => $replacements)
 {
@@ -263,8 +263,8 @@ foreach ((array)$file_replacements as $filepath => $replacements)
 	}
 	//echo "<xmp>".$file_content."</xmp>";
 	$write_result = $remote->remote_writefile($file_path, $file_content);
-	if (isset($GLOBALS['gsp_replace_text_results']) && is_array($GLOBALS['gsp_replace_text_results'])) {
-		$GLOBALS['gsp_replace_text_results'][] = array(
+	if (isset($GLOBALS['replace_text_results']) && is_array($GLOBALS['replace_text_results'])) {
+		$GLOBALS['replace_text_results'][] = array(
 			'file' => $file_path,
 			'replacements' => count((array)$replacements),
 			'write_result' => $write_result,

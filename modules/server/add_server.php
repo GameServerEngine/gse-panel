@@ -22,7 +22,7 @@
  *
  */
 
-function exec_gsp_module() {
+function exec_module() {
 
 	global $view;
 	global $db;
@@ -54,7 +54,7 @@ function exec_gsp_module() {
 
 		require_once('includes/lib_remote.php');
 
-		$remote = new GSPRemoteLibrary($rhost_ip,$rhost_port,$encryption_key,$timeout);
+		$remote = new RemoteLibrary($rhost_ip,$rhost_port,$encryption_key,$timeout);
 		$status = $remote->status_chk();
 		if($status === 0)
 		{

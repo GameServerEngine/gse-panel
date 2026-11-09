@@ -25,7 +25,7 @@
 define('LANG_add_mods_note', "Kullanıcıya sunucu ekledikten sonra mod eklemeniz gerekir. Bu, sunucunun düzenlenmesiyle yapılabilir.");
 define('LANG_game_servers', "Oyun Sunucuları");
 define('LANG_game_path', "Oyun Yolu");
-define('LANG_game_path_info', "Mutlak bir sunucu yolu. Örnek: /home /ogpbot/GSP_User_Files /My_Server");
+define('LANG_game_path_info', "Mutlak bir sunucu yolu. Örnek: /home /ogpbot/User_Files /My_Server");
 define('LANG_game_server_name_info', "Sunucu adı, kullanıcıların sunucularını tanımlamasına yardımcı olur.");
 define('LANG_control_password', "Şifre Kontrol");
 define('LANG_control_password_info', "Bu şifre RCON şifresi gibi sunucu kontrolü için kullanılır. Şifre boş ise, başka araçlar kullanılır.");

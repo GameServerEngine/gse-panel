@@ -402,7 +402,7 @@ if (is_array($to_delete)) {
         if ($home_info) {
             $server_info = $db->getRemoteServerById($home_info['remote_server_id']);
             if ($server_info) {
-                $remote = new GSPRemoteLibrary(
+                $remote = new RemoteLibrary(
                     $server_info['agent_ip'],
                     $server_info['agent_port'],
                     $server_info['encryption_key'],
@@ -410,7 +410,7 @@ if (is_array($to_delete)) {
                 );
 
                 // Stop the running server process
-                $server_xml   = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
+                $server_xml   = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file'], os_for_install_row($home_info));
                 $control_type = isset($server_xml->control_protocol_type)
                               ? (string)$server_xml->control_protocol_type : "";
                 $addresses    = $db->getHomeIpPorts($home_id);

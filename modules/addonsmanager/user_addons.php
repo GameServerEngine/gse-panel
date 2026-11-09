@@ -21,7 +21,7 @@ require_once(dirname(__FILE__) . '/server_content_helpers.php');
 require_once("includes/lib_remote.php");
 require_once("modules/config_games/server_config_parser.php");
 
-function exec_gsp_module() {
+function exec_module() {
 	global $db;
 	$home_id = $_GET['home_id'];
 	$mod_id  = $_GET['mod_id'];
@@ -51,8 +51,8 @@ function exec_gsp_module() {
 		scm_ensure_phase2_schema($db);
 		$server_bot_os_filter = scm_server_bot_os_filter_sql($home_info);
 		if (isset($_POST['scm_manifest_action']) && isset($_POST['manifest_id'])) {
-			$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
-			$remote = new GSPRemoteLibrary($home_info['agent_ip'], $home_info['agent_port'], $home_info['encryption_key'], $home_info['timeout']);
+			$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file'], os_for_install_row($home_info));
+			$remote = new RemoteLibrary($home_info['agent_ip'], $home_info['agent_port'], $home_info['encryption_key'], $home_info['timeout']);
 			$action_message = '';
 			if ($server_xml === false) {
 				print_failure('Unable to load server XML configuration.');
@@ -79,8 +79,8 @@ function exec_gsp_module() {
 		{
 			$items = $db->resultQuery(
 				"SELECT DISTINCT addon_id, name, game_name " .
-				"FROM GSP_DB_PREFIXaddons " .
-				"NATURAL JOIN GSP_DB_PREFIXconfig_homes " .
+				"FROM TABLE_PREFIX_PLACEHOLDERaddons " .
+				"NATURAL JOIN TABLE_PREFIX_PLACEHOLDERconfig_homes " .
 				"WHERE addon_type='" . $db->realEscapeSingle($type_key) . "' " .
 				"AND home_cfg_id=" . (int)$home_cfg_id . $query_groups . $server_bot_os_filter
 				);

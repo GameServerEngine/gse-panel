@@ -38,7 +38,7 @@ $(document).ready(function()
 						<div class="card-footer">\
 							<div class="d-flex justify-content-around flex-row flex-wrap">\
 								<div class="description-block d-inline-block mx-2">\
-									<h5 class="description-header">'+langConsts['GSP_LANG_starting_on']+'</h5>\
+									<h5 class="description-header">'+langConsts['LANG_starting_on']+'</h5>\
 									<span class="description-text">'+serviceCost.split(' ')[2]+'</span>\
 								</div>\
 								<div class="description-block d-inline-block mx-2">\

@@ -10,7 +10,7 @@ function cat_money(float $v): string
     return number_format($v, 2, '.', '');
 }
 
-function exec_gsp_module()
+function exec_module()
 {
     global $table_prefix;
 ?>

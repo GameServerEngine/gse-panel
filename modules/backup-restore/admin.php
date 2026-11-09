@@ -68,7 +68,7 @@ function restic_admin_validate($input, &$errors)
     );
 }
 
-function exec_gsp_module()
+function exec_module()
 {
     global $db;
 

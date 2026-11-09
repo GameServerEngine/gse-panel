@@ -25,7 +25,7 @@
 require_once('home_handling_functions.php');
 require_once("modules/config_games/server_config_parser.php");
 
-function exec_gsp_module() {
+function exec_module() {
     global $view,$db;
 
     $ip = $_REQUEST['ip'];
@@ -48,7 +48,7 @@ function exec_gsp_module() {
 	}
 
 	require_once('includes/lib_remote.php');
-	$remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
+	$remote = new RemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
 
 	$os = $remote->what_os();
 
@@ -62,7 +62,7 @@ function exec_gsp_module() {
     echo empty($home_info['home_name']) ? get_lang('not_available') : htmlentities($home_info['home_name']);
     echo "</h2>";
 
-    $server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
+    $server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], os_for_install_row($home_info));
 
     if ( !$server_xml )
     {
@@ -70,7 +70,7 @@ function exec_gsp_module() {
         return;
     }
 	$path_error = '';
-	$home_info = gsp_with_game_root($home_info, $server_xml, $path_error);
+	$home_info = with_game_root($home_info, $server_xml, $path_error);
 	if ($home_info === false) {
 		print_failure('Invalid game directory for this server: ' . htmlentities($path_error));
 		return;
@@ -89,14 +89,14 @@ function exec_gsp_module() {
 			if( isset( $server_xml->console_log ) )
 			{
 				$log_path = preg_replace("/%mod%/i", $home_info['mods'][$mod_id]['mod_key'], (string)$server_xml->console_log);
-				$log_retval = $remote->get_log(GSP_SCREEN_TYPE_HOME,
+				$log_retval = $remote->get_log(SCREEN_TYPE_HOME,
 					$home_info['home_id'],
 					clean_path($home_info['game_root']),
 					$home_log, 100, $log_path);
 			}
 			else
 			{
-				$log_retval = $remote->get_log(GSP_SCREEN_TYPE_HOME,
+				$log_retval = $remote->get_log(SCREEN_TYPE_HOME,
 					$home_id,
 					clean_path($home_info['game_root']."/".$server_xml->exe_location),
 					$home_log);
@@ -173,9 +173,9 @@ function exec_gsp_module() {
 			{
 				if(	isset($server_xml->lgsl_query_name) )
 					require_once('protocol/lgsl/lgsl_protocol.php');
-				gsp_lifecycle_begin_replace_text_tracking();
+				lifecycle_begin_replace_text_tracking();
 				require_once("modules/gamemanager/cfg_text_replace.php");
-				$replace_text_results = gsp_lifecycle_replace_text_results();
+				$replace_text_results = lifecycle_replace_text_results();
 			}
 
 			$control_type = isset($server_xml->control_protocol_type) ? $server_xml->control_protocol_type : "";
@@ -215,7 +215,7 @@ function exec_gsp_module() {
 				}
 			}
 
-			$lifecycle_payload = gsp_lifecycle_start_payload($db, $remote, $home_info, $server_xml, $mod_id, $ip, $port, $start_cmd, $preStart, $envVars, $replace_text_results, 'panel_restart');
+			$lifecycle_payload = lifecycle_start_payload($db, $remote, $home_info, $server_xml, $mod_id, $ip, $port, $start_cmd, $preStart, $envVars, $replace_text_results, 'panel_restart');
 			if (isset($lifecycle_payload['error'])) {
 				print_failure(htmlentities($lifecycle_payload['error']));
 				return;
@@ -259,7 +259,7 @@ function exec_gsp_module() {
 				}
 				else
 				{
-					print_failure(htmlentities(gsp_lifecycle_result_message($restart_result, get_lang('error_occured_remote_host').".$remote_retval")));
+					print_failure(htmlentities(lifecycle_result_message($restart_result, get_lang('error_occured_remote_host').".$remote_retval")));
 					$view->refresh("?m=gamemanager&amp;p=game_monitor&amp;home_id-mod_id-ip-port=". $home_id . "-". $mod_id . "-" . $ip . "-" . $port,3);
 				}
 			}

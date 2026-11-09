@@ -8,17 +8,17 @@
  * The owner gets the full crash details and the log tail, so they can see what happened.
  */
 
-if (!defined('GSP_CRASH_TICKET_WINDOW_SECONDS')) {
-    define('GSP_CRASH_TICKET_WINDOW_SECONDS', 1800);
+if (!defined('CRASH_TICKET_WINDOW_SECONDS')) {
+    define('CRASH_TICKET_WINDOW_SECONDS', 1800);
 }
-if (!defined('GSP_CRASH_TICKET_LOG_BYTES')) {
-    define('GSP_CRASH_TICKET_LOG_BYTES', 200000);
+if (!defined('CRASH_TICKET_LOG_BYTES')) {
+    define('CRASH_TICKET_LOG_BYTES', 200000);
 }
 
 /** Owner (user_id) of a game home, or 0 if none is linked. */
-function gsp_crash_owner_user_id($db, $home_id)
+function crash_owner_user_id($db, $home_id)
 {
-    $rows = $db->resultQuery('SELECT user_id FROM GSP_DB_PREFIXuser_homes WHERE home_id = ' . (int)$home_id . ' LIMIT 1');
+    $rows = $db->resultQuery('SELECT user_id FROM TABLE_PREFIX_PLACEHOLDERuser_homes WHERE home_id = ' . (int)$home_id . ' LIMIT 1');
     return (is_array($rows) && isset($rows[0]['user_id'])) ? (int)$rows[0]['user_id'] : 0;
 }
 
@@ -31,13 +31,13 @@ function gsp_crash_owner_user_id($db, $home_id)
  *
  * Returns array('action' => 'opened'|'updated'|'skipped', 'tid' => int) or array('action' => 'skipped').
  */
-function gsp_open_crash_ticket($db, array $incident, $log_tail = '')
+function open_crash_ticket($db, array $incident, $log_tail = '')
 {
     $home_id = (int)($incident['home_id'] ?? 0);
     if ($home_id <= 0) {
         return array('action' => 'skipped');
     }
-    $user_id = gsp_crash_owner_user_id($db, $home_id);
+    $user_id = crash_owner_user_id($db, $home_id);
     if ($user_id <= 0) {
         return array('action' => 'skipped');
     }
@@ -68,15 +68,15 @@ function gsp_open_crash_ticket($db, array $incident, $log_tail = '')
         $body .= "Windows report: " . $incident['report_path'] . "\n";
     }
     if ($log_tail !== '') {
-        if (strlen($log_tail) > GSP_CRASH_TICKET_LOG_BYTES) {
-            $log_tail = substr($log_tail, -GSP_CRASH_TICKET_LOG_BYTES);
+        if (strlen($log_tail) > CRASH_TICKET_LOG_BYTES) {
+            $log_tail = substr($log_tail, -CRASH_TICKET_LOG_BYTES);
         }
         $body .= "\nRecent log (latest lines):\n" . $log_tail . "\n";
     }
 
-    $since = date('Y-m-d H:i:s', time() - GSP_CRASH_TICKET_WINDOW_SECONDS);
+    $since = date('Y-m-d H:i:s', time() - CRASH_TICKET_WINDOW_SECONDS);
     $existing = $db->resultQuery(
-        "SELECT tid, uid FROM GSP_DB_PREFIXtickets WHERE user_id = " . (int)$user_id
+        "SELECT tid, uid FROM TABLE_PREFIX_PLACEHOLDERtickets WHERE user_id = " . (int)$user_id
         . " AND subject = '" . $db->realEscapeSingle($subject) . "'"
         . " AND status = 1 AND created_at >= '" . $db->realEscapeSingle($since) . "'"
         . " ORDER BY tid DESC LIMIT 1"

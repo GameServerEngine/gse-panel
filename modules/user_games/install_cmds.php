@@ -24,7 +24,7 @@
 
 require_once("modules/config_games/server_config_parser.php");
 
-function exec_gsp_module()
+function exec_module()
 {
 	$home_id = $_GET['home_id'];
 	$mod_id = $_GET['mod_id'];
@@ -34,7 +34,7 @@ function exec_gsp_module()
 	if ( array_key_exists($mod_id, (array)$home_info['mods']) )
 	{
 		echo "<h2>".get_lang('cmds_for')." \"".htmlentities($home_info['home_name'])."\" [Mod:".$home_info['mods'][$mod_id]['mod_name']."]</h2>";
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION.$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION.$home_info['home_cfg_file'], os_for_install_row($home_info));
 		$mod_cfg_id = $home_info['mods'][$mod_id]['mod_cfg_id'];
 
 		if(isset($_POST['edit_preinstall_cmds']))
@@ -42,12 +42,12 @@ function exec_gsp_module()
 			$precmd = $db->real_escape_string($_POST['edit_preinstall_cmds']);
 			if( isset( $_POST['save_as_default'] ) )
 			{
-				$game_mod_query = "UPDATE GSP_DB_PREFIXconfig_mods SET def_precmd='$precmd' WHERE mod_cfg_id='$mod_cfg_id'";
+				$game_mod_query = "UPDATE TABLE_PREFIX_PLACEHOLDERconfig_mods SET def_precmd='$precmd' WHERE mod_cfg_id='$mod_cfg_id'";
 				$db->query($game_mod_query);
 			}
 			else
 			{
-				$game_mod_query = "UPDATE GSP_DB_PREFIXgame_mods SET precmd='$precmd' WHERE mod_id='$mod_id'";
+				$game_mod_query = "UPDATE TABLE_PREFIX_PLACEHOLDERgame_mods SET precmd='$precmd' WHERE mod_id='$mod_id'";
 				$db->query($game_mod_query);
 			}
 			$home_info = $db->getGameHome($home_id);
@@ -58,12 +58,12 @@ function exec_gsp_module()
 			$postcmd = $db->real_escape_string($_POST['edit_postinstall_cmds']);
 			if( isset( $_POST['save_as_default'] ) )
 			{
-				$game_mod_query = "UPDATE GSP_DB_PREFIXconfig_mods SET def_postcmd='$postcmd' WHERE mod_cfg_id='$mod_cfg_id'";
+				$game_mod_query = "UPDATE TABLE_PREFIX_PLACEHOLDERconfig_mods SET def_postcmd='$postcmd' WHERE mod_cfg_id='$mod_cfg_id'";
 				$db->query($game_mod_query);
 			}
 			else
 			{
-				$game_mod_query = "UPDATE GSP_DB_PREFIXgame_mods SET postcmd='$postcmd' WHERE mod_id='$mod_id'";
+				$game_mod_query = "UPDATE TABLE_PREFIX_PLACEHOLDERgame_mods SET postcmd='$postcmd' WHERE mod_id='$mod_id'";
 				$db->query($game_mod_query);
 			}
 			$home_info = $db->getGameHome($home_id);

@@ -17,16 +17,16 @@
  * for where this choice is applied.
  */
 
-if (!defined('GSP_STOREFRONT_DEFAULT_SUBPATH')) {
-    define('GSP_STOREFRONT_DEFAULT_SUBPATH', '/store');
+if (!defined('STOREFRONT_DEFAULT_SUBPATH')) {
+    define('STOREFRONT_DEFAULT_SUBPATH', '/store');
 }
 
-function gsp_vhost_template_path($base_dir, $template_name)
+function vhost_template_path($base_dir, $template_name)
 {
-    return gsp_install_path($base_dir, 'install/vhost-templates/' . $template_name);
+    return install_path($base_dir, 'install/vhost-templates/' . $template_name);
 }
 
-function gsp_vhost_render_template($template_path, array $tokens)
+function vhost_render_template($template_path, array $tokens)
 {
     if (!is_readable($template_path)) {
         return null;
@@ -42,7 +42,7 @@ function gsp_vhost_render_template($template_path, array $tokens)
  * Returns whether the storefront should be treated as sharing the panel's
  * domain (blank storefront_domain, or explicitly equal to panel_domain).
  */
-function gsp_vhost_storefront_shares_panel_domain($panel_domain, $storefront_domain)
+function vhost_storefront_shares_panel_domain($panel_domain, $storefront_domain)
 {
     $storefront_domain = trim((string)$storefront_domain);
     if ($storefront_domain === '') {
@@ -66,7 +66,7 @@ function gsp_vhost_storefront_shares_panel_domain($panel_domain, $storefront_dom
  * since they depend on the live install path structure already handled by
  * modules/billing routing.
  */
-function gsp_vhost_build_previews($base_dir, array $options)
+function vhost_build_previews($base_dir, array $options)
 {
     $panel_domain = trim((string)($options['panel_domain'] ?? ''));
     $storefront_domain = trim((string)($options['storefront_domain'] ?? ''));
@@ -75,7 +75,7 @@ function gsp_vhost_build_previews($base_dir, array $options)
     $cert_fullchain = (string)($options['cert_fullchain'] ?? "/etc/letsencrypt/live/{$panel_domain}/fullchain.pem");
     $cert_privkey = (string)($options['cert_privkey'] ?? "/etc/letsencrypt/live/{$panel_domain}/privkey.pem");
 
-    $shared_domain = gsp_vhost_storefront_shares_panel_domain($panel_domain, $storefront_domain);
+    $shared_domain = vhost_storefront_shares_panel_domain($panel_domain, $storefront_domain);
 
     $panel_tokens = array(
         'SERVER_NAME' => $panel_domain !== '' ? $panel_domain : 'panel.example.com',
@@ -86,8 +86,8 @@ function gsp_vhost_build_previews($base_dir, array $options)
         'CERT_PRIVKEY' => $cert_privkey,
     );
 
-    $panel_contents = gsp_vhost_render_template(
-        gsp_vhost_template_path($base_dir, 'panel.conf.tpl'),
+    $panel_contents = vhost_render_template(
+        vhost_template_path($base_dir, 'panel.conf.tpl'),
         $panel_tokens
     );
 
@@ -98,7 +98,7 @@ function gsp_vhost_build_previews($base_dir, array $options)
         ),
         'storefront' => null,
         'shared_domain' => $shared_domain,
-        'storefront_subpath' => GSP_STOREFRONT_DEFAULT_SUBPATH,
+        'storefront_subpath' => STOREFRONT_DEFAULT_SUBPATH,
         'https_mode' => $https_mode,
     );
 
@@ -112,8 +112,8 @@ function gsp_vhost_build_previews($base_dir, array $options)
         );
         $result['storefront'] = array(
             'filename' => $storefront_domain . '.conf',
-            'contents' => gsp_vhost_render_template(
-                gsp_vhost_template_path($base_dir, 'storefront.conf.tpl'),
+            'contents' => vhost_render_template(
+                vhost_template_path($base_dir, 'storefront.conf.tpl'),
                 $storefront_tokens
             ),
         );

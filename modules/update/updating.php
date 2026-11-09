@@ -9,7 +9,7 @@
  *
  */
 
-function exec_gsp_module()
+function exec_module()
 {
     if ($_SESSION['users_role'] !== 'admin') {
         print_failure(get_lang('no_access'));

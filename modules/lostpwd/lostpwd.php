@@ -36,7 +36,7 @@ function makeRandomPassword() {
     return $pass;
 }
 
-function exec_gsp_module() {
+function exec_module() {
 
 	global $db,$view,$settings;
 

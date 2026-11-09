@@ -65,7 +65,7 @@ function clean($str){
 	return $db->real_escape_string($str);
 }
 
-function exec_gsp_module()
+function exec_module()
 {
 	global $db;
 	//Querying UPDATE a service FROM DB
@@ -79,7 +79,7 @@ function exec_gsp_module()
 		$end_port = clean($_POST['end_port']);
 		$service = clean($_POST['service']);
 
-		$change_service_settings = "UPDATE GSP_DB_PREFIXreseller_services SET
+		$change_service_settings = "UPDATE TABLE_PREFIX_PLACEHOLDERreseller_services SET
 									price_per_month='".$new_price_per_month."',
 									price_per_year='".$new_price_per_year."',
 									remote_server_id='".$remote_server_id."',
@@ -108,7 +108,7 @@ function exec_gsp_module()
 		if(isset($_POST['allow_extra_params']))$max_access_rights .= clean($_POST['allow_extra_params']);
 		if(isset($_POST['allow_ftp_usage']))$max_access_rights .= clean($_POST['allow_ftp_usage']);
 
-		$qry_add_service = "INSERT INTO GSP_DB_PREFIXreseller_services(service_id,
+		$qry_add_service = "INSERT INTO TABLE_PREFIX_PLACEHOLDERreseller_services(service_id,
 																	   service_name,
 																	   slot_max_qty ,
 																	   price_per_month,
@@ -132,8 +132,8 @@ function exec_gsp_module()
 	//Querying DELETE service FROM DB
 	if (isset($_POST['remove_service']) AND isset($_POST['service_id']))
 	{
-		$db->query( "DELETE FROM GSP_DB_PREFIXreseller_services WHERE service_id=" . $_POST['service_id'] );
-		$db->query( "DELETE FROM GSP_DB_PREFIXreseller_discount_codes WHERE service_id=" . $_POST['service_id'] );
+		$db->query( "DELETE FROM TABLE_PREFIX_PLACEHOLDERreseller_services WHERE service_id=" . $_POST['service_id'] );
+		$db->query( "DELETE FROM TABLE_PREFIX_PLACEHOLDERreseller_discount_codes WHERE service_id=" . $_POST['service_id'] );
 	}
 
 	if( isset( $_POST['add_discount_code'] ) )
@@ -144,13 +144,13 @@ function exec_gsp_module()
 		$percentage = clean($_POST['percentage']);
 		$description = clean($_POST['description']);
 		$code = clean($_POST['code']);
-		$add_code = "INSERT INTO GSP_DB_PREFIXreseller_discount_codes(discount_id, service_id, percentage, description, code) VALUES(NULL, '".$service_id."', '".$percentage."', '".$description."', '".$code."')";
+		$add_code = "INSERT INTO TABLE_PREFIX_PLACEHOLDERreseller_discount_codes(discount_id, service_id, percentage, description, code) VALUES(NULL, '".$service_id."', '".$percentage."', '".$description."', '".$code."')";
 		$db->query($add_code);
 	}
 
 	if (isset($_POST['remove_code']) AND isset($_POST['discount_id']))
 	{
-		$db->query( "DELETE FROM GSP_DB_PREFIXreseller_discount_codes WHERE discount_id=" . $_POST['discount_id'] );
+		$db->query( "DELETE FROM TABLE_PREFIX_PLACEHOLDERreseller_discount_codes WHERE discount_id=" . $_POST['discount_id'] );
 	}
 
 	global $settings;
@@ -219,7 +219,7 @@ function exec_gsp_module()
 	</table>
 	<br>
 	<?php
-	$services = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_services");
+	$services = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_services");
 	if ($services > 0)
 	{
 		?>
@@ -328,7 +328,7 @@ function exec_gsp_module()
 		</form>
 		<br>
 		<?php
-		$discount_codes = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_discount_codes");
+		$discount_codes = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_discount_codes");
 		if ($discount_codes > 0)
 		{
 			?>
@@ -345,7 +345,7 @@ function exec_gsp_module()
 			{
 				if( $row['service_id'] != "0" )
 				{
-					$service = $db->resultQuery("SELECT service_name FROM GSP_DB_PREFIXreseller_services WHERE service_id=".$row['service_id']);
+					$service = $db->resultQuery("SELECT service_name FROM TABLE_PREFIX_PLACEHOLDERreseller_services WHERE service_id=".$row['service_id']);
 					$service_name = $service[0]['service_name'];
 				}
 				else

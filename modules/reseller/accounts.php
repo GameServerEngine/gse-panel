@@ -21,7 +21,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  */
-function exec_gsp_module()
+function exec_module()
 {
 	error_reporting(E_ALL);
 
@@ -29,32 +29,32 @@ function exec_gsp_module()
 
 	if(isset($_POST['remove']))
 	{
-		$query_delete_account = $db->query("DELETE FROM GSP_DB_PREFIXreseller_accounts WHERE cart_id=".$_POST['cart_id']);
-		$query_delete_account = $db->query("DELETE FROM GSP_DB_PREFIXreseller_carts WHERE cart_id=".$_POST['cart_id']);
+		$query_delete_account = $db->query("DELETE FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE cart_id=".$_POST['cart_id']);
+		$query_delete_account = $db->query("DELETE FROM TABLE_PREFIX_PLACEHOLDERreseller_carts WHERE cart_id=".$_POST['cart_id']);
 	}
 	if(isset($_POST['paid']))
 	{
-		$query = "UPDATE GSP_DB_PREFIXreseller_carts
+		$query = "UPDATE TABLE_PREFIX_PLACEHOLDERreseller_carts
 				  SET paid=1
 				  WHERE cart_id=".$_POST['cart_id'];
 		$db->query($query);
 
-		$query = "UPDATE GSP_DB_PREFIXreseller_accounts
+		$query = "UPDATE TABLE_PREFIX_PLACEHOLDERreseller_accounts
 				  SET payment_date=NOW()
 				  WHERE cart_id=".$_POST['cart_id'];
 		$db->query($query);
 
-		$cart_accounts = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_accounts WHERE cart_id=".$_POST['cart_id']);
+		$cart_accounts = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE cart_id=".$_POST['cart_id']);
 		foreach ( $cart_accounts as $account )
 		{
 			$months = $account['invoice_duration'] == "month" ? 1 : 12;
 			$total_months = $months * $account['qty'];
 
-			$db->query("UPDATE GSP_DB_PREFIXreseller_accounts
+			$db->query("UPDATE TABLE_PREFIX_PLACEHOLDERreseller_accounts
 						SET available_months=".$total_months.
 					   " WHERE account_id=".$account['account_id'] );
 
-			$db->query( "UPDATE GSP_DB_PREFIXreseller_accounts ".
+			$db->query( "UPDATE TABLE_PREFIX_PLACEHOLDERreseller_accounts ".
 						"SET status=ADDDATE(DATE(NOW() + INTERVAL ".$total_months." MONTH), 1) ".
 						"WHERE account_id=".$account['account_id'] );
 		}
@@ -69,7 +69,7 @@ function exec_gsp_module()
 	<?php
 	foreach($status_array as $status => $paid_value)
 	{
-		$carts = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_carts WHERE paid=$paid_value");
+		$carts = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_carts WHERE paid=$paid_value");
 		if( $carts > 0 )
 		{
 			?>
@@ -87,7 +87,7 @@ function exec_gsp_module()
 					<th><?php print_lang("price");?></th>
 				</tr>
 				<?php
-				$accounts = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_accounts WHERE cart_id=".$cart['cart_id']);
+				$accounts = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE cart_id=".$cart['cart_id']);
 				$subtotal = 0;
 				$i = 0;
 				foreach($accounts as $account)
@@ -115,7 +115,7 @@ function exec_gsp_module()
 						print_lang('account_extended_to_new_cart');
 					}
 					?></td><td><?php
-					$qry_services = "SELECT * FROM GSP_DB_PREFIXreseller_services WHERE service_id=".$account['service_id'];
+					$qry_services = "SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_services WHERE service_id=".$account['service_id'];
 					$services = $db->resultQuery($qry_services);
 					$service = $services[0];
 					$invoice_duration = $account['qty'] > 1 ? $account['invoice_duration']."s" : $account['invoice_duration'];

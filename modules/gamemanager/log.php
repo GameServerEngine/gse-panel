@@ -33,7 +33,7 @@ require_once("modules/config_games/server_config_parser.php");
         //return;
     }
 
-    $server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
+    $server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], os_for_install_row($home_info));
 
     if ( !$server_xml )
     {
@@ -41,28 +41,28 @@ require_once("modules/config_games/server_config_parser.php");
         return;
     }
 	$path_error = '';
-	$home_info = gsp_with_game_root($home_info, $server_xml, $path_error);
+	$home_info = with_game_root($home_info, $server_xml, $path_error);
 	if ($home_info === false) {
 		print_failure('Invalid game directory for this server: ' . htmlentities($path_error));
 		return;
 	}
 
     require_once('includes/lib_remote.php');
-    $remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
+    $remote = new RemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
 
     $home_log = "";
 
 	if( isset( $server_xml->console_log ) )
 	{
 		$log_path = preg_replace("/%mod%/i", $home_info['mods'][$mod_id]['mod_key'], (string)$server_xml->console_log);
-		$log_retval = $remote->get_log(GSP_SCREEN_TYPE_HOME,
+		$log_retval = $remote->get_log(SCREEN_TYPE_HOME,
 			$home_info['home_id'],
 			clean_path($home_info['game_root']),
 			$home_log, 100, $log_path);
 	}
 	else
 	{
-		$log_retval = $remote->get_log(GSP_SCREEN_TYPE_HOME,
+		$log_retval = $remote->get_log(SCREEN_TYPE_HOME,
 			$home_info['home_id'],
 			clean_path($home_info['game_root']."/".$server_xml->exe_location),
 			$home_log);

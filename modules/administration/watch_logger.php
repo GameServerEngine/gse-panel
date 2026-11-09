@@ -23,7 +23,7 @@
  *
  */
 
-function exec_gsp_module() {
+function exec_module() {
 	global $db, $view, $loggedInUserInfo;
 
 	$search_field = (isset($_GET['search']) && !empty($_GET['search'])) ? $_GET['search'] : false;

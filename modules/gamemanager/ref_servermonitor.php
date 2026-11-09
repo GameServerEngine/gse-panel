@@ -25,7 +25,7 @@
 require_once('modules/gamemanager/home_handling_functions.php');
 require_once("modules/config_games/server_config_parser.php");
 require_once('includes/lib_remote.php');
-function exec_gsp_module()
+function exec_module()
 {
 	global $db;
 
@@ -48,7 +48,7 @@ function exec_gsp_module()
 	$stats_players = 0;
 	$stats_maxplayers = 0;
 
-	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file'], gsp_os_for_install_row($server_home));
+	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file'], os_for_install_row($server_home));
 	$xml_installer = $server_xml->installer;
 
 	$mod_name = $server_home['mods'][$mod_id]['mod_name'];
@@ -119,7 +119,7 @@ function exec_gsp_module()
 		}
 		$remote_server_id = $server_home['remote_server_id'];
 		$rserver = $db->getRemoteServerById($remote_server_id);
-		$remote = new GSPRemoteLibrary($rserver['agent_ip'], $rserver['agent_port'], $rserver['encryption_key'], $rserver['timeout']);
+		$remote = new RemoteLibrary($rserver['agent_ip'], $rserver['agent_port'], $rserver['encryption_key'], $rserver['timeout']);
 		$startup_file_exists = $remote->rfile_exists( "startups/".$ip."-".$port ) === 1;
 		$SrvCtrl = "<table class='srvctrl'><tr><td style='border:0;text-align:center;background:transparent'><a href='?m=gamemanager&amp;p=restart&amp;home_id=".
 					 $home_id."&amp;mod_id=".$mod_id."&amp;ip=".$ip."&amp;port=".$port.

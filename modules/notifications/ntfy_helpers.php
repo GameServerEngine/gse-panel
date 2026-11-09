@@ -107,7 +107,7 @@ if (!defined('NTFY_HELPERS_LOADED')) {
 	 * Scheduler v2 run-event hook point. Call this when a scheduled task run
 	 * finishes. NOT WIRED to any execution path yet: scheduler v2 phase P1 has
 	 * no execution path (see docs/plans/scheduler-v2/PLAN.md "Phases"). P2 should
-	 * call this from wherever a gsp_scheduled_task_run row transitions to
+	 * call this from wherever a scheduled_task_run row transitions to
 	 * success/failed/skipped. $status is one of success|failed|skipped.
 	 */
 	function ntfy_notify_scheduled_task_run($baseUrl, $home_id, $action_key, $status)

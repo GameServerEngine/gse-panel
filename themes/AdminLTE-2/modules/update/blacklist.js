@@ -25,7 +25,7 @@ $(document).ready(function()
 
 	$('.main a[href$="&back"]').each(function()
 	{
-		$(this).addClass('btn btn-xs btn-secondary').text('.. ' + langConsts['GSP_LANG_level_up'].replace(/\^/g, '')).prepend('<i class="fas fa-level-up-alt mr-1"></i>');
+		$(this).addClass('btn btn-xs btn-secondary').text('.. ' + langConsts['LANG_level_up'].replace(/\^/g, '')).prepend('<i class="fas fa-level-up-alt mr-1"></i>');
 	});
 });
 

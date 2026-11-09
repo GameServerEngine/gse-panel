@@ -136,8 +136,8 @@ if (!empty($settings['panel_language'])) {
 if (!empty($settings['time_zone'])) {
     date_default_timezone_set($settings['time_zone']);
 }
-if (function_exists('gspLang')) {
-    gspLang();
+if (function_exists('lang')) {
+    lang();
 }
 
 ob_start();

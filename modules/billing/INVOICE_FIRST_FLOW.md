@@ -12,17 +12,17 @@ The billing system now follows an **invoice-first** workflow where invoices are 
   - `status` = 'due'
   - `order_id` = 0 (no order exists yet)
   - All server details (service_id, home_name, ip, max_players, passwords, etc.)
-  - Customer details (name, email from gsp_users)
+  - Customer details (name, email from users)
   - Pricing (amount, qty, invoice_duration)
   - `due_date` = now + 3 days
 
 **Database changes:**
-- INSERT into `gsp_billing_invoices`
-- NO changes to `gsp_billing_orders` (order doesn't exist yet)
+- INSERT into `billing_invoices`
+- NO changes to `billing_orders` (order doesn't exist yet)
 
 ### 2. Cart Display (cart.php)
 **What shows:**
-- Query: `SELECT * FROM gsp_billing_invoices WHERE status = 'due' AND user_id = ?`
+- Query: `SELECT * FROM billing_invoices WHERE status = 'due' AND user_id = ?`
 - Displays all **unpaid invoices** (status='due')
 - Shows invoice_id, home_name, ip, max_players, amount, qty
 - Free items show "Claim (Free)" button
@@ -39,17 +39,17 @@ The billing system now follows an **invoice-first** workflow where invoices are 
 
 **What happens:**
 1. Mark invoice as paid:
-   - UPDATE `gsp_billing_invoices` SET status='paid', paid_date=NOW()
+   - UPDATE `billing_invoices` SET status='paid', paid_date=NOW()
 2. Create order record:
    - Calculate end_date (qty * invoice_duration)
-   - INSERT into `gsp_billing_orders` with status='paid'
+   - INSERT into `billing_orders` with status='paid'
    - Get new order_id from INSERT
 3. Link invoice to order:
-   - UPDATE `gsp_billing_invoices` SET order_id=? WHERE invoice_id=?
+   - UPDATE `billing_invoices` SET order_id=? WHERE invoice_id=?
 
 **Database changes:**
-- UPDATE `gsp_billing_invoices`: status='due' → 'paid', paid_date=NOW(), order_id=(new)
-- INSERT `gsp_billing_orders`: New record with status='paid', end_date calculated
+- UPDATE `billing_invoices`: status='due' → 'paid', paid_date=NOW(), order_id=(new)
+- INSERT `billing_orders`: New record with status='paid', end_date calculated
 
 #### 3b. PayPal Flow (api/capture_order.php)
 **When:** User pays via PayPal
@@ -69,7 +69,7 @@ The billing system now follows an **invoice-first** workflow where invoices are 
 - Updates order: status='paid' → 'installed', home_id=(assigned)
 
 **Database changes:**
-- UPDATE `gsp_billing_orders`: status='paid' → 'installed', home_id=(assigned)
+- UPDATE `billing_orders`: status='paid' → 'installed', home_id=(assigned)
 
 ## Status Values
 
@@ -86,7 +86,7 @@ The billing system now follows an **invoice-first** workflow where invoices are 
 
 ## Database Schema
 
-### gsp_billing_invoices (INVOICE-FIRST)
+### billing_invoices (INVOICE-FIRST)
 ```sql
 invoice_id          INT AUTO_INCREMENT PRIMARY KEY
 order_id            INT DEFAULT 0               -- Links to order AFTER payment (0 = not yet paid)
@@ -112,7 +112,7 @@ invoice_duration    VARCHAR(16) DEFAULT 'month' -- 'month', 'year', 'day'
 qty                 INT DEFAULT 1               -- Quantity/duration multiplier
 ```
 
-### gsp_billing_orders (ORDER-AFTER-PAYMENT)
+### billing_orders (ORDER-AFTER-PAYMENT)
 ```sql
 order_id            INT AUTO_INCREMENT PRIMARY KEY
 user_id             INT NOT NULL
@@ -160,7 +160,7 @@ paid_ts             DATETIME
 **Existing orders with status='in-cart' need to be migrated:**
 ```sql
 -- Convert existing cart items to invoices
-INSERT INTO gsp_billing_invoices (
+INSERT INTO billing_invoices (
   order_id, user_id, service_id, home_name, ip, max_players,
   remote_control_password, ftp_password, customer_name, customer_email,
   amount, status, invoice_duration, qty, description
@@ -181,10 +181,10 @@ SELECT
   o.invoice_duration,
   o.qty,
   CONCAT('Migrated cart item: ', o.home_name)
-FROM gsp_billing_orders o
-LEFT JOIN gsp_users u ON o.user_id = u.user_id
+FROM billing_orders o
+LEFT JOIN users u ON o.user_id = u.user_id
 WHERE o.status = 'in-cart';
 
 -- Delete old cart items (now converted to invoices)
-DELETE FROM gsp_billing_orders WHERE status = 'in-cart';
+DELETE FROM billing_orders WHERE status = 'in-cart';
 ```

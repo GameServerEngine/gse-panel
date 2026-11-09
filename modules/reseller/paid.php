@@ -1,5 +1,5 @@
 <?php
-function exec_gsp_module()
+function exec_module()
 {
 	if (isset($_POST['payment_status']) AND ($_POST['payment_status']=="Completed" OR $_POST['payment_status']=="Canceled_Reversal"))
 	{

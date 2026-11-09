@@ -78,13 +78,13 @@ run_client_command(array(
 
 echo "[2/7] Importing panel.sql baseline...\n";
 $panel_sql = file_get_contents($base_dir . '/panel.sql');
-// panel.sql contains at least one duplicate CREATE TABLE (GSP_DB_PREFIXban_list); make the
+// panel.sql contains at least one duplicate CREATE TABLE (TABLE_PREFIX_PLACEHOLDERban_list); make the
 // import idempotent the same way the existing installer's import already does.
 $panel_sql = preg_replace('/CREATE TABLE `/', 'CREATE TABLE IF NOT EXISTS `', $panel_sql);
-$panel_sql = str_replace('GSP_DB_PREFIX', $table_prefix, $panel_sql);
+$panel_sql = str_replace('TABLE_PREFIX_PLACEHOLDER', $table_prefix, $panel_sql);
 run_client_command(array('mysql', '-h', $db_host, '-P', (string)$db_port, '-u', $db_user, '-p' . $db_pass, $db_name), $panel_sql);
 
-$db = new GSPDatabaseMySQL();
+$db = new DatabaseMySQL();
 $connect_result = $db->connect($db_host, $db_user, $db_pass, $db_name, $table_prefix, $db_port);
 if ($connect_result !== true) {
     fwrite(STDERR, "Failed to connect to scratch database (code $connect_result)\n");
@@ -115,7 +115,7 @@ sort($module_dirs);
 $module_metadata = array();
 $pending_steps = array(); // list of ['module' => .., 'version' => .., 'step' => ..]
 foreach ($module_dirs as $module) {
-    $metadata = gsp_install_load_module_metadata($base_dir, $module);
+    $metadata = install_load_module_metadata($base_dir, $module);
     if (!$metadata) {
         echo "  - skip $module (no module_title/module_version)\n";
         continue;
@@ -144,7 +144,7 @@ while (!empty($pending_steps)) {
     $applied_this_pass = 0;
     foreach ($pending_steps as $item) {
         $errors = array();
-        if (gsp_install_apply_schema_step($db, $item['step'], $errors)) {
+        if (install_apply_schema_step($db, $item['step'], $errors)) {
             $applied_this_pass++;
         } else {
             $item['last_error'] = $db->getError();
@@ -200,7 +200,7 @@ foreach ($module_metadata as $module => $metadata) {
 // Support is kept in the code but disabled by default (see module list); keep it off for new installs.
 $db->query("UPDATE `{$table_prefix}modules` SET `enabled` = 0 WHERE `folder` = 'support'");
 echo "[6/7] Seeding default settings...\n";
-foreach (gsp_install_default_settings() as $setting => $value) {
+foreach (install_default_settings() as $setting => $value) {
     $setting_esc = $db->realEscapeSingle($setting);
     $value_esc = $db->realEscapeSingle($value);
     $db->query("INSERT INTO `{$table_prefix}settings` (`setting`,`value`) VALUES ('{$setting_esc}','{$value_esc}') " .
@@ -220,7 +220,7 @@ $header = <<<SQL
 -- DO NOT EDIT BY HAND. Regenerate with scripts/build-schema.sh whenever panel.sql or any
 -- modules/*/module.php install_queries change.
 --
--- Table names use the GSP_DB_PREFIX placeholder. The installer replaces it with the configured table_prefix at
+-- Table names use the TABLE_PREFIX_PLACEHOLDER placeholder. The installer replaces it with the configured table_prefix at
 -- import time if a non-default table_prefix is configured.
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -232,10 +232,10 @@ SQL;
 
 $footer = "\nSET FOREIGN_KEY_CHECKS = 1;\n";
 
-// Table names are written with the GSP_DB_PREFIX placeholder so the installer applies the
+// Table names are written with the TABLE_PREFIX_PLACEHOLDER placeholder so the installer applies the
 // configured table_prefix at install time (empty on our instance, so names are bare).
 $dump = preg_replace_callback('/(CREATE TABLE(?: IF NOT EXISTS)?|INSERT INTO|REPLACE INTO|ALTER TABLE|DROP TABLE(?: IF EXISTS)?|LOCK TABLES)(\s+)`([A-Za-z0-9_]+)`/', function ($m) {
-    return $m[1] . $m[2] . '`GSP_DB_PREFIX' . $m[3] . '`';
+    return $m[1] . $m[2] . '`TABLE_PREFIX_PLACEHOLDER' . $m[3] . '`';
 }, $dump);
 file_put_contents($out_path, $header . $dump . $footer);
 

@@ -7,39 +7,39 @@
  * browser and shell entrypoints do not diverge.
  */
 
-if (!defined('GSP_INSTALL_STATE_FILE')) {
-    define('GSP_INSTALL_STATE_FILE', 'includes/install.state.json');
+if (!defined('INSTALL_STATE_FILE')) {
+    define('INSTALL_STATE_FILE', 'includes/install.state.json');
 }
 
-if (!defined('GSP_INSTALL_MAINTENANCE_FILE')) {
-    define('GSP_INSTALL_MAINTENANCE_FILE', 'includes/install.maintenance');
+if (!defined('INSTALL_MAINTENANCE_FILE')) {
+    define('INSTALL_MAINTENANCE_FILE', 'includes/install.maintenance');
 }
 
-if (!defined('GSP_INSTALL_MAINTENANCE_TTL')) {
-    define('GSP_INSTALL_MAINTENANCE_TTL', 3600);
+if (!defined('INSTALL_MAINTENANCE_TTL')) {
+    define('INSTALL_MAINTENANCE_TTL', 3600);
 }
 
-function gsp_install_path($base_dir, $relative_path)
+function install_path($base_dir, $relative_path)
 {
     return rtrim($base_dir, '/\\') . '/' . ltrim($relative_path, '/\\');
 }
 
-function gsp_install_state_path($base_dir)
+function install_state_path($base_dir)
 {
-    return gsp_install_path($base_dir, GSP_INSTALL_STATE_FILE);
+    return install_path($base_dir, INSTALL_STATE_FILE);
 }
 
-function gsp_install_maintenance_path($base_dir)
+function install_maintenance_path($base_dir)
 {
-    return gsp_install_path($base_dir, GSP_INSTALL_MAINTENANCE_FILE);
+    return install_path($base_dir, INSTALL_MAINTENANCE_FILE);
 }
 
-function gsp_install_state_exists($base_dir)
+function install_state_exists($base_dir)
 {
-    return is_readable(gsp_install_state_path($base_dir));
+    return is_readable(install_state_path($base_dir));
 }
 
-function gsp_install_core_tables($table_prefix)
+function install_core_tables($table_prefix)
 {
     return array(
         $table_prefix . 'users',
@@ -50,10 +50,10 @@ function gsp_install_core_tables($table_prefix)
     );
 }
 
-function gsp_install_required_tables($table_prefix)
+function install_required_tables($table_prefix)
 {
     return array_merge(
-        gsp_install_core_tables($table_prefix),
+        install_core_tables($table_prefix),
         array(
             $table_prefix . 'port_pools',
             $table_prefix . 'port_pool_games',
@@ -64,7 +64,7 @@ function gsp_install_required_tables($table_prefix)
     );
 }
 
-function gsp_install_table_exists($db, $table_name)
+function install_table_exists($db, $table_name)
 {
     $rows = $db->resultQuery(
         "SELECT COUNT(*) AS table_count FROM information_schema.TABLES " .
@@ -79,15 +79,15 @@ function gsp_install_table_exists($db, $table_name)
     return isset($row['table_count']) && (int)$row['table_count'] > 0;
 }
 
-function gsp_install_count_admins($db, $table_prefix)
+function install_count_admins($db, $table_prefix)
 {
     $users_table = $table_prefix . 'users';
-    if (!gsp_install_table_exists($db, $users_table)) {
+    if (!install_table_exists($db, $users_table)) {
         return 0;
     }
 
     $rows = $db->resultQuery(
-        "SELECT COUNT(*) AS admin_count FROM " . gsp_install_quoted_identifier($users_table) .
+        "SELECT COUNT(*) AS admin_count FROM " . install_quoted_identifier($users_table) .
         " WHERE `users_role` = 'admin'"
     );
     if (!$rows || !is_array($rows)) {
@@ -97,30 +97,30 @@ function gsp_install_count_admins($db, $table_prefix)
     return isset($row['admin_count']) ? (int)$row['admin_count'] : 0;
 }
 
-function gsp_install_completion_errors($db, $table_prefix)
+function install_completion_errors($db, $table_prefix)
 {
     $errors = array();
     $missing_tables = array();
-    foreach (gsp_install_required_tables($table_prefix) as $table) {
-        if (!gsp_install_table_exists($db, $table)) {
+    foreach (install_required_tables($table_prefix) as $table) {
+        if (!install_table_exists($db, $table)) {
             $missing_tables[] = $table;
         }
     }
 
     if (!empty($missing_tables)) {
         $errors[] = 'Installation did not complete because required database tables are missing: ' . implode(', ', $missing_tables) . '.';
-    } elseif (gsp_install_count_admins($db, $table_prefix) < 1) {
+    } elseif (install_count_admins($db, $table_prefix) < 1) {
         $errors[] = 'Installation did not complete because no admin user was found.';
     }
 
     return $errors;
 }
 
-function gsp_install_get_installation_status($base_dir)
+function install_get_installation_status($base_dir)
 {
     $status = array(
         'complete' => false,
-        'state_exists' => gsp_install_state_exists($base_dir),
+        'state_exists' => install_state_exists($base_dir),
         'config_exists' => false,
         'config_readable' => false,
         'db_connected' => false,
@@ -129,11 +129,11 @@ function gsp_install_get_installation_status($base_dir)
         'reason' => '',
     );
 
-    if (gsp_install_state_exists($base_dir)) {
+    if (install_state_exists($base_dir)) {
         $status['reason'] = 'Installer state file exists.';
     }
 
-    $config_path = gsp_install_path($base_dir, 'includes/config.inc.php');
+    $config_path = install_path($base_dir, 'includes/config.inc.php');
     $status['config_exists'] = file_exists($config_path);
     $status['config_readable'] = is_readable($config_path) && filesize($config_path) > 0;
     if (!$status['config_readable']) {
@@ -150,19 +150,19 @@ function gsp_install_get_installation_status($base_dir)
     }
 
     $db = createDatabaseConnection($db_type, $db_host, $db_user, $db_pass, $db_name, $table_prefix, isset($db_port) ? $db_port : null);
-    if (!$db instanceof GSPDatabase) {
+    if (!$db instanceof Database) {
         $status['reason'] = 'Config exists, but database connection failed.';
         return $status;
     }
     $status['db_connected'] = true;
 
-    foreach (gsp_install_required_tables($table_prefix) as $table) {
-        if (!gsp_install_table_exists($db, $table)) {
+    foreach (install_required_tables($table_prefix) as $table) {
+        if (!install_table_exists($db, $table)) {
             $status['missing_tables'][] = $table;
         }
     }
 
-    $status['admin_count'] = gsp_install_count_admins($db, $table_prefix);
+    $status['admin_count'] = install_count_admins($db, $table_prefix);
     if (!empty($status['missing_tables'])) {
         $status['reason'] = 'Config exists, but required database tables are incomplete.';
         return $status;
@@ -177,15 +177,15 @@ function gsp_install_get_installation_status($base_dir)
     return $status;
 }
 
-function gsp_install_panel_appears_installed($base_dir)
+function install_panel_appears_installed($base_dir)
 {
-    $status = gsp_install_get_installation_status($base_dir);
+    $status = install_get_installation_status($base_dir);
     return !empty($status['complete']);
 }
 
-function gsp_install_read_state($base_dir)
+function install_read_state($base_dir)
 {
-    $path = gsp_install_state_path($base_dir);
+    $path = install_state_path($base_dir);
     if (!is_readable($path)) {
         return array();
     }
@@ -195,21 +195,21 @@ function gsp_install_read_state($base_dir)
     return is_array($decoded) ? $decoded : array();
 }
 
-function gsp_install_maintenance_gate_open($base_dir)
+function install_maintenance_gate_open($base_dir)
 {
-    $path = gsp_install_maintenance_path($base_dir);
+    $path = install_maintenance_path($base_dir);
     if (!is_file($path)) {
         return false;
     }
 
     $mtime = filemtime($path);
-    return $mtime !== false && (time() - $mtime) <= GSP_INSTALL_MAINTENANCE_TTL;
+    return $mtime !== false && (time() - $mtime) <= INSTALL_MAINTENANCE_TTL;
 }
 
-function gsp_install_write_state($base_dir, array $options)
+function install_write_state($base_dir, array $options)
 {
     $panel_domain = trim((string)($options['panel_domain'] ?? ''));
-    $panel_ssl = gsp_install_bool($options['panel_ssl'] ?? false);
+    $panel_ssl = install_bool($options['panel_ssl'] ?? false);
     $panel_public_url = '';
     if ($panel_domain !== '') {
         $panel_public_url = ($panel_ssl ? 'https://' : 'http://') . $panel_domain . '/';
@@ -226,14 +226,14 @@ function gsp_install_write_state($base_dir, array $options)
         'table_prefix' => $options['table_prefix'] ?? '',
         'admin_user' => $options['admin_user'] ?? 'admin',
         'panel_domain' => $panel_domain,
-        'panel_use_vhost' => gsp_install_bool($options['panel_use_vhost'] ?? false),
+        'panel_use_vhost' => install_bool($options['panel_use_vhost'] ?? false),
         'panel_ssl' => $panel_ssl,
         'panel_public_url' => $panel_public_url,
         'repo_url' => $options['repo_url'] ?? '',
         'repo_branch' => $options['repo_branch'] ?? '',
     );
 
-    $path = gsp_install_state_path($base_dir);
+    $path = install_state_path($base_dir);
     $json = json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     if ($json === false || file_put_contents($path, $json . "\n") === false) {
         return false;
@@ -242,35 +242,35 @@ function gsp_install_write_state($base_dir, array $options)
     return true;
 }
 
-function gsp_install_remove_maintenance_gate($base_dir)
+function install_remove_maintenance_gate($base_dir)
 {
-    $path = gsp_install_maintenance_path($base_dir);
+    $path = install_maintenance_path($base_dir);
     if (is_file($path)) {
         @unlink($path);
     }
 }
 
-function gsp_install_bool($value)
+function install_bool($value)
 {
     return filter_var($value, FILTER_VALIDATE_BOOLEAN);
 }
 
-function gsp_install_escape_config($value)
+function install_escape_config($value)
 {
     return addcslashes((string)$value, "\\\"");
 }
 
-function gsp_install_identifier($identifier)
+function install_identifier($identifier)
 {
     return preg_replace('/[^a-zA-Z0-9_]/', '', (string)$identifier);
 }
 
-function gsp_install_quoted_identifier($identifier)
+function install_quoted_identifier($identifier)
 {
     return '`' . str_replace('`', '``', (string)$identifier) . '`';
 }
 
-function gsp_install_validate_options(array $options)
+function install_validate_options(array $options)
 {
     $errors = array();
     $required = array('db_host', 'db_user', 'db_name', 'admin_user', 'admin_pass');
@@ -318,28 +318,28 @@ function gsp_install_validate_options(array $options)
     return $errors;
 }
 
-function gsp_install_config_contents(array $options)
+function install_config_contents(array $options)
 {
     /*
      * Structurally mirrors includes/config.inc.php.example: same credential
      * block, same DEBUG_MODE define, same debug.php require. Keep this in
-     * exact sync with that template by hand — see gsp_install_write_config()
+     * exact sync with that template by hand — see install_write_config()
      * for a runtime assertion that the two agree on which symbols are
      * defined.
      */
     $db_type = $options['db_type'] ?? 'mysql';
-    $debug_mode = gsp_install_bool($options['debug_mode'] ?? false);
+    $debug_mode = install_bool($options['debug_mode'] ?? false);
     return "<?php\n" .
         "###############################################\n" .
         "# Site configuration\n" .
         "###############################################\n" .
-        "\$db_host=\"" . gsp_install_escape_config($options['db_host']) . "\";\n" .
-        "\$db_port=\"" . gsp_install_escape_config($options['db_port'] ?? '3306') . "\";\n" .
-        "\$db_user=\"" . gsp_install_escape_config($options['db_user']) . "\";\n" .
-        "\$db_pass=\"" . gsp_install_escape_config($options['db_pass'] ?? '') . "\";\n" .
-        "\$db_name=\"" . gsp_install_escape_config($options['db_name']) . "\";\n" .
-        "\$table_prefix=\"" . gsp_install_escape_config($options['table_prefix'] ?? '') . "\";\n" .
-        "\$db_type=\"" . gsp_install_escape_config($db_type) . "\";\n" .
+        "\$db_host=\"" . install_escape_config($options['db_host']) . "\";\n" .
+        "\$db_port=\"" . install_escape_config($options['db_port'] ?? '3306') . "\";\n" .
+        "\$db_user=\"" . install_escape_config($options['db_user']) . "\";\n" .
+        "\$db_pass=\"" . install_escape_config($options['db_pass'] ?? '') . "\";\n" .
+        "\$db_name=\"" . install_escape_config($options['db_name']) . "\";\n" .
+        "\$table_prefix=\"" . install_escape_config($options['table_prefix'] ?? '') . "\";\n" .
+        "\$db_type=\"" . install_escape_config($db_type) . "\";\n" .
         "\n" .
         "###############################################\n" .
         "# Debug mode\n" .
@@ -358,7 +358,7 @@ function gsp_install_config_contents(array $options)
  * (--owner www-data --group www-data). Falls back through the common
  * distro web user names and finally to 'www-data' if none are found.
  */
-function gsp_install_detect_web_user()
+function install_detect_web_user()
 {
     if (!function_exists('posix_getpwnam')) {
         return 'www-data';
@@ -371,10 +371,10 @@ function gsp_install_detect_web_user()
     return 'www-data';
 }
 
-function gsp_install_config_write_permission_errors($base_dir)
+function install_config_write_permission_errors($base_dir)
 {
-    $includes_dir = gsp_install_path($base_dir, 'includes');
-    $config_path = gsp_install_path($base_dir, 'includes/config.inc.php');
+    $includes_dir = install_path($base_dir, 'includes');
+    $config_path = install_path($base_dir, 'includes/config.inc.php');
     $errors = array();
     $guidance = 'The web server user must have write permission. For the panel-test deployment, use owner/group www-data:www-data with group write, and make sure deploy user dev is a member of the www-data group.';
 
@@ -398,14 +398,14 @@ function gsp_install_config_write_permission_errors($base_dir)
     return array_values(array_unique($errors));
 }
 
-function gsp_install_write_config($base_dir, array $options)
+function install_write_config($base_dir, array $options)
 {
-    $path = gsp_install_path($base_dir, 'includes/config.inc.php');
+    $path = install_path($base_dir, 'includes/config.inc.php');
     if (!is_dir(dirname($path))) {
         return false;
     }
 
-    $result = file_put_contents($path, gsp_install_config_contents($options));
+    $result = file_put_contents($path, install_config_contents($options));
     if ($result === false) {
         return false;
     }
@@ -415,7 +415,7 @@ function gsp_install_write_config($base_dir, array $options)
     // config file to the detected web user so the web server can still read
     // it under the tighter 0640 permissions.
     if (function_exists('posix_getuid') && posix_getuid() === 0 && function_exists('chown')) {
-        $web_user = gsp_install_detect_web_user();
+        $web_user = install_detect_web_user();
         @chown($path, $web_user);
         @chgrp($path, $web_user);
     }
@@ -423,7 +423,7 @@ function gsp_install_write_config($base_dir, array $options)
     return true;
 }
 
-function gsp_install_create_module_tables($db, $table_prefix)
+function install_create_module_tables($db, $table_prefix)
 {
     $db->query("DROP TABLE IF EXISTS `" . $table_prefix . "modules`");
     $db->query("CREATE TABLE IF NOT EXISTS `" . $table_prefix . "modules` (
@@ -447,7 +447,7 @@ function gsp_install_create_module_tables($db, $table_prefix)
     ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;");
 }
 
-function gsp_install_split_sql_statements($sql)
+function install_split_sql_statements($sql)
 {
     $sql = preg_replace('/^\s*--.*$/m', '', (string)$sql);
     $sql = preg_replace('/\/\*![\s\S]*?\*\//', '', $sql);
@@ -496,19 +496,19 @@ function gsp_install_split_sql_statements($sql)
     return $statements;
 }
 
-function gsp_install_rewrite_schema_sql($sql, $table_prefix)
+function install_rewrite_schema_sql($sql, $table_prefix)
 {
     $sql = preg_replace('/\bCREATE\s+TABLE\s+`/i', 'CREATE TABLE IF NOT EXISTS `', (string)$sql);
-    $sql = str_replace('GSP_DB_PREFIX', (string)$table_prefix, (string)$sql);
+    $sql = str_replace('TABLE_PREFIX_PLACEHOLDER', (string)$table_prefix, (string)$sql);
     return $sql;
 }
 
-function gsp_install_schema_error_is_safe_duplicate($error)
+function install_schema_error_is_safe_duplicate($error)
 {
     return preg_match('/Duplicate column|Duplicate key name|Multiple primary key|already exists/i', (string)$error) === 1;
 }
 
-function gsp_install_apply_schema_query($db, $query, array &$errors)
+function install_apply_schema_query($db, $query, array &$errors)
 {
     $query = trim((string)$query);
     if ($query === '') {
@@ -520,7 +520,7 @@ function gsp_install_apply_schema_query($db, $query, array &$errors)
     }
 
     $error = $db->getError();
-    if (gsp_install_schema_error_is_safe_duplicate($error)) {
+    if (install_schema_error_is_safe_duplicate($error)) {
         return true;
     }
 
@@ -529,7 +529,7 @@ function gsp_install_apply_schema_query($db, $query, array &$errors)
     return false;
 }
 
-function gsp_install_apply_schema_step($db, $step, array &$errors)
+function install_apply_schema_step($db, $step, array &$errors)
 {
     if (is_callable($step)) {
         $ok = (bool)call_user_func($step, $db);
@@ -540,12 +540,12 @@ function gsp_install_apply_schema_step($db, $step, array &$errors)
         return $ok;
     }
 
-    return gsp_install_apply_schema_query($db, $step, $errors);
+    return install_apply_schema_query($db, $step, $errors);
 }
 
-function gsp_install_load_module_metadata($base_dir, $module)
+function install_load_module_metadata($base_dir, $module)
 {
-    $path = gsp_install_path($base_dir, 'modules/' . $module . '/module.php');
+    $path = install_path($base_dir, 'modules/' . $module . '/module.php');
     if (!is_readable($path)) {
         return null;
     }
@@ -569,24 +569,24 @@ function gsp_install_load_module_metadata($base_dir, $module)
 
 /*
  * Modules that can never be disabled via Module Manager (see
- * gsp_module_cannot_be_disabled() in includes/helpers.php for the
+ * module_cannot_be_disabled() in includes/helpers.php for the
  * authoritative list; kept here as a thin wrapper for install-time code).
  */
-if (!function_exists('gsp_module_cannot_be_disabled')) {
+if (!function_exists('module_cannot_be_disabled')) {
     require_once(dirname(__FILE__) . '/helpers.php');
 }
 
-function gsp_install_core_modules()
+function install_core_modules()
 {
     return array('modulemanager', 'settings', 'user_admin');
 }
 
-function gsp_install_module_is_core($folder)
+function install_module_is_core($folder)
 {
-    return gsp_module_cannot_be_disabled((string)$folder);
+    return module_cannot_be_disabled((string)$folder);
 }
 
-function gsp_install_builtin_modules($base_dir = null)
+function install_builtin_modules($base_dir = null)
 {
     /*
      * Every module found under modules/ (i.e. every directory that has a
@@ -595,7 +595,7 @@ function gsp_install_builtin_modules($base_dir = null)
      * directory without a module.php (e.g. the orphan modules/mods dir).
      */
     $base_dir = $base_dir ?: dirname(__DIR__);
-    $modules_dir = gsp_install_path($base_dir, 'modules');
+    $modules_dir = install_path($base_dir, 'modules');
     $module_dirs = array();
 
     if (is_dir($modules_dir)) {
@@ -630,17 +630,17 @@ function gsp_install_builtin_modules($base_dir = null)
  * upgrade mode instead applies versioned migrations from sql/ against an
  * existing, populated database and must not touch this file.
  */
-function gsp_install_import_canonical_schema($db, $base_dir, $table_prefix)
+function install_import_canonical_schema($db, $base_dir, $table_prefix)
 {
     $errors = array();
-    $schema_sql = gsp_install_path($base_dir, 'install/gse_panel.sql');
+    $schema_sql = install_path($base_dir, 'install/gse_panel.sql');
     if (!is_readable($schema_sql)) {
         return array('success' => false, 'errors' => array('Canonical schema file install/gse_panel.sql is missing or unreadable.'));
     }
 
-    $sql = gsp_install_rewrite_schema_sql(file_get_contents($schema_sql), $table_prefix);
-    foreach (gsp_install_split_sql_statements($sql) as $statement) {
-        if (!gsp_install_apply_schema_query($db, $statement, $errors)) {
+    $sql = install_rewrite_schema_sql(file_get_contents($schema_sql), $table_prefix);
+    foreach (install_split_sql_statements($sql) as $statement) {
+        if (!install_apply_schema_query($db, $statement, $errors)) {
             return array('success' => false, 'errors' => $errors);
         }
     }
@@ -648,16 +648,16 @@ function gsp_install_import_canonical_schema($db, $base_dir, $table_prefix)
     return array('success' => true, 'errors' => array());
 }
 
-function gsp_install_create_canonical_schema($db, $base_dir, $table_prefix)
+function install_create_canonical_schema($db, $base_dir, $table_prefix)
 {
-    return gsp_install_import_canonical_schema($db, $base_dir, $table_prefix);
+    return install_import_canonical_schema($db, $base_dir, $table_prefix);
 }
 
-function gsp_install_register_builtin_modules($db, $base_dir)
+function install_register_builtin_modules($db, $base_dir)
 {
     $registered = 0;
-    foreach (gsp_install_builtin_modules($base_dir) as $module) {
-        $metadata = gsp_install_load_module_metadata($base_dir, $module);
+    foreach (install_builtin_modules($base_dir) as $module) {
+        $metadata = install_load_module_metadata($base_dir, $module);
         if (!$metadata) {
             continue;
         }
@@ -666,14 +666,14 @@ function gsp_install_register_builtin_modules($db, $base_dir)
         $folder = $db->realEscapeSingle($module);
         $version = $db->realEscapeSingle($metadata['version']);
         $db_version = (int)$metadata['db_version'];
-        $query = "INSERT INTO `" . GSP_DB_PREFIX . "modules` (`title`,`folder`,`version`,`db_version`,`enabled`) " .
+        $query = "INSERT INTO `" . TABLE_PREFIX_PLACEHOLDER . "modules` (`title`,`folder`,`version`,`db_version`,`enabled`) " .
             "VALUES ('{$title}','{$folder}','{$version}',{$db_version},1) " .
             "ON DUPLICATE KEY UPDATE `title`=VALUES(`title`), `version`=VALUES(`version`), `db_version`=VALUES(`db_version`)";
         if (!$db->query($query)) {
             return array('success' => false, 'errors' => array('Built-in module registration failed. Sensitive database details are hidden.'));
         }
 
-        $rows = $db->resultQuery("SELECT `id` FROM `" . GSP_DB_PREFIX . "modules` WHERE `folder` = '{$folder}' LIMIT 1");
+        $rows = $db->resultQuery("SELECT `id` FROM `" . TABLE_PREFIX_PLACEHOLDER . "modules` WHERE `folder` = '{$folder}' LIMIT 1");
         if (!$rows || !isset($rows[0]['id'])) {
             return array('success' => false, 'errors' => array('Built-in module registration could not verify module row.'));
         }
@@ -699,43 +699,7 @@ function gsp_install_register_builtin_modules($db, $base_dir)
     return array('success' => true, 'registered' => $registered);
 }
 
-function gsp_install_migrate_tables($db, $table_prefix)
-{
-    if ($table_prefix === '') {
-        return array('renamed' => 0, 'skipped' => 0);
-    }
-
-    if ($table_prefix === 'gsp_') {
-        return array('renamed' => 0, 'skipped' => 0);
-    }
-
-    $rows = $db->resultQuery("SHOW TABLES LIKE 'gsp\\_%'");
-    if (!$rows || !is_array($rows)) {
-        return array('renamed' => 0, 'skipped' => 0);
-    }
-
-    $renamed = 0;
-    $skipped = 0;
-    foreach ($rows as $row) {
-        $gsp_table = array_values($row)[0];
-        $suffix = substr($gsp_table, 4);
-        $new_table = $table_prefix . $suffix;
-        $exists = $db->resultQuery("SHOW TABLES LIKE '" . str_replace("_", "\\_", $new_table) . "'");
-        if ($exists && is_array($exists) && count($exists) > 0) {
-            $skipped++;
-            continue;
-        }
-
-        $ok = $db->query("RENAME TABLE " . gsp_install_quoted_identifier($gsp_table) . " TO " . gsp_install_quoted_identifier($new_table));
-        if ($ok) {
-            $renamed++;
-        }
-    }
-
-    return array('renamed' => $renamed, 'skipped' => $skipped);
-}
-
-function gsp_install_selected_database($db)
+function install_selected_database($db)
 {
     $rows = $db->resultQuery("SELECT DATABASE() AS selected_database");
     if (!$rows || !is_array($rows)) {
@@ -745,7 +709,7 @@ function gsp_install_selected_database($db)
     return $row['selected_database'] ?? null;
 }
 
-function gsp_install_list_base_tables($db)
+function install_list_base_tables($db)
 {
     $rows = $db->resultQuery("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'");
     if (!$rows || !is_array($rows)) {
@@ -763,7 +727,7 @@ function gsp_install_list_base_tables($db)
     return $tables;
 }
 
-function gsp_install_tables_for_reinstall(array $tables, $table_prefix)
+function install_tables_for_reinstall(array $tables, $table_prefix)
 {
     if ($table_prefix === '') {
         return $tables;
@@ -778,17 +742,11 @@ function gsp_install_tables_for_reinstall(array $tables, $table_prefix)
     return $matched;
 }
 
-function gsp_install_extract_panel_table_suffixes($text)
+function install_extract_panel_table_suffixes($text)
 {
     $suffixes = array();
 
-    if (preg_match_all('/`gsp_([a-zA-Z0-9_]+)`/', (string)$text, $matches)) {
-        foreach ($matches[1] as $suffix) {
-            $suffixes[$suffix] = true;
-        }
-    }
-
-    if (preg_match_all('/GSP_DB_PREFIX(?:"\s*\.\s*"|\'\s*\.\s*\'|\s*\.\s*"|\s*\.\s*\'|`)?([a-zA-Z0-9_]+)/', (string)$text, $matches)) {
+    if (preg_match_all('/TABLE_PREFIX_PLACEHOLDER(?:"\s*\.\s*"|\'\s*\.\s*\'|\s*\.\s*"|\s*\.\s*\'|`)?([a-zA-Z0-9_]+)/', (string)$text, $matches)) {
         foreach ($matches[1] as $suffix) {
             $suffixes[$suffix] = true;
         }
@@ -797,24 +755,24 @@ function gsp_install_extract_panel_table_suffixes($text)
     return array_keys($suffixes);
 }
 
-function gsp_install_known_panel_tables($base_dir, $table_prefix)
+function install_known_panel_tables($base_dir, $table_prefix)
 {
     $suffixes = array();
-    foreach (gsp_install_core_tables('') as $table) {
+    foreach (install_core_tables('') as $table) {
         $suffixes[$table] = true;
     }
     $suffixes['module_menus'] = true;
 
     foreach (array('install/gse_panel.sql', 'panel.sql') as $schema_relative_path) {
-        $schema_path = gsp_install_path($base_dir, $schema_relative_path);
+        $schema_path = install_path($base_dir, $schema_relative_path);
         if (is_readable($schema_path)) {
-            foreach (gsp_install_extract_panel_table_suffixes(file_get_contents($schema_path)) as $suffix) {
+            foreach (install_extract_panel_table_suffixes(file_get_contents($schema_path)) as $suffix) {
                 $suffixes[$suffix] = true;
             }
         }
     }
 
-    $modules_dir = gsp_install_path($base_dir, 'modules');
+    $modules_dir = install_path($base_dir, 'modules');
     if (is_dir($modules_dir)) {
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($modules_dir, FilesystemIterator::SKIP_DOTS)
@@ -831,7 +789,7 @@ function gsp_install_known_panel_tables($base_dir, $table_prefix)
             if (!is_readable($path)) {
                 continue;
             }
-            foreach (gsp_install_extract_panel_table_suffixes(file_get_contents($path)) as $suffix) {
+            foreach (install_extract_panel_table_suffixes(file_get_contents($path)) as $suffix) {
                 $suffixes[$suffix] = true;
             }
         }
@@ -848,17 +806,17 @@ function gsp_install_known_panel_tables($base_dir, $table_prefix)
     return $tables;
 }
 
-function gsp_install_tables_for_reinstall_scope(array $tables, $table_prefix, $base_dir)
+function install_tables_for_reinstall_scope(array $tables, $table_prefix, $base_dir)
 {
     if ($table_prefix !== '') {
         return array(
-            'tables_to_drop' => gsp_install_tables_for_reinstall($tables, $table_prefix),
+            'tables_to_drop' => install_tables_for_reinstall($tables, $table_prefix),
             'unmatched' => array(),
             'scope' => "tables prefixed with {$table_prefix}",
         );
     }
 
-    $known = array_fill_keys(gsp_install_known_panel_tables($base_dir, ''), true);
+    $known = array_fill_keys(install_known_panel_tables($base_dir, ''), true);
     $tables_to_drop = array();
     $unmatched = array();
     foreach ($tables as $table) {
@@ -876,7 +834,7 @@ function gsp_install_tables_for_reinstall_scope(array $tables, $table_prefix, $b
     );
 }
 
-function gsp_install_drop_existing_tables($db, $db_name, $table_prefix, $allow_drop_all_tables = false, $base_dir = null)
+function install_drop_existing_tables($db, $db_name, $table_prefix, $allow_drop_all_tables = false, $base_dir = null)
 {
     $base_dir = $base_dir ?: dirname(__DIR__);
     $result = array(
@@ -891,16 +849,16 @@ function gsp_install_drop_existing_tables($db, $db_name, $table_prefix, $allow_d
         'errors' => array(),
     );
 
-    $selected_database = gsp_install_selected_database($db);
+    $selected_database = install_selected_database($db);
     $result['selected_database'] = $selected_database;
     if ($selected_database !== $db_name) {
         $result['errors'][] = "Installer connected to database '{$selected_database}', but expected '{$db_name}'. Installation stopped before dropping tables.";
         return $result;
     }
 
-    $tables = gsp_install_list_base_tables($db);
+    $tables = install_list_base_tables($db);
     $result['available_count'] = count($tables);
-    $scope = gsp_install_tables_for_reinstall_scope($tables, $table_prefix, $base_dir);
+    $scope = install_tables_for_reinstall_scope($tables, $table_prefix, $base_dir);
     $tables_to_drop = $scope['tables_to_drop'];
     $result['unmatched'] = $scope['unmatched'];
     $result['scope'] = $scope['scope'];
@@ -920,7 +878,7 @@ function gsp_install_drop_existing_tables($db, $db_name, $table_prefix, $allow_d
         return $result;
     }
 
-    $safe_db = gsp_install_quoted_identifier($db_name);
+    $safe_db = install_quoted_identifier($db_name);
     $fk_disabled = $db->query("SET FOREIGN_KEY_CHECKS = 0");
     if (!$fk_disabled) {
         $result['errors'][] = 'Unable to disable foreign key checks before dropping existing tables.';
@@ -928,7 +886,7 @@ function gsp_install_drop_existing_tables($db, $db_name, $table_prefix, $allow_d
     }
 
     foreach ($tables_to_drop as $table) {
-        $safe_table = gsp_install_quoted_identifier($table);
+        $safe_table = install_quoted_identifier($table);
         $ok = $db->query("DROP TABLE IF EXISTS {$safe_db}.{$safe_table}");
         if ($ok) {
             $result['dropped'][] = $table;
@@ -947,12 +905,12 @@ function gsp_install_drop_existing_tables($db, $db_name, $table_prefix, $allow_d
     return $result;
 }
 
-function gsp_install_default_settings()
+function install_default_settings()
 {
     return array(
         'title' => 'Gameserver Engine Panel',
         'slogan' => function_exists('get_lang') ? get_lang('slogan') : 'Gameserver Engine',
-        'gsp_version' => '0',
+        'panel_version' => '0',
         'version_type' => 'GSP',
         'theme' => 'SimpleBootstrap',
         'welcome_title' => '1',
@@ -974,22 +932,22 @@ function gsp_install_default_settings()
  *   - upgrade:      applies pending versioned migrations from sql/ against
  *                   an existing, populated database. Does not touch config.
  *
- * install/reinstall use gsp_install_run_install_or_reinstall(); reconfigure
+ * install/reinstall use install_run_install_or_reinstall(); reconfigure
  * and upgrade have their own dedicated functions below. This function is
  * the single public entry point used by both install.php and the CLI
  * installer.
  */
-function gsp_install_run(array $options)
+function install_run(array $options)
 {
     $mode = $options['mode'] ?? 'install';
     switch ($mode) {
         case 'reconfigure':
-            return gsp_install_run_reconfigure($options);
+            return install_run_reconfigure($options);
         case 'upgrade':
-            return gsp_install_run_upgrade($options);
+            return install_run_upgrade($options);
         case 'install':
         case 'reinstall':
-            return gsp_install_run_install_or_reinstall($options, $mode);
+            return install_run_install_or_reinstall($options, $mode);
         default:
             return array('success' => false, 'errors' => array(
                 "Unknown install mode '{$mode}'. Expected one of: install, reinstall, reconfigure, upgrade."
@@ -997,18 +955,18 @@ function gsp_install_run(array $options)
     }
 }
 
-function gsp_install_run_install_or_reinstall(array $options, $mode = 'install')
+function install_run_install_or_reinstall(array $options, $mode = 'install')
 {
     $base_dir = $options['base_dir'] ?? dirname(__DIR__);
-    $dry_run = gsp_install_bool($options['dry_run'] ?? false);
+    $dry_run = install_bool($options['dry_run'] ?? false);
     $options['db_type'] = $options['db_type'] ?? 'mysql';
     $options['db_port'] = (string)($options['db_port'] ?? '3306');
     $options['table_prefix'] = $options['table_prefix'] ?? '';
     $options['admin_email'] = $options['admin_email'] ?? 'admin@localhost';
     $options['install_via'] = $options['install_via'] ?? 'unknown';
-    $options['debug_mode'] = gsp_install_bool($options['debug_mode'] ?? false);
+    $options['debug_mode'] = install_bool($options['debug_mode'] ?? false);
 
-    $errors = gsp_install_validate_options($options);
+    $errors = install_validate_options($options);
     if (!empty($errors)) {
         return array('success' => false, 'errors' => $errors);
     }
@@ -1022,7 +980,7 @@ function gsp_install_run_install_or_reinstall(array $options, $mode = 'install')
         }
         // A confirmed reinstall is allowed to drop whatever tables are in
         // its known drop-scope (prefix-matched, or the known panel table
-        // list for a blank prefix — see gsp_install_drop_existing_tables).
+        // list for a blank prefix — see install_drop_existing_tables).
         $options['allow_drop_all_tables'] = true;
     } else {
         $options['allow_drop_all_tables'] = false;
@@ -1039,7 +997,7 @@ function gsp_install_run_install_or_reinstall(array $options, $mode = 'install')
     $old_cwd = getcwd();
     chdir($base_dir);
 
-    $config_permission_errors = gsp_install_config_write_permission_errors($base_dir);
+    $config_permission_errors = install_config_write_permission_errors($base_dir);
     if (!empty($config_permission_errors)) {
         if ($old_cwd !== false) {
             chdir($old_cwd);
@@ -1047,7 +1005,7 @@ function gsp_install_run_install_or_reinstall(array $options, $mode = 'install')
         return array('success' => false, 'errors' => $config_permission_errors);
     }
 
-    if (!gsp_install_write_config($base_dir, $options)) {
+    if (!install_write_config($base_dir, $options)) {
         if ($old_cwd !== false) {
             chdir($old_cwd);
         }
@@ -1076,8 +1034,8 @@ function gsp_install_run_install_or_reinstall(array $options, $mode = 'install')
     $GLOBALS['db'] = $db;
 
     if ($mode === 'install') {
-        $existing_tables = gsp_install_list_base_tables($db);
-        $scope = gsp_install_tables_for_reinstall_scope($existing_tables, $options['table_prefix'], $base_dir);
+        $existing_tables = install_list_base_tables($db);
+        $scope = install_tables_for_reinstall_scope($existing_tables, $options['table_prefix'], $base_dir);
         if (!empty($scope['tables_to_drop'])) {
             if ($old_cwd !== false) {
                 chdir($old_cwd);
@@ -1089,7 +1047,7 @@ function gsp_install_run_install_or_reinstall(array $options, $mode = 'install')
         }
     }
 
-    $drop = gsp_install_drop_existing_tables($db, $options['db_name'], $options['table_prefix'], $options['allow_drop_all_tables'], $base_dir);
+    $drop = install_drop_existing_tables($db, $options['db_name'], $options['table_prefix'], $options['allow_drop_all_tables'], $base_dir);
     if (empty($drop['success'])) {
         if ($old_cwd !== false) {
             chdir($old_cwd);
@@ -1100,8 +1058,8 @@ function gsp_install_run_install_or_reinstall(array $options, $mode = 'install')
             'drop' => $drop,
         );
     }
-    $migration = gsp_install_migrate_tables($db, $options['table_prefix']);
-    $schema = gsp_install_create_canonical_schema($db, $base_dir, $options['table_prefix']);
+    $migration = array('renamed' => 0, 'skipped' => 0);
+    $schema = install_create_canonical_schema($db, $base_dir, $options['table_prefix']);
     if (empty($schema['success'])) {
         if ($old_cwd !== false) {
             chdir($old_cwd);
@@ -1114,7 +1072,7 @@ function gsp_install_run_install_or_reinstall(array $options, $mode = 'install')
         );
     }
 
-    $module_registration = gsp_install_register_builtin_modules($db, $base_dir);
+    $module_registration = install_register_builtin_modules($db, $base_dir);
     if (empty($module_registration['success'])) {
         if ($old_cwd !== false) {
             chdir($old_cwd);
@@ -1127,7 +1085,7 @@ function gsp_install_run_install_or_reinstall(array $options, $mode = 'install')
         );
     }
 
-    $db->setSettings(gsp_install_default_settings());
+    $db->setSettings(install_default_settings());
 
     $existing_admin = $db->getUser($options['admin_user']);
     if (!$existing_admin) {
@@ -1138,7 +1096,7 @@ function gsp_install_run_install_or_reinstall(array $options, $mode = 'install')
         updateGameConfigsPostInstall();
     }
 
-    $completion_errors = gsp_install_completion_errors($db, $options['table_prefix']);
+    $completion_errors = install_completion_errors($db, $options['table_prefix']);
     if (!empty($completion_errors)) {
         if ($old_cwd !== false) {
             chdir($old_cwd);
@@ -1153,8 +1111,8 @@ function gsp_install_run_install_or_reinstall(array $options, $mode = 'install')
         );
     }
 
-    $state_written = gsp_install_write_state($base_dir, $options);
-    gsp_install_remove_maintenance_gate($base_dir);
+    $state_written = install_write_state($base_dir, $options);
+    install_remove_maintenance_gate($base_dir);
 
     if ($old_cwd !== false) {
         chdir($old_cwd);
@@ -1166,7 +1124,7 @@ function gsp_install_run_install_or_reinstall(array $options, $mode = 'install')
         'migration' => $migration,
         'modules_registered' => $module_registration['registered'] ?? 0,
         'admin_created' => !$existing_admin,
-        'state_file' => GSP_INSTALL_STATE_FILE,
+        'state_file' => INSTALL_STATE_FILE,
         'errors' => $state_written ? array() : array('Installation completed, but lock/state file could not be written.'),
     );
 }
@@ -1178,13 +1136,13 @@ function gsp_install_run_install_or_reinstall(array $options, $mode = 'install')
  * (only when domain/https settings were supplied) it is used solely for a
  * settings UPDATE/INSERT, never schema DDL.
  */
-function gsp_install_run_reconfigure(array $options)
+function install_run_reconfigure(array $options)
 {
     $base_dir = $options['base_dir'] ?? dirname(__DIR__);
     $options['db_type'] = $options['db_type'] ?? 'mysql';
     $options['db_port'] = (string)($options['db_port'] ?? '3306');
     $options['table_prefix'] = $options['table_prefix'] ?? '';
-    $options['debug_mode'] = gsp_install_bool($options['debug_mode'] ?? false);
+    $options['debug_mode'] = install_bool($options['debug_mode'] ?? false);
 
     $errors = array();
     foreach (array('db_host', 'db_user', 'db_name') as $field) {
@@ -1202,7 +1160,7 @@ function gsp_install_run_reconfigure(array $options)
         return array('success' => false, 'errors' => $errors);
     }
 
-    $dry_run = gsp_install_bool($options['dry_run'] ?? false);
+    $dry_run = install_bool($options['dry_run'] ?? false);
     if ($dry_run) {
         return array(
             'success' => true,
@@ -1214,7 +1172,7 @@ function gsp_install_run_reconfigure(array $options)
     $old_cwd = getcwd();
     chdir($base_dir);
 
-    $config_permission_errors = gsp_install_config_write_permission_errors($base_dir);
+    $config_permission_errors = install_config_write_permission_errors($base_dir);
     if (!empty($config_permission_errors)) {
         if ($old_cwd !== false) {
             chdir($old_cwd);
@@ -1222,7 +1180,7 @@ function gsp_install_run_reconfigure(array $options)
         return array('success' => false, 'errors' => $config_permission_errors);
     }
 
-    if (!gsp_install_write_config($base_dir, $options)) {
+    if (!install_write_config($base_dir, $options)) {
         if ($old_cwd !== false) {
             chdir($old_cwd);
         }
@@ -1295,9 +1253,9 @@ function gsp_install_run_reconfigure(array $options)
  * files in sql/ (e.g. one-off ad-hoc scripts) are ignored by the automatic
  * upgrade runner and must continue to be applied manually.
  */
-function gsp_install_list_migration_files($base_dir)
+function install_list_migration_files($base_dir)
 {
-    $sql_dir = gsp_install_path($base_dir, 'sql');
+    $sql_dir = install_path($base_dir, 'sql');
     $migrations = array();
     if (!is_dir($sql_dir)) {
         return $migrations;
@@ -1314,10 +1272,10 @@ function gsp_install_list_migration_files($base_dir)
 /*
  * upgrade mode: applies pending versioned migrations from sql/ against an
  * existing, populated database. Tracks progress via a `schema_migration_version`
- * row in GSP_DB_PREFIXsettings so re-running upgrade is idempotent. Does not touch
+ * row in TABLE_PREFIX_PLACEHOLDERsettings so re-running upgrade is idempotent. Does not touch
  * config.inc.php or vhosts.
  */
-function gsp_install_run_upgrade(array $options)
+function install_run_upgrade(array $options)
 {
     $base_dir = $options['base_dir'] ?? dirname(__DIR__);
     $options['db_type'] = $options['db_type'] ?? 'mysql';
@@ -1334,7 +1292,7 @@ function gsp_install_run_upgrade(array $options)
         return array('success' => false, 'errors' => $errors);
     }
 
-    $dry_run = gsp_install_bool($options['dry_run'] ?? false);
+    $dry_run = install_bool($options['dry_run'] ?? false);
 
     $old_cwd = getcwd();
     chdir($base_dir);
@@ -1364,7 +1322,7 @@ function gsp_install_run_upgrade(array $options)
     }
 
     $pending = array();
-    foreach (gsp_install_list_migration_files($base_dir) as $version => $filename) {
+    foreach (install_list_migration_files($base_dir) as $version => $filename) {
         if ($version > $current_version) {
             $pending[$version] = $filename;
         }
@@ -1392,10 +1350,10 @@ function gsp_install_run_upgrade(array $options)
             break;
         }
 
-        $sql = gsp_install_rewrite_schema_sql($sql, $options['table_prefix']);
+        $sql = install_rewrite_schema_sql($sql, $options['table_prefix']);
         $migration_ok = true;
-        foreach (gsp_install_split_sql_statements($sql) as $statement) {
-            if (!gsp_install_apply_schema_query($db, $statement, $errors)) {
+        foreach (install_split_sql_statements($sql) as $statement) {
+            if (!install_apply_schema_query($db, $statement, $errors)) {
                 $migration_ok = false;
                 break;
             }
@@ -1427,20 +1385,20 @@ function gsp_install_run_upgrade(array $options)
     );
 }
 
-function gsp_install_current_session_is_admin($base_dir)
+function install_current_session_is_admin($base_dir)
 {
     if (empty($_SESSION['user_id'])) {
         return false;
     }
 
-    $config_path = gsp_install_path($base_dir, 'includes/config.inc.php');
+    $config_path = install_path($base_dir, 'includes/config.inc.php');
     if (!is_readable($config_path)) {
         return false;
     }
 
     require_once($config_path);
     $db = createDatabaseConnection($db_type, $db_host, $db_user, $db_pass, $db_name, $table_prefix, isset($db_port) ? $db_port : null);
-    if (!$db instanceof GSPDatabase) {
+    if (!$db instanceof Database) {
         return false;
     }
 

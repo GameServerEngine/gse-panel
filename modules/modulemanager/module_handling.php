@@ -123,7 +123,7 @@ function install_module($db, $module, $install_if_optional = TRUE)
 /// (modulemanager, settings, user_admin) can never be disabled.
 function toggle_module_enabled($db, $module_id, $module, $enable)
 {
-	if (!$enable && gsp_module_cannot_be_disabled($module)) {
+	if (!$enable && module_cannot_be_disabled($module)) {
 		print_failure(get_lang_f('module_cannot_be_disabled', $module));
 		return FALSE;
 	}

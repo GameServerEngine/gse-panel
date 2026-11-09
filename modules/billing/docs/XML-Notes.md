@@ -533,7 +533,7 @@ Used for setting environment variables which may be needed by some servers.  Thi
 
 Special entries:
 
-`{GSP_HOME_DIR}` will be replaced by the home directory for the game server.
+`{HOME_DIR}` will be replaced by the home directory for the game server.
 ___
 ### Linux:
 
@@ -569,13 +569,13 @@ Example:
 
 ```
 <environment_variables>
-export LD_LIBRARY_PATH="{GSP_HOME_DIR}/RustDedicated_Data/Plugins/x86_64"
+export LD_LIBRARY_PATH="{HOME_DIR}/RustDedicated_Data/Plugins/x86_64"
 </environment_variables>
 ```
 
 Special entries:
 
-`{GSP_HOME_DIR}` will be replaced by the home directory for the game server.
+`{HOME_DIR}` will be replaced by the home directory for the game server.
 
 
 
@@ -603,7 +603,7 @@ The above example adds chattr +i to the bin/AvorionServer executable.  This prev
 
 Special entries:
 
-`{GSP_HOME_DIR}` will be replaced by the home directory for the game server.  However, if you're using this variable, you should just use a local path.
+`{HOME_DIR}` will be replaced by the home directory for the game server.  However, if you're using this variable, you should just use a local path.
 
 
 

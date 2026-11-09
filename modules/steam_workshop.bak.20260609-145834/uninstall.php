@@ -26,7 +26,7 @@ require_once("modules/config_games/server_config_parser.php");
 require_once("modules/steam_workshop/functions.php");
 require_once('includes/form_table_class.php');
 
-function exec_gsp_module()
+function exec_module()
 {
 	Global $db,$view;
 	echo '<h2>Steam Workshop</h2>';
@@ -118,7 +118,7 @@ function exec_gsp_module()
 
 		if($xml !== false)
 		{
-			$remote = new GSPRemoteLibrary($home_cfg['agent_ip'],$home_cfg['agent_port'],$home_cfg['encryption_key'], $home_cfg['timeout']);
+			$remote = new RemoteLibrary($home_cfg['agent_ip'],$home_cfg['agent_port'],$home_cfg['encryption_key'], $home_cfg['timeout']);
 
 			if($remote->status_chk() !== 1)
 			{

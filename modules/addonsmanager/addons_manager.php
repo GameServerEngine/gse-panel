@@ -18,7 +18,7 @@
  *   7. A config preset (type=config).
  *   8. A full server profile built from multiple actions (type=profile).
  *
- * DB table: GSP_DB_PREFIXaddons (unchanged for backward compatibility).
+ * DB table: TABLE_PREFIX_PLACEHOLDERaddons (unchanged for backward compatibility).
  * See SERVER_CONTENT_ROADMAP.md for the full migration plan.
  *
  */
@@ -28,7 +28,7 @@ require_once(dirname(__FILE__) . '/server_content_categories.php');
 require_once(dirname(__FILE__) . '/server_content_helpers.php');
 require_once("modules/config_games/server_config_parser.php");
 
-function exec_gsp_module() {
+function exec_module() {
 
 	if (isset($install_method) && $install_method === 'steam_workshop') {
 		print_failure('Steam Workshop has been removed from Server Content. Use the Steam Workshop module instead.');
@@ -105,7 +105,7 @@ function exec_gsp_module() {
 		{
 			print_failure(get_lang("select_a_game_type"));
 		}
-		elseif ($fields['install_method'] === 'steam_workshop' && (!($game_cfg = $db->getGameCfg($fields['home_cfg_id'])) || !($server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $game_cfg['home_cfg_file'], gsp_os_for_install_row($game_cfg))) || !scm_workshop_is_supported($server_xml)))
+		elseif ($fields['install_method'] === 'steam_workshop' && (!($game_cfg = $db->getGameCfg($fields['home_cfg_id'])) || !($server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $game_cfg['home_cfg_file'], os_for_install_row($game_cfg))) || !scm_workshop_is_supported($server_xml)))
 		{
 			print_failure('Steam Workshop support must be configured in the selected game XML before creating a Workshop content entry.');
 		}
@@ -134,7 +134,7 @@ function exec_gsp_module() {
 			{
 				print_success(get_lang_f("addon_has_been_created", $fields['name']));
 				if (isset($_POST['addon_id']) && (int)$_POST['addon_id'] > 0 && isset($_POST['edit']))
-					$db->query("DELETE FROM GSP_DB_PREFIXaddons WHERE addon_id=" . (int)$_POST['addon_id']);
+					$db->query("DELETE FROM TABLE_PREFIX_PLACEHOLDERaddons WHERE addon_id=" . (int)$_POST['addon_id']);
 			}
 		}
 	}
@@ -166,7 +166,7 @@ function exec_gsp_module() {
 
 	if (isset($_POST['addon_id']) && (int)$_POST['addon_id'] > 0 && isset($_POST['edit']))
 	{
-		$addons_rows = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXaddons WHERE addon_id=".(int)$_POST['addon_id']);
+		$addons_rows = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERaddons WHERE addon_id=".(int)$_POST['addon_id']);
 		if (!is_array($addons_rows)) {
 			$addons_rows = [];
 		}
@@ -569,7 +569,7 @@ function exec_gsp_module() {
 	<?php
 	if (isset($_POST['addon_id']) && (int)$_POST['addon_id'] > 0 && isset($_POST['remove']))
 	{
-		if (!$db->query("DELETE FROM GSP_DB_PREFIXaddons WHERE addon_id=" . (int)$_POST['addon_id']))
+		if (!$db->query("DELETE FROM TABLE_PREFIX_PLACEHOLDERaddons WHERE addon_id=" . (int)$_POST['addon_id']))
 			print_lang('can_not_remove_addon');
 	}
 
@@ -579,24 +579,24 @@ function exec_gsp_module() {
 
 	if ( isset($_GET['show']) )
 	{
-		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM GSP_DB_PREFIXaddons NATURAL JOIN GSP_DB_PREFIXconfig_homes WHERE addon_type='".$addon_type."' AND home_cfg_id=".$home_cfg_id);
+		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM TABLE_PREFIX_PLACEHOLDERaddons NATURAL JOIN TABLE_PREFIX_PLACEHOLDERconfig_homes WHERE addon_type='".$addon_type."' AND home_cfg_id=".$home_cfg_id);
 	}
 	elseif ( isset($_GET['show_all']) )
 	{
-		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM GSP_DB_PREFIXaddons NATURAL JOIN GSP_DB_PREFIXconfig_homes");
+		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM TABLE_PREFIX_PLACEHOLDERaddons NATURAL JOIN TABLE_PREFIX_PLACEHOLDERconfig_homes");
 	}
 	elseif ( isset($_GET['show_type']))
 	{
-		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM GSP_DB_PREFIXaddons NATURAL JOIN GSP_DB_PREFIXconfig_homes WHERE addon_type='".$addon_type."'");
+		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM TABLE_PREFIX_PLACEHOLDERaddons NATURAL JOIN TABLE_PREFIX_PLACEHOLDERconfig_homes WHERE addon_type='".$addon_type."'");
 	}
 	elseif ( isset($_GET['show_game']))
 	{
-		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM GSP_DB_PREFIXaddons NATURAL JOIN GSP_DB_PREFIXconfig_homes WHERE home_cfg_id=".$home_cfg_id);
+		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM TABLE_PREFIX_PLACEHOLDERaddons NATURAL JOIN TABLE_PREFIX_PLACEHOLDERconfig_homes WHERE home_cfg_id=".$home_cfg_id);
 	}
 	elseif ( isset($_GET['show_group']))
 	{
 		$group_id = $group_id == '0' ? $group_id." OR group_id IS NULL" : $group_id;
-		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM GSP_DB_PREFIXaddons NATURAL JOIN GSP_DB_PREFIXconfig_homes WHERE group_id=".$group_id);
+		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM TABLE_PREFIX_PLACEHOLDERaddons NATURAL JOIN TABLE_PREFIX_PLACEHOLDERconfig_homes WHERE group_id=".$group_id);
 	}
 	if (isset($result) && !is_array($result)) {
 		$result = [];

@@ -47,7 +47,7 @@ fi
 if [ ! -s "sinusbot" ]; then
   echo "Sinusbot is not installed!"
 fi
-GSPUSERNAME=$(whoami)
+USERNAME=$(whoami)
 mkdir -p tempogp
 echo
 echo
@@ -60,7 +60,7 @@ echo
 echo
 echo "Install Sinusbot with the provided script with the following command:"
 echo
-echo "sudo su - $GSPUSERNAME"
+echo "sudo su - $USERNAME"
 echo "sudo $PWD/sinusbot_installer.sh"
 echo
 echo "Use the 'INSTALL' option, then select 'Own path' and use this location:"
@@ -68,7 +68,7 @@ echo
 echo "$PWD"
 echo
 echo "Note that the path needs to have NO '/' at the end. Continue by carefuly following"
-echo "the instructions and when asked, use the following user name for sinusbot: $GSPUSERNAME"
+echo "the instructions and when asked, use the following user name for sinusbot: $USERNAME"
 echo
 echo "Follow the Teamspeak client install instructions."
 echo "Basically you will need to press in order the ENTER, q, y, and ENTER keys."
@@ -77,7 +77,7 @@ echo "WARNING: After Installation, you will need to REMOVE the Sinusbot service 
 echo "the sinusbot_installer.sh script again. This is mandatory or else you will have"
 echo "Sinusbot running as a service in the background and messing with GSP!"
 echo
-echo "sudo su - $GSPUSERNAME"
+echo "sudo su - $USERNAME"
 echo "sudo $PWD/sinusbot_installer.sh"
 echo
 echo "Select the 'REMOVE' option, then select 'Own path' and be sure to use this location:"
@@ -85,7 +85,7 @@ echo
 echo "$PWD/tempogp"
 echo
 echo "after that, when asked confirm and continue, DO NOT remove Youtube-DL, confirm the 'tempogp' folder location,"
-echo "DO NOT remove the '$GSPUSERNAME' user, and finish you're done, this should have you a working installation."
+echo "DO NOT remove the '$USERNAME' user, and finish you're done, this should have you a working installation."
 echo
 echo
 echo "At any time, to make sure you have all dependencies before starting Sinusbot you can use the"

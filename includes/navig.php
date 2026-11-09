@@ -104,13 +104,13 @@ function navigation() {
 
                 include_once( $include_file );
 
-                if ( !function_exists( 'exec_gsp_module' ) )
+                if ( !function_exists( 'exec_module' ) )
                 {
                     print_failure("Missing module execute function.");
                     return;
                 }
 
-                exec_gsp_module();
+                exec_module();
                 return;
             }
             print_failure("Invalid subpage given.");
@@ -120,12 +120,12 @@ function navigation() {
         else if ( is_file( MODULES.$_REQUEST['m'].'/'.$_REQUEST['m'].'.php') )
         {
             include( MODULES.$_REQUEST['m'].'/'.$_REQUEST['m'].'.php');
-            if ( !function_exists( 'exec_gsp_module' ) )
+            if ( !function_exists( 'exec_module' ) )
             {
                 print_failure("Missing module execute function.");
                 return;
             }
-            exec_gsp_module();
+            exec_module();
         }
         // If files above are not found then we print an error.
         else

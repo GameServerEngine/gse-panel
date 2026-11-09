@@ -44,7 +44,7 @@ $(document).ready(function()
 	$('[id^="refreshed"] .monitor-1').addClass('col-md-10 d-flex');
 	$('[id^="refreshed"] .monitor-2').addClass('col-md-2');
 
-	$('.main form > input[value="'+langConsts['GSP_LANG_show_all']+'"]').parent('form').addClass('d-inline-block my-2');
+	$('.main form > input[value="'+langConsts['LANG_show_all']+'"]').parent('form').addClass('d-inline-block my-2');
 
 	// all server images
 	$('[id^="refreshed"]').each(function()

@@ -25,7 +25,7 @@
 require_once('home_handling_functions.php');
 require_once("modules/config_games/server_config_parser.php");
 
-function exec_gsp_module() {
+function exec_module() {
 
 	global $view,$db;
 
@@ -60,7 +60,7 @@ function exec_gsp_module() {
 
 	echo "<h2>".htmlentities($home_info['home_name'])."</h2>";
 
-	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
+	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], os_for_install_row($home_info));
 
 	if ( !$server_xml )
 	{
@@ -68,7 +68,7 @@ function exec_gsp_module() {
 		return;
 	}
 	$path_error = '';
-	$home_info = gsp_with_game_root($home_info, $server_xml, $path_error);
+	$home_info = with_game_root($home_info, $server_xml, $path_error);
 	if ($home_info === false) {
 		print_failure('Invalid game directory for this server: ' . htmlentities($path_error));
 		return;
@@ -82,7 +82,7 @@ function exec_gsp_module() {
 	}
 	else
 	{
-		$remote = new GSPRemoteLibrary($rserver['agent_ip'],
+		$remote = new RemoteLibrary($rserver['agent_ip'],
 									   $rserver['agent_port'],
 									   $rserver['encryption_key'],
 									   $rserver['timeout']);
@@ -104,7 +104,7 @@ function exec_gsp_module() {
 			$query_port = "10011";
 		}
 
-		$stop_result = gsp_lifecycle_remote_stop_verified($remote, $server_xml, $home_info, $ip, $port, $home_info['control_password'], $control_type);
+		$stop_result = lifecycle_remote_stop_verified($remote, $server_xml, $home_info, $ip, $port, $home_info['control_password'], $control_type);
 		$remote_retval = !empty($stop_result['success']) ? 1 : 0;
 		$agent_status = isset($stop_result['status_evidence']) ? $stop_result['status_evidence'] : array();
 		$firewall_settings = $db->getFirewallSettings($home_info['remote_server_id']);
@@ -141,7 +141,7 @@ function exec_gsp_module() {
 			}
 		}
 		if ( $remote_retval === 0 )
-			gsp_lifecycle_print_failure($stop_result, get_lang("agent_offline"));
+			lifecycle_print_failure($stop_result, get_lang("agent_offline"));
 			elseif ( $remote_retval !== 1 )
 			{
 				$status_name = isset($agent_status['status']) ? strtoupper($agent_status['status']) : "UNKNOWN";

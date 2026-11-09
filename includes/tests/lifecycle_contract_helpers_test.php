@@ -1,7 +1,7 @@
 <?php
 
-if (!defined('GSP_SCREEN_TYPE_HOME')) {
-	define('GSP_SCREEN_TYPE_HOME', 'HOME');
+if (!defined('SCREEN_TYPE_HOME')) {
+	define('SCREEN_TYPE_HOME', 'HOME');
 }
 
 if (!function_exists('clean_path')) {
@@ -13,11 +13,11 @@ if (!function_exists('clean_path')) {
 	}
 }
 
-$GLOBALS['gsp_lifecycle_test_bot_rows'] = array();
+$GLOBALS['lifecycle_test_bot_rows'] = array();
 
 function scm_get_enabled_server_bot_rows($db, $home_id)
 {
-	return $GLOBALS['gsp_lifecycle_test_bot_rows'];
+	return $GLOBALS['lifecycle_test_bot_rows'];
 }
 
 function scm_server_bot_normalize_row(array $row)
@@ -33,7 +33,7 @@ function scm_server_bot_normalize_row(array $row)
 require_once(dirname(__DIR__) . '/lifecycle_contract_helpers.php');
 require_once(dirname(__DIR__, 2) . '/modules/gamemanager/home_handling_functions.php');
 
-class GspLifecycleFakeRemote
+class LifecycleFakeRemote
 {
 	public $files = array();
 	public $commands = array();
@@ -64,8 +64,8 @@ class GspLifecycleFakeRemote
 	public function exec($command)
 	{
 		$this->commands[] = $command;
-		if (strpos($command, 'GSP_PORT_LISTENING') !== false || strpos($command, 'GSP_PORT_CLOSED') !== false) {
-			return $this->portListening ? 'GSP_PORT_LISTENING' : 'GSP_PORT_CLOSED';
+		if (strpos($command, 'PORT_LISTENING') !== false || strpos($command, 'PORT_CLOSED') !== false) {
+			return $this->portListening ? 'PORT_LISTENING' : 'PORT_CLOSED';
 		}
 		return '';
 	}
@@ -102,7 +102,7 @@ class GspLifecycleFakeRemote
 	}
 }
 
-function gsp_lifecycle_test_assert($condition, $message)
+function lifecycle_test_assert($condition, $message)
 {
 	if (!$condition) {
 		fwrite(STDERR, "FAIL: $message\n");
@@ -135,15 +135,15 @@ $homeInfo = array(
 	),
 );
 
-$GLOBALS['gsp_lifecycle_test_bot_rows'] = array(array(
+$GLOBALS['lifecycle_test_bot_rows'] = array(array(
 	'name' => 'DZSA',
 	'bot_working_dir' => '/srv/gse/42/dayz_win64/dzsa',
 	'bot_executable' => 'node-mod-server.exe',
 	'bot_arguments' => '"-port=2302" "-mod=@CF"',
 ));
 
-$remote = new GspLifecycleFakeRemote();
-$payload = gsp_lifecycle_start_payload(
+$remote = new LifecycleFakeRemote();
+$payload = lifecycle_start_payload(
 	null,
 	$remote,
 	$homeInfo,
@@ -157,37 +157,37 @@ $payload = gsp_lifecycle_start_payload(
 	array(array('file' => '/srv/gse/42/dayz_win64/serverDZ.cfg', 'write_result' => 1))
 );
 
-gsp_lifecycle_test_assert(!isset($payload['error']), 'builds lifecycle start payload');
-gsp_lifecycle_test_assert($payload['management_home'] === '/srv/gse/42', 'payload carries management home');
-gsp_lifecycle_test_assert($payload['game_root'] === '/srv/gse/42/dayz_win64', 'payload carries game root');
-gsp_lifecycle_test_assert($payload['run_directory'] === 'dayz_win64/server', 'payload carries relative game-key run directory');
-gsp_lifecycle_test_assert($payload['absolute_run_directory'] === '/srv/gse/42/dayz_win64/server', 'payload carries absolute run directory');
-gsp_lifecycle_test_assert($payload['executable'] === 'DayZServer_x64.exe', 'payload carries executable name');
-gsp_lifecycle_test_assert($payload['arguments'] === '-config=serverDZ.cfg', 'payload carries resolved startup arguments');
-gsp_lifecycle_test_assert($payload['environment'] === 'ENV_ONE=value', 'payload carries environment variables');
-gsp_lifecycle_test_assert($payload['port_context']['ip'] === '192.0.2.10' && $payload['port_context']['game_port'] === 2302, 'payload carries assigned IP and game port');
-gsp_lifecycle_test_assert($payload['port_context']['protocol'] === 'lgsl' && $payload['port_context']['control_protocol'] === 'rcon', 'payload carries protocol context');
-gsp_lifecycle_test_assert($payload['user_options']['players'] === '60', 'payload carries current saved user selections');
-gsp_lifecycle_test_assert($payload['replace_text_results'][0]['file'] === '/srv/gse/42/dayz_win64/serverDZ.cfg', 'payload carries replace-text results');
-gsp_lifecycle_test_assert($payload['bot']['command'] === 'node-mod-server.exe', 'payload carries one transparent bot command');
-gsp_lifecycle_test_assert(isset($remote->files['/srv/gse/42/bot.def']), 'writes bot.def in management home');
-gsp_lifecycle_test_assert(strpos($remote->files['/srv/gse/42/bot.def'], 'workdir=/srv/gse/42/dayz_win64/dzsa') !== false, 'bot.def contains simple workdir/executable/arguments keys');
-gsp_lifecycle_test_assert(!isset($remote->files['/srv/gse/42/dayz_win64/bot.def']), 'does not write bot.def beneath game root');
+lifecycle_test_assert(!isset($payload['error']), 'builds lifecycle start payload');
+lifecycle_test_assert($payload['management_home'] === '/srv/gse/42', 'payload carries management home');
+lifecycle_test_assert($payload['game_root'] === '/srv/gse/42/dayz_win64', 'payload carries game root');
+lifecycle_test_assert($payload['run_directory'] === 'dayz_win64/server', 'payload carries relative game-key run directory');
+lifecycle_test_assert($payload['absolute_run_directory'] === '/srv/gse/42/dayz_win64/server', 'payload carries absolute run directory');
+lifecycle_test_assert($payload['executable'] === 'DayZServer_x64.exe', 'payload carries executable name');
+lifecycle_test_assert($payload['arguments'] === '-config=serverDZ.cfg', 'payload carries resolved startup arguments');
+lifecycle_test_assert($payload['environment'] === 'ENV_ONE=value', 'payload carries environment variables');
+lifecycle_test_assert($payload['port_context']['ip'] === '192.0.2.10' && $payload['port_context']['game_port'] === 2302, 'payload carries assigned IP and game port');
+lifecycle_test_assert($payload['port_context']['protocol'] === 'lgsl' && $payload['port_context']['control_protocol'] === 'rcon', 'payload carries protocol context');
+lifecycle_test_assert($payload['user_options']['players'] === '60', 'payload carries current saved user selections');
+lifecycle_test_assert($payload['replace_text_results'][0]['file'] === '/srv/gse/42/dayz_win64/serverDZ.cfg', 'payload carries replace-text results');
+lifecycle_test_assert($payload['bot']['command'] === 'node-mod-server.exe', 'payload carries one transparent bot command');
+lifecycle_test_assert(isset($remote->files['/srv/gse/42/bot.def']), 'writes bot.def in management home');
+lifecycle_test_assert(strpos($remote->files['/srv/gse/42/bot.def'], 'workdir=/srv/gse/42/dayz_win64/dzsa') !== false, 'bot.def contains simple workdir/executable/arguments keys');
+lifecycle_test_assert(!isset($remote->files['/srv/gse/42/dayz_win64/bot.def']), 'does not write bot.def beneath game root');
 
 $homeInfoChanged = $homeInfo;
 $homeInfoChanged['last_param'] = json_encode(array('map' => 'livonia', 'players' => '80', 'extra' => '-profiles=current'));
-$payloadChanged = gsp_lifecycle_start_payload(null, $remote, $homeInfoChanged, $serverXml, 7, '192.0.2.10', 2402, '-config=livonia.cfg -profiles=current', '', '', array());
-gsp_lifecycle_test_assert($payloadChanged['arguments'] === '-config=livonia.cfg -profiles=current', 'changed user selections regenerate current startup arguments');
-gsp_lifecycle_test_assert($payloadChanged['user_options']['players'] === '80', 'changed user selections regenerate current option payload');
+$payloadChanged = lifecycle_start_payload(null, $remote, $homeInfoChanged, $serverXml, 7, '192.0.2.10', 2402, '-config=livonia.cfg -profiles=current', '', '', array());
+lifecycle_test_assert($payloadChanged['arguments'] === '-config=livonia.cfg -profiles=current', 'changed user selections regenerate current startup arguments');
+lifecycle_test_assert($payloadChanged['user_options']['players'] === '80', 'changed user selections regenerate current option payload');
 
 $startResult = $remote->universal_start_result(42, '/srv/gse/42', 'DayZServer_x64.exe', 'dayz_win64/server', $payloadChanged['arguments'], 2402, '192.0.2.10', 'NA', '0', '', '', 'dayz_win64', '', $payloadChanged);
-gsp_lifecycle_test_assert(!empty($startResult['success']), 'fake Start RPC accepts structured payload');
-gsp_lifecycle_test_assert($remote->startPayloads[0]['game_root'] === '/srv/gse/42/dayz_win64', 'fake Start RPC receives game_root');
-gsp_lifecycle_test_assert($remote->startPayloads[0]['arguments'] === '-config=livonia.cfg -profiles=current', 'fake Start RPC receives current arguments');
+lifecycle_test_assert(!empty($startResult['success']), 'fake Start RPC accepts structured payload');
+lifecycle_test_assert($remote->startPayloads[0]['game_root'] === '/srv/gse/42/dayz_win64', 'fake Start RPC receives game_root');
+lifecycle_test_assert($remote->startPayloads[0]['arguments'] === '-config=livonia.cfg -profiles=current', 'fake Start RPC receives current arguments');
 
 $remote->files['/srv/gse/42/bot.def'] = "workdir=/manual\nexecutable=manual\narguments=\n";
-$payload = gsp_lifecycle_start_payload(null, $remote, $homeInfo, $serverXml, 7, '192.0.2.10', 2302, 'cmd', '', '', array());
-gsp_lifecycle_test_assert(isset($payload['error']) && strpos($payload['error'], 'non-generated bot.def') !== false, 'refuses to overwrite manual bot.def');
+$payload = lifecycle_start_payload(null, $remote, $homeInfo, $serverXml, 7, '192.0.2.10', 2302, 'cmd', '', '', array());
+lifecycle_test_assert(isset($payload['error']) && strpos($payload['error'], 'non-generated bot.def') !== false, 'refuses to overwrite manual bot.def');
 
 // The real GSE Windows agent's readfile RPC auto-creates a blank file on
 // first read of a path that doesn't exist, then reports success (retval 1)
@@ -197,22 +197,22 @@ gsp_lifecycle_test_assert(isset($payload['error']) && strpos($payload['error'], 
 // rest of this file) to prove starting a server whose bot.def has never
 // been written does not get misreported as a foreign-file conflict.
 $remote->files['/srv/gse/42/bot.def'] = '';
-$GLOBALS['gsp_lifecycle_test_bot_rows'] = array();
-$payload = gsp_lifecycle_start_payload(null, $remote, $homeInfo, $serverXml, 7, '192.0.2.10', 2302, 'cmd', '', '', array());
-gsp_lifecycle_test_assert(!isset($payload['error']), 'an auto-created blank bot.def is not treated as a foreign-file conflict');
+$GLOBALS['lifecycle_test_bot_rows'] = array();
+$payload = lifecycle_start_payload(null, $remote, $homeInfo, $serverXml, 7, '192.0.2.10', 2302, 'cmd', '', '', array());
+lifecycle_test_assert(!isset($payload['error']), 'an auto-created blank bot.def is not treated as a foreign-file conflict');
 
-gsp_lifecycle_test_assert(gsp_lifecycle_status_is_verified_stopped(array('status' => 'OFFLINE', 'process_running' => 0, 'session_running' => 0, 'game_port_listening' => 0)), 'accepts stopped evidence with no runtime');
-gsp_lifecycle_test_assert(!gsp_lifecycle_status_is_verified_stopped(array('status' => 'OFFLINE', 'game_port_listening' => 1)), 'rejects stopped status when game port survives');
-gsp_lifecycle_test_assert(!gsp_lifecycle_status_is_verified_stopped(array('status' => 'OFFLINE', 'remaining_pids' => array(2222))), 'rejects stopped status when tracked PIDs survive');
+lifecycle_test_assert(lifecycle_status_is_verified_stopped(array('status' => 'OFFLINE', 'process_running' => 0, 'session_running' => 0, 'game_port_listening' => 0)), 'accepts stopped evidence with no runtime');
+lifecycle_test_assert(!lifecycle_status_is_verified_stopped(array('status' => 'OFFLINE', 'game_port_listening' => 1)), 'rejects stopped status when game port survives');
+lifecycle_test_assert(!lifecycle_status_is_verified_stopped(array('status' => 'OFFLINE', 'remaining_pids' => array(2222))), 'rejects stopped status when tracked PIDs survive');
 
-$remote = new GspLifecycleFakeRemote();
+$remote = new LifecycleFakeRemote();
 $remote->statusQueue[] = array('status' => 'OFFLINE', 'process_running' => 0, 'session_running' => 0, 'game_port_listening' => 0);
-$stopResult = gsp_lifecycle_remote_stop_verified($remote, $serverXml, $homeInfo, '192.0.2.10', 2302, 'secret', 'tcp');
-gsp_lifecycle_test_assert(!empty($stopResult['success']), 'verified Stop succeeds when status evidence is stopped');
-gsp_lifecycle_test_assert($remote->stopPayloads[0]['operation'] === 'stop', 'fake Stop RPC receives stop operation');
-gsp_lifecycle_test_assert($remote->stopPayloads[0]['management_home'] === '/srv/gse/42', 'fake Stop RPC receives management home');
+$stopResult = lifecycle_remote_stop_verified($remote, $serverXml, $homeInfo, '192.0.2.10', 2302, 'secret', 'tcp');
+lifecycle_test_assert(!empty($stopResult['success']), 'verified Stop succeeds when status evidence is stopped');
+lifecycle_test_assert($remote->stopPayloads[0]['operation'] === 'stop', 'fake Stop RPC receives stop operation');
+lifecycle_test_assert($remote->stopPayloads[0]['management_home'] === '/srv/gse/42', 'fake Stop RPC receives management home');
 
-$remote = new GspLifecycleFakeRemote();
+$remote = new LifecycleFakeRemote();
 $remote->stopResult = array('success' => 0, 'status' => 'protected_port_owner', 'message' => 'Assigned port is owned by a protected process.');
 $remote->statusQueue[] = array(
 	'status' => 'STOPPING',
@@ -222,21 +222,21 @@ $remote->statusQueue[] = array(
 	'port_owners' => array(array('pid' => 4, 'owner' => 'SYSTEM', 'protected' => 1)),
 	'last_error' => 'Assigned port is owned by a protected process.',
 );
-$stopResult = gsp_lifecycle_remote_stop_verified($remote, $serverXml, $homeInfo, '192.0.2.10', 2302, 'secret', 'tcp');
-gsp_lifecycle_test_assert(empty($stopResult['success']) && $stopResult['status'] === 'stop_not_verified', 'protected port-owner evidence keeps Stop failed');
-gsp_lifecycle_test_assert(strpos($stopResult['message'], 'protected process') !== false, 'protected port-owner message is preserved');
+$stopResult = lifecycle_remote_stop_verified($remote, $serverXml, $homeInfo, '192.0.2.10', 2302, 'secret', 'tcp');
+lifecycle_test_assert(empty($stopResult['success']) && $stopResult['status'] === 'stop_not_verified', 'protected port-owner evidence keeps Stop failed');
+lifecycle_test_assert(strpos($stopResult['message'], 'protected process') !== false, 'protected port-owner message is preserved');
 
-$restartPayload = gsp_lifecycle_start_payload(null, new GspLifecycleFakeRemote(), $homeInfo, $serverXml, 7, '192.0.2.10', 2302, 'restart-current-args', '', '', array(), 'panel_restart');
-$remote = new GspLifecycleFakeRemote();
+$restartPayload = lifecycle_start_payload(null, new LifecycleFakeRemote(), $homeInfo, $serverXml, 7, '192.0.2.10', 2302, 'restart-current-args', '', '', array(), 'panel_restart');
+$remote = new LifecycleFakeRemote();
 $restartResult = $remote->remote_restart_server_result(42, '192.0.2.10', 2302, 'rcon', 'secret', 'tcp', '/srv/gse/42', 'DayZServer_x64.exe', 'dayz_win64/server', 'restart-current-args', 'NA', '0', '', '', 'dayz_win64', '', 'panel_restart', $restartPayload);
-gsp_lifecycle_test_assert(!empty($restartResult['success']), 'fake Restart RPC accepts structured payload');
-gsp_lifecycle_test_assert($remote->restartPayloads[0]['operation'] === 'restart_start', 'fake Restart RPC receives restart_start operation');
-gsp_lifecycle_test_assert($remote->restartPayloads[0]['restart_reason'] === 'panel_restart', 'fake Restart RPC receives restart reason');
+lifecycle_test_assert(!empty($restartResult['success']), 'fake Restart RPC accepts structured payload');
+lifecycle_test_assert($remote->restartPayloads[0]['operation'] === 'restart_start', 'fake Restart RPC receives restart_start operation');
+lifecycle_test_assert($remote->restartPayloads[0]['restart_reason'] === 'panel_restart', 'fake Restart RPC receives restart reason');
 
-gsp_lifecycle_test_assert(!is_agent_status_online(array('status' => 'ONLINE', 'desired_state' => 'status.running')), 'desired running marker alone is not online proof');
-gsp_lifecycle_test_assert(!is_agent_status_active(array('status' => 'STARTING', 'desired_state' => 'status.running')), 'desired state without runtime evidence is not active proof');
-gsp_lifecycle_test_assert(is_agent_status_active(array('status' => 'STARTING')), 'legacy active status without desired-state fields remains compatible');
-gsp_lifecycle_test_assert(is_agent_status_online(array('status' => 'ONLINE', 'game_port_listening' => 1)), 'observed game port is online proof');
+lifecycle_test_assert(!is_agent_status_online(array('status' => 'ONLINE', 'desired_state' => 'status.running')), 'desired running marker alone is not online proof');
+lifecycle_test_assert(!is_agent_status_active(array('status' => 'STARTING', 'desired_state' => 'status.running')), 'desired state without runtime evidence is not active proof');
+lifecycle_test_assert(is_agent_status_active(array('status' => 'STARTING')), 'legacy active status without desired-state fields remains compatible');
+lifecycle_test_assert(is_agent_status_online(array('status' => 'ONLINE', 'game_port_listening' => 1)), 'observed game port is online proof');
 
 echo "All lifecycle contract helper tests passed.\n";
 

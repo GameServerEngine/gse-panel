@@ -46,7 +46,7 @@ if (!function_exists('billing_runtime_panel_root')) {
         }
 
         global $billing_runtime_site_config;
-        $candidate = getenv('GSP_PANEL_PATH') ?: getenv('BILLING_PANEL_PATH');
+        $candidate = getenv('PANEL_PATH') ?: getenv('BILLING_PANEL_PATH');
         if (!$candidate && !empty($billing_runtime_site_config['panel_path'])) {
             $candidate = (string)$billing_runtime_site_config['panel_path'];
         }

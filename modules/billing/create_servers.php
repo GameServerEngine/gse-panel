@@ -213,7 +213,7 @@ if (!function_exists('billing_detect_install_state')) {
 			return $state;
 		}
 		$path_error = '';
-		$home_info = gsp_with_game_root($home_info, $server_xml, $path_error);
+		$home_info = with_game_root($home_info, $server_xml, $path_error);
 		if ($home_info === false) {
 			$state['reason'] = "Invalid game directory; install completion cannot be verified. {$path_error}";
 			return $state;
@@ -223,7 +223,7 @@ if (!function_exists('billing_detect_install_state')) {
 			$state['reason'] = 'server_exec_name is empty; install completion cannot be verified.';
 			return $state;
 		}
-		$remote = new GSPRemoteLibrary($home_info['agent_ip'], $home_info['agent_port'], $home_info['encryption_key'], $home_info['timeout']);
+		$remote = new RemoteLibrary($home_info['agent_ip'], $home_info['agent_port'], $home_info['encryption_key'], $home_info['timeout']);
 		$hostStat = $remote->status_chk();
 		$state['remote_status'] = ($hostStat === 1) ? 'online' : 'offline';
 		if ($hostStat !== 1) {
@@ -231,7 +231,7 @@ if (!function_exists('billing_detect_install_state')) {
 			return $state;
 		}
 		$log_txt = '';
-		$update_active = $remote->get_log(GSP_SCREEN_TYPE_UPDATE, intval($home_info['home_id']), clean_path($home_info['home_path']), $log_txt);
+		$update_active = $remote->get_log(SCREEN_TYPE_UPDATE, intval($home_info['home_id']), clean_path($home_info['home_path']), $log_txt);
 		$state['update_active'] = ($update_active == 1);
 		$state['update_log'] = $log_txt;
 		$execFolder = clean_path($home_info['game_root'] . "/" . (string)($server_xml->exe_location ?? ''));
@@ -360,7 +360,7 @@ if (!function_exists('billing_invoke_provision')) {
 		unset($GLOBALS['BILLING_PROVISION_TRACE_ERROR'], $GLOBALS['BILLING_PROVISION_TRACE_CONTEXT']);
 		$GLOBALS['BILLING_PROVISION_OVERRIDE'] = $options;
 		ob_start();
-		exec_gsp_module();
+		exec_module();
 		$output = ob_get_clean();
 		$result = isset($GLOBALS['BILLING_PROVISION_LAST_RESULT']) ? $GLOBALS['BILLING_PROVISION_LAST_RESULT'] : array();
 		$result['output'] = $output;
@@ -410,8 +410,8 @@ if (!function_exists('billing_lifecycle_service_from_config')) {
 if (!function_exists('billing_allocate_home_port')) {
 	function billing_allocate_home_port($db, string $db_prefix, int $home_id, int $remote_server_id, int $home_cfg_id): array
 	{
-		if (gsp_port_allocator_schema_available($db, $db_prefix)) {
-			$allocatedBlock = gsp_port_allocate_home_block($db, $db_prefix, $home_id, $remote_server_id, $home_cfg_id);
+		if (port_allocator_schema_available($db, $db_prefix)) {
+			$allocatedBlock = port_allocate_home_block($db, $db_prefix, $home_id, $remote_server_id, $home_cfg_id);
 			billing_provision_trace('Attempted global port-block allocation.', array(
 				'home_id' => $home_id,
 				'selected_remote_server_id' => $remote_server_id,

@@ -35,7 +35,7 @@ define('LANG_assign_game_homes', "Назначить игровой сервер
 define('LANG_user', "Пользователь");
 define('LANG_group', "Группа");
 define('LANG_start', "Запуск");
-define('LANG_gsp_agent_ip', "IP Агента GSP");
+define('LANG_agent_ip', "IP Агента GSP");
 define('LANG_max_players', "Макс. кол-во игроков");
 define('LANG_max', "Макс.");
 define('LANG_ip_and_port', "IP и порт");
@@ -89,7 +89,7 @@ define('LANG_player_name', "Имя игрока");
 define('LANG_score', "Счет");
 define('LANG_time', "Время");
 define('LANG_no_rights_to_stop_server', "У вас не достаточно прав для остановки этого сервера.");
-define('LANG_no_gsp_lgsl_support', "Этот сервер (%s)не поддерживает LGSL и статистика не может быть показана.");
+define('LANG_no_lgsl_support', "Этот сервер (%s)не поддерживает LGSL и статистика не может быть показана.");
 define('LANG_server_status', "Статус сервера");
 define('LANG_server_stopped', "Сервер '%s' был остановлен.");
 define('LANG_if_want_to_start_homes', "Запускайте сервера из %s.");

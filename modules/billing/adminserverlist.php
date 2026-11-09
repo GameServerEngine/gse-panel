@@ -49,15 +49,15 @@
 /**
  * Admin service configuration page.
  *
- * On every load this page syncs GSP_DB_PREFIXbilling_services with the panel's game
+ * On every load this page syncs TABLE_PREFIX_PLACEHOLDERbilling_services with the panel's game
  * config list (config_homes).  One billing_services row is maintained per
  * config_homes entry; the row is keyed by home_cfg_id.  config_mods is NOT
  * used as the identity source — mods are install-time details that belong in
  * the game config tables, not here.
  *
- * remote_server_id in GSP_DB_PREFIXbilling_services stores a comma-separated list of
+ * remote_server_id in TABLE_PREFIX_PLACEHOLDERbilling_services stores a comma-separated list of
  * numeric remote server IDs, e.g. "1,3,7".  The deprecated
- * gsp_billing_service_remote_servers mapping table is never referenced here.
+ * billing_service_remote_servers mapping table is never referenced here.
  *
  * Columns synced from config_homes (read-only in the UI):
  *   service_name  ← game_name

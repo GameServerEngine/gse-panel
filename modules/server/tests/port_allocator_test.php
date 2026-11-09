@@ -2,7 +2,7 @@
 
 require_once dirname(__DIR__, 3) . '/includes/port_allocator.php';
 
-class GspPortAllocatorFakeDb
+class PortAllocatorFakeDb
 {
 	public $blocks = array();
 	public $homeIpPorts = array();
@@ -26,28 +26,28 @@ class GspPortAllocatorFakeDb
 		if (strpos($query, 'SHOW TABLES LIKE') !== false) {
 			return array(array('Tables_in_test' => 'ok'));
 		}
-		if (strpos($query, 'FROM `GSP_DB_PREFIXsettings`') !== false && strpos($query, "setting`='port_block_size'") !== false) {
+		if (strpos($query, 'FROM `TABLE_PREFIX_PLACEHOLDERsettings`') !== false && strpos($query, "setting`='port_block_size'") !== false) {
 			return array(array('value' => $this->portBlockSize));
 		}
-		if (strpos($query, 'FROM `GSP_DB_PREFIXconfig_homes`') !== false) {
+		if (strpos($query, 'FROM `TABLE_PREFIX_PLACEHOLDERconfig_homes`') !== false) {
 			if (preg_match('/home_cfg_id=(\d+)/', $query, $m) && isset($this->configHomes[(int)$m[1]])) {
 				return array($this->configHomes[(int)$m[1]]);
 			}
 			return array();
 		}
-		if (strpos($query, 'FROM `GSP_DB_PREFIXremote_server_ips`') !== false) {
+		if (strpos($query, 'FROM `TABLE_PREFIX_PLACEHOLDERremote_server_ips`') !== false) {
 			if (preg_match('/ip_id=(\d+)/', $query, $m)) {
 				$ipId = (int)$m[1];
 				return in_array($ipId, array(10, 11), true) ? array(array('ip_id' => $ipId, 'remote_server_id' => 1)) : array();
 			}
 			return array(array('ip_id' => 10), array('ip_id' => 11));
 		}
-		if (strpos($query, 'FROM `GSP_DB_PREFIXserver_homes`') !== false) {
+		if (strpos($query, 'FROM `TABLE_PREFIX_PLACEHOLDERserver_homes`') !== false) {
 			if (preg_match('/home_id=(\d+)/', $query, $m)) {
 				return array(array('home_id' => (int)$m[1], 'remote_server_id' => 1, 'home_cfg_id' => 5));
 			}
 		}
-		if (strpos($query, 'INNER JOIN `gsp_port_pools`') !== false) {
+		if (strpos($query, 'INNER JOIN `port_pools`') !== false) {
 			if (!$this->mappedPoolsEnabled) {
 				return array();
 			}
@@ -69,7 +69,7 @@ class GspPortAllocatorFakeDb
 				'block_size' => 10,
 			));
 		}
-		if (strpos($query, 'FROM `GSP_DB_PREFIXarrange_ports`') !== false) {
+		if (strpos($query, 'FROM `TABLE_PREFIX_PLACEHOLDERarrange_ports`') !== false) {
 			if (preg_match('/ip_id=(\d+)/', $query, $ip) && preg_match('/home_cfg_id=(\d+)/', $query, $cfg)) {
 				foreach ($this->arrangePorts as $row) {
 					if ((int)$row['ip_id'] === (int)$ip[1] && (int)$row['home_cfg_id'] === (int)$cfg[1]) {
@@ -79,16 +79,16 @@ class GspPortAllocatorFakeDb
 			}
 			return array();
 		}
-		if (strpos($query, 'FROM `gsp_game_port_offsets`') !== false) {
+		if (strpos($query, 'FROM `game_port_offsets`') !== false) {
 			return $this->offsets;
 		}
-		if (strpos($query, 'FROM `gsp_static_port_reservations`') !== false) {
+		if (strpos($query, 'FROM `static_port_reservations`') !== false) {
 			return $this->matchingStaticReservation($query);
 		}
-		if (strpos($query, 'FROM `GSP_DB_PREFIXhome_ip_ports`') !== false) {
+		if (strpos($query, 'FROM `TABLE_PREFIX_PLACEHOLDERhome_ip_ports`') !== false) {
 			return $this->matchingHomeIpPorts($query);
 		}
-		if (strpos($query, 'FROM `gsp_home_port_blocks`') !== false) {
+		if (strpos($query, 'FROM `home_port_blocks`') !== false) {
 			return $this->matchingBlocks($query);
 		}
 		return array();
@@ -97,7 +97,7 @@ class GspPortAllocatorFakeDb
 	public function query($query)
 	{
 		$this->queries[] = $query;
-		if (strpos($query, 'INSERT INTO `gsp_home_port_blocks`') !== false) {
+		if (strpos($query, 'INSERT INTO `home_port_blocks`') !== false) {
 			if (!preg_match("/VALUES\s+\((\d+),\s*(\d+),\s*(NULL|\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*'([^']+)'/s", $query, $m)) {
 				return false;
 			}
@@ -116,7 +116,7 @@ class GspPortAllocatorFakeDb
 			);
 			return true;
 		}
-		if (strpos($query, 'INSERT INTO `GSP_DB_PREFIXhome_ip_ports`') !== false) {
+		if (strpos($query, 'INSERT INTO `TABLE_PREFIX_PLACEHOLDERhome_ip_ports`') !== false) {
 			if (!preg_match('/SELECT\s+(\d+),\s+(\d+),\s+(\d+)/', $query, $m)) {
 				return false;
 			}
@@ -128,7 +128,7 @@ class GspPortAllocatorFakeDb
 			$this->homeIpPorts[] = array('ip_id' => (int)$m[1], 'port' => (int)$m[2], 'home_id' => (int)$m[3]);
 			return true;
 		}
-		if (strpos($query, 'UPDATE `gsp_home_port_blocks` SET status=') !== false && preg_match('/block_id=(\d+)/', $query, $m)) {
+		if (strpos($query, 'UPDATE `home_port_blocks` SET status=') !== false && preg_match('/block_id=(\d+)/', $query, $m)) {
 			foreach ($this->blocks as &$row) {
 				if ((int)$row['block_id'] === (int)$m[1]) {
 					$row['status'] = 'released';
@@ -154,7 +154,7 @@ class GspPortAllocatorFakeDb
 			return array();
 		}
 		foreach ($this->blocks as $row) {
-			if ((int)$row['ip_id'] === (int)$ip[1] && $row['status'] === 'active' && gsp_port_allocator_ranges_overlap($start[1], $end[1], $row['block_start'], $row['block_end'])) {
+			if ((int)$row['ip_id'] === (int)$ip[1] && $row['status'] === 'active' && port_allocator_ranges_overlap($start[1], $end[1], $row['block_start'], $row['block_end'])) {
 				return array($row);
 			}
 		}
@@ -186,7 +186,7 @@ class GspPortAllocatorFakeDb
 			return array();
 		}
 		foreach ($this->staticReservations as $row) {
-			if ($row['status'] === 'active' && gsp_port_allocator_ranges_overlap($start[1], $end[1], $row['port_start'], $row['port_end'])) {
+			if ($row['status'] === 'active' && port_allocator_ranges_overlap($start[1], $end[1], $row['port_start'], $row['port_end'])) {
 				return array($row);
 			}
 		}
@@ -194,7 +194,7 @@ class GspPortAllocatorFakeDb
 	}
 }
 
-function gsp_port_allocator_test_assert($condition, $message)
+function port_allocator_test_assert($condition, $message)
 {
 	if (!$condition) {
 		fwrite(STDERR, "FAIL: {$message}\n");
@@ -203,36 +203,36 @@ function gsp_port_allocator_test_assert($condition, $message)
 	echo "PASS: {$message}\n";
 }
 
-$starts = gsp_port_allocator_candidate_starts(32000, 32999, 10);
-gsp_port_allocator_test_assert(count($starts) === 991, 'candidate scan advances by one port for maximum packing');
-gsp_port_allocator_test_assert($starts[0] === 32000 && $starts[990] === 32990, 'candidate scan stops at the last complete block');
+$starts = port_allocator_candidate_starts(32000, 32999, 10);
+port_allocator_test_assert(count($starts) === 991, 'candidate scan advances by one port for maximum packing');
+port_allocator_test_assert($starts[0] === 32000 && $starts[990] === 32990, 'candidate scan stops at the last complete block');
 
-$db = new GspPortAllocatorFakeDb();
+$db = new PortAllocatorFakeDb();
 $db->configHomes[5] = array('home_cfg_id' => 5, 'game_key' => 'minecraft_linux64', 'game_name' => 'Minecraft', 'home_cfg_file' => 'minecraft_linux64.xml');
-$first = gsp_port_allocate_home_block($db, 'gsp_', 100, 1, 5);
-gsp_port_allocator_test_assert(!empty($first['ok']), 'allocates without manual port pool mappings');
-gsp_port_allocator_test_assert($first['ip_id'] === 10 && $first['port'] === 25565 && $first['block_end'] === 25574, 'allocator tries the game default port first');
-gsp_port_allocator_test_assert($first['block_size'] === 10, 'default global block size is 10');
-gsp_port_allocator_test_assert(count($db->homeIpPorts) === 1 && $db->homeIpPorts[0]['port'] === 25565, 'allocation mirrors primary port to home_ip_ports');
+$first = port_allocate_home_block($db, '', 100, 1, 5);
+port_allocator_test_assert(!empty($first['ok']), 'allocates without manual port pool mappings');
+port_allocator_test_assert($first['ip_id'] === 10 && $first['port'] === 25565 && $first['block_end'] === 25574, 'allocator tries the game default port first');
+port_allocator_test_assert($first['block_size'] === 10, 'default global block size is 10');
+port_allocator_test_assert(count($db->homeIpPorts) === 1 && $db->homeIpPorts[0]['port'] === 25565, 'allocation mirrors primary port to home_ip_ports');
 
-$second = gsp_port_allocate_home_block($db, 'gsp_', 101, 1, 5);
-gsp_port_allocator_test_assert(!empty($second['ok']) && $second['port'] === 25575, 'occupied block advances to the next free contiguous block');
-gsp_port_allocator_test_assert(!gsp_port_allocator_block_has_conflict($db, 'gsp_', 11, 1, 25565, 25574), 'same block can be reused on a different ip_id');
+$second = port_allocate_home_block($db, '', 101, 1, 5);
+port_allocator_test_assert(!empty($second['ok']) && $second['port'] === 25575, 'occupied block advances to the next free contiguous block');
+port_allocator_test_assert(!port_allocator_block_has_conflict($db, '', 11, 1, 25565, 25574), 'same block can be reused on a different ip_id');
 
-$db = new GspPortAllocatorFakeDb();
+$db = new PortAllocatorFakeDb();
 $db->configHomes[5] = array('home_cfg_id' => 5, 'game_key' => 'minecraft_linux64', 'game_name' => 'Minecraft', 'home_cfg_file' => 'minecraft_linux64.xml');
 $db->staticReservations[] = array('reservation_id' => 1, 'status' => 'active', 'port_start' => 25565, 'port_end' => 25574);
-$reserved = gsp_port_allocate_home_block($db, 'gsp_', 102, 1, 5);
-gsp_port_allocator_test_assert(!empty($reserved['ok']) && $reserved['port'] === 25575, 'static service reservation blocks the overlapping game block');
+$reserved = port_allocate_home_block($db, '', 102, 1, 5);
+port_allocator_test_assert(!empty($reserved['ok']) && $reserved['port'] === 25575, 'static service reservation blocks the overlapping game block');
 
-$db = new GspPortAllocatorFakeDb();
+$db = new PortAllocatorFakeDb();
 $db->configHomes[5] = array('home_cfg_id' => 5, 'game_key' => 'minecraft_linux64', 'game_name' => 'Minecraft', 'home_cfg_file' => 'minecraft_linux64.xml');
 $db->portBlockSize = 4;
-$custom = gsp_port_allocate_home_block($db, 'gsp_', 103, 1, 5);
-gsp_port_allocator_test_assert(!empty($custom['ok']) && $custom['block_size'] === 4 && $custom['block_end'] === 25568, 'custom global block size is honored');
+$custom = port_allocate_home_block($db, '', 103, 1, 5);
+port_allocator_test_assert(!empty($custom['ok']) && $custom['block_size'] === 4 && $custom['block_end'] === 25568, 'custom global block size is honored');
 
-$db = new GspPortAllocatorFakeDb();
-$fallback = gsp_port_allocator_find_candidate($db, 'gsp_', 1, 99, 10, null);
-gsp_port_allocator_test_assert(!empty($fallback['ok']) && $fallback['primary_port'] === 27015 && $fallback['default_port_source'] === 'fallback', 'unknown games use the safe fallback base port');
+$db = new PortAllocatorFakeDb();
+$fallback = port_allocator_find_candidate($db, '', 1, 99, 10, null);
+port_allocator_test_assert(!empty($fallback['ok']) && $fallback['primary_port'] === 27015 && $fallback['default_port_source'] === 'fallback', 'unknown games use the safe fallback base port');
 
 echo "All port allocator tests passed.\n";

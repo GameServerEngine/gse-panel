@@ -570,7 +570,7 @@ function animateProgressBars()
 				const serversRegex = / (\d*?)\/(\d*?) /m;
 				if(serversRegex.test(serverStats))
 				{
-					$('#item2 .card-title').append(' (' + serverStats.match(serversRegex)[1] + '/' + serverStats.match(serversRegex)[2] + ' ' + langConsts['GSP_LANG_server'] + ')');
+					$('#item2 .card-title').append(' (' + serverStats.match(serversRegex)[1] + '/' + serverStats.match(serversRegex)[2] + ' ' + langConsts['LANG_server'] + ')');
 					$('#item2 .card-body').find('center').remove();
 				}
 			}

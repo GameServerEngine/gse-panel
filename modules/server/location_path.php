@@ -1,13 +1,13 @@
 <?php
 /* Location paths for the machine placement form. A path such as "USA / Central / Kansas City"
  * is resolved level by level; any level that does not exist yet is created under the one above. */
-function gsp_location_tree_rows($db, $prefix)
+function location_tree_rows($db, $prefix)
 {
 	return $db->resultQuery('SELECT location_id, parent_id, kind, name FROM ' . $prefix . 'billing_locations WHERE enabled = 1 ORDER BY name');
 }
 
 /* Map of location_id => "Parent / Child / Node". */
-function gsp_location_paths(array $rows)
+function location_paths(array $rows)
 {
 	$byId = array();
 	foreach ($rows as $r) {
@@ -29,7 +29,7 @@ function gsp_location_paths(array $rows)
 }
 
 /* Returns the location_id of the last level in the path (0 when the path is empty). */
-function gsp_resolve_location_path($db, $prefix, $path)
+function resolve_location_path($db, $prefix, $path)
 {
 	$parent = 0;
 	foreach (explode('/', (string)$path) as $seg) {

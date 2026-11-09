@@ -146,7 +146,7 @@ deleted     → Order soft-deleted
 
 ### billing_orders Table (Key Fields)
 - `order_id` - Primary key
-- `user_id` - Links to gsp_users.user_id
+- `user_id` - Links to users.user_id
 - `service_id` - Links to billing_services.service_id
 - `home_id` - Links to game_homes.home_id (after provisioning)
 - `status` - Current order status (in-cart, paid, installed, etc.)
@@ -265,7 +265,7 @@ modules/billing/
 4. Finds page with `key="my_orders"`
 5. Checks user access against `access="admin,user"`
 6. Includes `modules/billing/my_orders_panel.php`
-7. Calls `exec_gsp_module()` function
+7. Calls `exec_module()` function
 8. Renders output in panel layout
 
 **Multi-Server Processing:**

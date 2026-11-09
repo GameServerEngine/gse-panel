@@ -4,24 +4,24 @@
  * GSP - GameServer Panel
  *
  * Migration runner: applies numbered SQL files from sql/migrations/ in order,
- * records each as applied in the gsp_schema_migrations table, and skips
+ * records each as applied in the schema_migrations table, and skips
  * migrations already recorded. Replaces the old one-off patch system
  * (modules/update/patches/).
  *
  */
 
-function gsp_migrations_table_name()
+function migrations_table_name()
 {
-	return 'GSP_DB_PREFIXschema_migrations';
+	return 'TABLE_PREFIX_PLACEHOLDERschema_migrations';
 }
 
-function gsp_migrations_ensure_table($db)
+function migrations_ensure_table($db)
 {
 	if (!isset($db) || !is_object($db)) {
 		return false;
 	}
 	$db->query(
-		"CREATE TABLE IF NOT EXISTS `" . gsp_migrations_table_name() . "` ("
+		"CREATE TABLE IF NOT EXISTS `" . migrations_table_name() . "` ("
 		. "`migration_id` VARCHAR(191) NOT NULL,"
 		. "`applied_at` DATETIME NOT NULL,"
 		. "PRIMARY KEY (`migration_id`)"
@@ -30,7 +30,7 @@ function gsp_migrations_ensure_table($db)
 	return (string)$db->getError() === '';
 }
 
-function gsp_migrations_discover($dir)
+function migrations_discover($dir)
 {
 	$migrations = [];
 	if (!is_dir($dir)) {
@@ -56,13 +56,13 @@ function gsp_migrations_discover($dir)
 	return $migrations;
 }
 
-function gsp_migrations_get_applied($db)
+function migrations_get_applied($db)
 {
 	$applied = [];
 	if (!isset($db) || !is_object($db)) {
 		return $applied;
 	}
-	$rows = $db->resultQuery("SELECT migration_id, applied_at FROM `" . gsp_migrations_table_name() . "`");
+	$rows = $db->resultQuery("SELECT migration_id, applied_at FROM `" . migrations_table_name() . "`");
 	if (is_array($rows)) {
 		foreach ($rows as $row) {
 			$applied[$row['migration_id']] = $row['applied_at'];
@@ -71,7 +71,7 @@ function gsp_migrations_get_applied($db)
 	return $applied;
 }
 
-function gsp_migrations_record($db, $migration_id, $applied_at = null)
+function migrations_record($db, $migration_id, $applied_at = null)
 {
 	if (!isset($db) || !is_object($db)) {
 		return false;
@@ -80,7 +80,7 @@ function gsp_migrations_record($db, $migration_id, $applied_at = null)
 	$id_esc = $db->real_escape_string($migration_id);
 	$at_esc = $db->real_escape_string($applied_at);
 	return $db->query(
-		"INSERT INTO `" . gsp_migrations_table_name() . "` (migration_id, applied_at) "
+		"INSERT INTO `" . migrations_table_name() . "` (migration_id, applied_at) "
 		. "VALUES ('{$id_esc}', '{$at_esc}') "
 		. "ON DUPLICATE KEY UPDATE applied_at = VALUES(applied_at)"
 	);
@@ -91,7 +91,7 @@ function gsp_migrations_record($db, $migration_id, $applied_at = null)
  * are not inside single-quoted, double-quoted, or backtick-quoted spans.
  * Lines starting with -- (after optional leading whitespace) are dropped.
  */
-function gsp_sql_split_statements($sql)
+function sql_split_statements($sql)
 {
 	$lines = explode("\n", (string)$sql);
 	$filtered = [];
@@ -143,7 +143,7 @@ function gsp_sql_split_statements($sql)
  * table, in ascending numeric/name order. Stops at the first failure so later
  * migrations never run against a half-applied schema.
  */
-function gsp_migrations_run_pending($db, $dir, callable $logger)
+function migrations_run_pending($db, $dir, callable $logger)
 {
 	$result = [
 		'success' => true,
@@ -154,16 +154,16 @@ function gsp_migrations_run_pending($db, $dir, callable $logger)
 		'error' => null,
 	];
 
-	if (!gsp_migrations_ensure_table($db)) {
+	if (!migrations_ensure_table($db)) {
 		$result['success'] = false;
 		$result['error'] = 'Could not create or verify the schema_migrations table.';
 		$logger($result['error']);
 		return $result;
 	}
 
-	$migrations = gsp_migrations_discover($dir);
+	$migrations = migrations_discover($dir);
 	$result['available'] = count($migrations);
-	$applied = gsp_migrations_get_applied($db);
+	$applied = migrations_get_applied($db);
 
 	foreach ($migrations as $migration) {
 		$id = $migration['id'];
@@ -184,7 +184,7 @@ function gsp_migrations_run_pending($db, $dir, callable $logger)
 		}
 
 		$logger("Applying migration {$id}.");
-		$statements = gsp_sql_split_statements($sql);
+		$statements = sql_split_statements($sql);
 		$ok = true;
 		foreach ($statements as $statement) {
 			$db->query($statement);
@@ -204,7 +204,7 @@ function gsp_migrations_run_pending($db, $dir, callable $logger)
 			break;
 		}
 
-		gsp_migrations_record($db, $id);
+		migrations_record($db, $id);
 		$result['applied'][] = $id;
 		$logger("Migration {$id} applied.");
 	}
@@ -215,14 +215,14 @@ function gsp_migrations_run_pending($db, $dir, callable $logger)
 /**
  * True if no migration has been recorded as applied without also completing
  * (used by preflight to refuse to start a new update mid-migration).
- * With gsp_migrations_run_pending stopping at the first failed migration
+ * With migrations_run_pending stopping at the first failed migration
  * without recording it, "half-applied" means a migration ran its statements
  * but the process was interrupted before the record insert below it. The
  * schema_migrations table itself is the source of truth: a migration is only
  * ever "applied" once its insert is committed, so there is nothing further to
  * detect here beyond the table being reachable.
  */
-function gsp_migrations_preflight_ok($db)
+function migrations_preflight_ok($db)
 {
-	return gsp_migrations_ensure_table($db);
+	return migrations_ensure_table($db);
 }

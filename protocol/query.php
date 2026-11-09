@@ -6,8 +6,8 @@
  * This file intentionally avoids changing existing monitor paths in this phase.
  */
 
-if (!function_exists('gsp_query_provider_names')) {
-	function gsp_query_provider_names()
+if (!function_exists('query_provider_names')) {
+	function query_provider_names()
 	{
 		return array(
 			// LGSL remains default for legacy/older game coverage.
@@ -24,8 +24,8 @@ if (!function_exists('gsp_query_provider_names')) {
 	}
 }
 
-if (!function_exists('gsp_query_default_result')) {
-	function gsp_query_default_result()
+if (!function_exists('query_default_result')) {
+	function query_default_result()
 	{
 		return array(
 			'success' => false,
@@ -50,8 +50,8 @@ if (!function_exists('gsp_query_default_result')) {
 	}
 }
 
-if (!function_exists('gsp_query_normalize_player_list')) {
-	function gsp_query_normalize_player_list($players)
+if (!function_exists('query_normalize_player_list')) {
+	function query_normalize_player_list($players)
 	{
 		$normalized = array();
 		foreach ((array)$players as $player) {
@@ -67,10 +67,10 @@ if (!function_exists('gsp_query_normalize_player_list')) {
 	}
 }
 
-if (!function_exists('gsp_query_server')) {
-	function gsp_query_server($server_info, $options = array())
+if (!function_exists('query_server')) {
+	function query_server($server_info, $options = array())
 	{
-		$result = gsp_query_default_result();
+		$result = query_default_result();
 		$server = (array)$server_info;
 		$options = (array)$options;
 
@@ -149,7 +149,7 @@ if (!function_exists('gsp_query_server')) {
 		$result['bots'] = isset($raw['e']['bots']) ? (int)$raw['e']['bots'] : 0;
 		$result['passworded'] = !empty($raw['s']['password']);
 		$result['latency_ms'] = isset($raw['t']['ping']) ? (int)$raw['t']['ping'] : null;
-		$result['player_list'] = isset($raw['p']) ? gsp_query_normalize_player_list($raw['p']) : array();
+		$result['player_list'] = isset($raw['p']) ? query_normalize_player_list($raw['p']) : array();
 
 		return $result;
 	}

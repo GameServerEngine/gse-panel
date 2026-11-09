@@ -25,7 +25,7 @@
 define('LANG_add_mods_note', "Usted necesita agregar mods después de agregar el servidor al usuario.<br>Esto se puede hacer mediante la edición del servidor.");
 define('LANG_game_servers', "Servidores de Juegos");
 define('LANG_game_path', "Carpeta del juego");
-define('LANG_game_path_info', "Una ruta absoluta del servidor. Ejemplo: /home/ogpbot/GSP_User_Files/My_Server");
+define('LANG_game_path_info', "Una ruta absoluta del servidor. Ejemplo: /home/ogpbot/User_Files/My_Server");
 define('LANG_game_server_name_info', "Ayuda a identificar el servidor.");
 define('LANG_control_password', "RCON");
 define('LANG_control_password_info', "Esta contraseña se usa para el control del servidor, en algunos casos se utiliza para RCON, o como contraseña de serveradmin en TS3. Si la contraseña esta vacía algunas funciones podrían no estar disponibles.");
@@ -41,7 +41,7 @@ define('LANG_game_configurations', "Configuraciones de juegos");
 define('LANG_add_remote_server', "Agregar Servidor remoto");
 define('LANG_wine_games', "Juegos Wine");
 define('LANG_home_path', "Carpeta Home");
-define('LANG_change_home_info', "Ejemplo: /home/gsp_agent/mi_servidor/");
+define('LANG_change_home_info', "Ejemplo: /home/agent/mi_servidor/");
 define('LANG_game_server_name', "Nombre del servidor");
 define('LANG_change_name_info', "Este nombre ayuda a identificar el servidor.");
 define('LANG_game_control_password', "Contraseña de control");

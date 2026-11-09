@@ -3,7 +3,7 @@
 require_once __DIR__ . '/function.php';
 
 // Customer backup screen for one game home. Routes POST actions from the forms in function.php.
-function exec_gsp_module()
+function exec_module()
 {
     $home_id = isset($_REQUEST['home_id']) ? (int)$_REQUEST['home_id'] : 0;
     if ($home_id <= 0) {

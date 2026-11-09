@@ -22,7 +22,7 @@
  *
  */
 
-function print_player_list_gsp_dashboard($player_list,$players,$playersmax,$gamename)
+function print_player_list_dashboard($player_list,$players,$playersmax,$gamename)
 {
     $data = "<center><table class='currently-online' >".
 			"<tr><td style='text-align:left;'>".
@@ -36,7 +36,7 @@ function print_player_list_gsp_dashboard($player_list,$players,$playersmax,$game
 	return $data;
 }
 
-function exec_gsp_module()
+function exec_module()
 {
 	$server_key = 'server_'.$_GET['ip'].'_'.$_GET['port'];
 	if(isset($_GET['show']) and $_GET['show'] == "players")
@@ -57,7 +57,7 @@ function exec_gsp_module()
 	require('modules/gamemanager/home_handling_functions.php');
 	require('modules/config_games/server_config_parser.php');
 	$server_home = $_SESSION[$server_key];
-	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file'], gsp_os_for_install_row($server_home));
+	$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file'], os_for_install_row($server_home));
 	$port = $server_home['port'];
 	$query_name = "";
 	$mod = "";
@@ -97,7 +97,7 @@ function exec_gsp_module()
 		$_SESSION[$server_key]['playersmax'] = $playersmax;
 		if ( $players >= 1 )
 		{
-			$_SESSION[$server_key]['online_players'] = print_player_list_gsp_dashboard($playersList,$players,$playersmax,$server_home['game_name']);
+			$_SESSION[$server_key]['online_players'] = print_player_list_dashboard($playersList,$players,$playersmax,$server_home['game_name']);
 		}
 		elseif(isset($_SESSION[$server_key]['online_players']))
 			unset($_SESSION[$server_key]['online_players']);

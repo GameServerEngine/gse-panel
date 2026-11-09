@@ -42,7 +42,7 @@ function rr_has_arg(array $argv, $name)
     return in_array($name, $argv, true);
 }
 
-function gsp_requirements_path($base_dir = null)
+function requirements_path($base_dir = null)
 {
     $base_dir = $base_dir ?: dirname(__DIR__);
     return rtrim($base_dir, '/\\') . '/install/requirements.json';
@@ -52,10 +52,10 @@ function gsp_requirements_path($base_dir = null)
  * Load and decode the manifest. Returns array on success, null on failure.
  * check.php includes this file and calls this function directly.
  */
-function gsp_load_requirements($base_dir = null)
+function load_requirements($base_dir = null)
 {
     static $cache = array();
-    $path = gsp_requirements_path($base_dir);
+    $path = requirements_path($base_dir);
     if (array_key_exists($path, $cache)) {
         return $cache[$path];
     }
@@ -72,10 +72,10 @@ function gsp_load_requirements($base_dir = null)
     return $data;
 }
 
-if (!defined('GSP_REQUIREMENTS_READER_LIB')) {
+if (!defined('REQUIREMENTS_READER_LIB')) {
     // Allow check.php to `require_once` this file purely for the two functions
     // above without triggering the CLI behaviour below.
-    define('GSP_REQUIREMENTS_READER_LIB', true);
+    define('REQUIREMENTS_READER_LIB', true);
 }
 
 // When included (not executed directly) stop here and expose only the helpers.
@@ -83,9 +83,9 @@ if (!isset($argv[0]) || realpath($argv[0]) !== realpath(__FILE__)) {
     return;
 }
 
-$requirements = gsp_load_requirements(dirname(__DIR__));
+$requirements = load_requirements(dirname(__DIR__));
 if ($requirements === null) {
-    fwrite(STDERR, "Unable to read or parse " . gsp_requirements_path(dirname(__DIR__)) . "\n");
+    fwrite(STDERR, "Unable to read or parse " . requirements_path(dirname(__DIR__)) . "\n");
     exit(1);
 }
 

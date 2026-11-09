@@ -28,7 +28,7 @@ require_once 'modules/config_games/server_config_parser.php';
 require_once 'includes/game_path_helpers.php';
 require 'includes/lib_remote.php';
 
-function exec_gsp_module()
+function exec_module()
 {
     global $db, $view;
 
@@ -48,7 +48,7 @@ function exec_gsp_module()
         return;
     }
 
-    $server_xml = read_server_config(SERVER_CONFIG_LOCATION .'/'. $server_home['home_cfg_file'], gsp_os_for_install_row($server_home));
+    $server_xml = read_server_config(SERVER_CONFIG_LOCATION .'/'. $server_home['home_cfg_file'], os_for_install_row($server_home));
     if ($server_xml === false) {
         print_failure(get_lang('failed_read'));
         $view->refresh("?m=gamemanager&p=game_monitor");
@@ -56,7 +56,7 @@ function exec_gsp_module()
         return;
     }
     $path_error = '';
-    $server_home = gsp_with_game_root($server_home, $server_xml, $path_error);
+    $server_home = with_game_root($server_home, $server_xml, $path_error);
     if ($server_home === false) {
         print_failure('Invalid game directory for this server: ' . htmlentities($path_error));
         $view->refresh("?m=gamemanager&p=game_monitor");
@@ -74,7 +74,7 @@ function exec_gsp_module()
         return;
     }
 
-    $remote = new GSPRemoteLibrary($server_home['agent_ip'], $server_home['agent_port'], $server_home['encryption_key'], $server_home['timeout']);
+    $remote = new RemoteLibrary($server_home['agent_ip'], $server_home['agent_port'], $server_home['encryption_key'], $server_home['timeout']);
 
     if ($remote->status_chk() === 0) {
         print_failure(get_lang('agent_offline'));
@@ -84,7 +84,7 @@ function exec_gsp_module()
     }
 
     $path_error = '';
-    $remote_file = gsp_resolve_game_payload_path($server_home, $file, $path_error, true);
+    $remote_file = resolve_game_payload_path($server_home, $file, $path_error, true);
     if ($remote_file === false) {
         print_failure(get_lang('invalid_file') . ': ' . htmlentities($path_error));
         $view->refresh("?m=editconfigfiles&home_id=". (int)$server_home['home_id']);

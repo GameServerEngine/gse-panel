@@ -29,7 +29,7 @@ define('LANG_remote_host_info', "Adres Hosta lub Domena która wskazuje na dany 
 define('LANG_remote_host_port', "Port Hosta");
 define('LANG_remote_host_port_info', "The port that is listened by the GSP Agent on remote host. Default: 12679.");
 define('LANG_remote_host_name', "Nazwa Hosta");
-define('LANG_gsp_user', "GSP Agent Username");
+define('LANG_user', "GSP Agent Username");
 define('LANG_remote_host_name_info', "Nazwa zdalnego komputera jest używana, aby pomóc użytkownikom w określeniu ich serwerów.");
 define('LANG_add_remote_host', "Dodaj Hosta");
 define('LANG_remote_encryption_key', "Klucz Szyfrowania Hosta");

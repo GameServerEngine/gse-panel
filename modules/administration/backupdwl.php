@@ -22,7 +22,7 @@
  *
  */
 
-function exec_gsp_module()
+function exec_module()
 {
 	$path = getcwd()."/".$_GET['randir']."/"; // change the path to fit your websites document structure
 	$fullPath = $path.$_GET['dwfile'];

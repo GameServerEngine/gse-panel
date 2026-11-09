@@ -21,7 +21,7 @@
 define("DSI_BASEPATH", "modules/dsi/");
 require_once(DSI_BASEPATH . 'includes/functions_ui.php');
 require_once('modules/config_games/server_config_parser.php');
-function exec_gsp_module(){
+function exec_module(){
 	global $db;
 	global $view;
 
@@ -64,7 +64,7 @@ function exec_gsp_module(){
 			$server_home['ip']      == $ip and
 			$server_home['port']    == $port )
 		{
-			$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file'], gsp_os_for_install_row($server_home));
+			$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file'], os_for_install_row($server_home));
 			$public_ip = checkDisplayPublicIP($server_home['display_public_ip'],$server_home['ip'] != $server_home['agent_ip'] ? $server_home['ip'] : $server_home['agent_ip']);
 
 			$mod = preg_replace("/[^a-z0-9_]/", "-", strtolower($server_home['mod_key']));

@@ -22,7 +22,7 @@
  *
  */
 
-function exec_gsp_module() {
+function exec_module() {
 
     global $view;
     global $db;
@@ -114,7 +114,7 @@ function exec_gsp_module() {
             $_REQUEST['remote_host'],
             $_REQUEST['remote_host_port'],
             $_REQUEST['remote_host_name'],
-			$_REQUEST['gsp_user'],
+			$_REQUEST['user'],
 			$_REQUEST['remote_host_ftp_ip'],
 			$_REQUEST['remote_host_ftp_port'],
             $_REQUEST['remote_encryption_key'],
@@ -136,7 +136,7 @@ function exec_gsp_module() {
         }
         else
         {
-            $locationId = gsp_resolve_location_path($db, $table_prefix, (string)($_POST['location_path'] ?? ''));
+            $locationId = resolve_location_path($db, $table_prefix, (string)($_POST['location_path'] ?? ''));
             $osIn = (string)($_POST['server_os'] ?? 'linux');
             $os = in_array($osIn, array('linux', 'windows', 'any'), true) ? $osIn : 'linux';
             $install = isset($_POST['install_enabled']) ? 1 : 0;
@@ -158,7 +158,7 @@ function exec_gsp_module() {
         $ft->add_field('string','remote_host',$remote_server['agent_ip']);
         $ft->add_field('string','remote_host_port',$remote_server['agent_port']);
         $ft->add_field('string','remote_host_name',$remote_server['remote_server_name']);
-		$ft->add_field('string','gsp_user',isset($remote_server['user']) ? $remote_server['user'] : (isset($remote_server['gsp_user']) ? $remote_server['gsp_user'] : ''));
+		$ft->add_field('string','user',isset($remote_server['user']) ? $remote_server['user'] : (isset($remote_server['user']) ? $remote_server['user'] : ''));
 		$ft->add_field('string','remote_host_ftp_ip',$ftp_ip);
 		$ft->add_field('string','remote_host_ftp_port',$remote_server['ftp_port']);
         $ft->add_field('string','remote_encryption_key',$remote_server['encryption_key']);
@@ -170,8 +170,8 @@ function exec_gsp_module() {
         $ft->end_form();
         echo create_back_button('server');
         if ( empty($_SESSION['placement_csrf']) ) { $_SESSION['placement_csrf'] = bin2hex(random_bytes(16)); }
-        $pathRows = gsp_location_tree_rows($db, $table_prefix);
-        $pathMap = gsp_location_paths((array)$pathRows);
+        $pathRows = location_tree_rows($db, $table_prefix);
+        $pathMap = location_paths((array)$pathRows);
         $curLoc = (int)($remote_server['location_id'] ?? 0);
         $curOs = (string)($remote_server['server_os'] ?? 'linux');
         $curInstall = (int)($remote_server['install_enabled'] ?? 1);
@@ -207,8 +207,8 @@ function exec_gsp_module() {
 				{
 					foreach ((array)$servers_match_ip_id as $home_info)
 					{
-						$remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
-						$screen_running = $remote->is_screen_running(GSP_SCREEN_TYPE_HOME,$home_info['home_id']) === 1;
+						$remote = new RemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
+						$screen_running = $remote->is_screen_running(SCREEN_TYPE_HOME,$home_info['home_id']) === 1;
 						if( $screen_running )
 						{
 							$servers_running = TRUE;

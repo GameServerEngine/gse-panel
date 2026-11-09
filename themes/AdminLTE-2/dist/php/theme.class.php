@@ -4,7 +4,7 @@ class Theme
 {
 	private $absolutePath = "../../../..";
 
-	private function getGSPPublicPath()
+	private function getPublicPath()
 	{
 		return str_replace("themes/AdminLTE/dist/php/settings.php", "", $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_NAME']);
 	}
@@ -39,7 +39,7 @@ class Theme
 		return false;
 	}
 
-	private function getGSPServers($all = false)
+	private function getServers($all = false)
 	{
 		// load ThemeDB class
 		require_once("./db.class.php");
@@ -73,18 +73,18 @@ class Theme
 
 	private function getAllCrons()
 	{
-		return $this->GSPCronjob('get');
+		return $this->Cronjob('get');
 	}
 
-	private function GSPCronjob($type, $id = false, $url = false)
+	private function Cronjob($type, $id = false, $url = false)
 	{
 		// load gsp lib_remote
 		require_once($this->absolutePath."/includes/lib_remote.php");
 
-		$firstRemoteServer = $this->getGSPServers();
+		$firstRemoteServer = $this->getServers();
 		if($firstRemoteServer)
 		{
-			$remote = new GSPRemoteLibrary($firstRemoteServer[0]['agent_ip'], $firstRemoteServer[0]['agent_port'], $firstRemoteServer[0]['encryption_key'], $firstRemoteServer[0]['timeout']);
+			$remote = new RemoteLibrary($firstRemoteServer[0]['agent_ip'], $firstRemoteServer[0]['agent_port'], $firstRemoteServer[0]['encryption_key'], $firstRemoteServer[0]['timeout']);
 			if($remote->status_chk() != 1)
 			{
 				return false;
@@ -119,13 +119,13 @@ class Theme
 		require_once("./db.class.php");
 		$ThemeDB = new ThemeDB;
 
-		$checkURL = $this->getGSPPublicPath().'themes/AdminLTE/dist/php/settings.php?m=global&p=check&v=updateserverstats';
+		$checkURL = $this->getPublicPath().'themes/AdminLTE/dist/php/settings.php?m=global&p=check&v=updateserverstats';
 
 		$updateToken = $ThemeDB->getSetting('updateToken', -1);
 
 		$foundCron = false;
 		$validCron = false;
-		$allCrons = $this->GSPCronjob('get');
+		$allCrons = $this->Cronjob('get');
 		foreach($allCrons AS $cronNum => $cronVal)
 		{
 			// check if current cron is updateserverstats
@@ -134,13 +134,13 @@ class Theme
 				if($remove)
 				{
 					// remove cron
-					$this->GSPCronjob('del', $cronNum);
+					$this->Cronjob('del', $cronNum);
 				}else
 				{
 					if($foundCron)
 					{
 						// possible duplicates, remove them all
-						$this->GSPCronjob('del', $cronNum);
+						$this->Cronjob('del', $cronNum);
 						continue;
 					}
 					else
@@ -168,13 +168,13 @@ class Theme
 			if($foundCron && !$validCron)
 			{
 				// cron existent but invalid - update entry
-				$this->GSPCronjob('edit', $foundCron, $goodCronEntry);
+				$this->Cronjob('edit', $foundCron, $goodCronEntry);
 				return 'updated cronjob';
 			}
 			elseif(!$foundCron)
 			{
 				// cron not existent - create entry
-				$this->GSPCronjob('add', false, $goodCronEntry);
+				$this->Cronjob('add', false, $goodCronEntry);
 				return 'created cronjob';
 			}
 		}
@@ -238,8 +238,8 @@ class Theme
 			foreach($serverHomes AS $key => $shData)
 			{
 				// check if the screen running the server is running.
-				$remote = new GSPRemoteLibrary($shData['agent_ip'], $shData['agent_port'], $shData['encryption_key'], $shData['timeout']);
-				if( $remote->is_screen_running(GSP_SCREEN_TYPE_HOME, $shData['home_id']))
+				$remote = new RemoteLibrary($shData['agent_ip'], $shData['agent_port'], $shData['encryption_key'], $shData['timeout']);
+				if( $remote->is_screen_running(SCREEN_TYPE_HOME, $shData['home_id']))
 				{
 					$queryData = $this->getProtocolAndQuery($serverHomes[$key]);
 					$serverHomes[$key]['qProtocol'] = $queryData['qProtocol'];
@@ -464,7 +464,7 @@ class Theme
 		{
 			// check if a map image exists
 			$mapImage = $this->getServerImage($serverObject);
-			if($mapImage!=$this->getGSPPublicPath().'images/online_big.png')
+			if($mapImage!=$this->getPublicPath().'images/online_big.png')
 			{
 				$iconBox = '
 					<span class="info-box-icon" style="
@@ -650,7 +650,7 @@ class Theme
 		require_once($this->absolutePath."/modules/config_games/server_config_parser.php");
 
 		// load home config file
-		$serverConfig = read_server_config($this->absolutePath."/".SERVER_CONFIG_LOCATION.$serverObject['home_cfg_file'], gsp_os_for_install_row($serverObject));
+		$serverConfig = read_server_config($this->absolutePath."/".SERVER_CONFIG_LOCATION.$serverObject['home_cfg_file'], os_for_install_row($serverObject));
 		if($serverConfig)
 		{
 			// get protocol query name
@@ -722,15 +722,15 @@ class Theme
 		$mod_gt = $query_name == "conanexiles" ? "conan" : $mod_gt;
 
 		$map_paths = array(
-			$this->getGSPPublicPath()."protocol/lgsl/maps/$query_name/$mod/$map.jpg",
-			$this->getGSPPublicPath()."protocol/lgsl/maps/$query_name/$mod/$map.gif",
-			$this->getGSPPublicPath()."protocol/lgsl/maps/$query_name/$mod/$map.png",
-			$this->getGSPPublicPath()."protocol/lgsl/maps/$query_name/$map.jpg",
-			$this->getGSPPublicPath()."protocol/lgsl/maps/$query_name/$map.gif",
-			$this->getGSPPublicPath()."protocol/lgsl/maps/$query_name/$map.png",
+			$this->getPublicPath()."protocol/lgsl/maps/$query_name/$mod/$map.jpg",
+			$this->getPublicPath()."protocol/lgsl/maps/$query_name/$mod/$map.gif",
+			$this->getPublicPath()."protocol/lgsl/maps/$query_name/$mod/$map.png",
+			$this->getPublicPath()."protocol/lgsl/maps/$query_name/$map.jpg",
+			$this->getPublicPath()."protocol/lgsl/maps/$query_name/$map.gif",
+			$this->getPublicPath()."protocol/lgsl/maps/$query_name/$map.png",
 			"https://image.gametracker.com/images/maps/160x120/$mod_gt/$map.jpg",
 			"https://image.gametracker.com/images/maps/160x120/$query_name/$map.jpg",
-			$this->getGSPPublicPath()."images/online_big.png"
+			$this->getPublicPath()."images/online_big.png"
 		);
 
 		return get_first_existing_file($map_paths, 'https://gametracker.com', 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:81.0) Gecko/20100101 Firefox/81.0');

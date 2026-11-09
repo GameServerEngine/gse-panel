@@ -674,7 +674,7 @@ function steam_workshop_build_mod_line($mods, $xml)
 
 function steam_workshop_log_is_terminal($log_txt)
 {
-	return preg_match('/GSP_WORKSHOP_INSTALL_(COMPLETE|FAILED)/', (string)$log_txt) === 1;
+	return preg_match('/WORKSHOP_INSTALL_(COMPLETE|FAILED)/', (string)$log_txt) === 1;
 }
 
 function remove_mod($home_cfg, $remote, $xml, $mod_string)

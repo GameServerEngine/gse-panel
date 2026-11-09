@@ -65,21 +65,21 @@ if (!function_exists('gamemanager_trigger_update_install')) {
 			return $resultBase + array('ok' => false, 'pending' => true, 'message' => "Could not read server config XML for home #{$home_id}. Tried: {$xml_abs}");
 		}
 		$path_error = '';
-		$home_info = gsp_with_game_root($home_info, $server_xml, $path_error);
+		$home_info = with_game_root($home_info, $server_xml, $path_error);
 		if ($home_info === false) {
 			return $resultBase + array('ok' => false, 'pending' => true, 'message' => "Invalid game root for home #{$home_id}: {$path_error}");
 		}
 
-		$remote = new GSPRemoteLibrary($home_info['agent_ip'], $home_info['agent_port'], $home_info['encryption_key'], $home_info['timeout']);
+		$remote = new RemoteLibrary($home_info['agent_ip'], $home_info['agent_port'], $home_info['encryption_key'], $home_info['timeout']);
 		if ($remote->status_chk() === 0) {
 			return $resultBase + array('ok' => false, 'pending' => true, 'message' => 'Agent is offline.');
 		}
-		if ($remote->is_screen_running(GSP_SCREEN_TYPE_HOME, $home_id) == 1) {
+		if ($remote->is_screen_running(SCREEN_TYPE_HOME, $home_id) == 1) {
 			return $resultBase + array('ok' => false, 'pending' => false, 'message' => 'Server is running and cannot be updated.');
 		}
 
 		$log_txt = '';
-		$update_active = $remote->get_log(GSP_SCREEN_TYPE_UPDATE, $home_id, clean_path($home_info['home_path']), $log_txt);
+		$update_active = $remote->get_log(SCREEN_TYPE_UPDATE, $home_id, clean_path($home_info['home_path']), $log_txt);
 		if ($update_active == 1) {
 			return $resultBase + array('ok' => true, 'started' => true, 'already_running' => true, 'message' => 'Update already in progress.', 'output' => $log_txt);
 		}
@@ -110,7 +110,7 @@ if (!function_exists('gamemanager_trigger_update_install')) {
 			}
 			$ms_info = $db->getGameHome($master_server_home_id);
 			$ms_path_error = '';
-			$ms_info = is_array($ms_info) ? gsp_with_game_root($ms_info, $server_xml, $ms_path_error) : false;
+			$ms_info = is_array($ms_info) ? with_game_root($ms_info, $server_xml, $ms_path_error) : false;
 			if ($ms_info === false) {
 				return $resultBase + array('ok' => false, 'pending' => false, 'message' => 'Invalid master server game root: ' . $ms_path_error);
 			}

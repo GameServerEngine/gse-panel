@@ -1,5 +1,5 @@
 <?php
-function gsp_steam_workshop_simple_admin_script()
+function steam_workshop_simple_admin_script()
 {
 ?>
 <script>

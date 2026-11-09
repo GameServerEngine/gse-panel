@@ -22,7 +22,7 @@
  *
  */
 echo '<script src="js/modules/util.js"></script>';
-function exec_gsp_module()
+function exec_module()
 {
 	global $db;
 	include 'util_config.php';

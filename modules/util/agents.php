@@ -22,7 +22,7 @@
  *
  */
 include 'includes/lib_remote.php';
-function exec_gsp_module()
+function exec_module()
 {
 	global $db;
 	$remoteServers = $db->getRemoteServers();
@@ -30,7 +30,7 @@ function exec_gsp_module()
 
 	if(is_array($remoteServers)){
 		foreach ((array)$remoteServers as $server){
-			$remote = new GSPRemoteLibrary($server['agent_ip'], $server['agent_port'], $server['encryption_key'], 1);
+			$remote = new RemoteLibrary($server['agent_ip'], $server['agent_port'], $server['encryption_key'], 1);
 			$status = (int)$remote->status_chk();
 
 			$servers[] = array(

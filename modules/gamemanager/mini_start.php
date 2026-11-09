@@ -1,6 +1,6 @@
 <?php
-if (!function_exists('gsp_agent_start_failure_text')) {
-function gsp_agent_start_failure_text($code)
+if (!function_exists('agent_start_failure_text')) {
+function agent_start_failure_text($code)
 {
 	$code = (int)$code;
 	if ($code === -10) return 'The server files could not be found. Please check the server installation.';
@@ -40,7 +40,7 @@ $last_param = json_decode($server_home['last_param'], True);
 $isAdmin = $db->isAdmin($_SESSION['user_id']);
 
 $path_error = '';
-$server_home = gsp_with_game_root($server_home, $server_xml, $path_error);
+$server_home = with_game_root($server_home, $server_xml, $path_error);
 if ($server_home === false) {
 	print_failure('Invalid game directory for this server: ' . htmlentities($path_error));
 	return;
@@ -123,7 +123,7 @@ if( !isset( $_POST['start_server'] ) )
 		<input type='hidden' name='home_id' value='$server_home[home_id]' />\n
 		<input type='hidden' name='remote_server_id' value='".$server_home['remote_server_id']."' />\n
 		<table class='start-server'>
-		<tr><td class='right'>". get_lang("gsp_agent_ip") .
+		<tr><td class='right'>". get_lang("agent_ip") .
 		":</td><td class='left'>".$server_home['agent_ip']."</td></tr>";
 
 	$max_players = $server_home['max_players'];
@@ -333,7 +333,7 @@ elseif($server_home['home_id'] == $_POST['home_id'])
 
 
 	$cli_param_data['HOSTNAME'] = $server_home['home_name'];
-	$cli_param_data['PID_FILE'] = "gsp_game_startup.pid";
+	$cli_param_data['PID_FILE'] = "game_startup.pid";
 
 	$os = $remote->what_os();
 
@@ -607,7 +607,7 @@ elseif($server_home['home_id'] == $_POST['home_id'])
 	$db->changeLastParam($server_home['home_id'],$server_home['last_param']);
 
 	echo "<table class='server-starting'>";
-	echo "<tr><td class='right'>". get_lang("gsp_agent_ip") .
+	echo "<tr><td class='right'>". get_lang("agent_ip") .
 		":</td><td class='left'>".$server_home['agent_ip']."</td></tr>\n";
 	echo "<tr><td class='right'>". get_lang("game_home") .
 		":</td><td class='left'>".$server_home['game_root']."</td></tr>";
@@ -621,9 +621,9 @@ elseif($server_home['home_id'] == $_POST['home_id'])
 
 	$replace_text_results = array();
 	if($server_xml->replace_texts OR $server_xml->custom_fields) {
-		gsp_lifecycle_begin_replace_text_tracking();
+		lifecycle_begin_replace_text_tracking();
 		require_once("modules/gamemanager/cfg_text_replace.php");
-		$replace_text_results = gsp_lifecycle_replace_text_results();
+		$replace_text_results = lifecycle_replace_text_results();
 	}
 
 	// Run pre-start commands
@@ -654,7 +654,7 @@ elseif($server_home['home_id'] == $_POST['home_id'])
 		}
 	}
 
-	$lifecycle_payload = gsp_lifecycle_start_payload($db, $remote, $server_home, $server_xml, $server_home['mod_id'], $ip, $port, $start_cmd, $preStart, $envVars, $replace_text_results);
+	$lifecycle_payload = lifecycle_start_payload($db, $remote, $server_home, $server_xml, $server_home['mod_id'], $ip, $port, $start_cmd, $preStart, $envVars, $replace_text_results);
 	if (isset($lifecycle_payload['error'])) {
 		print_failure(htmlentities($lifecycle_payload['error']));
 		return;
@@ -692,7 +692,7 @@ elseif($server_home['home_id'] == $_POST['home_id'])
 		}
 		else
 		{
-			print_failure(htmlentities(gsp_lifecycle_result_message($start_result, gsp_agent_start_failure_text($start_retval))));
+			print_failure(htmlentities(lifecycle_result_message($start_result, agent_start_failure_text($start_retval))));
 			return;
 		}
 	}

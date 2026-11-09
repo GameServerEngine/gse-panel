@@ -22,7 +22,7 @@
  *
  */
 
-function exec_gsp_module()
+function exec_module()
 {
 	require_once('modules/settings/functions.php');
 	require_once('includes/form_table_class.php');

@@ -4,7 +4,6 @@
 --
 -- Run manually ONCE on an existing installation.
 -- Safe to re-run: every ALTER uses IF NOT EXISTS / PREPARE guards.
--- Table prefix: gsp_   (matches modules/billing/includes/config.inc.php)
 --
 -- BACK UP YOUR DATABASE BEFORE RUNNING THIS SCRIPT.
 -- ============================================================
@@ -12,13 +11,13 @@
 SET @dbname = DATABASE();
 
 -- ============================================================
--- SECTION 1: Fix gsp_server_homes.server_expiration_date
+-- SECTION 1: Fix server_homes.server_expiration_date
 --            Convert from VARCHAR(21) with 'X' default to DATETIME NULL
 -- ============================================================
 
 -- Clear placeholder 'X' and empty-string values so the column
 -- can be safely converted to DATETIME.
-UPDATE `gsp_server_homes`
+UPDATE `server_homes`
 SET `server_expiration_date` = NULL
 WHERE `server_expiration_date` IN ('X', '', '0', '0000-00-00 00:00:00')
    OR `server_expiration_date` IS NULL;
@@ -28,28 +27,28 @@ SET @col_type = '';
 SELECT DATA_TYPE INTO @col_type
 FROM information_schema.COLUMNS
 WHERE TABLE_SCHEMA = @dbname
-  AND TABLE_NAME   = 'gsp_server_homes'
+  AND TABLE_NAME   = 'server_homes'
   AND COLUMN_NAME  = 'server_expiration_date';
 
 SET @sql = IF(
     @col_type = 'varchar',
-    'ALTER TABLE `gsp_server_homes` MODIFY COLUMN `server_expiration_date` DATETIME NULL DEFAULT NULL',
+    'ALTER TABLE `server_homes` MODIFY COLUMN `server_expiration_date` DATETIME NULL DEFAULT NULL',
     'SELECT "server_expiration_date already DATETIME – skipping" AS _msg'
 );
 PREPARE _stmt FROM @sql; EXECUTE _stmt; DEALLOCATE PREPARE _stmt;
 
 -- ============================================================
--- SECTION 2: Add new billing lifecycle columns to gsp_server_homes
+-- SECTION 2: Add new billing lifecycle columns to server_homes
 -- ============================================================
 
 -- billing_status
 SET @col_exists = 0;
 SELECT COUNT(*) INTO @col_exists
 FROM information_schema.COLUMNS
-WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'gsp_server_homes' AND COLUMN_NAME = 'billing_status';
+WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'server_homes' AND COLUMN_NAME = 'billing_status';
 SET @sql = IF(
     @col_exists = 0,
-    'ALTER TABLE `gsp_server_homes` ADD COLUMN `billing_status` ENUM(\'Active\',\'Invoiced\',\'Expired\') NOT NULL DEFAULT \'Active\' AFTER `server_expiration_date`',
+    'ALTER TABLE `server_homes` ADD COLUMN `billing_status` ENUM(\'Active\',\'Invoiced\',\'Expired\') NOT NULL DEFAULT \'Active\' AFTER `server_expiration_date`',
     'SELECT "billing_status already exists" AS _msg'
 );
 PREPARE _stmt FROM @sql; EXECUTE _stmt; DEALLOCATE PREPARE _stmt;
@@ -58,10 +57,10 @@ PREPARE _stmt FROM @sql; EXECUTE _stmt; DEALLOCATE PREPARE _stmt;
 SET @col_exists = 0;
 SELECT COUNT(*) INTO @col_exists
 FROM information_schema.COLUMNS
-WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'gsp_server_homes' AND COLUMN_NAME = 'next_invoice_date';
+WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'server_homes' AND COLUMN_NAME = 'next_invoice_date';
 SET @sql = IF(
     @col_exists = 0,
-    'ALTER TABLE `gsp_server_homes` ADD COLUMN `next_invoice_date` DATETIME NULL DEFAULT NULL AFTER `billing_status`',
+    'ALTER TABLE `server_homes` ADD COLUMN `next_invoice_date` DATETIME NULL DEFAULT NULL AFTER `billing_status`',
     'SELECT "next_invoice_date already exists" AS _msg'
 );
 PREPARE _stmt FROM @sql; EXECUTE _stmt; DEALLOCATE PREPARE _stmt;
@@ -70,10 +69,10 @@ PREPARE _stmt FROM @sql; EXECUTE _stmt; DEALLOCATE PREPARE _stmt;
 SET @col_exists = 0;
 SELECT COUNT(*) INTO @col_exists
 FROM information_schema.COLUMNS
-WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'gsp_server_homes' AND COLUMN_NAME = 'last_invoice_id';
+WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'server_homes' AND COLUMN_NAME = 'last_invoice_id';
 SET @sql = IF(
     @col_exists = 0,
-    'ALTER TABLE `gsp_server_homes` ADD COLUMN `last_invoice_id` INT NULL DEFAULT NULL AFTER `next_invoice_date`',
+    'ALTER TABLE `server_homes` ADD COLUMN `last_invoice_id` INT NULL DEFAULT NULL AFTER `next_invoice_date`',
     'SELECT "last_invoice_id already exists" AS _msg'
 );
 PREPARE _stmt FROM @sql; EXECUTE _stmt; DEALLOCATE PREPARE _stmt;
@@ -82,20 +81,20 @@ PREPARE _stmt FROM @sql; EXECUTE _stmt; DEALLOCATE PREPARE _stmt;
 SET @col_exists = 0;
 SELECT COUNT(*) INTO @col_exists
 FROM information_schema.COLUMNS
-WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'gsp_server_homes' AND COLUMN_NAME = 'billing_enabled';
+WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'server_homes' AND COLUMN_NAME = 'billing_enabled';
 SET @sql = IF(
     @col_exists = 0,
-    'ALTER TABLE `gsp_server_homes` ADD COLUMN `billing_enabled` TINYINT(1) NOT NULL DEFAULT 1 AFTER `last_invoice_id`',
+    'ALTER TABLE `server_homes` ADD COLUMN `billing_enabled` TINYINT(1) NOT NULL DEFAULT 1 AFTER `last_invoice_id`',
     'SELECT "billing_enabled already exists" AS _msg'
 );
 PREPARE _stmt FROM @sql; EXECUTE _stmt; DEALLOCATE PREPARE _stmt;
 
 -- ============================================================
--- SECTION 3: Create gsp_invoices (post-purchase renewal invoices)
---            Distinct from gsp_billing_invoices (pre-purchase cart)
+-- SECTION 3: Create invoices (post-purchase renewal invoices)
+--            Distinct from billing_invoices (pre-purchase cart)
 -- ============================================================
 
-CREATE TABLE IF NOT EXISTS `gsp_invoices` (
+CREATE TABLE IF NOT EXISTS `invoices` (
     `invoice_id`       INT            NOT NULL AUTO_INCREMENT,
     `home_id`          INT            NOT NULL,
     `user_id`          INT            NOT NULL,
@@ -122,10 +121,10 @@ CREATE TABLE IF NOT EXISTS `gsp_invoices` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ============================================================
--- SECTION 4: Create gsp_billing_config (per-game or global rates)
+-- SECTION 4: Create billing_config (per-game or global rates)
 -- ============================================================
 
-CREATE TABLE IF NOT EXISTS `gsp_billing_config` (
+CREATE TABLE IF NOT EXISTS `billing_config` (
     `config_id`                INT            NOT NULL AUTO_INCREMENT,
     `game_key`                 VARCHAR(128)   NULL     DEFAULT NULL COMMENT 'NULL = global default',
     `rate_type`                ENUM('daily','monthly','yearly')
@@ -142,22 +141,22 @@ CREATE TABLE IF NOT EXISTS `gsp_billing_config` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Insert global default config if none exists
-INSERT INTO `gsp_billing_config`
+INSERT INTO `billing_config`
     (`game_key`, `rate_type`, `price_per_player`, `grace_days`, `delete_after_expired_days`, `enabled`)
 SELECT NULL, 'monthly', 0.00, 0, 7, 1
 WHERE NOT EXISTS (
-    SELECT 1 FROM `gsp_billing_config` WHERE `game_key` IS NULL LIMIT 1
+    SELECT 1 FROM `billing_config` WHERE `game_key` IS NULL LIMIT 1
 );
 
 -- ============================================================
 -- SECTION 5: Populate server_homes.billing_status from existing
---            gsp_billing_orders data
+--            billing_orders data
 --            Priority: Expired > Invoiced > Active
 -- ============================================================
 
 -- Active: paid, installed, active, running, enabled, online
-UPDATE `gsp_server_homes` sh
-INNER JOIN `gsp_billing_orders` bo
+UPDATE `server_homes` sh
+INNER JOIN `billing_orders` bo
         ON bo.home_id = sh.home_id
        AND CAST(bo.home_id AS UNSIGNED) > 0
 SET sh.`billing_status`       = 'Active',
@@ -166,8 +165,8 @@ SET sh.`billing_status`       = 'Active',
 WHERE bo.`status` IN ('paid', 'installed', 'active', 'running', 'enabled', 'online');
 
 -- Invoiced: renew, unpaid, pending, overdue, invoice, invoiced, in-cart
-UPDATE `gsp_server_homes` sh
-INNER JOIN `gsp_billing_orders` bo
+UPDATE `server_homes` sh
+INNER JOIN `billing_orders` bo
         ON bo.home_id = sh.home_id
        AND CAST(bo.home_id AS UNSIGNED) > 0
 SET sh.`billing_status`       = 'Invoiced',
@@ -176,8 +175,8 @@ SET sh.`billing_status`       = 'Invoiced',
 WHERE bo.`status` IN ('renew', 'unpaid', 'pending', 'overdue', 'invoice', 'invoiced', 'in-cart');
 
 -- Expired: expired, cancelled, terminated, suspended, deleted
-UPDATE `gsp_server_homes` sh
-INNER JOIN `gsp_billing_orders` bo
+UPDATE `server_homes` sh
+INNER JOIN `billing_orders` bo
         ON bo.home_id = sh.home_id
        AND CAST(bo.home_id AS UNSIGNED) > 0
 SET sh.`billing_status`       = 'Expired',
@@ -185,8 +184,8 @@ SET sh.`billing_status`       = 'Expired',
 WHERE bo.`status` IN ('expired', 'cancelled', 'terminated', 'suspended', 'deleted');
 
 -- Backfill server_expiration_date from billing_orders where still NULL
-UPDATE `gsp_server_homes` sh
-INNER JOIN `gsp_billing_orders` bo
+UPDATE `server_homes` sh
+INNER JOIN `billing_orders` bo
         ON bo.home_id = sh.home_id
        AND CAST(bo.home_id AS UNSIGNED) > 0
 SET sh.`server_expiration_date` = bo.`end_date`
@@ -194,57 +193,57 @@ WHERE sh.`server_expiration_date` IS NULL
   AND bo.`end_date` IS NOT NULL;
 
 -- ============================================================
--- SECTION 6: Normalize gsp_billing_orders.status to new values
+-- SECTION 6: Normalize billing_orders.status to new values
 -- ============================================================
 
 -- Active (was: paid, installed, active, running, enabled, online)
-UPDATE `gsp_billing_orders`
+UPDATE `billing_orders`
 SET `status` = 'Active'
 WHERE `status` IN ('paid', 'installed', 'active', 'running', 'enabled', 'online');
 
 -- Invoiced (was: renew, unpaid, pending, overdue, invoice, invoiced, in-cart)
-UPDATE `gsp_billing_orders`
+UPDATE `billing_orders`
 SET `status` = 'Invoiced'
 WHERE `status` IN ('renew', 'unpaid', 'pending', 'overdue', 'invoice', 'invoiced', 'in-cart');
 
 -- Expired (was: expired, cancelled, terminated, suspended, deleted)
-UPDATE `gsp_billing_orders`
+UPDATE `billing_orders`
 SET `status` = 'Expired'
 WHERE `status` IN ('expired', 'cancelled', 'terminated', 'suspended', 'deleted');
 
 -- ============================================================
--- SECTION 7: Add indexes to gsp_server_homes for billing queries
+-- SECTION 7: Add indexes to server_homes for billing queries
 -- ============================================================
 
 SET @idx = 0;
 SELECT COUNT(*) INTO @idx FROM information_schema.STATISTICS
-WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'gsp_server_homes' AND INDEX_NAME = 'idx_billing_status';
+WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'server_homes' AND INDEX_NAME = 'idx_billing_status';
 SET @sql = IF(@idx = 0,
-    'ALTER TABLE `gsp_server_homes` ADD INDEX `idx_billing_status` (`billing_status`)',
+    'ALTER TABLE `server_homes` ADD INDEX `idx_billing_status` (`billing_status`)',
     'SELECT "idx_billing_status exists" AS _msg');
 PREPARE _stmt FROM @sql; EXECUTE _stmt; DEALLOCATE PREPARE _stmt;
 
 SET @idx = 0;
 SELECT COUNT(*) INTO @idx FROM information_schema.STATISTICS
-WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'gsp_server_homes' AND INDEX_NAME = 'idx_server_expiration_date';
+WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'server_homes' AND INDEX_NAME = 'idx_server_expiration_date';
 SET @sql = IF(@idx = 0,
-    'ALTER TABLE `gsp_server_homes` ADD INDEX `idx_server_expiration_date` (`server_expiration_date`)',
+    'ALTER TABLE `server_homes` ADD INDEX `idx_server_expiration_date` (`server_expiration_date`)',
     'SELECT "idx_server_expiration_date exists" AS _msg');
 PREPARE _stmt FROM @sql; EXECUTE _stmt; DEALLOCATE PREPARE _stmt;
 
 SET @idx = 0;
 SELECT COUNT(*) INTO @idx FROM information_schema.STATISTICS
-WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'gsp_server_homes' AND INDEX_NAME = 'idx_next_invoice_date';
+WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'server_homes' AND INDEX_NAME = 'idx_next_invoice_date';
 SET @sql = IF(@idx = 0,
-    'ALTER TABLE `gsp_server_homes` ADD INDEX `idx_next_invoice_date` (`next_invoice_date`)',
+    'ALTER TABLE `server_homes` ADD INDEX `idx_next_invoice_date` (`next_invoice_date`)',
     'SELECT "idx_next_invoice_date exists" AS _msg');
 PREPARE _stmt FROM @sql; EXECUTE _stmt; DEALLOCATE PREPARE _stmt;
 
 SET @idx = 0;
 SELECT COUNT(*) INTO @idx FROM information_schema.STATISTICS
-WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'gsp_server_homes' AND INDEX_NAME = 'idx_billing_enabled';
+WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'server_homes' AND INDEX_NAME = 'idx_billing_enabled';
 SET @sql = IF(@idx = 0,
-    'ALTER TABLE `gsp_server_homes` ADD INDEX `idx_billing_enabled` (`billing_enabled`)',
+    'ALTER TABLE `server_homes` ADD INDEX `idx_billing_enabled` (`billing_enabled`)',
     'SELECT "idx_billing_enabled exists" AS _msg');
 PREPARE _stmt FROM @sql; EXECUTE _stmt; DEALLOCATE PREPARE _stmt;
 
@@ -254,7 +253,7 @@ PREPARE _stmt FROM @sql; EXECUTE _stmt; DEALLOCATE PREPARE _stmt;
 
 SELECT CONCAT(
     'Migration complete. ',
-    'gsp_server_homes now has billing_status/next_invoice_date/last_invoice_id/billing_enabled. ',
-    'gsp_invoices and gsp_billing_config tables created. ',
-    'gsp_billing_orders.status normalized to Active/Invoiced/Expired.'
+    'server_homes now has billing_status/next_invoice_date/last_invoice_id/billing_enabled. ',
+    'invoices and billing_config tables created. ',
+    'billing_orders.status normalized to Active/Invoiced/Expired.'
 ) AS Migration_Result;

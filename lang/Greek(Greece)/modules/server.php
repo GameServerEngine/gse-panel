@@ -29,7 +29,7 @@ define('LANG_remote_host_info', "Ο απομακρυσμένος κεντρικ�
 define('LANG_remote_host_port', "Θύρα απομακρυσμένου κεντρικού υπολογιστή.");
 define('LANG_remote_host_port_info', "Η θύρα που ακούει ο GSP Agent στον απομακρυσμένο κεντρικό υπολογιστή. Προεπιλογή: 12679.");
 define('LANG_remote_host_name', "Όνομα Απομακρυσμένου Κεντρικόυ Υπολογιστή");
-define('LANG_gsp_user', "Όνομα χρήστη GSP Agent");
+define('LANG_user', "Όνομα χρήστη GSP Agent");
 define('LANG_remote_host_name_info', "Το όνομα απομακρυσμένου κεντρικού υπολογιστή χρησιμοποιείται για να βοηθήσει τους χρήστες να αναγνωρίσουν τους διακομιστές τους.");
 define('LANG_add_remote_host', "Προσθέστε Απομακρυσμένου Κεντρικού Υπολογιστή");
 define('LANG_remote_encryption_key', "Κλειδί Απομακρυσμένης Κρυπτογράφησης");

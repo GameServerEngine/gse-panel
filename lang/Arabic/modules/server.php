@@ -29,7 +29,7 @@ define('LANG_remote_host_info', "يجب أن يكون المضيف البعيد 
 define('LANG_remote_host_port', "بورت المضيف البعيد");
 define('LANG_remote_host_port_info', "The port that is listened by the GSP Agent on remote host. Default: 12679.");
 define('LANG_remote_host_name', "إسم المضيف البعيد");
-define('LANG_gsp_user', "اسم مستخدم وكيل GSP");
+define('LANG_user', "اسم مستخدم وكيل GSP");
 define('LANG_remote_host_name_info', "يستخدم اسم المضيف البعيد لمساعدة المستخدمين على تحديد خوادمهم.");
 define('LANG_add_remote_host', "إضافة المضيف البعيد");
 define('LANG_remote_encryption_key', "مفتاح التشفير عن بعد");

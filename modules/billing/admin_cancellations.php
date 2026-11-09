@@ -5,7 +5,7 @@ require_once __DIR__.'/classes/BillingRepository.php'; require_once __DIR__.'/cl
 function h($v){return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}
 $db=(isset($db_host,$db_user,$db_pass,$db_name)) ? @mysqli_connect($db_host,$db_user,$db_pass,$db_name,isset($db_port)?(int)$db_port:null) : false;
 if (!$db && billing_is_panel_context()) { echo '<div class="failure billing-admin-failure">Billing admin: database connection failed.</div>'; return; }
-mysqli_set_charset($db,'utf8mb4'); $p=$table_prefix??'gsp_';
+mysqli_set_charset($db,'utf8mb4'); $p=$table_prefix??'';
 $csrf=billing_action_csrf_token('billing_admin_cancellation_csrf'); $msg='';
 if ($_SERVER['REQUEST_METHOD']==='POST' && billing_action_validate_csrf($_POST['csrf']??'','billing_admin_cancellation_csrf')) {
     $id=(int)($_POST['request_id']??0); $decision=$_POST['decision']??''; $admin=(int)($_SESSION['website_user_id']??$_SESSION['user_id']??0);

@@ -181,7 +181,7 @@ if (!defined('BILLING_CONFIG_PATH')) {
 // Step 2: Child-of-panel detection.
 // ---------------------------------------------------------------------------
 $_billing_panel_config = null;
-$explicit_panel = getenv('GSP_PANEL_PATH');
+$explicit_panel = getenv('PANEL_PATH');
 if ($explicit_panel === false || $explicit_panel === '') {
     $explicit_panel = getenv('BILLING_PANEL_PATH');
 }
@@ -326,8 +326,8 @@ define('BILLING_CONFIG_LOADED', true);
 // PayPal helper functions — use these everywhere instead of reading globals.
 // ---------------------------------------------------------------------------
 
-if (!function_exists('gsp_paypal_get_mode')) {
-    function gsp_paypal_get_mode(): string
+if (!function_exists('paypal_get_mode')) {
+    function paypal_get_mode(): string
     {
         if (function_exists('billing_get_paypal_db_config')) {
             $db = billing_get_paypal_db_config();
@@ -337,71 +337,71 @@ if (!function_exists('gsp_paypal_get_mode')) {
     }
 }
 
-if (!function_exists('gsp_paypal_is_sandbox')) {
-    function gsp_paypal_is_sandbox(): bool
+if (!function_exists('paypal_is_sandbox')) {
+    function paypal_is_sandbox(): bool
     {
-        return gsp_paypal_get_mode() !== 'live';
+        return paypal_get_mode() !== 'live';
     }
 }
 
-if (!function_exists('gsp_paypal_get_client_id')) {
-    function gsp_paypal_get_client_id(): string
+if (!function_exists('paypal_get_client_id')) {
+    function paypal_get_client_id(): string
     {
         $db = function_exists('billing_get_paypal_db_config') ? billing_get_paypal_db_config() : [];
         if (!empty($db['paypal_client_id'])) return (string)$db['paypal_client_id'];
-        if (gsp_paypal_is_sandbox()) {
+        if (paypal_is_sandbox()) {
             return (string)($GLOBALS['paypal_sandbox_client_id'] ?? '');
         }
         return (string)($GLOBALS['paypal_live_client_id'] ?? '');
     }
 }
 
-if (!function_exists('gsp_paypal_get_client_secret')) {
-    function gsp_paypal_get_client_secret(): string
+if (!function_exists('paypal_get_client_secret')) {
+    function paypal_get_client_secret(): string
     {
         $db = function_exists('billing_get_paypal_db_config') ? billing_get_paypal_db_config() : [];
         if (!empty($db['paypal_client_secret'])) return (string)$db['paypal_client_secret'];
-        if (gsp_paypal_is_sandbox()) {
+        if (paypal_is_sandbox()) {
             return (string)($GLOBALS['paypal_sandbox_client_secret'] ?? '');
         }
         return (string)($GLOBALS['paypal_live_client_secret'] ?? '');
     }
 }
 
-if (!function_exists('gsp_paypal_get_webhook_id')) {
-    function gsp_paypal_get_webhook_id(): string
+if (!function_exists('paypal_get_webhook_id')) {
+    function paypal_get_webhook_id(): string
     {
         $db = function_exists('billing_get_paypal_db_config') ? billing_get_paypal_db_config() : [];
         if (!empty($db['paypal_webhook_id'])) return (string)$db['paypal_webhook_id'];
-        if (gsp_paypal_is_sandbox()) {
+        if (paypal_is_sandbox()) {
             return (string)($GLOBALS['paypal_sandbox_webhook_id'] ?? '');
         }
         return (string)($GLOBALS['paypal_live_webhook_id'] ?? '');
     }
 }
 
-if (!function_exists('gsp_paypal_get_api_base')) {
-    function gsp_paypal_get_api_base(): string
+if (!function_exists('paypal_get_api_base')) {
+    function paypal_get_api_base(): string
     {
-        return gsp_paypal_is_sandbox()
+        return paypal_is_sandbox()
             ? 'https://api-m.sandbox.paypal.com'
             : 'https://api-m.paypal.com';
     }
 }
 
-if (!function_exists('gsp_paypal_get_webhook_path')) {
-    function gsp_paypal_get_webhook_path(): string
+if (!function_exists('paypal_get_webhook_path')) {
+    function paypal_get_webhook_path(): string
     {
         $path = (string)($GLOBALS['paypal_webhook_path'] ?? '/paypal/webhook.php');
         return '/' . ltrim($path, '/');
     }
 }
 
-if (!function_exists('gsp_paypal_get_full_webhook_url')) {
-    function gsp_paypal_get_full_webhook_url(): string
+if (!function_exists('paypal_get_full_webhook_url')) {
+    function paypal_get_full_webhook_url(): string
     {
         $base = rtrim((string)($GLOBALS['SITE_BASE_URL'] ?? ''), '/');
-        $path = gsp_paypal_get_webhook_path();
+        $path = paypal_get_webhook_path();
         return $base . $path;
     }
 }

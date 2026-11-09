@@ -29,7 +29,7 @@ define('LANG_remote_host_info', "Udaljeni poslužitelj mora imati odgovarajući 
 define('LANG_remote_host_port', "Port Udaljenog Poslužitelja");
 define('LANG_remote_host_port_info', "Port od strane GSP Agenta na udaljenom poslužitelju. Zadano:12679");
 define('LANG_remote_host_name', "Naziv Udaljenog Poslužitelja");
-define('LANG_gsp_user', "Korisničko Ime GSP Agenta");
+define('LANG_user', "Korisničko Ime GSP Agenta");
 define('LANG_remote_host_name_info', "Naziv udaljenog poslužitelja koristi se za pomoć korisnicima da identificiraju svoje poslužitelje.");
 define('LANG_add_remote_host', "Dodajte Udaljeni Poslužitelj");
 define('LANG_remote_encryption_key', "Udaljeni Ključ za Enkripciju");

@@ -41,7 +41,7 @@ class Gtan extends Http
      */
     protected $packets = [
         //self::PACKET_STATUS => "GET /apiservers HTTP/1.0\r\nHost: master.gtanet.work\r\nAccept: */*\r\n\r\n",
-        self::PACKET_STATUS => "GET /gtan/api.php?ip=%s&raw HTTP/1.0\r\nHost: multiplayerhosting.info\r\nAccept: */*\r\n\r\n",
+        self::PACKET_STATUS => "GET /gtan/gsp_api.php?ip=%s&raw HTTP/1.0\r\nHost: multiplayerhosting.info\r\nAccept: */*\r\n\r\n",
     ];
 
     /**

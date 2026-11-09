@@ -13,7 +13,7 @@ cat >"$config_json" <<'JSON'
 {
   "db_host": "localhost",
   "db_port": "3306",
-  "db_user": "gsp_panel",
+  "db_user": "panel",
   "db_pass": "validation-secret",
   "db_name": "panel",
   "table_prefix": "",

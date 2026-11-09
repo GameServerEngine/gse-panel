@@ -2,8 +2,8 @@
 /**
  * Panel dispatcher for billing administrator pages.
  */
-if (!function_exists('exec_gsp_module')) {
-    function exec_gsp_module(): void
+if (!function_exists('exec_module')) {
+    function exec_module(): void
     {
         $page = (string)($_GET['p'] ?? '');
         $sections = array(

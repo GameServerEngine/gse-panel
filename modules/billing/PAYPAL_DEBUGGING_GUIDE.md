@@ -154,7 +154,7 @@ error => Access denied for user
 **Log entry example:**
 ```
 [2025-10-29 21:30:00] [cap_12345] UPDATE_INVOICES_FAILED
-error => Table 'gsp_billing_invoices' doesn't exist
+error => Table 'billing_invoices' doesn't exist
 ```
 
 **Cause:** Database schema issue

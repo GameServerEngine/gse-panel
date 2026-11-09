@@ -24,7 +24,7 @@
 
 require_once(__DIR__ . "/../Crypt/XXTEA.php");
 
-if (!defined('GSP_XMLRPC_READY')) {
+if (!defined('XMLRPC_READY')) {
 	if (!function_exists('xmlrpc_encode_request') || !function_exists('xmlrpc_decode')) {
 		$message = "GSP requires the PHP xmlrpc extension for agent communication.\n".
 		           "Install the php-xmlrpc package for your PHP version (example: sudo apt install php8.3-xmlrpc on Ubuntu 24.04 or use PECL).\n".
@@ -39,16 +39,16 @@ if (!defined('GSP_XMLRPC_READY')) {
 		}
 		exit(1);
 	}
-	define('GSP_XMLRPC_READY', true);
+	define('XMLRPC_READY', true);
 }
 
 // Screen type for servers
-define("GSP_SCREEN_TYPE_HOME","HOME");
-define("GSP_SCREEN_TYPE_UPDATE","UPDATE");
+define("SCREEN_TYPE_HOME","HOME");
+define("SCREEN_TYPE_UPDATE","UPDATE");
 
 define("AGENT_ERROR_NOT_EXECUTABLE",-13);
 
-class GSPRemoteLibrary
+class RemoteLibrary
 {
 	private $port;
 	private $host;

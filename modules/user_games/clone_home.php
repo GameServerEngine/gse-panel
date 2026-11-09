@@ -22,7 +22,7 @@
  *
  */
 
-function exec_gsp_module()
+function exec_module()
 {
 	global $db, $settings;
 
@@ -44,7 +44,7 @@ function exec_gsp_module()
 	echo create_back_button('user_games');
 
 	include_once('includes/lib_remote.php');
-	$remote = new GSPRemoteLibrary($server_row['agent_ip'],$server_row['agent_port'],$server_row['encryption_key'],$server_row['timeout']);
+	$remote = new RemoteLibrary($server_row['agent_ip'],$server_row['agent_port'],$server_row['encryption_key'],$server_row['timeout']);
 
 	if(isset($_REQUEST['clone_home']))
 	{
@@ -54,7 +54,7 @@ function exec_gsp_module()
 		$web_user = $web_user["users_login"];
 
 		// Game path logic
-		$game_path = "/home/".$server_row['gsp_user']."/GSP_User_Files/"; // Default
+		$game_path = "/home/".$server_row['user']."/User_Files/"; // Default
 
 		$skipId = false;
 		if(hasValue($default_home_dir)){
@@ -198,7 +198,7 @@ function exec_gsp_module()
 	$ft->add_field('string','new_home_name',htmlentities($server_row['home_name']));
 	echo "<tr><td class='right'>".get_lang('clone_mods').":</td>
 		<td class='left'><input type='checkbox' name='clone_mods' value='y' /></td></tr>";
-	echo "<input name='user_group' type='hidden' value='".get_user_uid_gid_from_passwd($passwd_array,$server_row['gsp_user'])."' /></tr>";
+	echo "<input name='user_group' type='hidden' value='".get_user_uid_gid_from_passwd($passwd_array,$server_row['user'])."' /></tr>";
 	echo "</table>";
 	$ft->add_button('submit','clone_home',get_lang('clone_home'));
 	echo "<p class='info'>".get_lang('the_name_of_the_server_to_help_users_to_identify_it')."</p>";

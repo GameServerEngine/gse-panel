@@ -11,7 +11,7 @@
  *
  */
 
-function exec_gsp_module()
+function exec_module()
 {
 	global $db, $settings;
 
@@ -161,7 +161,7 @@ function exec_gsp_module()
  * Both servers must live on the SAME remote agent.  Cross-node migration is
  * noted below as a limitation.
  *
- * @param GSPDatabase $db       Panel DB
+ * @param Database $db       Panel DB
  * @param array       $source   Row from getGameHomeWithoutMods() for source
  * @param array       $dest     Row from getGameHomeWithoutMods() for dest
  * @param array       $settings Panel settings array
@@ -193,7 +193,7 @@ function migrate_game_server($db, $source, $dest, $settings)
 	$same_node = ($source['remote_server_id'] == $dest['remote_server_id']);
 
 	// Build remote connection to the source agent (used for same-node ops)
-	$remote_src = new GSPRemoteLibrary(
+	$remote_src = new RemoteLibrary(
 		$source['agent_ip'],
 		$source['agent_port'],
 		$source['encryption_key'],
@@ -205,7 +205,7 @@ function migrate_game_server($db, $source, $dest, $settings)
 		// SSH to pull files from the source agent.  This requires that the
 		// destination agent's OS user can reach the source via SSH without
 		// a passphrase.  We attempt it but return 0 on obvious failure.
-		$remote_dst = new GSPRemoteLibrary(
+		$remote_dst = new RemoteLibrary(
 			$dest['agent_ip'],
 			$dest['agent_port'],
 			$dest['encryption_key'],
@@ -219,7 +219,7 @@ function migrate_game_server($db, $source, $dest, $settings)
 			return 0;
 		}
 
-		$src_user = $source['gsp_user'] ?? 'gameserver';
+		$src_user = $source['user'] ?? 'gameserver';
 		$rsync_pull = sprintf(
 			'rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" %s@%s:%s/ %s/',
 			escapeshellarg($src_user),
@@ -233,7 +233,7 @@ function migrate_game_server($db, $source, $dest, $settings)
 			return -1; // running async
 		}
 		// Fix ownership on destination
-		$dst_user  = $dest['gsp_user'] ?? 'gameserver';
+		$dst_user  = $dest['user'] ?? 'gameserver';
 		$chown_cmd = sprintf(
 			'chown -R %s:%s %s/',
 			escapeshellarg($dst_user),
@@ -271,8 +271,8 @@ function migrate_game_server($db, $source, $dest, $settings)
 
 	// Linux — prefer the agent's built-in clone_home (rsync -a) because it
 	// runs in the background and returns -1 (async) with progress support.
-	// We need to pass the owner for chown; fall back to source gsp_user.
-	$owner = $dest['gsp_user'] ?? $source['gsp_user'] ?? 'gameserver';
+	// We need to pass the owner for chown; fall back to source user.
+	$owner = $dest['user'] ?? $source['user'] ?? 'gameserver';
 	$rc    = $remote_src->clone_home($src_path, $dst_path, $owner);
 
 	if ($rc === 1 || $rc === -1) {

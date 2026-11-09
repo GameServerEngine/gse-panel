@@ -27,8 +27,8 @@ define("XML_SCHEMA","modules/config_games/schema_server_config.xml");
 
 require_once(dirname(__DIR__, 2) . "/includes/game_path_helpers.php");
 
-if (!function_exists('gsp_render_config_error')) {
-	function gsp_render_config_error($title, $details = "")
+if (!function_exists('render_config_error')) {
+	function render_config_error($title, $details = "")
 	{
 		$log_message = "[GSP] $title" . (empty($details) ? "" : " Details: $details");
 		error_log($log_message);
@@ -57,15 +57,15 @@ if (!function_exists('gsp_render_config_error')) {
 /**
  * Collect a non-fatal XML parse/validation error for a game config file.
  * Errors are stored in a static array and can be retrieved via
- * gsp_get_xml_errors().  Does NOT stop page execution.
+ * get_xml_errors().  Does NOT stop page execution.
  */
-if (!function_exists('gsp_collect_xml_error')) {
-	function gsp_collect_xml_error(string $file, string $title, string $details = ''): void
+if (!function_exists('collect_xml_error')) {
+	function collect_xml_error(string $file, string $title, string $details = ''): void
 	{
 		$log_message = "[GSP] $title" . (empty($details) ? '' : ' Details: ' . $details);
 		error_log($log_message);
 
-		$GLOBALS['_gsp_xml_errors'][] = array(
+		$GLOBALS['_xml_errors'][] = array(
 			'file'    => $file,
 			'title'   => $title,
 			'details' => $details,
@@ -73,27 +73,27 @@ if (!function_exists('gsp_collect_xml_error')) {
 	}
 }
 
-if (!function_exists('gsp_get_xml_errors')) {
-	function gsp_get_xml_errors(): array
+if (!function_exists('get_xml_errors')) {
+	function get_xml_errors(): array
 	{
-		return isset($GLOBALS['_gsp_xml_errors']) ? $GLOBALS['_gsp_xml_errors'] : array();
+		return isset($GLOBALS['_xml_errors']) ? $GLOBALS['_xml_errors'] : array();
 	}
 }
 
-if (!function_exists('gsp_render_missing_xml_extensions')) {
-	function gsp_render_missing_xml_extensions($missing_extensions)
+if (!function_exists('render_missing_xml_extensions')) {
+	function render_missing_xml_extensions($missing_extensions)
 	{
 		$pretty = implode(', ', $missing_extensions);
 		$details = "Missing PHP extension(s): {$pretty}\n"
 				 . "Install the php-xml package and restart Apache/PHP-FPM.\n"
 				 . "Debian/Ubuntu: sudo apt install php-xml\n"
 				 . "RHEL/CentOS: sudo dnf install php-xml";
-		gsp_render_config_error("Required PHP XML extensions are not available.", $details);
+		render_config_error("Required PHP XML extensions are not available.", $details);
 	}
 }
 
-if (!function_exists('gsp_format_libxml_errors')) {
-	function gsp_format_libxml_errors()
+if (!function_exists('format_libxml_errors')) {
+	function format_libxml_errors()
 	{
 		$errors = libxml_get_errors();
 		if (empty($errors)) {
@@ -108,8 +108,8 @@ if (!function_exists('gsp_format_libxml_errors')) {
 	}
 }
 
-if (!function_exists('gsp_ensure_xml_support')) {
-	function gsp_ensure_xml_support()
+if (!function_exists('ensure_xml_support')) {
+	function ensure_xml_support()
 	{
 		static $checked = false;
 		if ($checked) {
@@ -128,7 +128,7 @@ if (!function_exists('gsp_ensure_xml_support')) {
 		}
 
 		if (!empty($missing)) {
-			gsp_render_missing_xml_extensions($missing);
+			render_missing_xml_extensions($missing);
 		}
 
 		$checked = true;
@@ -139,7 +139,7 @@ if (!function_exists('gsp_ensure_xml_support')) {
 /// \return array containing the elements on success.
 /* OS blocks: a game file may hold <os><windows> and/or <os><linux> blocks. The chosen OS's
  * values are copied to the top level so callers that read top-level tags keep working. */
-function gsp_config_os_names(DOMDocument $dom)
+function config_os_names(DOMDocument $dom)
 {
 	$names = array();
 	foreach ($dom->documentElement->childNodes as $c) {
@@ -154,9 +154,9 @@ function gsp_config_os_names(DOMDocument $dom)
 	return $names;
 }
 
-function gsp_resolve_config_os(DOMDocument $dom, $os)
+function resolve_config_os(DOMDocument $dom, $os)
 {
-	$names = gsp_config_os_names($dom);
+	$names = config_os_names($dom);
 	if ($os !== null) {
 		return in_array($os, $names, true) ? $os : null;
 	}
@@ -166,7 +166,7 @@ function gsp_resolve_config_os(DOMDocument $dom, $os)
 	return in_array('linux', $names, true) ? 'linux' : null;
 }
 
-function gsp_apply_os_block(DOMDocument $dom, $os)
+function apply_os_block(DOMDocument $dom, $os)
 {
 	if ($os === null) {
 		return;
@@ -212,7 +212,7 @@ function gsp_apply_os_block(DOMDocument $dom, $os)
 
 /* OS of the agent a game is installed on. Returns 'unknown' when it cannot be determined, so the
  * read fails visibly instead of loading the wrong block. */
-function gsp_os_for_install_row($row)
+function os_for_install_row($row)
 {
 	global $db;
 	if (is_array($row) && !empty($row['server_os'])) {
@@ -220,7 +220,7 @@ function gsp_os_for_install_row($row)
 	}
 	$homeId = is_array($row) && isset($row['home_id']) ? (int)$row['home_id'] : 0;
 	if ($homeId > 0 && isset($db) && $db) {
-		$rows = $db->resultQuery("SELECT rs.server_os FROM GSP_DB_PREFIXserver_homes sh INNER JOIN GSP_DB_PREFIXremote_servers rs ON rs.remote_server_id = sh.remote_server_id WHERE sh.home_id = {$homeId} LIMIT 1");
+		$rows = $db->resultQuery("SELECT rs.server_os FROM TABLE_PREFIX_PLACEHOLDERserver_homes sh INNER JOIN TABLE_PREFIX_PLACEHOLDERremote_servers rs ON rs.remote_server_id = sh.remote_server_id WHERE sh.home_id = {$homeId} LIMIT 1");
 		if (!empty($rows[0]['server_os'])) {
 			return $rows[0]['server_os'];
 		}
@@ -229,10 +229,10 @@ function gsp_os_for_install_row($row)
 }
 function read_server_config( $filename, $os = null )
 {
-	gsp_ensure_xml_support();
+	ensure_xml_support();
 
 	if (!is_readable($filename)) {
-		gsp_collect_xml_error(
+		collect_xml_error(
 			$filename,
 			"Game configuration file is missing or unreadable.",
 			"Expected at: {$filename}"
@@ -244,10 +244,10 @@ function read_server_config( $filename, $os = null )
 	$dom = new DOMDocument();
 	if ($dom->load($filename) === FALSE)
 	{
-		gsp_collect_xml_error(
+		collect_xml_error(
 			$filename,
 			"Unable to load XML configuration.",
-			"File: {$filename}\n".gsp_format_libxml_errors()
+			"File: {$filename}\n".format_libxml_errors()
 		);
 		libxml_use_internal_errors($previous_error_state);
 		return FALSE;
@@ -255,23 +255,23 @@ function read_server_config( $filename, $os = null )
 
 	if ( $dom->schemaValidate(XML_SCHEMA) !== TRUE )
 	{
-		gsp_collect_xml_error(
+		collect_xml_error(
 			$filename,
 			"XML configuration failed schema validation.",
-			"File: {$filename}\nSchema: ".XML_SCHEMA."\n".gsp_format_libxml_errors()
+			"File: {$filename}\nSchema: ".XML_SCHEMA."\n".format_libxml_errors()
 		);
 		libxml_use_internal_errors($previous_error_state);
 		return FALSE;
 	}
 
-	$resolvedOs = gsp_resolve_config_os($dom, $os);
-	gsp_apply_os_block($dom, $resolvedOs);
+	$resolvedOs = resolve_config_os($dom, $os);
+	apply_os_block($dom, $resolvedOs);
 	$xml = simplexml_import_dom($dom);
 	if($xml === false){
-		gsp_collect_xml_error(
+		collect_xml_error(
 			$filename,
 			"Failed to parse XML configuration.",
-			"File: {$filename}\n".gsp_format_libxml_errors()
+			"File: {$filename}\n".format_libxml_errors()
 		);
 		libxml_use_internal_errors($previous_error_state);
 		return FALSE;

@@ -81,14 +81,14 @@ else
 		$home_id = $user_home['home_id'];
 		$home_info = $db->getGameHomeWithoutMods($home_id);
 		$server_info = $db->getRemoteServerById($home_info['remote_server_id']);
-		$remote = new GSPRemoteLibrary($server_info['agent_ip'], $server_info['agent_port'], $server_info['encryption_key']);
+		$remote = new RemoteLibrary($server_info['agent_ip'], $server_info['agent_port'], $server_info['encryption_key']);
 		$ftp_login = isset($home_info['ftp_login']) ? $home_info['ftp_login'] : $home_id;
 		$remote->ftp_mgr("userdel", $ftp_login);
 		$db->changeFtpStatus('disabled',$home_id);
 		$addresses = $db->getHomeIpPorts($home_id);
 		foreach($addresses as $address)
 		{
-			$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
+			$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], os_for_install_row($home_info));
 			if(isset($server_xml->control_protocol_type))$control_type = $server_xml->control_protocol_type; else $control_type = "";
 			$remote->remote_stop_server($home_id,$address['ip'],$address['port'],$server_xml->control_protocol,$home_info['control_password'],$control_type,$home_info['home_path']);
 		}

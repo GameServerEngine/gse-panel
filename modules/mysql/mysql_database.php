@@ -22,7 +22,7 @@
  *
  */
 
-class MySQLModuleDatabase extends GSPDatabaseMySQL
+class MySQLModuleDatabase extends DatabaseMySQL
 {
 	protected $link;
 	protected $table_prefix;

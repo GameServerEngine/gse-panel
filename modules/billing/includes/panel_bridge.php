@@ -1,7 +1,7 @@
 <?php
 /**
  * Panel bridge helpers for the storefront.
- * Provides access to the native GSPDatabase layer, settings, and XML parsers
+ * Provides access to the native Database layer, settings, and XML parsers
  * without duplicating the panel bootstrap logic in each script.
  */
 require_once dirname(__DIR__) . '/billing_bootstrap.php';
@@ -10,7 +10,7 @@ if (!function_exists('billing_panel_bootstrap')) {
     /**
      * Initialize the panel runtime and return shared context.
      *
-     * @return array{db:GSPDatabase|null, settings:array, table_prefix:string}|null
+     * @return array{db:Database|null, settings:array, table_prefix:string}|null
      */
     function billing_panel_bootstrap()
     {
@@ -24,7 +24,7 @@ if (!function_exists('billing_panel_bootstrap')) {
             error_log('billing_panel_bootstrap: unable to resolve project root');
             return null;
         }
-        $overrideRoot = getenv('GSP_PANEL_PATH');
+        $overrideRoot = getenv('PANEL_PATH');
         if (($overrideRoot === false || $overrideRoot === '') && function_exists('billing_runtime_panel_root')) {
             $overrideRoot = billing_runtime_panel_root();
         }
@@ -82,7 +82,7 @@ if (!function_exists('billing_panel_bootstrap')) {
         }
 
         $panelDb = createDatabaseConnection($db_type, $db_host, $db_user, $db_pass, $db_name, $table_prefix, isset($db_port) ? $db_port : NULL);
-        if (!($panelDb instanceof GSPDatabase)) {
+        if (!($panelDb instanceof Database)) {
             error_log('billing_panel_bootstrap: failed to connect to panel database');
             return null;
         }
@@ -101,9 +101,9 @@ if (!function_exists('billing_panel_bootstrap')) {
 
 if (!function_exists('billing_get_panel_db')) {
     /**
-     * Convenience wrapper to fetch the shared GSPDatabase handle.
+     * Convenience wrapper to fetch the shared Database handle.
      *
-     * @return GSPDatabase|null
+     * @return Database|null
      */
     function billing_get_panel_db()
     {

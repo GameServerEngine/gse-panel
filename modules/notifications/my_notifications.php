@@ -16,7 +16,7 @@
 
 require_once('modules/notifications/ntfy_helpers.php');
 
-function exec_gsp_module()
+function exec_module()
 {
 	global $db, $settings;
 

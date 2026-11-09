@@ -29,7 +29,7 @@ function create_selection($selection,$flag)
 		<td align='left'><input id='".clean_id_string($selection)."' type='checkbox' name='".$selection."' value='1' checked='checked' /></td></tr><tr>
 		<td align='left' class='info' colspan='2'>".get_lang($selection.'_info')."</td></tr>";
 }
-function exec_gsp_module()
+function exec_module()
 {
 	global $db, $settings;
 	global $view;
@@ -100,7 +100,7 @@ function exec_gsp_module()
 			}
 			foreach ((array)$remote_servers as $server)
 			{
-				if($server['remote_server_id'] == $rserver_id) $gsp_user = $server['gsp_user'];
+				if($server['remote_server_id'] == $rserver_id) $remote_user = $server['user'];
 			}
 			foreach ((array)$users as $user)
 			{
@@ -109,7 +109,7 @@ function exec_gsp_module()
 			$ftppassword = genRandomString(8);
 
 			// Game path logic
-			$game_path = "/home/".$gsp_user."/GSP_User_Files/"; // Default
+			$game_path = "/home/".$remote_user."/User_Files/"; // Default
 
 			$skipId = false;
 			if(hasValue($default_home_dir)){
@@ -138,10 +138,10 @@ function exec_gsp_module()
 					$home_info = $db->getGameHomeWithoutMods($new_home_id);
 					require_once('includes/lib_remote.php');
 					require_once('includes/game_path_helpers.php');
-					$remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
+					$remote = new RemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
 
 					$path_error = '';
-					$game_root = gsp_resolve_game_root($home_info['home_path'], $game_key, $path_error);
+					$game_root = resolve_game_root($home_info['home_path'], $game_key, $path_error);
 					if ($game_root === false) {
 						print_failure('Invalid game directory for this server: ' . htmlentities($path_error));
 						return;
@@ -221,7 +221,7 @@ function exec_gsp_module()
 			$rhost_id = $_POST['rserver_id'];
 		$remote_server = $db->getRemoteServer($rhost_id);
 		require_once('includes/lib_remote.php');
-		$remote = new GSPRemoteLibrary($remote_server['agent_ip'],$remote_server['agent_port'],$remote_server['encryption_key'],$remote_server['timeout']);
+		$remote = new RemoteLibrary($remote_server['agent_ip'],$remote_server['agent_port'],$remote_server['encryption_key'],$remote_server['timeout']);
 		$host_stat = $remote->status_chk();
 		if( $host_stat === 1)
 			$os = $remote->what_os();

@@ -22,9 +22,9 @@
  *
  */
 
-define("GSP_DB_PREFIX", "GSP_DB_PREFIX");
+define("TABLE_PREFIX_PLACEHOLDER", "TABLE_PREFIX_PLACEHOLDER");
 
-abstract class GSPDatabase {
+abstract class Database {
 
     protected $queries_ = 0;
 
@@ -153,7 +153,7 @@ abstract class GSPDatabase {
 
 	abstract public function getCurrentHomeConfigMods($clear_all);
 
-	abstract public function updateGSPGameModsWithNewIDs($oldModStructure);
+	abstract public function updateGameModsWithNewIDs($oldModStructure);
 
     abstract public function clearGameCfgs($clear_all);
 

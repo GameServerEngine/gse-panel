@@ -23,7 +23,7 @@
  *
  */
 
-function exec_gsp_module()
+function exec_module()
 {
 	echo "<h2>".get_lang('ban_list')."</h2>";
 	global $db, $settings;
@@ -34,10 +34,10 @@ function exec_gsp_module()
 		foreach ((array)$_POST as $name => $ip)
 		{
 			$ip = $db->real_escape_string($ip);
-			$db->query("DELETE FROM `GSP_DB_PREFIXban_list` WHERE client_ip = '$ip';");
+			$db->query("DELETE FROM `TABLE_PREFIX_PLACEHOLDERban_list` WHERE client_ip = '$ip';");
 		}
 	}
-	$ban_list = $db->resultQuery("SELECT logging_attempts, banned_until, client_ip FROM `GSP_DB_PREFIXban_list`;");
+	$ban_list = $db->resultQuery("SELECT logging_attempts, banned_until, client_ip FROM `TABLE_PREFIX_PLACEHOLDERban_list`;");
 	$ban_qty = 0;
 	$ban_table = '';
 	if($ban_list)

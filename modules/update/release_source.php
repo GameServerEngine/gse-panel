@@ -12,17 +12,17 @@
  *
  */
 
-if (!defined('GSP_RELEASE_USER_AGENT')) {
+if (!defined('RELEASE_USER_AGENT')) {
 	// GitHub rejects API requests that send no User-Agent (HTTP 403).
-	define('GSP_RELEASE_USER_AGENT', 'GSE-Panel-Update');
+	define('RELEASE_USER_AGENT', 'GSE-Panel-Update');
 }
 
-function gsp_release_components()
+function release_components()
 {
 	return ['panel', 'agent_linux', 'agent_windows'];
 }
 
-function gsp_release_component_label($component)
+function release_component_label($component)
 {
 	$labels = [
 		'panel' => 'Panel',
@@ -32,14 +32,14 @@ function gsp_release_component_label($component)
 	return isset($labels[$component]) ? $labels[$component] : $component;
 }
 
-function gsp_is_valid_release_source_channel($channel)
+function is_valid_release_source_channel($channel)
 {
 	return in_array((string)$channel, ['stable', 'testing'], true);
 }
 
 /**
- * Settings are stored under gsp_release_<component>_repo_url,
- * gsp_release_<component>_channel, gsp_release_<component>_token_file.
+ * Settings are stored under release_<component>_repo_url,
+ * release_<component>_channel, release_<component>_token_file.
  * Tokens are never stored in the settings table directly: only a path to a
  * secret file the panel reads at request time.
  */
@@ -55,36 +55,36 @@ function default_repo_url($component)
 }
 }
 
-function gsp_release_source_settings($component)
+function release_source_settings($component)
 {
 	global $settings;
-	$prefix = 'gsp_release_' . $component . '_';
+	$prefix = 'release_' . $component . '_';
 	return [
 		'component' => $component,
 		'repo_url' => !empty($settings[$prefix . 'repo_url']) ? trim((string)$settings[$prefix . 'repo_url']) : default_repo_url($component),
-		'channel' => gsp_is_valid_release_source_channel($settings[$prefix . 'channel'] ?? '')
+		'channel' => is_valid_release_source_channel($settings[$prefix . 'channel'] ?? '')
 			? (string)$settings[$prefix . 'channel']
 			: 'stable',
 		'token_file' => !empty($settings[$prefix . 'token_file']) ? trim((string)$settings[$prefix . 'token_file']) : '',
 	];
 }
 
-function gsp_validate_release_source_settings(array $cfg)
+function validate_release_source_settings(array $cfg)
 {
 	$errors = [];
 	if ($cfg['repo_url'] !== '' && !preg_match('#^https?://#i', $cfg['repo_url'])) {
-		$errors[] = gsp_release_component_label($cfg['component']) . ' repo URL must be http(s).';
+		$errors[] = release_component_label($cfg['component']) . ' repo URL must be http(s).';
 	}
-	if (!gsp_is_valid_release_source_channel($cfg['channel'])) {
-		$errors[] = gsp_release_component_label($cfg['component']) . ' release channel must be stable or testing.';
+	if (!is_valid_release_source_channel($cfg['channel'])) {
+		$errors[] = release_component_label($cfg['component']) . ' release channel must be stable or testing.';
 	}
 	if ($cfg['token_file'] !== '' && (strpos($cfg['token_file'], "\0") !== false || strpos($cfg['token_file'], '..') !== false || strpos($cfg['token_file'], '/') !== 0)) {
-		$errors[] = gsp_release_component_label($cfg['component']) . ' token file must be a safe absolute path.';
+		$errors[] = release_component_label($cfg['component']) . ' token file must be a safe absolute path.';
 	}
 	return $errors;
 }
 
-function gsp_read_release_token(array $cfg)
+function read_release_token(array $cfg)
 {
 	if ($cfg['token_file'] === '' || !is_readable($cfg['token_file'])) {
 		return '';
@@ -97,7 +97,7 @@ function gsp_read_release_token(array $cfg)
  * gitlab.com) which both expose a releases API; 'generic' for anything else
  * (self-hosted forges, plain git remotes), which falls back to git tags.
  */
-function gsp_release_provider_from_url($repo_url)
+function release_provider_from_url($repo_url)
 {
 	$host = strtolower((string)parse_url($repo_url, PHP_URL_HOST));
 	if ($host === 'github.com' || $host === 'www.github.com') {
@@ -115,7 +115,7 @@ function gsp_release_provider_from_url($repo_url)
  * Releases are assumed to already be sorted newest-first (as GitLab/GitHub
  * APIs return them); this just filters. Returns null if none qualify.
  */
-function gsp_release_pick_stable(array $releases)
+function release_pick_stable(array $releases)
 {
 	foreach ($releases as $release) {
 		if (empty($release['prerelease'])) {
@@ -129,7 +129,7 @@ function gsp_release_pick_stable(array $releases)
  * Picks the newest prerelease. Returns null if there is none, in which case
  * the caller should fall back to the head of the `testing` branch.
  */
-function gsp_release_pick_testing(array $releases)
+function release_pick_testing(array $releases)
 {
 	foreach ($releases as $release) {
 		if (!empty($release['prerelease'])) {
@@ -145,32 +145,32 @@ function gsp_release_pick_testing(array $releases)
  * $releases_fetcher: callable($repo_url, $token, $provider) -> array of release-shaped rows
  *   (newest first: ['tag', 'prerelease', 'created_at']), or null if there's nothing to resolve from.
  *   For github/gitlab this is the releases API; for a generic (self-hosted) remote, the production
- *   wrapper passes a git-tags-based fetcher instead (see gsp_release_fetch_tags_live). Tests inject
+ *   wrapper passes a git-tags-based fetcher instead (see release_fetch_tags_live). Tests inject
  *   whatever shape they need directly, independent of provider.
  * $testing_branch_head_fetcher: callable($repo_url, $token, $provider) -> ['tag' => 'testing', 'commit' => sha] or null.
  */
-function gsp_release_resolve_channel(array $cfg, callable $releases_fetcher, callable $testing_branch_head_fetcher)
+function release_resolve_channel(array $cfg, callable $releases_fetcher, callable $testing_branch_head_fetcher)
 {
-	$token = gsp_read_release_token($cfg);
-	$provider = gsp_release_provider_from_url($cfg['repo_url']);
+	$token = read_release_token($cfg);
+	$provider = release_provider_from_url($cfg['repo_url']);
 	$releases = $releases_fetcher($cfg['repo_url'], $token, $provider);
 
 	if ($cfg['channel'] === 'stable') {
-		$pick = is_array($releases) ? gsp_release_pick_stable($releases) : null;
+		$pick = is_array($releases) ? release_pick_stable($releases) : null;
 		if ($pick === null) {
-			return ['success' => false, 'error' => 'No stable (non-prerelease) release tag found for ' . gsp_release_component_label($cfg['component']) . '.'];
+			return ['success' => false, 'error' => 'No stable (non-prerelease) release tag found for ' . release_component_label($cfg['component']) . '.'];
 		}
 		return ['success' => true, 'source' => 'release', 'tag' => $pick['tag'], 'release' => $pick];
 	}
 
 	// testing: newest prerelease, else the head of the `testing` branch.
-	$pick = is_array($releases) ? gsp_release_pick_testing($releases) : null;
+	$pick = is_array($releases) ? release_pick_testing($releases) : null;
 	if ($pick !== null) {
 		return ['success' => true, 'source' => 'release', 'tag' => $pick['tag'], 'release' => $pick];
 	}
 	$branch_head = $testing_branch_head_fetcher($cfg['repo_url'], $token, $provider);
 	if ($branch_head === null) {
-		return ['success' => false, 'error' => 'No prerelease tag and no `testing` branch found for ' . gsp_release_component_label($cfg['component']) . '.'];
+		return ['success' => false, 'error' => 'No prerelease tag and no `testing` branch found for ' . release_component_label($cfg['component']) . '.'];
 	}
 	return ['success' => true, 'source' => 'branch', 'tag' => $branch_head['tag'], 'commit' => $branch_head['commit']];
 }
@@ -179,7 +179,7 @@ function gsp_release_resolve_channel(array $cfg, callable $releases_fetcher, cal
  * The checksum asset is always named after the archive with a .sha256
  * suffix, published alongside it in the same release.
  */
-function gsp_release_checksum_asset_name($archive_filename)
+function release_checksum_asset_name($archive_filename)
 {
 	return basename((string)$archive_filename) . '.sha256';
 }
@@ -188,7 +188,7 @@ function gsp_release_checksum_asset_name($archive_filename)
  * True if $file_path's SHA-256 digest matches $expected_hex (case-insensitive,
  * may be a bare hex digest or a "<hex>  <filename>" sha256sum-style line).
  */
-function gsp_verify_sha256_file($file_path, $expected_hex)
+function verify_sha256_file($file_path, $expected_hex)
 {
 	if (!is_file($file_path)) {
 		return ['success' => false, 'error' => 'File to verify is missing: ' . $file_path];
@@ -214,7 +214,7 @@ function gsp_verify_sha256_file($file_path, $expected_hex)
  * Live GitLab/GitHub releases fetcher (not used in tests; injected there).
  * Returns rows newest-first: ['tag' => .., 'prerelease' => bool, 'created_at' => .., 'assets' => [name => url]].
  */
-function gsp_release_fetch_releases_live($repo_url, $token, $provider)
+function release_fetch_releases_live($repo_url, $token, $provider)
 {
 	$api_url = null;
 	$headers = [];
@@ -244,7 +244,7 @@ function gsp_release_fetch_releases_live($repo_url, $token, $provider)
 		return null;
 	}
 	$ch = curl_init($api_url);
-	curl_setopt($ch, CURLOPT_USERAGENT, GSP_RELEASE_USER_AGENT);
+	curl_setopt($ch, CURLOPT_USERAGENT, RELEASE_USER_AGENT);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
@@ -300,7 +300,7 @@ function gsp_release_fetch_releases_live($repo_url, $token, $provider)
  * version_compare on the part before the hyphen, then the full tag string.
  * There is no created_at from ls-remote, so ordering is by tag name only.
  */
-function gsp_release_fetch_tags_live($repo_url, $token, $provider)
+function release_fetch_tags_live($repo_url, $token, $provider)
 {
 	$url = $repo_url;
 	if ($token !== '' && preg_match('#^https://(.+)$#', $repo_url, $m)) {
@@ -346,7 +346,7 @@ function gsp_release_fetch_tags_live($repo_url, $token, $provider)
  * needs. Prefer that over the tag archive, which contains the whole repo.
  * Returns '' when the release has no zip asset or the lookup fails.
  */
-function gsp_release_asset_url($repo_url, $tag)
+function release_asset_url($repo_url, $tag)
 {
 	$base = rtrim(preg_replace('#\.git$#', '', trim((string)$repo_url)), '/');
 	if ((string)$tag === '' || !function_exists('curl_init')) {
@@ -358,7 +358,7 @@ function gsp_release_asset_url($repo_url, $tag)
 	$ch = curl_init('https://api.github.com/repos/' . $m[1] . '/' . $m[2] . '/releases/tags/' . rawurlencode((string)$tag));
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-	curl_setopt($ch, CURLOPT_USERAGENT, GSP_RELEASE_USER_AGENT);
+	curl_setopt($ch, CURLOPT_USERAGENT, RELEASE_USER_AGENT);
 	curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: application/vnd.github+json'));
 	$body = curl_exec($ch);
 	$code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -379,14 +379,14 @@ function gsp_release_asset_url($repo_url, $tag)
 	return '';
 }
 
-function gsp_release_archive_url($repo_url, $tag)
+function release_archive_url($repo_url, $tag)
 {
 	$base = rtrim(preg_replace('#\.git$#', '', trim((string)$repo_url)), '/');
 	if (!preg_match('#/([^/]+)$#', $base, $m) || (string)$tag === '') {
 		return '';
 	}
-	if (gsp_release_provider_from_url($base) === 'github') {
-		$asset = gsp_release_asset_url($base, $tag);
+	if (release_provider_from_url($base) === 'github') {
+		$asset = release_asset_url($base, $tag);
 		if ($asset !== '') {
 			return $asset;
 		}
@@ -399,12 +399,12 @@ function gsp_release_archive_url($repo_url, $tag)
  * Downloads a release archive and returns its SHA-256 (lowercase hex), or
  * null if the download fails. The archive is removed afterwards.
  */
-function gsp_release_archive_sha256($url)
+function release_archive_sha256($url)
 {
 	if ((string)$url === '' || !function_exists('curl_init')) {
 		return null;
 	}
-	$tmp = tempnam(sys_get_temp_dir(), 'gsp_rel_');
+	$tmp = tempnam(sys_get_temp_dir(), 'rel_');
 	if ($tmp === false) {
 		return null;
 	}
@@ -414,7 +414,7 @@ function gsp_release_archive_sha256($url)
 		return null;
 	}
 	$ch = curl_init($url);
-	curl_setopt($ch, CURLOPT_USERAGENT, GSP_RELEASE_USER_AGENT);
+	curl_setopt($ch, CURLOPT_USERAGENT, RELEASE_USER_AGENT);
 	curl_setopt($ch, CURLOPT_FILE, $fh);
 	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 	curl_setopt($ch, CURLOPT_FAILONERROR, true);
@@ -434,7 +434,7 @@ function gsp_release_archive_sha256($url)
 /**
  * Maps an agent build name (as the agent reports it) to its release component.
  */
-function gsp_release_component_for_agent($agent_component)
+function release_component_for_agent($agent_component)
 {
 	return $agent_component === 'windows_agent' ? 'agent_windows' : 'agent_linux';
 }
@@ -442,15 +442,15 @@ function gsp_release_component_for_agent($agent_component)
 /**
  * Release tags for a component, newest first. Null if the repo cannot be read.
  */
-function gsp_release_tag_options($component)
+function release_tag_options($component)
 {
-	$cfg = gsp_release_source_settings($component);
+	$cfg = release_source_settings($component);
 	if ($cfg['repo_url'] === '') {
 		return null;
 	}
-	$token = gsp_read_release_token($cfg);
-	$provider = gsp_release_provider_from_url($cfg['repo_url']);
-	$rows = gsp_release_fetch_source_live($cfg['repo_url'], $token, $provider);
+	$token = read_release_token($cfg);
+	$provider = release_provider_from_url($cfg['repo_url']);
+	$rows = release_fetch_source_live($cfg['repo_url'], $token, $provider);
 	if (!is_array($rows)) {
 		return null;
 	}
@@ -467,19 +467,19 @@ function gsp_release_tag_options($component)
  * Production fetcher dispatch: github/gitlab use their releases API, anything
  * else falls back to git tags over the network.
  */
-function gsp_release_fetch_source_live($repo_url, $token, $provider)
+function release_fetch_source_live($repo_url, $token, $provider)
 {
 	if ($provider === 'github' || $provider === 'gitlab') {
-		return gsp_release_fetch_releases_live($repo_url, $token, $provider);
+		return release_fetch_releases_live($repo_url, $token, $provider);
 	}
-	return gsp_release_fetch_tags_live($repo_url, $token, $provider);
+	return release_fetch_tags_live($repo_url, $token, $provider);
 }
 
 /**
  * Head commit of the `testing` branch, for the testing-channel fallback when
  * there's no prerelease tag. Works for any git remote, including self-hosted.
  */
-function gsp_release_fetch_testing_branch_head_live($repo_url, $token, $provider)
+function release_fetch_testing_branch_head_live($repo_url, $token, $provider)
 {
 	$url = $repo_url;
 	if ($token !== '' && preg_match('#^https://(.+)$#', $repo_url, $m)) {
@@ -499,7 +499,7 @@ function gsp_release_fetch_testing_branch_head_live($repo_url, $token, $provider
  * live GitLab/GitHub releases or git tags/branches, as appropriate for the
  * repo host.
  */
-function gsp_release_resolve_channel_live(array $cfg)
+function release_resolve_channel_live(array $cfg)
 {
-	return gsp_release_resolve_channel($cfg, 'gsp_release_fetch_source_live', 'gsp_release_fetch_testing_branch_head_live');
+	return release_resolve_channel($cfg, 'release_fetch_source_live', 'release_fetch_testing_branch_head_live');
 }

@@ -15,7 +15,7 @@ $(document).ready(function()
 	$('.main #theme').parents('tr').after('\
 	<tr>\
 		<td align="right">\
-			<label for="themeNavWidth" class="mb-0">'+langConsts['GSP_LANG_theme']+' Nav Width:</label>\
+			<label for="themeNavWidth" class="mb-0">'+langConsts['LANG_theme']+' Nav Width:</label>\
 			<small class="currentNavWidth text-muted d-block"></small>\
 		</td>\
 		<td align="left">\
@@ -24,7 +24,7 @@ $(document).ready(function()
 			</div>\
 		</td>\
 		<td>\
-			<div class="image-tip" data-toggle="tooltip" data-html="true" title="Sets '+langConsts['GSP_LANG_theme']+' Navigation Width for all Users"><i class="far fa-question-circle"></i></div>\
+			<div class="image-tip" data-toggle="tooltip" data-html="true" title="Sets '+langConsts['LANG_theme']+' Navigation Width for all Users"><i class="far fa-question-circle"></i></div>\
 		</td>\
 	</tr>\
 	');
@@ -33,7 +33,7 @@ $(document).ready(function()
 	$('.main #theme').parents('tr').after('\
 	<tr>\
 		<td align="right">\
-			<label for="themeLogo">'+langConsts['GSP_LANG_theme']+' Logo:</label>\
+			<label for="themeLogo">'+langConsts['LANG_theme']+' Logo:</label>\
 		</td>\
 		<td align="left">\
 			<div class="form-group mb-0">\
@@ -46,7 +46,7 @@ $(document).ready(function()
 			</div>\
 		</td>\
 		<td>\
-			<div class="image-tip" data-toggle="tooltip" data-html="true" title="'+langConsts['GSP_LANG_theme']+' Logo - Max Size: '+(localStorage.getItem('themeNavWidth')-32)+'x50px"><i class="far fa-question-circle"></i></div>\
+			<div class="image-tip" data-toggle="tooltip" data-html="true" title="'+langConsts['LANG_theme']+' Logo - Max Size: '+(localStorage.getItem('themeNavWidth')-32)+'x50px"><i class="far fa-question-circle"></i></div>\
 		</td>\
 	</tr>\
 	');
@@ -69,7 +69,7 @@ $(document).ready(function()
 	});
 
 	// add theme serverstats option
-	var themeServerstatsOptions = {'remove' : langConsts['GSP_LANG_off'], 'activate' : langConsts['GSP_LANG_on']}
+	var themeServerstatsOptions = {'remove' : langConsts['LANG_off'], 'activate' : langConsts['LANG_on']}
 	var themeServerstatsOptionsOut = ''
 	for(var key in themeServerstatsOptions)
 	{
@@ -160,7 +160,7 @@ $(document).ready(function()
 			url: 'themes/AdminLTE-2/dist/php/settings.php?m=settings&p=themeNavWidth&v='+$(this).val(),
 			start: function()
 			{
-				toastr.info(langConsts['GSP_LANG_theme']+' Nav Width change initiated');
+				toastr.info(langConsts['LANG_theme']+' Nav Width change initiated');
 			},
 			success: function(themeNavWidth)
 			{
@@ -174,9 +174,9 @@ $(document).ready(function()
 				$('.currentNavWidth').text('Current Width: '+themeNavWidth+'px');
 
 				// reset themeLogo tooltip message
-				$('#themeLogo').closest('tr').find('.image-tip').attr('title', langConsts['GSP_LANG_theme']+' Logo - Max Size: '+(themeNavWidth-32)+' x 33px');
+				$('#themeLogo').closest('tr').find('.image-tip').attr('title', langConsts['LANG_theme']+' Logo - Max Size: '+(themeNavWidth-32)+' x 33px');
 
-				toastr.success('Successfully changed '+langConsts['GSP_LANG_theme']+' Nav Width to ' + themeNavWidth + 'px');
+				toastr.success('Successfully changed '+langConsts['LANG_theme']+' Nav Width to ' + themeNavWidth + 'px');
 			}
 		});
 	});
@@ -270,7 +270,7 @@ $(window).load(function()
 			limit: 1,
 			start: function()
 			{
-				toastr.info(langConsts['GSP_LANG_theme']+' Logo Upload initiated');
+				toastr.info(langConsts['LANG_theme']+' Logo Upload initiated');
 			},
 			success: function(data)
 			{
@@ -301,7 +301,7 @@ $(window).load(function()
 								addThemeRemoval(jsonData['data']);
 							}
 
-							toastr.success('Successfully uploaded new '+langConsts['GSP_LANG_theme']+' Logo');
+							toastr.success('Successfully uploaded new '+langConsts['LANG_theme']+' Logo');
 						}
 					});
 				}else
@@ -325,7 +325,7 @@ function addThemeRemoval(themeLogo)
 		<div class="themeLogoRemoval my-2">\
 			<img src="' + themeLogo + '?t=' + d.getTime() + '" class="brand-image">\
 			<a class="btn btn-xs btn-danger m-1" id="removeThemeLogo">\
-				<i class="fas fa-trash-alt mr-1"></i>Remove ' + langConsts['GSP_LANG_theme'] + ' Logo\
+				<i class="fas fa-trash-alt mr-1"></i>Remove ' + langConsts['LANG_theme'] + ' Logo\
 			</a>\
 		</div>\
 	');
@@ -347,7 +347,7 @@ function addThemeRemoval(themeLogo)
 				// change theme for image updates
 				themeChanger(localStorage.getItem('theme'));
 
-				toastr.success('Successfully removed '+langConsts['GSP_LANG_theme']+' Logo');
+				toastr.success('Successfully removed '+langConsts['LANG_theme']+' Logo');
 			}
 		});
 	});

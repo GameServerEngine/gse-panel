@@ -1,7 +1,7 @@
 <?php
 require_once(dirname(__DIR__) . '/release_source.php');
 
-function gsp_relsrc_assert($condition, $message)
+function relsrc_assert($condition, $message)
 {
     if (!$condition) {
         fwrite(STDERR, "FAIL: {$message}\n");
@@ -11,9 +11,9 @@ function gsp_relsrc_assert($condition, $message)
 }
 
 // --- provider detection ---
-gsp_relsrc_assert(gsp_release_provider_from_url('https://github.com/acme/widget.git') === 'github', 'github.com repo URL detected as github');
-gsp_relsrc_assert(gsp_release_provider_from_url('https://gitlab.com/acme/widget.git') === 'gitlab', 'gitlab.com repo URL detected as gitlab');
-gsp_relsrc_assert(gsp_release_provider_from_url('https://git.runlevelsystems.com/GSE/Panel.git') === 'generic', 'self-hosted forge detected as generic');
+relsrc_assert(release_provider_from_url('https://github.com/acme/widget.git') === 'github', 'github.com repo URL detected as github');
+relsrc_assert(release_provider_from_url('https://gitlab.com/acme/widget.git') === 'gitlab', 'gitlab.com repo URL detected as gitlab');
+relsrc_assert(release_provider_from_url('https://git.runlevelsystems.com/GSE/Panel.git') === 'generic', 'self-hosted forge detected as generic');
 
 // --- stable / testing picking from a pre-sorted (newest-first) release list ---
 $releases = [
@@ -21,75 +21,75 @@ $releases = [
     ['tag' => 'v2.0.0', 'prerelease' => false, 'created_at' => '2026-09-01'],
     ['tag' => 'v1.9.0', 'prerelease' => false, 'created_at' => '2026-08-01'],
 ];
-gsp_relsrc_assert(gsp_release_pick_stable($releases)['tag'] === 'v2.0.0', 'stable picks the newest non-prerelease, skipping the prerelease ahead of it');
-gsp_relsrc_assert(gsp_release_pick_testing($releases)['tag'] === 'v2.1.0-rc1', 'testing picks the newest prerelease');
+relsrc_assert(release_pick_stable($releases)['tag'] === 'v2.0.0', 'stable picks the newest non-prerelease, skipping the prerelease ahead of it');
+relsrc_assert(release_pick_testing($releases)['tag'] === 'v2.1.0-rc1', 'testing picks the newest prerelease');
 
 $no_prerelease = [
     ['tag' => 'v2.0.0', 'prerelease' => false, 'created_at' => '2026-09-01'],
 ];
-gsp_relsrc_assert(gsp_release_pick_testing($no_prerelease) === null, 'testing returns null when there is no prerelease, so caller falls back to branch head');
+relsrc_assert(release_pick_testing($no_prerelease) === null, 'testing returns null when there is no prerelease, so caller falls back to branch head');
 
 $none = [];
-gsp_relsrc_assert(gsp_release_pick_stable($none) === null, 'stable returns null for an empty release list');
+relsrc_assert(release_pick_stable($none) === null, 'stable returns null for an empty release list');
 
-// --- gsp_release_resolve_channel: stable channel uses the releases API result ---
+// --- release_resolve_channel: stable channel uses the releases API result ---
 $cfg = ['component' => 'panel', 'repo_url' => 'https://github.com/acme/widget.git', 'channel' => 'stable', 'token_file' => ''];
 $fetch_releases = function ($url, $token, $provider) use ($releases) { return $releases; };
 $fetch_branch = function ($url, $token, $provider) { return ['tag' => 'testing', 'commit' => 'deadbeef']; };
-$resolved = gsp_release_resolve_channel($cfg, $fetch_releases, $fetch_branch);
-gsp_relsrc_assert($resolved['success'] === true && $resolved['tag'] === 'v2.0.0' && $resolved['source'] === 'release', 'stable channel resolves to the newest non-prerelease via the releases API');
+$resolved = release_resolve_channel($cfg, $fetch_releases, $fetch_branch);
+relsrc_assert($resolved['success'] === true && $resolved['tag'] === 'v2.0.0' && $resolved['source'] === 'release', 'stable channel resolves to the newest non-prerelease via the releases API');
 
 // --- testing channel with a prerelease available ---
 $cfg['channel'] = 'testing';
-$resolved = gsp_release_resolve_channel($cfg, $fetch_releases, $fetch_branch);
-gsp_relsrc_assert($resolved['success'] === true && $resolved['tag'] === 'v2.1.0-rc1' && $resolved['source'] === 'release', 'testing channel resolves to the newest prerelease when one exists');
+$resolved = release_resolve_channel($cfg, $fetch_releases, $fetch_branch);
+relsrc_assert($resolved['success'] === true && $resolved['tag'] === 'v2.1.0-rc1' && $resolved['source'] === 'release', 'testing channel resolves to the newest prerelease when one exists');
 
 // --- testing channel with no prerelease falls back to the testing branch head ---
 $fetch_releases_no_pre = function ($url, $token, $provider) use ($no_prerelease) { return $no_prerelease; };
-$resolved = gsp_release_resolve_channel($cfg, $fetch_releases_no_pre, $fetch_branch);
-gsp_relsrc_assert($resolved['success'] === true && $resolved['source'] === 'branch' && $resolved['commit'] === 'deadbeef', 'testing channel falls back to the testing branch head when there is no prerelease tag');
+$resolved = release_resolve_channel($cfg, $fetch_releases_no_pre, $fetch_branch);
+relsrc_assert($resolved['success'] === true && $resolved['source'] === 'branch' && $resolved['commit'] === 'deadbeef', 'testing channel falls back to the testing branch head when there is no prerelease tag');
 
 // --- generic (self-hosted) provider: resolved via a git-tags-shaped fetcher (same row shape, different source) ---
 $cfg_generic = ['component' => 'agent_linux', 'repo_url' => 'https://git.runlevelsystems.com/GSE/Agent-Linux.git', 'channel' => 'testing', 'token_file' => ''];
 $fetch_tags_no_prerelease = function ($url, $token, $provider) use ($no_prerelease) {
-    gsp_relsrc_assert($provider === 'generic', 'the fetcher sees the resolved provider (generic) so it can pick its own source');
+    relsrc_assert($provider === 'generic', 'the fetcher sees the resolved provider (generic) so it can pick its own source');
     return $no_prerelease;
 };
-$resolved = gsp_release_resolve_channel($cfg_generic, $fetch_tags_no_prerelease, $fetch_branch);
-gsp_relsrc_assert($resolved['success'] === true && $resolved['source'] === 'branch', 'generic provider on testing channel falls back to the testing branch head when its tag source has no prerelease');
+$resolved = release_resolve_channel($cfg_generic, $fetch_tags_no_prerelease, $fetch_branch);
+relsrc_assert($resolved['success'] === true && $resolved['source'] === 'branch', 'generic provider on testing channel falls back to the testing branch head when its tag source has no prerelease');
 
 $cfg_generic['channel'] = 'stable';
 $fetch_tags_empty = function ($url, $token, $provider) { return []; };
-$resolved = gsp_release_resolve_channel($cfg_generic, $fetch_tags_empty, $fetch_branch);
-gsp_relsrc_assert($resolved['success'] === false, 'generic provider on stable channel with no qualifying tag reports failure rather than guessing');
+$resolved = release_resolve_channel($cfg_generic, $fetch_tags_empty, $fetch_branch);
+relsrc_assert($resolved['success'] === false, 'generic provider on stable channel with no qualifying tag reports failure rather than guessing');
 
 // --- validation ---
-gsp_relsrc_assert(gsp_is_valid_release_source_channel('stable'), 'stable is a valid channel');
-gsp_relsrc_assert(gsp_is_valid_release_source_channel('testing'), 'testing is a valid channel');
-gsp_relsrc_assert(!gsp_is_valid_release_source_channel('unstable'), 'unstable is not a valid channel for this settings surface');
-$bad = gsp_validate_release_source_settings(['component' => 'panel', 'repo_url' => 'not-a-url', 'channel' => 'stable', 'token_file' => '']);
-gsp_relsrc_assert(!empty($bad), 'non-http(s) repo URL is rejected');
-$bad_token = gsp_validate_release_source_settings(['component' => 'panel', 'repo_url' => 'https://github.com/acme/widget.git', 'channel' => 'stable', 'token_file' => '../etc/passwd']);
-gsp_relsrc_assert(!empty($bad_token), 'relative/traversal token file path is rejected');
-$ok = gsp_validate_release_source_settings(['component' => 'panel', 'repo_url' => 'https://github.com/acme/widget.git', 'channel' => 'stable', 'token_file' => '/etc/gsp/secrets/panel_token']);
-gsp_relsrc_assert(empty($ok), 'valid settings with an absolute secret path validate');
+relsrc_assert(is_valid_release_source_channel('stable'), 'stable is a valid channel');
+relsrc_assert(is_valid_release_source_channel('testing'), 'testing is a valid channel');
+relsrc_assert(!is_valid_release_source_channel('unstable'), 'unstable is not a valid channel for this settings surface');
+$bad = validate_release_source_settings(['component' => 'panel', 'repo_url' => 'not-a-url', 'channel' => 'stable', 'token_file' => '']);
+relsrc_assert(!empty($bad), 'non-http(s) repo URL is rejected');
+$bad_token = validate_release_source_settings(['component' => 'panel', 'repo_url' => 'https://github.com/acme/widget.git', 'channel' => 'stable', 'token_file' => '../etc/passwd']);
+relsrc_assert(!empty($bad_token), 'relative/traversal token file path is rejected');
+$ok = validate_release_source_settings(['component' => 'panel', 'repo_url' => 'https://github.com/acme/widget.git', 'channel' => 'stable', 'token_file' => '/etc/gsp/secrets/panel_token']);
+relsrc_assert(empty($ok), 'valid settings with an absolute secret path validate');
 
 // --- checksum verification ---
-$tmp = tempnam(sys_get_temp_dir(), 'gsp_relsrc_');
+$tmp = tempnam(sys_get_temp_dir(), 'relsrc_');
 file_put_contents($tmp, "release archive contents\n");
 $real_hash = hash_file('sha256', $tmp);
-$ok = gsp_verify_sha256_file($tmp, $real_hash);
-gsp_relsrc_assert($ok['success'] === true, 'matching sha256 digest verifies');
-$ok_sha256sum_line = gsp_verify_sha256_file($tmp, $real_hash . '  panel-release.zip');
-gsp_relsrc_assert($ok_sha256sum_line['success'] === true, 'a sha256sum-style "<hex>  <filename>" line verifies too');
-$ok_upper = gsp_verify_sha256_file($tmp, strtoupper($real_hash));
-gsp_relsrc_assert($ok_upper['success'] === true, 'uppercase hex digest verifies (case-insensitive)');
-$bad_hash = gsp_verify_sha256_file($tmp, str_repeat('0', 64));
-gsp_relsrc_assert($bad_hash['success'] === false, 'mismatched sha256 digest is rejected');
-$bad_format = gsp_verify_sha256_file($tmp, 'not-a-hash');
-gsp_relsrc_assert($bad_format['success'] === false, 'malformed expected checksum is rejected rather than silently passing');
-$missing_file = gsp_verify_sha256_file($tmp . '.does-not-exist', $real_hash);
-gsp_relsrc_assert($missing_file['success'] === false, 'missing file to verify is rejected');
+$ok = verify_sha256_file($tmp, $real_hash);
+relsrc_assert($ok['success'] === true, 'matching sha256 digest verifies');
+$ok_sha256sum_line = verify_sha256_file($tmp, $real_hash . '  panel-release.zip');
+relsrc_assert($ok_sha256sum_line['success'] === true, 'a sha256sum-style "<hex>  <filename>" line verifies too');
+$ok_upper = verify_sha256_file($tmp, strtoupper($real_hash));
+relsrc_assert($ok_upper['success'] === true, 'uppercase hex digest verifies (case-insensitive)');
+$bad_hash = verify_sha256_file($tmp, str_repeat('0', 64));
+relsrc_assert($bad_hash['success'] === false, 'mismatched sha256 digest is rejected');
+$bad_format = verify_sha256_file($tmp, 'not-a-hash');
+relsrc_assert($bad_format['success'] === false, 'malformed expected checksum is rejected rather than silently passing');
+$missing_file = verify_sha256_file($tmp . '.does-not-exist', $real_hash);
+relsrc_assert($missing_file['success'] === false, 'missing file to verify is rejected');
 @unlink($tmp);
 
 echo "All release source tests passed.\n";

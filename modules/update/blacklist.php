@@ -59,7 +59,7 @@ function path_check()
 
     return TRUE;
 }
-function exec_gsp_module()
+function exec_module()
 {
 	global $db, $view;
 
@@ -68,7 +68,7 @@ function exec_gsp_module()
 
 	$current_blacklist = array();
 
-	$blacklisted_files = $db->resultQuery('SELECT file_path FROM `GSP_DB_PREFIXupdate_blacklist`;');
+	$blacklisted_files = $db->resultQuery('SELECT file_path FROM `TABLE_PREFIX_PLACEHOLDERupdate_blacklist`;');
 	if($blacklisted_files !== FALSE)
 	{
 		$current_blacklist = array();
@@ -83,7 +83,7 @@ function exec_gsp_module()
 		foreach ((array)$_POST['blacklist'] as $file)
 		{
 			$file = $db->real_escape_string($file);
-			$db->query("INSERT INTO `GSP_DB_PREFIXupdate_blacklist` SET file_path='$file';");
+			$db->query("INSERT INTO `TABLE_PREFIX_PLACEHOLDERupdate_blacklist` SET file_path='$file';");
 		}
 
 		foreach ((array)$_POST['folder_files'] as $file)
@@ -93,12 +93,12 @@ function exec_gsp_module()
 				if(!in_array($file,$_POST['blacklist']))
 				{
 					$file = $db->real_escape_string($file);
-					$db->query("DELETE FROM `GSP_DB_PREFIXupdate_blacklist` WHERE file_path='$file';");
+					$db->query("DELETE FROM `TABLE_PREFIX_PLACEHOLDERupdate_blacklist` WHERE file_path='$file';");
 				}
 			}
 		}
 
-		$blacklisted_files = $db->resultQuery('SELECT file_path FROM `GSP_DB_PREFIXupdate_blacklist`;');
+		$blacklisted_files = $db->resultQuery('SELECT file_path FROM `TABLE_PREFIX_PLACEHOLDERupdate_blacklist`;');
 		if($blacklisted_files !== FALSE)
 		{
 			$current_blacklist = array();

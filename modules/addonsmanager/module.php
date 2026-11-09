@@ -47,7 +47,7 @@ $module_menus   = array(
 // ── db_version 1 : initial install ───────────────────────────────────────────
 $install_queries    = array();
 $install_queries[0] = array(
-    "CREATE TABLE IF NOT EXISTS `".GSP_DB_PREFIX."addons` (
+    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."addons` (
         `addon_id`     INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         `name`         VARCHAR(80)  NOT NULL,
         `url`          VARCHAR(200) NOT NULL,
@@ -64,13 +64,13 @@ $install_queries[0] = array(
 // MODIFY is safe on existing installs; existing 'plugin'/'mappack'/'config'
 // values are preserved without alteration.
 $install_queries[1] = array(
-    "ALTER TABLE `".GSP_DB_PREFIX."addons`
+    "ALTER TABLE `".TABLE_PREFIX_PLACEHOLDER."addons`
         MODIFY `addon_type` VARCHAR(32) NOT NULL;"
 );
 
 // ── db_version 3 : workshop item selections per server home ───────────────────
 $install_queries[2] = array(
-    "CREATE TABLE IF NOT EXISTS `".GSP_DB_PREFIX."server_content_workshop` (
+    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."server_content_workshop` (
         `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         `home_id` INT NOT NULL,
         `home_cfg_id` INT NOT NULL,
@@ -99,7 +99,7 @@ $install_queries[2] = array(
 //
 $install_queries[3] = array(
     function ($db) {
-        $prefix = GSP_DB_PREFIX;
+        $prefix = TABLE_PREFIX_PLACEHOLDER;
 
         // ── Extend the addons table with Phase 2 columns ──────────────────────
         $new_columns = array(
@@ -183,7 +183,7 @@ $install_queries[3] = array(
 // ── db_version 5 : content-type specific metadata for Workshop/config/folder actions ──
 $install_queries[4] = array(
     function ($db) {
-        $prefix = GSP_DB_PREFIX;
+        $prefix = TABLE_PREFIX_PLACEHOLDER;
         $new_columns = array(
             'workshop_item_id'       => "VARCHAR(64) NULL AFTER `description`",
             'workshop_app_id'        => "VARCHAR(32) NULL AFTER `workshop_item_id`",
@@ -221,7 +221,7 @@ $install_queries[4] = array(
 //
 $install_queries[5] = array(
     function ($db) {
-        $prefix = GSP_DB_PREFIX;
+        $prefix = TABLE_PREFIX_PLACEHOLDER;
 
         // ── New policy columns on the addons (content template) table ─────────
         $addon_columns = array(
@@ -270,7 +270,7 @@ $install_queries[5] = array(
 // ── db_version 7 : Workshop Phase 1 runtime tracking columns ────────────────
 $install_queries[6] = array(
     function ($db) {
-        $prefix = GSP_DB_PREFIX;
+        $prefix = TABLE_PREFIX_PLACEHOLDER;
         $table = $db->realEscapeSingle($prefix . 'server_content_workshop');
         $columns = array(
             'install_path' => "VARCHAR(512) NULL AFTER `title`",
@@ -297,7 +297,7 @@ $install_queries[6] = array(
 // ── db_version 8 : generic Server Bot content infrastructure ───────────────
 $install_queries[7] = array(
     function ($db) {
-        $prefix = GSP_DB_PREFIX;
+        $prefix = TABLE_PREFIX_PLACEHOLDER;
         $addon_table = $db->realEscapeSingle($prefix . 'addons');
         $addon_columns = array(
             'bot_working_dir' => "VARCHAR(255) NULL AFTER `blocked_workshop_ids`",
@@ -345,7 +345,7 @@ $install_queries[7] = array(
 // ── db_version 9 : installed Server Content lifecycle + first bot packages ──
 $install_queries[8] = array(
     function ($db) {
-        $prefix = GSP_DB_PREFIX;
+        $prefix = TABLE_PREFIX_PLACEHOLDER;
         $addon_table = $db->realEscapeSingle($prefix . 'addons');
         $addon_columns = array(
             'bot_install_folder'   => "VARCHAR(255) NULL AFTER `bot_arguments`",

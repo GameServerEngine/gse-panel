@@ -29,7 +29,7 @@ define('LANG_remote_host_info', "Der entfernte Host muss pingbar sein!");
 define('LANG_remote_host_port', "Entfernter Host Port");
 define('LANG_remote_host_port_info', "Der Port, der vom GSP-Agent auf dem Remote-Host überwacht wird. Standard: 12679.");
 define('LANG_remote_host_name', "Entfernter Host Name");
-define('LANG_gsp_user', "GSP Agent Nutzername");
+define('LANG_user', "GSP Agent Nutzername");
 define('LANG_remote_host_name_info', "Der entfernte Hostname wird verwendet, um Benutzern zu helfen, ihre Server zu identifizieren.");
 define('LANG_add_remote_host', "Entfernten Host hinzufügen");
 define('LANG_remote_encryption_key', "Entfernter Verschlüsselungs-Schlüssel");

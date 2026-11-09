@@ -25,7 +25,7 @@
 //GameServer Panel Sub User Registration Add On By
 //  own3mall
 
-function exec_gsp_module()
+function exec_module()
 {
 	global $db,$view;
 

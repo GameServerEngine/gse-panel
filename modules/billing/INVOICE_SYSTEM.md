@@ -5,7 +5,7 @@ The billing system now uses a **dual-table architecture** separating orders (ong
 
 ## Database Tables
 
-### 1. `gsp_billing_services`
+### 1. `billing_services`
 **Purpose:** Available game server packages/products
 **Key Fields:**
 - `service_id` - Unique identifier
@@ -14,7 +14,7 @@ The billing system now uses a **dual-table architecture** separating orders (ong
 - `price_monthly`, `price_year` - Pricing tiers
 - `enabled` - Availability flag
 
-### 2. `gsp_billing_orders` (formerly just cart items)
+### 2. `billing_orders` (formerly just cart items)
 **Purpose:** Active game server instances (ongoing services)
 **Key Fields:**
 - `order_id` - Unique identifier
@@ -36,7 +36,7 @@ The billing system now uses a **dual-table architecture** separating orders (ong
 - `expired` - Service ended
 - `renew` - Renewal pending in cart
 
-### 3. `gsp_billing_invoices` (NEW)
+### 3. `billing_invoices` (NEW)
 **Purpose:** Payment records (one invoice per payment)
 **Key Fields:**
 - `invoice_id` - Unique identifier

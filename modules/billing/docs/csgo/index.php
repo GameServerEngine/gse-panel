@@ -181,7 +181,7 @@ setadminpassword [password]
 
 <h3>Command Line Template</h3>
 <p>The server uses the following command line template:</p>
-<pre><code>%GAME_TYPE% -console -usercon %MAP% %MAPGROUP% %IP% %PORT% %PLAYERS% -pidfile gsp_game_startup.pid</code></pre>
+<pre><code>%GAME_TYPE% -console -usercon %MAP% %MAPGROUP% %IP% %PORT% %PLAYERS% -pidfile game_startup.pid</code></pre>
 
 <h3>Available Startup Parameters</h3>
 <p>The following parameters can be configured when starting the server:</p>

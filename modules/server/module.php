@@ -33,17 +33,17 @@ array( 'subpage' => '', 'name'=>'Servers', 'group'=>'admin' )
 
 $install_queries = array();
 $install_queries[0] = array(
-    "CREATE TABLE IF NOT EXISTS `".GSP_DB_PREFIX."remote_server_ips` (
+    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."remote_server_ips` (
         `ip_id` int(11) NOT NULL AUTO_INCREMENT,
         `remote_server_id` int(11) NOT NULL,
         `ip` varchar(255) NOT NULL,
         PRIMARY KEY (`ip_id`)
     ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
 
-    "CREATE TABLE IF NOT EXISTS `".GSP_DB_PREFIX."remote_servers` (
+    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."remote_servers` (
         `remote_server_id` int(11) NOT NULL auto_increment,
         `remote_server_name` varchar(100) NOT NULL,
-        `gsp_user` varchar(100) NOT NULL,
+        `user` varchar(100) NOT NULL,
         `agent_ip` varchar(255) NOT NULL,
         `agent_port` int(11) NOT NULL,
         `ftp_port` int(11) NOT NULL,
@@ -57,7 +57,7 @@ $install_queries[0] = array(
         UNIQUE KEY `agent_ip` (`agent_ip`,`agent_port`)
     ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Remote servers and IPs';",
 
-    "CREATE TABLE IF NOT EXISTS `".GSP_DB_PREFIX."arrange_ports` (
+    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."arrange_ports` (
         `range_id` int(11) NOT NULL auto_increment,
         `ip_id` int(11) NOT NULL,
         `home_cfg_id` int(11) NOT NULL,
@@ -69,7 +69,7 @@ $install_queries[0] = array(
     ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Remote servers and IPs';"
 );
 $install_queries[1] = array(
-    "CREATE TABLE IF NOT EXISTS `".GSP_DB_PREFIX."agent_resource_snapshots` (
+    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."agent_resource_snapshots` (
         `remote_server_id` int(11) NOT NULL,
         `agent_ip` varchar(255) NOT NULL DEFAULT '',
         `agent_port` int(11) NOT NULL DEFAULT 0,
@@ -88,7 +88,7 @@ $install_queries[1] = array(
     ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Latest cached per-agent resource snapshot';"
 );
 $install_queries[3] = array(
-    "CREATE TABLE IF NOT EXISTS `".GSP_DB_PREFIX."port_pools` (
+    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."port_pools` (
         `pool_id` int(11) NOT NULL AUTO_INCREMENT,
         `pool_key` varchar(64) NOT NULL,
         `name` varchar(128) NOT NULL,
@@ -109,7 +109,7 @@ $install_queries[3] = array(
         KEY `idx_port_pools_range` (`range_start`,`range_end`)
     ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Global reusable port pool catalog';",
 
-    "CREATE TABLE IF NOT EXISTS `".GSP_DB_PREFIX."port_pool_games` (
+    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."port_pool_games` (
         `pool_game_id` int(11) NOT NULL AUTO_INCREMENT,
         `pool_id` int(11) NOT NULL,
         `home_cfg_id` int(11) NOT NULL,
@@ -127,7 +127,7 @@ $install_queries[3] = array(
         KEY `idx_pool_games_pool` (`pool_id`)
     ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Game config to global port pool mappings';",
 
-    "CREATE TABLE IF NOT EXISTS `".GSP_DB_PREFIX."game_port_offsets` (
+    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."game_port_offsets` (
         `offset_id` int(11) NOT NULL AUTO_INCREMENT,
         `home_cfg_id` int(11) NOT NULL,
         `port_role` enum('primary','query','rcon','web','steam','peer','admin','filetransfer','query_ssh','custom') NOT NULL,
@@ -147,7 +147,7 @@ $install_queries[3] = array(
         KEY `idx_game_port_offsets_fit` (`fits_standard_block`)
     ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Normalized per-game port offsets imported from XML or review';",
 
-    "CREATE TABLE IF NOT EXISTS `".GSP_DB_PREFIX."static_port_reservations` (
+    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."static_port_reservations` (
         `reservation_id` int(11) NOT NULL AUTO_INCREMENT,
         `scope` enum('ip','remote_server','global') NOT NULL DEFAULT 'ip',
         `ip_id` int(11) NULL DEFAULT NULL,
@@ -169,7 +169,7 @@ $install_queries[3] = array(
         KEY `idx_static_res_service` (`service_name`)
     ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Static host and service port reservations';",
 
-    "CREATE TABLE IF NOT EXISTS `".GSP_DB_PREFIX."home_port_blocks` (
+    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."home_port_blocks` (
         `block_id` bigint(20) NOT NULL AUTO_INCREMENT,
         `home_id` int(11) NULL DEFAULT NULL,
         `ip_id` int(11) NOT NULL,
@@ -194,7 +194,7 @@ $install_queries[3] = array(
         KEY `idx_home_port_blocks_primary` (`ip_id`,`primary_port`,`status`)
     ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Whole port-block allocation ledger';",
 
-    "CREATE TABLE IF NOT EXISTS `".GSP_DB_PREFIX."port_allocation_events` (
+    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."port_allocation_events` (
         `event_id` bigint(20) NOT NULL AUTO_INCREMENT,
         `block_id` bigint(20) NULL DEFAULT NULL,
         `home_id` int(11) NULL DEFAULT NULL,
@@ -212,7 +212,7 @@ $install_queries[3] = array(
         KEY `idx_port_events_type_time` (`event_type`,`created_at`)
     ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Port allocation audit events';",
 
-    "INSERT INTO `".GSP_DB_PREFIX."port_pools`
+    "INSERT INTO `".TABLE_PREFIX_PLACEHOLDER."port_pools`
         (`pool_key`,`name`,`purpose`,`base_port`,`range_start`,`range_end`,`block_size`,`priority`,`enabled`,`allow_manual`,`notes`)
      VALUES
         ('arma-dayz-2302','Arma/DayZ 2302','game',2302,2302,2399,10,10,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md'),
@@ -237,7 +237,7 @@ $install_queries[3] = array(
         `notes`=VALUES(`notes`),
         `updated_at`=NOW();",
 
-    "INSERT INTO `".GSP_DB_PREFIX."settings` (`setting`,`value`)
+    "INSERT INTO `".TABLE_PREFIX_PLACEHOLDER."settings` (`setting`,`value`)
      VALUES ('port_block_size','10')
      ON DUPLICATE KEY UPDATE `value`=`value`;"
 );

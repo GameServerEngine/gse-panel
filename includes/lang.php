@@ -31,42 +31,42 @@ if(file_exists('includes/functions.php'))
 if(file_exists('functions.php'))
 	require_once('functions.php');
 
-function gsp_lang_root()
+function lang_root()
 {
     return dirname(__DIR__) . "/lang";
 }
 
-function gsp_lang_dir($language)
+function lang_dir($language)
 {
-    return gsp_lang_root() . "/" . trim((string)$language, "/\\");
+    return lang_root() . "/" . trim((string)$language, "/\\");
 }
 
 function add_lang_module($lang_module)
 {
     global $lang_modules;
     array_push($lang_modules,$lang_module);
-    // Need to reload langs if module is added after the first gspLang call.
-    gspLang();
+    // Need to reload langs if module is added after the first lang call.
+    lang();
 }
 
-function gspLang()
+function lang()
 {
     global $lang_modules;
-    $langRoot = gsp_lang_root();
+    $langRoot = lang_root();
 	$locale_files = makefilelist($langRoot, ".|..|.svn", true, "folders");
 	if( isset($_REQUEST['lang']) and !in_array($_REQUEST['lang'],$locale_files) )
 		unset($_REQUEST['lang'], $_GET['lang'], $_POST['lang']);
     // For debugging purposes we allow lang change from url.
-    if ( isset($_REQUEST['lang']) && is_dir(gsp_lang_dir($_REQUEST['lang'])) )
-        $selectedLangDir = gsp_lang_dir($_REQUEST['lang']);
+    if ( isset($_REQUEST['lang']) && is_dir(lang_dir($_REQUEST['lang'])) )
+        $selectedLangDir = lang_dir($_REQUEST['lang']);
     // Check that the language exists
-    else if ( !empty($_SESSION['users_lang']) && is_dir(gsp_lang_dir($_SESSION['users_lang'])) )
-        $selectedLangDir = gsp_lang_dir($_SESSION['users_lang']);
+    else if ( !empty($_SESSION['users_lang']) && is_dir(lang_dir($_SESSION['users_lang'])) )
+        $selectedLangDir = lang_dir($_SESSION['users_lang']);
     // ... if lang does not exist lets use english.
-    else if ( isset($GLOBALS['panel_language']) && is_dir(gsp_lang_dir($GLOBALS['panel_language'])) )
-        $selectedLangDir = gsp_lang_dir($GLOBALS['panel_language']);
+    else if ( isset($GLOBALS['panel_language']) && is_dir(lang_dir($GLOBALS['panel_language'])) )
+        $selectedLangDir = lang_dir($GLOBALS['panel_language']);
     else
-        $selectedLangDir = gsp_lang_dir("English");
+        $selectedLangDir = lang_dir("English");
 
     if (!is_dir($selectedLangDir)) {
         error_log("GSP language directory missing; continuing without language files: " . $selectedLangDir);
@@ -107,13 +107,13 @@ function gspLang()
     }
 }
 
-function gsp_load_english_fallbacks()
+function load_english_fallbacks()
 {
     static $coreLoaded = false;
     static $loadedModules = array();
     global $lang_modules;
 
-    $englishDir = gsp_lang_dir("English");
+    $englishDir = lang_dir("English");
     if (!is_dir($englishDir)) {
         return;
     }
@@ -122,7 +122,7 @@ function gsp_load_english_fallbacks()
         $coreFiles = glob($englishDir . "/*.php");
         if (is_array($coreFiles)) {
             foreach ($coreFiles as $coreFile) {
-                gsp_include_lang_file_safely($coreFile);
+                include_lang_file_safely($coreFile);
             }
         }
         $coreLoaded = true;
@@ -145,13 +145,13 @@ function gsp_load_english_fallbacks()
         }
         $moduleFile = $englishDir . "/modules/" . $moduleName . ".php";
         if (is_file($moduleFile)) {
-            gsp_include_lang_file_safely($moduleFile);
+            include_lang_file_safely($moduleFile);
         }
         $loadedModules[$moduleName] = true;
     }
 }
 
-function gsp_include_lang_file_safely($filePath)
+function include_lang_file_safely($filePath)
 {
     set_error_handler(function ($severity, $message) {
         $isConstantRedefinition = (bool)preg_match('/^Constant\\s+.+\\s+already\\s+defined$/i', trim((string)$message));
@@ -166,20 +166,20 @@ function gsp_include_lang_file_safely($filePath)
 
 function get_lang($lang_index)
 {
-	global $GSPLangPre;
+	global $LangPre;
 
     if (defined($lang_index))
     {
         return constant($lang_index);
     }
 
-	if(!startsWith($lang_index, $GSPLangPre)){
-		$newLangIndex = $GSPLangPre . $lang_index;
+	if(!startsWith($lang_index, $LangPre)){
+		$newLangIndex = $LangPre . $lang_index;
 		if (defined($newLangIndex))
 		{
 			return constant($newLangIndex);
 		}
-        gsp_load_english_fallbacks();
+        load_english_fallbacks();
         if (defined($newLangIndex))
         {
             return constant($newLangIndex);
@@ -187,7 +187,7 @@ function get_lang($lang_index)
 	}
     else
     {
-        gsp_load_english_fallbacks();
+        load_english_fallbacks();
         if (defined($lang_index))
         {
             return constant($lang_index);
@@ -200,7 +200,7 @@ function get_lang($lang_index)
 
 function get_lang_f()
 {
-	global $GSPLangPre;
+	global $LangPre;
     $args = func_get_args();
     $lang_index = array_shift($args);
 
@@ -209,13 +209,13 @@ function get_lang_f()
         return vsprintf(constant($lang_index),$args);
     }
 
-	if(!startsWith($lang_index, $GSPLangPre)){
-		$newLangIndex = $GSPLangPre . $lang_index;
+	if(!startsWith($lang_index, $LangPre)){
+		$newLangIndex = $LangPre . $lang_index;
 		if (defined($newLangIndex))
 		{
 			return vsprintf(constant($newLangIndex),$args);
 		}
-        gsp_load_english_fallbacks();
+        load_english_fallbacks();
         if (defined($newLangIndex))
         {
             return vsprintf(constant($newLangIndex),$args);
@@ -223,7 +223,7 @@ function get_lang_f()
 	}
     else
     {
-        gsp_load_english_fallbacks();
+        load_english_fallbacks();
         if (defined($lang_index))
         {
             return vsprintf(constant($lang_index),$args);

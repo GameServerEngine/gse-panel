@@ -23,7 +23,7 @@
  *
  */
 
-function exec_gsp_module()
+function exec_module()
 {
 	include('includes/lib_remote.php');
 
@@ -34,7 +34,7 @@ function exec_gsp_module()
 	{
 		$success = true;
 		$server_row = $db->getRemoteServer($_POST['remote_server_id']);
-		$remote = new GSPRemoteLibrary($server_row['agent_ip'],$server_row['agent_port'],$server_row['encryption_key'],$server_row['timeout']);
+		$remote = new RemoteLibrary($server_row['agent_ip'],$server_row['agent_port'],$server_row['encryption_key'],$server_row['timeout']);
 		$post_ftp_login = strip_real_escape_string($_POST['ftp_login']);
 		$post_ftp_password = strip_real_escape_string($_POST['ftp_password']);
 		$post_full_path = strip_real_escape_string($_POST['full_path']);
@@ -83,7 +83,7 @@ function exec_gsp_module()
 	{
 		$ftp_login = strip_real_escape_string($_POST['ftp_login']);
 		$server_row = $db->getRemoteServer($_POST['remote_server_id']);
-		$remote = new GSPRemoteLibrary($server_row['agent_ip'],$server_row['agent_port'],$server_row['encryption_key'],$server_row['timeout']);
+		$remote = new RemoteLibrary($server_row['agent_ip'],$server_row['agent_port'],$server_row['encryption_key'],$server_row['timeout']);
 
 		$remote->ftp_mgr("userdel", $ftp_login);
 
@@ -94,7 +94,7 @@ function exec_gsp_module()
 	if(isset($_POST['edit_ftp_user']))
 	{
 		$server_row = $db->getRemoteServer($_POST['remote_server_id']);
-		$remote = new GSPRemoteLibrary($server_row['agent_ip'],$server_row['agent_port'],$server_row['encryption_key'],$server_row['timeout']);
+		$remote = new RemoteLibrary($server_row['agent_ip'],$server_row['agent_port'],$server_row['encryption_key'],$server_row['timeout']);
 		$ftp_login = strip_real_escape_string($_POST['ftp_login']);
 		$settings = "";
 		foreach ((array)$_POST as $key => $value)
@@ -147,7 +147,7 @@ function exec_gsp_module()
 		foreach ((array)$servers as $server_row)
 		{
 			$display_ip = checkDisplayPublicIP($server_row['display_public_ip'],$server_row['agent_ip']);
-			$remote = new GSPRemoteLibrary($server_row['agent_ip'],$server_row['agent_port'],$server_row['encryption_key'],$server_row['timeout']);
+			$remote = new RemoteLibrary($server_row['agent_ip'],$server_row['agent_port'],$server_row['encryption_key'],$server_row['timeout']);
 
 			$host_stat = $remote->status_chk();
 

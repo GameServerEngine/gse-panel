@@ -23,11 +23,11 @@
  */
 
 require_once('includes/lib_remote.php');
-function exec_gsp_module()
+function exec_module()
 {
 	global $db;
 	$remote_server = $db->getRemoteServer($_GET['r_server_id']);
-	$remote = new GSPRemoteLibrary( $remote_server['agent_ip'], $remote_server['agent_port'],
+	$remote = new RemoteLibrary( $remote_server['agent_ip'], $remote_server['agent_port'],
 									$remote_server['encryption_key'], $remote_server['timeout'] );
 
 	if($remote->status_chk() == 1)

@@ -8,7 +8,7 @@ $(document).ready(function()
 
 	$('.main [href^="?m=gamemanager"]').each(function()
 	{
-		if($(this).text()==langConsts['GSP_LANG_back'])
+		if($(this).text()==langConsts['LANG_back'])
 		{
 			$(this).addClass('btn btn-sm btn-primary mt-1').prepend('<i class="fas fa-angle-double-left mr-1"></i>');
 		}
@@ -16,7 +16,7 @@ $(document).ready(function()
 
 	$('.main [href^="?m=steam_workshop"]').each(function()
 	{
-		if($(this).text()==langConsts['GSP_LANG_install_mod'])
+		if($(this).text()==langConsts['LANG_install_mod'])
 		{
 			$(this).addClass('btn-sm').prepend('<i class="fas fa-puzzle-piece mr-1"></i>');
 		}

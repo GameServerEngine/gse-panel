@@ -100,7 +100,7 @@ function steam_workshop_admin_get_game_options($db, &$workshop_config_labels)
 	$game_cfgs = $db->getGameCfgs();
 	foreach($game_cfgs as $game_cfg)
 	{
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$game_cfg['home_cfg_file'], gsp_os_for_install_row($game_cfg));
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$game_cfg['home_cfg_file'], os_for_install_row($game_cfg));
 		if(isset($server_xml->installer) and $server_xml->installer == "steamcmd")
 		{
 			$cfgMods = $db->getCfgMods($game_cfg['home_cfg_id']);
@@ -136,7 +136,7 @@ function steam_workshop_admin_get_game_options($db, &$workshop_config_labels)
 	return $games;
 }
 
-function exec_gsp_module()
+function exec_module()
 {
 
 	Global $db,$view;
@@ -159,7 +159,7 @@ function exec_gsp_module()
 				$modkey = $cfgMod['mod_key'];
 		}
 
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$gameCfg['home_cfg_file'], gsp_os_for_install_row($gameCfg));
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$gameCfg['home_cfg_file'], os_for_install_row($gameCfg));
 
 		$mod_xml = xml_get_mod($server_xml, $modkey);
 
@@ -321,5 +321,5 @@ function exec_gsp_module()
 	}
 }
 
-if (function_exists('gsp_steam_workshop_simple_admin_script')) { gsp_steam_workshop_simple_admin_script(); }
+if (function_exists('steam_workshop_simple_admin_script')) { steam_workshop_simple_admin_script(); }
 ?>

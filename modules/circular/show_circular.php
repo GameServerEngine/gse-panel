@@ -22,7 +22,7 @@
  *
  */
 include 'modules/circular/functions.php';
-function exec_gsp_module()
+function exec_module()
 {
 	$circulars = get_circulars();
 	if(isset($_GET['list']))

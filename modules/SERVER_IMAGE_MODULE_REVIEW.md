@@ -33,12 +33,12 @@
 
 ### Which module generates images?
 - **Both** generate PNG status banners.
-- `lgsl_with_img_mod` is LGSL-centric and built around the `GSP_DB_PREFIXlgsl` cache model.
+- `lgsl_with_img_mod` is LGSL-centric and built around the `TABLE_PREFIX_PLACEHOLDERlgsl` cache model.
 - `dsi` supports LGSL/GameQ/TS3 monitor includes and can render banner/code snippets directly for panel users.
 
 ### Which has better cache support?
 - **lgsl_with_img_mod** has deeper cache integration:
-  - DB-backed query cache (`GSP_DB_PREFIXlgsl.cache`, `cache_time`)
+  - DB-backed query cache (`TABLE_PREFIX_PLACEHOLDERlgsl.cache`, `cache_time`)
   - image file cache handling
   - pending/retry semantics in `lgsl_query_cached(...)`
 - `dsi` has simple file cache (60s TTL) per generated image and relies on protocol monitor include side effects for query state.

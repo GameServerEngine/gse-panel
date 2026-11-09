@@ -21,7 +21,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  */
-function exec_gsp_module()
+function exec_module()
 {
 	include "modules/tshock/shared.php";
 	if($continue)

@@ -29,7 +29,7 @@ define('LANG_remote_host_info', "A távoli kiszolgálónak pingelhető állomás
 define('LANG_remote_host_port', "Távoli kiszolgáló port");
 define('LANG_remote_host_port_info', "A port amit az GSP Agent figyel a távoli kiszolgálón. Alapértelmezett: 12679.");
 define('LANG_remote_host_name', "Távoli kiszolgáló név");
-define('LANG_gsp_user', "GSP Agent felhasználónév");
+define('LANG_user', "GSP Agent felhasználónév");
 define('LANG_remote_host_name_info', "Távoli állomásnév szokott segíteni a felhasználóknak beazonosítani a szervereiket.");
 define('LANG_add_remote_host', "Távoli kiszolgáló hozzáadása");
 define('LANG_remote_encryption_key', "Távoli titkosítási kulcs");

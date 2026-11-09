@@ -22,7 +22,7 @@
  *
  */
 
-function exec_gsp_module()
+function exec_module()
 {
 	global $db;
 	require_once 'includes/api_functions.php';

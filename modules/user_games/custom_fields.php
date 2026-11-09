@@ -83,7 +83,7 @@ function renderCustomFields($field, $home_id)
 	echo "</label></td></tr>\n";
 }
 
-function exec_gsp_module()
+function exec_module()
 {
     global $db,$view,$custom_fields,$isAdmin;
 
@@ -107,10 +107,10 @@ function exec_gsp_module()
 	//get used custom value or get default
 	$custom_fields = json_decode($db->getCustomFields($home_id), True);
 
-	$server_xml = read_server_config(SERVER_CONFIG_LOCATION.$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
+	$server_xml = read_server_config(SERVER_CONFIG_LOCATION.$home_info['home_cfg_file'], os_for_install_row($home_info));
 
 	include_once('includes/lib_remote.php');
-	$remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
+	$remote = new RemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
 
 	echo "<h2>".get_lang('editing_home_called')." \"".htmlentities($home_info['home_name'])."\"</h2>";
 

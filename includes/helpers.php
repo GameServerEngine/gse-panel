@@ -23,7 +23,7 @@
  */
 
 // Globals
-$GSPLangPre = "LANG_";
+$LangPre = "LANG_";
 
 // Ignore any request with unwanted values at 'm' or 'p'
 if( isset($_REQUEST['m']) and !preg_match("/^([a-z]|[0-9]|_|-)+$/i", $_REQUEST['m']) )
@@ -53,7 +53,7 @@ function createDatabaseConnection($db_type,$db_host,$db_user,$db_pass,$db_name,$
 			require_once("includes/database_mysqli.php");
 		else
 			die("<p class='failure'>GSP requires the <a href='http://php.net/manual/en/book.mysqli.php' target='_blank'>mysqli PHP extension</a>. Please install it, and then try again.</p>");
-        $database = new GSPDatabaseMySQL();
+        $database = new DatabaseMySQL();
         $connect_value = $database->connect($db_host,$db_user,$db_pass,$db_name,$table_prefix,$db_port);
 
         if ($connect_value === TRUE)
@@ -70,7 +70,7 @@ function createDatabaseConnection($db_type,$db_host,$db_user,$db_pass,$db_name,$
 
 function get_db_error_text ($db_retval, &$error_text)
 {
-    if (is_a($db_retval,"GSPDatabase"))
+    if (is_a($db_retval,"Database"))
         return FALSE;
 
     switch ($db_retval) {
@@ -320,7 +320,7 @@ function isCoreModule($module){
  * Login/auth is not a module (no module.php; it's core index.php/includes/
  * auth) so it is always active regardless of this list.
  */
-function gsp_module_cannot_be_disabled($module){
+function module_cannot_be_disabled($module){
 	$undisableable = array('modulemanager', 'settings', 'user_admin');
 	return in_array($module, $undisableable, true);
 }
@@ -449,9 +449,9 @@ function runPostUpdateOperations(){
 	}
 }
 
-function getGSPGitHubURL($gitHubUsername, $repo){
-	$GSPGitHub = "https://github.com/GameServerPanel/";
-	$gitHubURL = $GSPGitHub;
+function getGitHubURL($gitHubUsername, $repo){
+	$GitHub = "https://github.com/GameServerPanel/";
+	$gitHubURL = $GitHub;
 	if(isset($gitHubUsername) && !empty($gitHubUsername)){
 		$gitHubURL = "https://github.com/" . $gitHubUsername . "/";
 	}
@@ -462,12 +462,12 @@ function getGSPGitHubURL($gitHubUsername, $repo){
 		return $gitHubURL;
 	}
 
-	return $GSPGitHub;
+	return $GitHub;
 }
 
-function getGSPGitHubURLUnstrict($gitHubUsername){
-	$GSPGitHub = "https://github.com/GameServerPanel/";
-	$gitHubURL = $GSPGitHub;
+function getGitHubURLUnstrict($gitHubUsername){
+	$GitHub = "https://github.com/GameServerPanel/";
+	$gitHubURL = $GitHub;
 	if(isset($gitHubUsername) && !empty($gitHubUsername)){
 		$gitHubURL = "https://github.com/" . $gitHubUsername . "/";
 	}
@@ -479,7 +479,7 @@ function getGSPGitHubURLUnstrict($gitHubUsername){
 		return $gitHubURL;
 	}
 
-	return $GSPGitHub;
+	return $GitHub;
 }
 
 function getGitHubOrganization($gitHubURL){
@@ -495,13 +495,13 @@ function getGitHubOrganization($gitHubURL){
 	return $gitHubOrg;
 }
 
-function getGSPLangConstantsJSON(){
-	global $GSPLangPre;
+function getLangConstantsJSON(){
+	global $LangPre;
 	$finalConsts = array();
 
 	$consts = get_defined_constants(true);
 	foreach ((array)$consts["user"] as $key => $value){
-		if(startsWith($key, $GSPLangPre)){
+		if(startsWith($key, $LangPre)){
 			$finalConsts[$key] = $value;
 		}
 	}

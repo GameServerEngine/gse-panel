@@ -2,7 +2,7 @@
 require_once __DIR__ . '/storefront_locations.php';
 /**
  * Database-facing helpers for the panel-owned game catalog
- * (GSP_DB_PREFIXcatalog_offer / GSP_DB_PREFIXcatalog_tier). Pure pricing math
+ * (TABLE_PREFIX_PLACEHOLDERcatalog_offer / TABLE_PREFIX_PLACEHOLDERcatalog_tier). Pure pricing math
  * lives in catalog_pricing.php; this file only loads rows.
  */
 

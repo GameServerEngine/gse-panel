@@ -25,7 +25,7 @@ require_once('modules/gamemanager/home_handling_functions.php');
 require_once('modules/config_games/server_config_parser.php');
 require_once('protocol/lgsl/lgsl_protocol.php');
 require_once('protocol/GameQ/GameQ.php');
-function exec_gsp_module(){
+function exec_module(){
 	global $db;
 	echo "<h2>".get_lang("dsi_long")."</h2>";
 
@@ -75,7 +75,7 @@ function exec_gsp_module(){
 			$server_home['port']    == $port )
 		{
 			$public_ip = checkDisplayPublicIP($server_home['display_public_ip'], $server_home['ip']);
-			$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file'], gsp_os_for_install_row($server_home));
+			$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file'], os_for_install_row($server_home));
 			$url = false;
 			if ($server_xml->protocol == "lgsl"){
 				list($c_port, $q_port, $s_port) = lgsl_port_conversion($server_xml->lgsl_query_name, $server_home['port'], "", "");

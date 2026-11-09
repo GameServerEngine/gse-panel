@@ -7,7 +7,7 @@
  * The decision logic (scheduler_v2_resolve_conflict) is a pure function so it can
  * be unit tested without a database. The DB-backed lock
  * (scheduler_v2_lock / scheduler_v2_unlock) is a thin wrapper around it using the
- * existing $db mysqli connection and gsp_scheduled_task_run as the lock record.
+ * existing $db mysqli connection and scheduled_task_run as the lock record.
  */
 
 if (!defined('SCHEDULER_V2_LOCK_LOADED')) {

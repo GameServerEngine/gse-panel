@@ -11,8 +11,8 @@
  */
 
 $query_groups = "";
-$gsp_session_role = isset($_SESSION['users_role']) ? $_SESSION['users_role'] : (isset($_SESSION['users_role']) ? $_SESSION['users_role'] : "");
-if($gsp_session_role != "admin")
+$session_role = isset($_SESSION['users_role']) ? $_SESSION['users_role'] : (isset($_SESSION['users_role']) ? $_SESSION['users_role'] : "");
+if($session_role != "admin")
 {
 	$groups = $db->getUsersGroups($_SESSION['user_id']);
 	if (!is_array($groups)) {
@@ -23,7 +23,7 @@ if($gsp_session_role != "admin")
 		$query_groups .= "group_id=".$group['group_id']." OR ";
 	$query_groups .= "group_id=0 OR group_id IS NULL)";
 }
-$addons = $db->resultQuery("SELECT addon_id FROM GSP_DB_PREFIXaddons WHERE home_cfg_id=".$server_home['home_cfg_id'].$query_groups);
+$addons = $db->resultQuery("SELECT addon_id FROM TABLE_PREFIX_PLACEHOLDERaddons WHERE home_cfg_id=".$server_home['home_cfg_id'].$query_groups);
 $addons_qty = is_array($addons) ? count((array)$addons) : 0;
 if($addons and $addons_qty >= 1){
 	$module_buttons = array(

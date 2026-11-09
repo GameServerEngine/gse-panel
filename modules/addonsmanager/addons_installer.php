@@ -117,7 +117,7 @@ if (file_exists(dirname(__FILE__) . '/../steam_workshop/includes/functions.php')
 	require_once(dirname(__FILE__) . '/../steam_workshop/includes/functions.php');
 }
 
-function exec_gsp_module() {
+function exec_module() {
 
 	if (isset($install_method) && $install_method === 'steam_workshop') {
 		print_failure('Steam Workshop has been removed from Server Content. Use the Steam Workshop module instead.');
@@ -158,9 +158,9 @@ function exec_gsp_module() {
 	scm_ensure_phase2_schema($db);
 
 	$home_cfg_id = $home_info['home_cfg_id'];
-	$server_xml  = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
+	$server_xml  = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], os_for_install_row($home_info));
 	$path_error = '';
-	$home_info = gsp_with_game_root($home_info, $server_xml, $path_error);
+	$home_info = with_game_root($home_info, $server_xml, $path_error);
 	if ($home_info === false) {
 		print_failure('Invalid game directory for this server: ' . htmlentities($path_error));
 		return;
@@ -181,7 +181,7 @@ function exec_gsp_module() {
     {
         $addon_id = (int)$_REQUEST['addon_id'];
 
-		$addons_rows = $db->resultQuery("SELECT url, path, post_script, addon_type, install_method, content_version, requires_stop, restart_after_install, workshop_item_id, workshop_app_id, target_path_template, optional_folder_name, config_edit_rule, launch_param_additions, name, bot_working_dir, bot_executable, bot_arguments, bot_install_folder, bot_os_support, bot_enable_default, bot_uninstall_script, checksum_sha256 FROM GSP_DB_PREFIXaddons WHERE addon_id=".$addon_id.$query_groups.$server_bot_os_filter);
+		$addons_rows = $db->resultQuery("SELECT url, path, post_script, addon_type, install_method, content_version, requires_stop, restart_after_install, workshop_item_id, workshop_app_id, target_path_template, optional_folder_name, config_edit_rule, launch_param_additions, name, bot_working_dir, bot_executable, bot_arguments, bot_install_folder, bot_os_support, bot_enable_default, bot_uninstall_script, checksum_sha256 FROM TABLE_PREFIX_PLACEHOLDERaddons WHERE addon_id=".$addon_id.$query_groups.$server_bot_os_filter);
 		if (!is_array($addons_rows)) {
 			$addons_rows = [];
 		}
@@ -192,7 +192,7 @@ function exec_gsp_module() {
 			return;
 		}
 
-		$remote = new GSPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
+		$remote = new RemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
 
 		$addon_info      = $addons_rows[0];
 		$install_method  = scm_get_install_method_default(isset($addon_info['install_method']) ? $addon_info['install_method'] : 'download_zip');
@@ -382,9 +382,9 @@ function exec_gsp_module() {
 				return;
 			}
 			if ($install_method === 'post_script') {
-				$script_command = "cd " . escapeshellarg($home_info['game_root']) . " && /bin/bash -lc " . escapeshellarg((string)$post_script) . " ; echo __GSP_SCRIPT_EXIT:$?";
+				$script_command = "cd " . escapeshellarg($home_info['game_root']) . " && /bin/bash -lc " . escapeshellarg((string)$post_script) . " ; echo __SCRIPT_EXIT:$?";
 				$script_output = $remote->exec($script_command);
-				$script_ok = is_string($script_output) && preg_match('/__GSP_SCRIPT_EXIT:(\d+)/', $script_output, $sm) && (int)$sm[1] === 0;
+				$script_ok = is_string($script_output) && preg_match('/__SCRIPT_EXIT:(\d+)/', $script_output, $sm) && (int)$sm[1] === 0;
 				if ($script_ok) {
 					scm_record_install_done($db, (int)$history_id, 'installed', 0, trim((string)$script_output));
 					scm_upsert_manifest($db, $home_id, $addon_id, array(
@@ -499,13 +499,13 @@ function exec_gsp_module() {
 				}
 				$ok = false;
 				if ($install_method === 'create_folder') {
-					$ok = is_string($remote->exec("mkdir -p " . escapeshellarg($resolved_path) . " && echo __GSP_FOLDER_OK"));
+					$ok = is_string($remote->exec("mkdir -p " . escapeshellarg($resolved_path) . " && echo __FOLDER_OK"));
 				} else {
 					$config_rule = trim((string)$addon_info['config_edit_rule']);
 					$dir = dirname($resolved_path);
-					$cmd = "mkdir -p " . escapeshellarg($dir) . " && touch " . escapeshellarg($resolved_path) . " && printf %s " . escapeshellarg($config_rule . PHP_EOL) . " >> " . escapeshellarg($resolved_path) . " && echo __GSP_CONFIG_OK";
+					$cmd = "mkdir -p " . escapeshellarg($dir) . " && touch " . escapeshellarg($resolved_path) . " && printf %s " . escapeshellarg($config_rule . PHP_EOL) . " >> " . escapeshellarg($resolved_path) . " && echo __CONFIG_OK";
 					$out = $remote->exec($cmd);
-					$ok = is_string($out) && strpos($out, '__GSP_CONFIG_OK') !== false;
+					$ok = is_string($out) && strpos($out, '__CONFIG_OK') !== false;
 				}
 				if ($ok) {
 					scm_record_install_done($db, (int)$history_id, 'installed', 0, $install_method . '_ok');
@@ -660,7 +660,7 @@ function exec_gsp_module() {
 		if ($addon_type === 'workshop_item') {
 			$first_addon_id = 0;
 			$wk_addons = $db->resultQuery(
-				"SELECT addon_id FROM GSP_DB_PREFIXaddons
+				"SELECT addon_id FROM TABLE_PREFIX_PLACEHOLDERaddons
 				  WHERE addon_type='workshop_item' AND home_cfg_id=" . (int)$home_cfg_id . $query_groups . "
 				  ORDER BY name ASC LIMIT 1"
 			);
@@ -681,7 +681,7 @@ function exec_gsp_module() {
 				$addon_type_lang = isset($category_labels[$addon_type]) ? $category_labels[$addon_type] : ucfirst(str_replace('_', ' ', $addon_type));
 				$addons = $db->resultQuery(
 					"SELECT addon_id, name, install_method, workshop_item_id, workshop_app_id, target_path_template, optional_folder_name, bot_arguments
-					   FROM GSP_DB_PREFIXaddons
+					   FROM TABLE_PREFIX_PLACEHOLDERaddons
 					  WHERE addon_type='".$addon_type."' AND home_cfg_id=" . $home_cfg_id . $query_groups . $server_bot_os_filter . "
 					  ORDER BY name ASC"
 				);

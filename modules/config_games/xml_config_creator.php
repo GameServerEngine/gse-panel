@@ -22,7 +22,7 @@
  *
  */
 
-function exec_gsp_module()
+function exec_module()
 {
 	$selectedProtocol = isset($_POST['protocol']) ? $_POST['protocol'] : '';
 	$queryChoices = array();

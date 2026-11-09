@@ -1,7 +1,7 @@
 <?php
 
-if (!defined('GSP_DB_PREFIX')) {
-	define('GSP_DB_PREFIX', 'gsp_');
+if (!defined('TABLE_PREFIX_PLACEHOLDER')) {
+	define('TABLE_PREFIX_PLACEHOLDER', '');
 }
 
 if (!function_exists('clean_path')) {
@@ -118,7 +118,7 @@ $linuxFile = $remote->files['/srv/games/20/_alsoRun.cmd'];
 scm_server_bot_test_assert(strpos($linuxFile, "workdir=/srv/games/dayz/bot\n") !== false, 'Linux launch file includes workdir key');
 scm_server_bot_test_assert(strpos($linuxFile, "executable=./bot\n") !== false, 'Linux launch file includes executable key');
 scm_server_bot_test_assert(strpos($linuxFile, "arguments=--config bot.cfg --watch\n") !== false, 'Linux launch file includes arguments key');
-scm_server_bot_test_assert(strpos($linuxFile, "# GSE_SERVER_CONTENT_SERVER_BOT_GENERATED\n") === 0, 'launch file includes managed ownership marker');
+scm_server_bot_test_assert(strpos($linuxFile, "# SERVER_CONTENT_SERVER_BOT_GENERATED\n") === 0, 'launch file includes managed ownership marker');
 
 $remote = new ScmServerBotFakeRemote();
 $winRows = array(array(
@@ -255,6 +255,6 @@ $lifeDb->rows = array(array(
 ));
 $remote = new ScmServerBotFakeRemote();
 scm_server_bot_test_assert(scm_server_bot_manifest_action($lifeDb, $remote, $linuxHome, $serverXml, 1, 'uninstall', 99, $message), 'uninstall action succeeds');
-scm_server_bot_test_assert(strpos(implode("\n", $lifeDb->queries), 'DELETE FROM `GSP_DB_PREFIXserver_content_manifest`') !== false, 'uninstall removes installed-content row after generation');
+scm_server_bot_test_assert(strpos(implode("\n", $lifeDb->queries), 'DELETE FROM `TABLE_PREFIX_PLACEHOLDERserver_content_manifest`') !== false, 'uninstall removes installed-content row after generation');
 
 echo "All Server Bot helper smoke tests passed.\n";

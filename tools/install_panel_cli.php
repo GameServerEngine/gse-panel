@@ -111,7 +111,7 @@ require_once($base_dir . '/includes/html_functions.php');
 require_once($base_dir . '/includes/functions.php');
 require_once($base_dir . '/includes/install_engine.php');
 
-gspLang();
+lang();
 
 $options['base_dir'] = $base_dir;
 $options['install_via'] = 'cli';
@@ -119,7 +119,7 @@ $options['installed_by'] = getenv('SUDO_USER') ?: getenv('USER') ?: 'root';
 $options['dry_run'] = cli_has_arg($argv, '--dry-run') || !empty($options['dry_run']);
 
 ob_start();
-$result = gsp_install_run($options);
+$result = install_run($options);
 $legacy_output = trim(strip_tags(ob_get_clean()));
 if ($legacy_output !== '') {
     foreach (explode("\n", $legacy_output) as $line) {

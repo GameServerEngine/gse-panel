@@ -22,7 +22,7 @@
  *
  */
 
-function exec_gsp_module()
+function exec_module()
 {
 	echo "<h2>LGSL Admin</h2>";
 	require "modules/lgsl_with_img_mod/lgsl_files/lgsl_config.php";

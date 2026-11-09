@@ -33,7 +33,7 @@ function real_escape_string_recursive(&$item, $key, $link){
     $item = $this->realEscapeSingle($item);
 }
 
-class GSPDatabaseMySQL extends GSPDatabase
+class DatabaseMySQL extends Database
 {
 	protected $link;
 
@@ -91,7 +91,7 @@ class GSPDatabaseMySQL extends GSPDatabase
 		try {
 			$result = mysqli_query($this->link,$query);
 		} catch ( \Throwable $e ) {
-			error_log("GSPDatabaseMySQL::listQuery exception: " . $e->getMessage());
+			error_log("DatabaseMySQL::listQuery exception: " . $e->getMessage());
 			return FALSE;
 		}
 
@@ -880,7 +880,7 @@ class GSPDatabaseMySQL extends GSPDatabase
 	/// (modulemanager, settings, user_admin) are always treated as enabled.
 	public function isModuleEnabled($module_folder)
 	{
-		if (function_exists('gsp_module_cannot_be_disabled') && gsp_module_cannot_be_disabled($module_folder)) {
+		if (function_exists('module_cannot_be_disabled') && module_cannot_be_disabled($module_folder)) {
 			return true;
 		}
 
@@ -1009,7 +1009,7 @@ class GSPDatabaseMySQL extends GSPDatabase
 		return false;
 	}
 
-	public function updateGSPGameModsWithNewIDs($oldModStructure){
+	public function updateGameModsWithNewIDs($oldModStructure){
 		$currentStructure = $this->getCurrentHomeConfigMods(false);
 
 		if(isset($oldModStructure) && is_array($oldModStructure) && isset($currentStructure) && is_array($currentStructure)){
@@ -1211,12 +1211,12 @@ class GSPDatabaseMySQL extends GSPDatabase
 	/// \brief Used to make plain query to the database.
 	/// \return true if success and false otherwise.
 	/// When false is returned user can check error with getError() function.
-	// Runs a SELECT and returns all rows as arrays (GSP_DB_PREFIX placeholder allowed). FALSE on failure.
+	// Runs a SELECT and returns all rows as arrays (TABLE_PREFIX_PLACEHOLDER placeholder allowed). FALSE on failure.
 	public function queryRows( $query )
 	{
 		if ( !$this->link ) return FALSE;
 
-		$query = str_replace( "GSP_DB_PREFIX", $this->table_prefix, $query );
+		$query = str_replace( "TABLE_PREFIX_PLACEHOLDER", $this->table_prefix, $query );
 
 		++$this->queries_;
 		$result = mysqli_query($this->link,$query);
@@ -1231,13 +1231,13 @@ class GSPDatabaseMySQL extends GSPDatabase
 	{
 		if ( !$this->link ) return FALSE;
 
-		$query = str_replace( "GSP_DB_PREFIX", $this->table_prefix, $query );
+		$query = str_replace( "TABLE_PREFIX_PLACEHOLDER", $this->table_prefix, $query );
 
 		++$this->queries_;
 		try {
 			mysqli_query($this->link,$query);
 		} catch ( \Throwable $e ) {
-			error_log("GSPDatabaseMySQL::query exception: " . $e->getMessage());
+			error_log("DatabaseMySQL::query exception: " . $e->getMessage());
 			return FALSE;
 		}
 
@@ -1251,7 +1251,7 @@ class GSPDatabaseMySQL extends GSPDatabase
 
 	/// \brief This query return array of values or false on failure.
 	public function resultQuery( $query ) {
-		$query = str_replace( "GSP_DB_PREFIX", $this->table_prefix, $query );
+		$query = str_replace( "TABLE_PREFIX_PLACEHOLDER", $this->table_prefix, $query );
 		return $this->listQuery($query);
 	}
 
@@ -1309,7 +1309,7 @@ class GSPDatabaseMySQL extends GSPDatabase
 			return false;
 
 		$rhost_name = trim($rhost_name);
-		$query = sprintf("INSERT INTO `%sremote_servers` (`agent_ip`,remote_server_name,gsp_user,agent_port,ftp_ip,ftp_port,`encryption_key`,timeout,use_nat,display_public_ip)
+		$query = sprintf("INSERT INTO `%sremote_servers` (`agent_ip`,remote_server_name,user,agent_port,ftp_ip,ftp_port,`encryption_key`,timeout,use_nat,display_public_ip)
 			VALUES('%s','%s','%s','%d','%s','%s','%s','%s','%s','%s');",
 				$this->table_prefix,
 				$this->realEscapeSingle($rhost_ip),
@@ -1537,7 +1537,7 @@ class GSPDatabaseMySQL extends GSPDatabase
 		$query = sprintf("UPDATE %sremote_servers SET agent_ip='%s',
 			agent_port='%s', encryption_key='%s',
 			remote_server_name='%s',
-			gsp_user='%s',
+			user='%s',
 			ftp_ip='%s',
 			ftp_port='%s',
 			timeout='%s',
@@ -3124,8 +3124,8 @@ class GSPDatabaseMySQL extends GSPDatabase
 	}
 
 	public function addGameIpPort($home_id, $ip, $port) {
-		if (gsp_port_allocator_schema_available($this, $this->table_prefix)) {
-			$result = gsp_port_reserve_manual_home_block($this, $this->table_prefix, $home_id, $ip, $port);
+		if (port_allocator_schema_available($this, $this->table_prefix)) {
+			$result = port_reserve_manual_home_block($this, $this->table_prefix, $home_id, $ip, $port);
 			return !empty($result['ok']);
 		}
 		$home_id = $this->realEscapeSingle($home_id);
@@ -3152,7 +3152,7 @@ class GSPDatabaseMySQL extends GSPDatabase
 		if ( mysqli_query($this->link,$query) === FALSE )
 			return FALSE;
 
-		gsp_port_release_home_block($this, $this->table_prefix, $home_id, $ip, $port);
+		port_release_home_block($this, $this->table_prefix, $home_id, $ip, $port);
 
 		return TRUE;
 	}
@@ -3904,8 +3904,8 @@ class GSPDatabaseMySQL extends GSPDatabase
 	}
 
 	public function getNextAvailablePort($ip_id,$home_cfg_id){
-		if (gsp_port_allocator_schema_available($this, $this->table_prefix)) {
-			$port = gsp_port_allocator_preview_next_port($this, $this->table_prefix, $ip_id, $home_cfg_id);
+		if (port_allocator_schema_available($this, $this->table_prefix)) {
+			$port = port_allocator_preview_next_port($this, $this->table_prefix, $ip_id, $home_cfg_id);
 			if ($port !== false) {
 				return $port;
 			}
@@ -4122,7 +4122,7 @@ class GSPDatabaseMySQL extends GSPDatabase
 					case 'server':
 						require_once('includes/lib_remote.php');
 						$home_info = $this->getGameHomeWithoutMods($home_id);
-						$remote = new GSPRemoteLibrary($home_info['agent_ip'], $home_info['agent_port'], $home_info['encryption_key'], $home_info['timeout']);
+						$remote = new RemoteLibrary($home_info['agent_ip'], $home_info['agent_port'], $home_info['encryption_key'], $home_info['timeout']);
 						$agent_online = $remote->status_chk() === 1;
 						if( $agent_online )
 						{
@@ -4205,7 +4205,7 @@ class GSPDatabaseMySQL extends GSPDatabase
 		++$this->queries_;
 		if(empty($tmp))
 		{
-			$token = gsp_api_new_token();
+			$token = api_new_token();
 			$query ='INSERT INTO %sapi_tokens'.
 					' (user_id, token)'.
 					' VALUES'.

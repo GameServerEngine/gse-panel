@@ -84,7 +84,7 @@ function get_query_port($server_xml, $server_port)
 function get_start_cmd($user_info,$remote,$server_xml,$home_info,$mod_id,$ip,$port,$db)
 {
 	$path_error = '';
-	$home_info = gsp_with_game_root($home_info, $server_xml, $path_error);
+	$home_info = with_game_root($home_info, $server_xml, $path_error);
 	if ($home_info === false) {
 		return false;
 	}
@@ -101,7 +101,7 @@ function get_start_cmd($user_info,$remote,$server_xml,$home_info,$mod_id,$ip,$po
 	$cli_param_data['IP'] = $ip;
 	$cli_param_data['PORT'] = $port;
 	$cli_param_data['HOSTNAME'] = $home_info['home_name'];
-	$cli_param_data['PID_FILE'] = "gsp_game_startup.pid";
+	$cli_param_data['PID_FILE'] = "game_startup.pid";
 
 	// Linux
 	if( preg_match("/Linux/", $os) )
@@ -263,7 +263,7 @@ function send_rcon_command($command, $remote, $server_xml, $home_info, $home_id,
 	{
 		require_once("modules/gamemanager/MinecraftRcon.class.php");
 		$path_error = '';
-		$game_root = gsp_resolve_game_root_for_home($home_info, $server_xml, $path_error);
+		$game_root = resolve_game_root_for_home($home_info, $server_xml, $path_error);
 		if ($game_root === false) {
 			return FALSE;
 		}

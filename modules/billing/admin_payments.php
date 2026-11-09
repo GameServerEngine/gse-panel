@@ -19,7 +19,7 @@ if (!$db) {
     $errorMsg = billing_is_panel_context() ? 'Billing admin: database connection failed.' : 'Database connection failed.';
 } else {
     mysqli_set_charset($db, 'utf8mb4');
-    $prefix = $table_prefix ?? 'gsp_';
+    $prefix = $table_prefix ?? '';
     $repo   = new BillingRepository($db, $prefix);
 
     // Build filter from GET params

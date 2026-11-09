@@ -12,7 +12,7 @@
  * entries so admins can track every server in one place and cron-shop.php can
  * manage renewals/suspensions uniformly.
  *
- * Usage (inside exec_gsp_module after $new_home_id is confirmed):
+ * Usage (inside exec_module after $new_home_id is confirmed):
  *   require_once 'billing_integration.php';
  *   admin_register_server_in_billing($db, $user_id, $home_cfg_id,
  *       $rserver_id, $home_name, $max_players, $access_rights, $ftp, $new_home_id);
@@ -24,7 +24,7 @@ if (!function_exists('admin_register_server_in_billing')) {
      * Create billing_invoice + billing_order entries for an admin-provisioned
      * game server so it participates in the normal billing lifecycle.
      *
-     * @param GSPDatabase $db           Panel DB object (GSP_DB_PREFIX substitution works)
+     * @param Database $db           Panel DB object (TABLE_PREFIX_PLACEHOLDER substitution works)
      * @param int         $user_id      Owner of the server
      * @param int         $home_cfg_id  config_homes primary key (game type)
      * @param int         $rserver_id   remote_server id (stored in billing as "ip")
@@ -55,7 +55,7 @@ if (!function_exists('admin_register_server_in_billing')) {
         // ------------------------------------------------------------------ //
         $service_id = 0;
         $services = $db->resultQuery(
-            "SELECT service_id FROM GSP_DB_PREFIXbilling_services
+            "SELECT service_id FROM TABLE_PREFIX_PLACEHOLDERbilling_services
              WHERE home_cfg_id = " . intval($home_cfg_id) . "
              AND enabled = 1
              LIMIT 1"
@@ -161,7 +161,7 @@ if (!function_exists('admin_register_server_in_billing')) {
         // 5. Link the invoice back to the new order.                         //
         // ------------------------------------------------------------------ //
         $db->query(
-            "UPDATE GSP_DB_PREFIXbilling_invoices
+            "UPDATE TABLE_PREFIX_PLACEHOLDERbilling_invoices
              SET order_id = " . intval($order_id) . "
              WHERE invoice_id = " . intval($invoice_id)
         );

@@ -3,7 +3,7 @@
 -- DO NOT EDIT BY HAND. Regenerate with scripts/build-schema.sh whenever panel.sql or any
 -- modules/*/module.php install_queries change.
 --
--- Table names use the GSP_DB_PREFIX placeholder. The installer replaces it with the configured table_prefix at
+-- Table names use the TABLE_PREFIX_PLACEHOLDER placeholder. The installer replaces it with the configured table_prefix at
 -- import time if a non-default table_prefix is configured.
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -13,7 +13,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 /*M!999999\- enable the sandbox mode */ 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXaddons` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERaddons` (
   `addon_id` int unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(80) NOT NULL,
   `url` varchar(200) NOT NULL,
@@ -52,7 +52,7 @@ CREATE TABLE `GSP_DB_PREFIXaddons` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXadminexternallinks` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERadminexternallinks` (
   `link_id` int unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(80) NOT NULL,
   `url` varchar(200) NOT NULL,
@@ -62,7 +62,7 @@ CREATE TABLE `GSP_DB_PREFIXadminexternallinks` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXadminlte_serverstats` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERadminlte_serverstats` (
   `home_id` int NOT NULL,
   `users_online` int NOT NULL,
   `current_stamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -70,7 +70,7 @@ CREATE TABLE `GSP_DB_PREFIXadminlte_serverstats` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXadminlte_settings` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERadminlte_settings` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user` int NOT NULL,
   `name` varchar(255) NOT NULL,
@@ -81,7 +81,7 @@ CREATE TABLE `GSP_DB_PREFIXadminlte_settings` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXagent_resource_snapshots` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERagent_resource_snapshots` (
   `remote_server_id` int NOT NULL,
   `agent_ip` varchar(255) NOT NULL DEFAULT '',
   `agent_port` int NOT NULL DEFAULT '0',
@@ -101,7 +101,7 @@ CREATE TABLE `GSP_DB_PREFIXagent_resource_snapshots` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXapi_tokens` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERapi_tokens` (
   `user_id` int NOT NULL,
   `token` varchar(64) NOT NULL,
   PRIMARY KEY (`user_id`),
@@ -110,7 +110,7 @@ CREATE TABLE `GSP_DB_PREFIXapi_tokens` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXarrange_ports` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERarrange_ports` (
   `range_id` int NOT NULL AUTO_INCREMENT,
   `ip_id` int NOT NULL,
   `home_cfg_id` int NOT NULL,
@@ -123,14 +123,14 @@ CREATE TABLE `GSP_DB_PREFIXarrange_ports` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXbackup_restore` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbackup_restore` (
   `id` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXban_list` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERban_list` (
   `client_ip` varchar(255) NOT NULL,
   `logging_attempts` int NOT NULL DEFAULT '0',
   `banned_until` varchar(16) NOT NULL DEFAULT '0',
@@ -139,7 +139,7 @@ CREATE TABLE `GSP_DB_PREFIXban_list` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXbilling_cancellation_requests` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_cancellation_requests` (
   `request_id` int NOT NULL AUTO_INCREMENT,
   `home_id` int NOT NULL,
   `order_id` int NOT NULL,
@@ -161,7 +161,7 @@ CREATE TABLE `GSP_DB_PREFIXbilling_cancellation_requests` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXbilling_config` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_config` (
   `config_id` int NOT NULL AUTO_INCREMENT,
   `game_key` varchar(100) DEFAULT NULL,
   `enabled` tinyint(1) NOT NULL DEFAULT '1',
@@ -184,7 +184,7 @@ CREATE TABLE `GSP_DB_PREFIXbilling_config` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXbilling_coupons` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_coupons` (
   `coupon_id` int NOT NULL AUTO_INCREMENT,
   `code` varchar(50) NOT NULL,
   `name` varchar(255) NOT NULL DEFAULT '',
@@ -208,7 +208,7 @@ CREATE TABLE `GSP_DB_PREFIXbilling_coupons` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXbilling_invoices` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices` (
   `invoice_id` int NOT NULL AUTO_INCREMENT,
   `order_id` int NOT NULL DEFAULT '0',
   `user_id` int NOT NULL,
@@ -255,7 +255,7 @@ CREATE TABLE `GSP_DB_PREFIXbilling_invoices` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXbilling_locations` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_locations` (
   `location_id` int NOT NULL AUTO_INCREMENT,
   `parent_id` int DEFAULT NULL,
   `kind` varchar(32) NOT NULL DEFAULT 'region',
@@ -267,7 +267,7 @@ CREATE TABLE `GSP_DB_PREFIXbilling_locations` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXbilling_orders` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_orders` (
   `order_id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `service_id` int NOT NULL,
@@ -296,7 +296,7 @@ CREATE TABLE `GSP_DB_PREFIXbilling_orders` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXbilling_paypal_errors` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_paypal_errors` (
   `id` int NOT NULL AUTO_INCREMENT,
   `context` varchar(64) NOT NULL DEFAULT '',
   `error_code` varchar(128) NOT NULL DEFAULT '',
@@ -315,7 +315,7 @@ CREATE TABLE `GSP_DB_PREFIXbilling_paypal_errors` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXbilling_paypal_webhook_events` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_paypal_webhook_events` (
   `id` int NOT NULL AUTO_INCREMENT,
   `paypal_event_id` varchar(100) NOT NULL DEFAULT '',
   `event_type` varchar(100) NOT NULL DEFAULT '',
@@ -335,7 +335,7 @@ CREATE TABLE `GSP_DB_PREFIXbilling_paypal_webhook_events` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXbilling_service_agents` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_service_agents` (
   `service_id` int NOT NULL,
   `remote_server_id` int NOT NULL,
   PRIMARY KEY (`service_id`,`remote_server_id`),
@@ -344,7 +344,7 @@ CREATE TABLE `GSP_DB_PREFIXbilling_service_agents` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXbilling_service_requirements` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_service_requirements` (
   `home_cfg_id` int NOT NULL,
   `min_cpu_cores` decimal(6,2) NOT NULL DEFAULT '0.00',
   `min_ram_mb` int NOT NULL DEFAULT '0',
@@ -354,7 +354,7 @@ CREATE TABLE `GSP_DB_PREFIXbilling_service_requirements` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXbilling_service_tiers` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_service_tiers` (
   `service_id` int NOT NULL,
   `tier_key` varchar(16) NOT NULL,
   `slot_count` int NOT NULL DEFAULT '0',
@@ -364,7 +364,7 @@ CREATE TABLE `GSP_DB_PREFIXbilling_service_tiers` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXbilling_services` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_services` (
   `service_id` int NOT NULL AUTO_INCREMENT,
   `home_cfg_id` int NOT NULL,
   `mod_cfg_id` int NOT NULL,
@@ -393,7 +393,7 @@ CREATE TABLE `GSP_DB_PREFIXbilling_services` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXbilling_transactions` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_transactions` (
   `transaction_id` int NOT NULL AUTO_INCREMENT,
   `invoice_id` int NOT NULL DEFAULT '0',
   `user_id` int NOT NULL DEFAULT '0',
@@ -416,7 +416,7 @@ CREATE TABLE `GSP_DB_PREFIXbilling_transactions` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXcircular` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERcircular` (
   `circular_id` int NOT NULL AUTO_INCREMENT,
   `subject` text NOT NULL,
   `message` text NOT NULL,
@@ -426,7 +426,7 @@ CREATE TABLE `GSP_DB_PREFIXcircular` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXcircular_recipients` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERcircular_recipients` (
   `user_id` int NOT NULL,
   `circular_id` int NOT NULL,
   `status` tinyint NOT NULL,
@@ -435,7 +435,7 @@ CREATE TABLE `GSP_DB_PREFIXcircular_recipients` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXconfig_homes` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERconfig_homes` (
   `home_cfg_id` int NOT NULL AUTO_INCREMENT,
   `game_key` varchar(64) NOT NULL,
   `game_name` varchar(255) NOT NULL,
@@ -446,7 +446,7 @@ CREATE TABLE `GSP_DB_PREFIXconfig_homes` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXconfig_mods` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERconfig_mods` (
   `mod_cfg_id` int NOT NULL AUTO_INCREMENT,
   `home_cfg_id` varchar(50) NOT NULL,
   `mod_key` varchar(100) NOT NULL COMMENT 'mod short name - used by the game server for startup commands - ex cstrike',
@@ -459,7 +459,7 @@ CREATE TABLE `GSP_DB_PREFIXconfig_mods` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXfastdl_access_rules` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERfastdl_access_rules` (
   `home_cfg_id` varchar(32) NOT NULL,
   `match_file_extension` text,
   `match_client_ip` text,
@@ -468,7 +468,7 @@ CREATE TABLE `GSP_DB_PREFIXfastdl_access_rules` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXfastdl_settings` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERfastdl_settings` (
   `remote_server_id` int NOT NULL,
   `setting` varchar(63) NOT NULL,
   `value` varchar(255) NOT NULL,
@@ -477,7 +477,7 @@ CREATE TABLE `GSP_DB_PREFIXfastdl_settings` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXgame_mods` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERgame_mods` (
   `mod_id` int NOT NULL AUTO_INCREMENT,
   `home_id` int NOT NULL,
   `mod_cfg_id` int NOT NULL,
@@ -493,7 +493,7 @@ CREATE TABLE `GSP_DB_PREFIXgame_mods` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXgame_port_offsets` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERgame_port_offsets` (
   `offset_id` int NOT NULL AUTO_INCREMENT,
   `home_cfg_id` int NOT NULL,
   `port_role` enum('primary','query','rcon','web','steam','peer','admin','filetransfer','query_ssh','custom') NOT NULL,
@@ -515,7 +515,7 @@ CREATE TABLE `GSP_DB_PREFIXgame_port_offsets` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXhome_ip_ports` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERhome_ip_ports` (
   `ip_id` int NOT NULL,
   `port` int NOT NULL,
   `home_id` int NOT NULL,
@@ -525,7 +525,7 @@ CREATE TABLE `GSP_DB_PREFIXhome_ip_ports` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXhome_port_blocks` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERhome_port_blocks` (
   `block_id` bigint NOT NULL AUTO_INCREMENT,
   `home_id` int DEFAULT NULL,
   `ip_id` int NOT NULL,
@@ -552,7 +552,7 @@ CREATE TABLE `GSP_DB_PREFIXhome_port_blocks` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXlgsl` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERlgsl` (
   `id` int NOT NULL AUTO_INCREMENT,
   `type` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL DEFAULT '',
   `ip` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL DEFAULT '',
@@ -570,7 +570,7 @@ CREATE TABLE `GSP_DB_PREFIXlgsl` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXlogger` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERlogger` (
   `log_id` int unsigned NOT NULL AUTO_INCREMENT,
   `date` varchar(20) NOT NULL,
   `user_id` int NOT NULL,
@@ -594,7 +594,7 @@ CREATE TABLE `GSP_DB_PREFIXlogger` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXmachine_samples` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmachine_samples` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `machine_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `ts` datetime NOT NULL,
@@ -622,7 +622,7 @@ CREATE TABLE `GSP_DB_PREFIXmachine_samples` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXmachines` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmachines` (
   `id` int NOT NULL AUTO_INCREMENT,
   `machine_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `hostname` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -634,7 +634,7 @@ CREATE TABLE `GSP_DB_PREFIXmachines` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXmaster_server_homes` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmaster_server_homes` (
   `home_id` int NOT NULL,
   `home_cfg_id` int NOT NULL,
   `remote_server_id` int NOT NULL,
@@ -643,14 +643,14 @@ CREATE TABLE `GSP_DB_PREFIXmaster_server_homes` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXmodule_access_rights` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmodule_access_rights` (
   `module_id` int NOT NULL COMMENT 'This references to modules.id',
   `flag` char(1) NOT NULL,
   `description` varchar(64) NOT NULL,
   UNIQUE KEY `flag` (`flag`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `GSP_DB_PREFIXmodule_access_rights` (`module_id`, `flag`, `description`) VALUES (13,'d','allow_fast_download'),
+INSERT INTO `TABLE_PREFIX_PLACEHOLDERmodule_access_rights` (`module_id`, `flag`, `description`) VALUES (13,'d','allow_fast_download'),
 (14,'t','allow_ftp'),
 (15,'u','allow_updates'),
 (15,'p','allow_parameter_usage'),
@@ -659,7 +659,7 @@ INSERT INTO `GSP_DB_PREFIXmodule_access_rights` (`module_id`, `flag`, `descripti
 (17,'f','allow_file_management');
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXmodule_menus` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmodule_menus` (
   `module_id` int NOT NULL COMMENT 'This references to modules.id',
   `subpage` varchar(64) NOT NULL DEFAULT '',
   `group` varchar(32) NOT NULL,
@@ -668,7 +668,7 @@ CREATE TABLE `GSP_DB_PREFIXmodule_menus` (
   PRIMARY KEY (`module_id`,`subpage`,`group`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `GSP_DB_PREFIXmodule_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`) VALUES (1,'','user','ts3admin',0),
+INSERT INTO `TABLE_PREFIX_PLACEHOLDERmodule_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`) VALUES (1,'','user','ts3admin',0),
 (2,'addons_manager','admin','Server Content Manager',0),
 (3,'watch_logger','admin','Watch Logger',0),
 (4,'admin','admin','Backup/Restore Admin',0),
@@ -715,7 +715,7 @@ INSERT INTO `GSP_DB_PREFIXmodule_menus` (`module_id`, `subpage`, `group`, `menu_
 (38,'','user','Utilities',0);
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXmodules` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmodules` (
   `id` smallint unsigned NOT NULL AUTO_INCREMENT,
   `title` varchar(100) NOT NULL DEFAULT '',
   `folder` varchar(100) NOT NULL DEFAULT '',
@@ -726,7 +726,7 @@ CREATE TABLE `GSP_DB_PREFIXmodules` (
   UNIQUE KEY `folder` (`folder`)
 ) ENGINE=MyISAM AUTO_INCREMENT=39 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `GSP_DB_PREFIXmodules` (`id`, `title`, `folder`, `version`, `db_version`, `enabled`) VALUES (1,'TS3Admin','TS3Admin','0.2',1,1),
+INSERT INTO `TABLE_PREFIX_PLACEHOLDERmodules` (`id`, `title`, `folder`, `version`, `db_version`, `enabled`) VALUES (1,'TS3Admin','TS3Admin','0.2',1,1),
 (2,'Server Content Manager','addonsmanager','2.6',9,1),
 (3,'Administration','administration','1.0',1,1),
 (4,'Backup/Restore','backup-restore','1.2',1,1),
@@ -766,7 +766,7 @@ INSERT INTO `GSP_DB_PREFIXmodules` (`id`, `title`, `folder`, `version`, `db_vers
 (38,'Utilities','util','1.0',0,1);
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXmysql_databases` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmysql_databases` (
   `db_id` int NOT NULL AUTO_INCREMENT,
   `mysql_server_id` int NOT NULL,
   `home_id` int NOT NULL,
@@ -785,7 +785,7 @@ CREATE TABLE `GSP_DB_PREFIXmysql_databases` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXmysql_servers` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmysql_servers` (
   `mysql_server_id` int NOT NULL AUTO_INCREMENT,
   `remote_server_id` int NOT NULL,
   `mysql_name` varchar(100) NOT NULL,
@@ -799,7 +799,7 @@ CREATE TABLE `GSP_DB_PREFIXmysql_servers` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXnotification` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERnotification` (
   `notification_id` int NOT NULL AUTO_INCREMENT,
   `subject` text NOT NULL,
   `message` text NOT NULL,
@@ -809,7 +809,7 @@ CREATE TABLE `GSP_DB_PREFIXnotification` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXnotification_recipients` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERnotification_recipients` (
   `user_id` int NOT NULL,
   `notification_id` int NOT NULL,
   `status` tinyint NOT NULL,
@@ -818,7 +818,7 @@ CREATE TABLE `GSP_DB_PREFIXnotification_recipients` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXpanel_update_log` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERpanel_update_log` (
   `id` int NOT NULL AUTO_INCREMENT,
   `channel` varchar(64) NOT NULL,
   `branch` varchar(128) DEFAULT NULL,
@@ -834,7 +834,7 @@ CREATE TABLE `GSP_DB_PREFIXpanel_update_log` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXport_allocation_events` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERport_allocation_events` (
   `event_id` bigint NOT NULL AUTO_INCREMENT,
   `block_id` bigint DEFAULT NULL,
   `home_id` int DEFAULT NULL,
@@ -854,7 +854,7 @@ CREATE TABLE `GSP_DB_PREFIXport_allocation_events` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXport_pool_games` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERport_pool_games` (
   `pool_game_id` int NOT NULL AUTO_INCREMENT,
   `pool_id` int NOT NULL,
   `home_cfg_id` int NOT NULL,
@@ -874,7 +874,7 @@ CREATE TABLE `GSP_DB_PREFIXport_pool_games` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXport_pools` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERport_pools` (
   `pool_id` int NOT NULL AUTO_INCREMENT,
   `pool_key` varchar(64) NOT NULL,
   `name` varchar(128) NOT NULL,
@@ -895,18 +895,18 @@ CREATE TABLE `GSP_DB_PREFIXport_pools` (
   KEY `idx_port_pools_range` (`range_start`,`range_end`)
 ) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=latin1 COMMENT='Global reusable port pool catalog';
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `GSP_DB_PREFIXport_pools` (`pool_id`, `pool_key`, `name`, `purpose`, `base_port`, `range_start`, `range_end`, `block_size`, `priority`, `enabled`, `allow_manual`, `notes`, `created_at`, `updated_at`) VALUES (1,'arma-dayz-2302','Arma/DayZ 2302','game',2302,2302,2399,10,10,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-08 19:31:49',NULL),
-(2,'valheim-2456','Valheim 2456','game',2456,2456,2525,10,20,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-08 19:31:49',NULL),
-(3,'unreal-7777','Unreal-style 7777','game',7777,7777,7866,10,30,1,0,'Non-standard large query offsets still require per-game review.','2026-11-08 19:31:49',NULL),
-(4,'minecraft-25565','Minecraft 25565','game',25565,25565,25654,10,40,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-08 19:31:49',NULL),
-(5,'7dtd-26900','7 Days to Die 26900','game',26900,26900,27009,10,50,1,0,'Capped before the Source/SRCDS 27015 pool.','2026-11-08 19:31:49',NULL),
-(6,'source-27015','Source/SRCDS 27015','game',27015,27015,27104,10,60,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-08 19:31:49',NULL),
-(7,'rust-28015','Rust 28015','game',28015,28015,28104,10,70,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-08 19:31:49',NULL),
-(8,'quake-cod-28960','Quake/Call of Duty 28960','game',28960,28960,29049,10,80,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-08 19:31:49',NULL),
-(9,'gse-overflow-32000','GSE controlled overflow 32000','overflow',32000,32000,32999,10,1000,1,0,'Controlled overflow only: 100 ten-port blocks per IP.','2026-11-08 19:31:49',NULL);
+INSERT INTO `TABLE_PREFIX_PLACEHOLDERport_pools` (`pool_id`, `pool_key`, `name`, `purpose`, `base_port`, `range_start`, `range_end`, `block_size`, `priority`, `enabled`, `allow_manual`, `notes`, `created_at`, `updated_at`) VALUES (1,'arma-dayz-2302','Arma/DayZ 2302','game',2302,2302,2399,10,10,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-08 19:45:08',NULL),
+(2,'valheim-2456','Valheim 2456','game',2456,2456,2525,10,20,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-08 19:45:08',NULL),
+(3,'unreal-7777','Unreal-style 7777','game',7777,7777,7866,10,30,1,0,'Non-standard large query offsets still require per-game review.','2026-11-08 19:45:08',NULL),
+(4,'minecraft-25565','Minecraft 25565','game',25565,25565,25654,10,40,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-08 19:45:08',NULL),
+(5,'7dtd-26900','7 Days to Die 26900','game',26900,26900,27009,10,50,1,0,'Capped before the Source/SRCDS 27015 pool.','2026-11-08 19:45:08',NULL),
+(6,'source-27015','Source/SRCDS 27015','game',27015,27015,27104,10,60,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-08 19:45:08',NULL),
+(7,'rust-28015','Rust 28015','game',28015,28015,28104,10,70,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-08 19:45:08',NULL),
+(8,'quake-cod-28960','Quake/Call of Duty 28960','game',28960,28960,29049,10,80,1,0,'Seeded from docs/plans/global-port-allocation/PORT_POOLS.md','2026-11-08 19:45:08',NULL),
+(9,'gse-overflow-32000','GSE controlled overflow 32000','overflow',32000,32000,32999,10,1000,1,0,'Controlled overflow only: 100 ten-port blocks per IP.','2026-11-08 19:45:08',NULL);
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXprocess_samples` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERprocess_samples` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `machine_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `ts` datetime NOT NULL,
@@ -932,7 +932,7 @@ CREATE TABLE `GSP_DB_PREFIXprocess_samples` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXrcon_presets` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERrcon_presets` (
   `preset_id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(20) NOT NULL,
   `command` varchar(100) NOT NULL,
@@ -943,7 +943,7 @@ CREATE TABLE `GSP_DB_PREFIXrcon_presets` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXremote_server_ips` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERremote_server_ips` (
   `ip_id` int NOT NULL AUTO_INCREMENT,
   `remote_server_id` int NOT NULL,
   `ip` varchar(255) NOT NULL,
@@ -952,7 +952,7 @@ CREATE TABLE `GSP_DB_PREFIXremote_server_ips` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXremote_servers` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERremote_servers` (
   `remote_server_id` int NOT NULL AUTO_INCREMENT,
   `remote_server_name` varchar(100) NOT NULL,
   `user` varchar(100) NOT NULL,
@@ -975,7 +975,7 @@ CREATE TABLE `GSP_DB_PREFIXremote_servers` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXreseller_accounts` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_accounts` (
   `account_id` int NOT NULL AUTO_INCREMENT,
   `service_id` int NOT NULL,
   `user_id` int NOT NULL,
@@ -993,7 +993,7 @@ CREATE TABLE `GSP_DB_PREFIXreseller_accounts` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXreseller_carts` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_carts` (
   `cart_id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `paid` int DEFAULT NULL,
@@ -1004,7 +1004,7 @@ CREATE TABLE `GSP_DB_PREFIXreseller_carts` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXreseller_discount_codes` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_discount_codes` (
   `discount_id` int NOT NULL AUTO_INCREMENT,
   `service_id` int NOT NULL,
   `percentage` int NOT NULL,
@@ -1015,7 +1015,7 @@ CREATE TABLE `GSP_DB_PREFIXreseller_discount_codes` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXreseller_homes` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_homes` (
   `home_id` int NOT NULL,
   `user_id` int NOT NULL,
   `account_id` int NOT NULL,
@@ -1026,7 +1026,7 @@ CREATE TABLE `GSP_DB_PREFIXreseller_homes` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXreseller_services` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_services` (
   `service_id` int NOT NULL AUTO_INCREMENT,
   `service_name` varchar(60) NOT NULL,
   `slot_max_qty` int NOT NULL,
@@ -1042,7 +1042,7 @@ CREATE TABLE `GSP_DB_PREFIXreseller_services` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXrestic_homes` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERrestic_homes` (
   `home_id` int unsigned NOT NULL,
   `rest_user` varchar(64) NOT NULL,
   `repo_state` varchar(20) NOT NULL DEFAULT 'pending',
@@ -1053,7 +1053,7 @@ CREATE TABLE `GSP_DB_PREFIXrestic_homes` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXrestic_snapshots` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERrestic_snapshots` (
   `snapshot_row_id` int unsigned NOT NULL AUTO_INCREMENT,
   `home_id` int unsigned NOT NULL,
   `snapshot_id` varchar(64) NOT NULL,
@@ -1068,7 +1068,7 @@ CREATE TABLE `GSP_DB_PREFIXrestic_snapshots` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXschema_migrations` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERschema_migrations` (
   `migration_id` varchar(191) NOT NULL,
   `applied_at` datetime NOT NULL,
   PRIMARY KEY (`migration_id`)
@@ -1076,7 +1076,7 @@ CREATE TABLE `GSP_DB_PREFIXschema_migrations` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXserver_content_install_history` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERserver_content_install_history` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `home_id` int NOT NULL,
   `addon_id` int NOT NULL,
@@ -1098,7 +1098,7 @@ CREATE TABLE `GSP_DB_PREFIXserver_content_install_history` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXserver_content_manifest` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERserver_content_manifest` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `home_id` int NOT NULL,
   `addon_id` int NOT NULL,
@@ -1127,7 +1127,7 @@ CREATE TABLE `GSP_DB_PREFIXserver_content_manifest` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXserver_content_workshop` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERserver_content_workshop` (
   `id` int NOT NULL AUTO_INCREMENT,
   `content_id` int DEFAULT NULL,
   `home_id` int NOT NULL,
@@ -1157,7 +1157,7 @@ CREATE TABLE `GSP_DB_PREFIXserver_content_workshop` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXserver_content_workshop_catalog` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERserver_content_workshop_catalog` (
   `id` int NOT NULL AUTO_INCREMENT,
   `workshop_id` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
   `app_id` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
@@ -1181,7 +1181,7 @@ CREATE TABLE `GSP_DB_PREFIXserver_content_workshop_catalog` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXserver_homes` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` (
   `home_id` int NOT NULL AUTO_INCREMENT,
   `remote_server_id` int NOT NULL,
   `user_id_main` int NOT NULL,
@@ -1213,7 +1213,7 @@ CREATE TABLE `GSP_DB_PREFIXserver_homes` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXserver_status` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERserver_status` (
   `status_id` int NOT NULL AUTO_INCREMENT,
   `remote_server_id` int NOT NULL,
   `server_name` varchar(255) NOT NULL,
@@ -1232,15 +1232,15 @@ CREATE TABLE `GSP_DB_PREFIXserver_status` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXsettings` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERsettings` (
   `setting` varchar(63) NOT NULL,
   `value` varchar(1024) NOT NULL,
   PRIMARY KEY (`setting`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `GSP_DB_PREFIXsettings` (`setting`, `value`) VALUES ('title','Gameserver Engine Panel'),
+INSERT INTO `TABLE_PREFIX_PLACEHOLDERsettings` (`setting`, `value`) VALUES ('title','Gameserver Engine Panel'),
 ('slogan','The Open-Source one!'),
-('gsp_version','0'),
+('panel_version','0'),
 ('version_type','GSP'),
 ('theme','SimpleBootstrap'),
 ('welcome_title','1'),
@@ -1249,7 +1249,7 @@ INSERT INTO `GSP_DB_PREFIXsettings` (`setting`, `value`) VALUES ('title','Gamese
 ('port_block_size','10');
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXstatic_port_reservations` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations` (
   `reservation_id` int NOT NULL AUTO_INCREMENT,
   `scope` enum('ip','remote_server','global') NOT NULL DEFAULT 'ip',
   `ip_id` int DEFAULT NULL,
@@ -1273,7 +1273,7 @@ CREATE TABLE `GSP_DB_PREFIXstatic_port_reservations` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXstatus_cache` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERstatus_cache` (
   `date_timestamp` char(16) NOT NULL,
   `ip_id` char(3) NOT NULL,
   `port` char(6) NOT NULL,
@@ -1282,7 +1282,7 @@ CREATE TABLE `GSP_DB_PREFIXstatus_cache` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXticket_attachments` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERticket_attachments` (
   `attachment_id` int NOT NULL AUTO_INCREMENT,
   `ticket_id` int NOT NULL,
   `reply_id` int DEFAULT NULL,
@@ -1294,7 +1294,7 @@ CREATE TABLE `GSP_DB_PREFIXticket_attachments` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXticket_messages` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERticket_messages` (
   `reply_id` int NOT NULL AUTO_INCREMENT,
   `ticket_id` int NOT NULL,
   `user_id` int NOT NULL,
@@ -1310,7 +1310,7 @@ CREATE TABLE `GSP_DB_PREFIXticket_messages` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXticket_settings` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERticket_settings` (
   `id` int NOT NULL AUTO_INCREMENT,
   `setting_name` varchar(32) NOT NULL,
   `setting_value` text NOT NULL,
@@ -1318,7 +1318,7 @@ CREATE TABLE `GSP_DB_PREFIXticket_settings` (
   UNIQUE KEY `setting_name` (`setting_name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `GSP_DB_PREFIXticket_settings` (`id`, `setting_name`, `setting_value`) VALUES (1,'ratings_enabled','1'),
+INSERT INTO `TABLE_PREFIX_PLACEHOLDERticket_settings` (`id`, `setting_name`, `setting_value`) VALUES (1,'ratings_enabled','1'),
 (2,'attachments_enabled','1'),
 (3,'attachment_max_size','52428800'),
 (4,'attachment_limit','5'),
@@ -1327,7 +1327,7 @@ INSERT INTO `GSP_DB_PREFIXticket_settings` (`id`, `setting_name`, `setting_value
 (7,'notifications_enabled','1');
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXtickets` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERtickets` (
   `tid` int NOT NULL AUTO_INCREMENT,
   `uid` varchar(32) NOT NULL,
   `user_id` int NOT NULL,
@@ -1345,7 +1345,7 @@ CREATE TABLE `GSP_DB_PREFIXtickets` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXts3_homes` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERts3_homes` (
   `ts3_id` int NOT NULL AUTO_INCREMENT,
   `rserver_id` int NOT NULL,
   `ip` varchar(20) NOT NULL,
@@ -1359,7 +1359,7 @@ CREATE TABLE `GSP_DB_PREFIXts3_homes` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXtshock` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERtshock` (
   `token_id` int NOT NULL AUTO_INCREMENT,
   `ip` varchar(255) NOT NULL,
   `port` int NOT NULL,
@@ -1369,7 +1369,7 @@ CREATE TABLE `GSP_DB_PREFIXtshock` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXupdate_blacklist` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERupdate_blacklist` (
   `file_path` varchar(1000) DEFAULT NULL,
   UNIQUE KEY `file_path` (`file_path`),
   UNIQUE KEY `file_path_2` (`file_path`),
@@ -1378,7 +1378,7 @@ CREATE TABLE `GSP_DB_PREFIXupdate_blacklist` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXupdate_patches` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERupdate_patches` (
   `patch_id` varchar(191) NOT NULL,
   `status` varchar(32) NOT NULL,
   `details` text,
@@ -1389,7 +1389,7 @@ CREATE TABLE `GSP_DB_PREFIXupdate_patches` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXuser_group_homes` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_homes` (
   `home_id` int NOT NULL,
   `group_id` int NOT NULL,
   `access_rights` varchar(63) DEFAULT NULL,
@@ -1399,7 +1399,7 @@ CREATE TABLE `GSP_DB_PREFIXuser_group_homes` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXuser_group_info` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_info` (
   `group_id` int NOT NULL AUTO_INCREMENT,
   `group_name` varchar(255) DEFAULT NULL,
   `main_user_id` int DEFAULT NULL,
@@ -1409,7 +1409,7 @@ CREATE TABLE `GSP_DB_PREFIXuser_group_info` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXuser_group_remote_servers` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_remote_servers` (
   `remote_server_id` int NOT NULL,
   `group_id` int NOT NULL,
   `access_rights` varchar(63) DEFAULT NULL,
@@ -1418,7 +1418,7 @@ CREATE TABLE `GSP_DB_PREFIXuser_group_remote_servers` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXuser_groups` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_groups` (
   `user_id` int NOT NULL,
   `role_id` int DEFAULT NULL,
   `group_id` int NOT NULL,
@@ -1427,7 +1427,7 @@ CREATE TABLE `GSP_DB_PREFIXuser_groups` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXuser_homes` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_homes` (
   `home_id` int NOT NULL,
   `user_id` int NOT NULL,
   `access_rights` varchar(63) DEFAULT NULL,
@@ -1437,7 +1437,7 @@ CREATE TABLE `GSP_DB_PREFIXuser_homes` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXuser_role_info` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_role_info` (
   `role_id` int NOT NULL AUTO_INCREMENT,
   `role_name` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`role_id`),
@@ -1446,7 +1446,7 @@ CREATE TABLE `GSP_DB_PREFIXuser_role_info` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXusers` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERusers` (
   `user_id` int NOT NULL AUTO_INCREMENT,
   `users_login` varchar(255) NOT NULL,
   `users_passwd` varchar(255) NOT NULL,
@@ -1472,7 +1472,7 @@ CREATE TABLE `GSP_DB_PREFIXusers` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXwidgets` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERwidgets` (
   `id` int NOT NULL AUTO_INCREMENT,
   `column_id` int NOT NULL,
   `sort_no` int NOT NULL,
@@ -1481,14 +1481,14 @@ CREATE TABLE `GSP_DB_PREFIXwidgets` (
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `GSP_DB_PREFIXwidgets` (`id`, `column_id`, `sort_no`, `collapsed`, `title`) VALUES (1,1,1,0,'Game Monitor'),
+INSERT INTO `TABLE_PREFIX_PLACEHOLDERwidgets` (`id`, `column_id`, `sort_no`, `collapsed`, `title`) VALUES (1,1,1,0,'Game Monitor'),
 (2,2,0,0,'Online Server'),
 (3,2,1,0,'Currently Online'),
 (4,3,0,0,'FTP'),
 (5,3,1,0,'Support');
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GSP_DB_PREFIXwidgets_users` (
+CREATE TABLE `TABLE_PREFIX_PLACEHOLDERwidgets_users` (
   `user_id` int NOT NULL,
   `widget_id` int NOT NULL,
   `column_id` int NOT NULL,

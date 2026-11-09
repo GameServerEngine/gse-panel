@@ -1,27 +1,26 @@
 -- DEPRECATED: This file is no longer needed.
 --
--- The billing module no longer references an `enabled` column on GSP_DB_PREFIXremote_servers.
--- GSP_DB_PREFIXremote_servers is the server inventory table only.
--- Server availability per game/service is stored in GSP_DB_PREFIXbilling_services.remote_server_id
+-- The billing module no longer references an `enabled` column on TABLE_PREFIX_PLACEHOLDERremote_servers.
+-- TABLE_PREFIX_PLACEHOLDERremote_servers is the server inventory table only.
+-- Server availability per game/service is stored in TABLE_PREFIX_PLACEHOLDERbilling_services.remote_server_id
 -- as a comma-separated list of numeric server IDs (e.g. "1,3,7").
 --
 -- The original content of this file is kept below for historical reference only.
 -- Do NOT run this script on new installations.
 --
--- Migration: add `enabled` column to GSP_DB_PREFIXremote_servers
+-- Migration: add `enabled` column to TABLE_PREFIX_PLACEHOLDERremote_servers
 --
--- The original panel schema (panel.sql / GSP_DB_PREFIXremote_servers) includes an `enabled`
+-- The original panel schema (panel.sql / TABLE_PREFIX_PLACEHOLDERremote_servers) includes an `enabled`
 -- INT(11) column. Installations that were created from an older schema, or whose
 -- table was renamed without carrying the column forward, may be missing it.
 --
--- Run this once against your panel database (replace `gsp_` with your prefix if
 -- different). Safe to skip if the column already exists — just check with:
---   SHOW COLUMNS FROM `GSP_DB_PREFIXremote_servers` LIKE 'enabled';
+--   SHOW COLUMNS FROM `TABLE_PREFIX_PLACEHOLDERremote_servers` LIKE 'enabled';
 --
 -- Usage:
 --   mysql -u <user> -p <db_name> < modules/billing/add_remote_server_enabled_column.sql
 
-SET @table_name = 'gsp_remote_servers';
+SET @table_name = 'remote_servers';
 SET @col_name   = 'enabled';
 
 SET @sql = IF(

@@ -28,7 +28,7 @@ function reloadJobs($server_homes, $remote_servers, $getAllJobs = true)
 	$jobsArray = array();
 	foreach ((array)$remote_servers as $rhost_id => $remote_server )
 	{
-		$remote = new GSPRemoteLibrary($remote_server['agent_ip'], $remote_server['agent_port'], $remote_server['encryption_key'], $remote_server['timeout']);
+		$remote = new RemoteLibrary($remote_server['agent_ip'], $remote_server['agent_port'], $remote_server['encryption_key'], $remote_server['timeout']);
 		if($remote->status_chk() != 1)
 		{
 			$remote_servers_offline[$rhost_id] = $remote_server;
@@ -171,7 +171,7 @@ function updateCronJobTokens($old_token, $token){
 	$remote_servers = $db->getRemoteServers();
 	foreach ((array)$remote_servers as $remote_server)
 	{
-		$remote = new GSPRemoteLibrary($remote_server['agent_ip'], $remote_server['agent_port'], $remote_server['encryption_key'], $remote_server['timeout']);
+		$remote = new RemoteLibrary($remote_server['agent_ip'], $remote_server['agent_port'], $remote_server['encryption_key'], $remote_server['timeout']);
 		$jobs = $remote->scheduler_list_tasks();
 		foreach ((array)$jobs as $job_id => $job)
 		{
@@ -191,7 +191,7 @@ function deleteJobsByHomeServerID($home_id){
 		$remote_servers = $db->getRemoteServers();
 		foreach ((array)$remote_servers as $remote_server)
 		{
-			$remote = new GSPRemoteLibrary($remote_server['agent_ip'], $remote_server['agent_port'], $remote_server['encryption_key'], $remote_server['timeout']);
+			$remote = new RemoteLibrary($remote_server['agent_ip'], $remote_server['agent_port'], $remote_server['encryption_key'], $remote_server['timeout']);
 			$jobs = $remote->scheduler_list_tasks();
 			foreach ((array)$jobs as $job_id => $job)
 			{
@@ -215,7 +215,7 @@ function get_action_selector($action = false, $server_homes = false, $homeid_ip_
 	$server_actions = array('restart','stop','start');
 	if($server_homes and $homeid_ip_port)
 	{
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_homes[$homeid_ip_port]['home_cfg_file'], gsp_os_for_install_row($server_homes[$homeid_ip_port]));
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_homes[$homeid_ip_port]['home_cfg_file'], os_for_install_row($server_homes[$homeid_ip_port]));
 		if( $server_xml->installer == "steamcmd" )
 			$server_actions[] = 'steam_auto_update';
 	}
@@ -294,7 +294,7 @@ function updateCronJobsToNewApi()
 	{
 		require_once 'includes/lib_remote.php';
 
-		$panelURL = getGSPSiteURL();
+		$panelURL = getSiteURL();
 		if($panelURL === false)
 			return false;
 
@@ -305,7 +305,7 @@ function updateCronJobsToNewApi()
 		$mod_key = '';
 		foreach ((array)$remote_servers as $remote_server)
 		{
-			$remote = new GSPRemoteLibrary($remote_server['agent_ip'], $remote_server['agent_port'], $remote_server['encryption_key'], $remote_server['timeout']);
+			$remote = new RemoteLibrary($remote_server['agent_ip'], $remote_server['agent_port'], $remote_server['encryption_key'], $remote_server['timeout']);
 			$jobs = $remote->scheduler_list_tasks();
 			if(!is_array($jobs))
 				continue;

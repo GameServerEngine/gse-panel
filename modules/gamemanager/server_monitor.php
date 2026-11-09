@@ -30,8 +30,8 @@ require_once("includes/refreshed.php");
 require_once('includes/lib_remote.php');
 require_once("modules/steam_workshop/functions.php");
 
-if (!defined('GSP_WEBSITE_DOCS_BASE_URL')) {
-	define('GSP_WEBSITE_DOCS_BASE_URL', 'https://gameservers.world/docs/');
+if (!defined('WEBSITE_DOCS_BASE_URL')) {
+	define('WEBSITE_DOCS_BASE_URL', 'https://gameservers.world/docs/');
 }
 
 function renderParam($param, $last_param, $param_access_enabled, $home_id)
@@ -159,9 +159,9 @@ function get_sync_name($server_xml)
 	return $sync_name;
 }
 
-function gsp_docs_url_for_game_key($game_key)
+function docs_url_for_game_key($game_key)
 {
-	$baseDocsUrl = rtrim(GSP_WEBSITE_DOCS_BASE_URL, '/');
+	$baseDocsUrl = rtrim(WEBSITE_DOCS_BASE_URL, '/');
 	$game_key = trim((string)$game_key);
 	if ($game_key !== '') {
 		$docPath = __DIR__ . '/../billing/docs/' . $game_key . '/index.php';
@@ -172,7 +172,7 @@ function gsp_docs_url_for_game_key($game_key)
 	return $baseDocsUrl . '/';
 }
 
-function exec_gsp_module() {
+function exec_module() {
 	global $db, $settings, $loggedInUserInfo;
 	echo "<h2 class='gameMonitor " . ($db->isAdmin( $_SESSION['user_id'] ) ? "isAdminUser" : "") . "'>". get_lang("game_monitor") ."</h2>";
 	$refresh = new refreshed();
@@ -392,7 +392,7 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 				}
 			}
 
-			$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file'], gsp_os_for_install_row($server_home));
+			$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file'], os_for_install_row($server_home));
 
 			$mod = $server_home['mod_key'];
 			// If query name does not exist use mod key instead.
@@ -469,7 +469,7 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 				}
 			}
 
-			$remote = new GSPRemoteLibrary($server_home['agent_ip'], $server_home['agent_port'], $server_home['encryption_key'], $server_home['timeout']);
+			$remote = new RemoteLibrary($server_home['agent_ip'], $server_home['agent_port'], $server_home['encryption_key'], $server_home['timeout']);
 			$host_stat = $remote->status_chk();
 
 			if( $host_stat === 1)
@@ -490,11 +490,11 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 				if (method_exists($db, 'saveServerStatusCache') && !empty($server_home['ip_id'])) {
 					$db->saveServerStatusCache($server_home['ip_id'], $server_home['port'], $agent_status);
 				}
-				$update_in_progress = $remote->is_screen_running(GSP_SCREEN_TYPE_UPDATE,$server_home['home_id']) === 1;
+				$update_in_progress = $remote->is_screen_running(SCREEN_TYPE_UPDATE,$server_home['home_id']) === 1;
 				if($update_in_progress)
 				{
 					$workshop_log_txt = "";
-					$workshop_log_state = $remote->get_log(GSP_SCREEN_TYPE_UPDATE, $server_home['home_id'], clean_path($server_home['home_path']), $workshop_log_txt, 25);
+					$workshop_log_state = $remote->get_log(SCREEN_TYPE_UPDATE, $server_home['home_id'], clean_path($server_home['home_path']), $workshop_log_txt, 25);
 					if($workshop_log_state == 1 && steam_workshop_log_is_terminal($workshop_log_txt))
 						$update_in_progress = false;
 				}

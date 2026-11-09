@@ -35,7 +35,7 @@ require_once(__DIR__ . "/xml_tag_descriptions.php");
  * - simple flat array    → comma-separated list of leaf values
  * - nested/complex array → JSON (pretty-printed for readability in admin forms)
  */
-function gsp_normalize_config_value($value): string
+function normalize_config_value($value): string
 {
     if ($value === null) {
         return '';
@@ -66,19 +66,19 @@ function gsp_normalize_config_value($value): string
  * Return an HTML-safe string suitable for display (echo) in the editor.
  * Always wraps the result in htmlspecialchars.
  */
-function gsp_value_to_display_string($value): string
+function value_to_display_string($value): string
 {
-    return htmlspecialchars(gsp_normalize_config_value($value), ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars(normalize_config_value($value), ENT_QUOTES, 'UTF-8');
 }
 
 /**
  * Return an HTML-safe string suitable for use as an HTML form field value.
- * Identical to gsp_value_to_display_string — kept as a distinct function so
+ * Identical to value_to_display_string — kept as a distinct function so
  * callers can signal intent and future formatting rules can differ.
  */
-function gsp_value_to_editable_string($value): string
+function value_to_editable_string($value): string
 {
-    return htmlspecialchars(gsp_normalize_config_value($value), ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars(normalize_config_value($value), ENT_QUOTES, 'UTF-8');
 }
 
 function config_games_normalize_path($path)
@@ -371,7 +371,7 @@ function config_games_render_node(SimpleXMLElement $node, array $ancestors, arra
         $html .= "<div class='xml-node__attributes'><strong>Attributes</strong>";
         foreach ($attributes as $attrName => $attrValue) {
             $attrSafe = htmlspecialchars($attrName, ENT_QUOTES, 'UTF-8');
-            $valSafe = gsp_value_to_editable_string($attrValue);
+            $valSafe = value_to_editable_string($attrValue);
             $html .= "<div class='attr-row'><span>{$attrSafe}</span><input type='text' name=\"nodes[{$safeNodeKey}][attributes][{$attrSafe}]\" value=\"{$valSafe}\" placeholder='Leave blank to remove'></div>";
         }
         $html .= "<div class='attr-row'><input type='text' name=\"nodes[{$safeNodeKey}][new_attribute][name]\" placeholder='New attribute name'><input type='text' name=\"nodes[{$safeNodeKey}][new_attribute][value]\" placeholder='New attribute value'></div>";
@@ -519,7 +519,7 @@ function config_games_get_top_level_sections($configFile)
 
 function config_games_validate_document_or_errors(DOMDocument $dom)
 {
-    $tmp = tempnam(sys_get_temp_dir(), 'gsp_cfg_section_');
+    $tmp = tempnam(sys_get_temp_dir(), 'cfg_section_');
     if ($tmp === false) {
         return array('Could not create temporary file for validation.');
     }
@@ -876,7 +876,7 @@ function config_games_save_xml($db, $home_cfg_id, array $nodesPayload)
     return true;
 }
 
-function exec_gsp_module() {
+function exec_module() {
 
     global $db,$view;
     $game_cfgs = $db->getGameCfgs();
@@ -939,7 +939,7 @@ function exec_gsp_module() {
 
         // Update and remove invalid old game mod ids
         if($clear_old){
-			$db->updateGSPGameModsWithNewIDs($oldStructure);
+			$db->updateGameModsWithNewIDs($oldStructure);
 		}
 
         print_success(get_lang('configs_updated_ok'));
@@ -1019,7 +1019,7 @@ function exec_gsp_module() {
                 // Apply best-effort auto-fix: wrap bare '<' chars in script blocks with CDATA.
                 $sanitized_content = config_games_sanitize_xml_scripts($raw_content);
                 // Write to a temp file for validation
-                $tmp = tempnam(sys_get_temp_dir(), 'gsp_xml_');
+                $tmp = tempnam(sys_get_temp_dir(), 'xml_');
                 file_put_contents($tmp, $sanitized_content);
                 $xmlErrors = config_games_validate_xml_file($tmp);
                 @unlink($tmp);
@@ -1155,8 +1155,8 @@ function exec_gsp_module() {
 					echo "<hr style='margin:24px 0;border-color:#333'>";
 					echo "<h3 style='margin-bottom:8px'>Full Raw XML Editor</h3>";
 					echo "<div class='xml-raw-warning'>&#x26A0; <strong>Warning:</strong> Saving raw XML bypasses the guided editor. The file will be validated against the schema before saving. Invalid XML will be rejected.</div>";
-					echo "<script>function gspToggleRawXml(){var s=document.getElementById('raw_xml_section');var b=document.getElementById('raw_xml_toggle_btn');if(s.style.display!=='block'){s.style.display='block';b.textContent='Hide Raw XML Editor';}else{s.style.display='none';b.textContent='Show Raw XML Editor';}}</script>";
-					echo "<button type='button' id='raw_xml_toggle_btn' class='xml-raw-toggle' onclick='gspToggleRawXml()'>Show Raw XML Editor</button>";
+					echo "<script>function toggleRawXml(){var s=document.getElementById('raw_xml_section');var b=document.getElementById('raw_xml_toggle_btn');if(s.style.display!=='block'){s.style.display='block';b.textContent='Hide Raw XML Editor';}else{s.style.display='none';b.textContent='Show Raw XML Editor';}}</script>";
+					echo "<button type='button' id='raw_xml_toggle_btn' class='xml-raw-toggle' onclick='toggleRawXml()'>Show Raw XML Editor</button>";
 					echo "<div id='raw_xml_section' class='xml-raw-section'>";
 					echo "<form action='?m=config_games&amp;home_cfg_id=".$home_cfg_id."' method='post'>";
 					echo "<input type='hidden' name='home_cfg_id' value='".(int)$home_cfg_id."'>";

@@ -80,8 +80,8 @@
 - Existing cache model is spread across current status cache and module-specific image caches, without one normalized query cache contract.
 
 ## New wrapper prepared in this phase
-- Added `protocol/gsp_query.php`.
-- Introduces `gsp_query_server($server_info, $options = [])` normalized result contract.
+- Added `protocol/query.php`.
+- Introduces `query_server($server_info, $options = [])` normalized result contract.
 - Keeps default provider on LGSL (`lgsl_legacy`) for safety.
 - Adds provider concept placeholders (no broad provider switch in this phase):
   - `lgsl_legacy`
@@ -92,7 +92,7 @@
 
 ## Proposed query cache table (planning only, no migration applied)
 ```sql
-CREATE TABLE IF NOT EXISTS GSP_DB_PREFIXserver_query_cache (
+CREATE TABLE IF NOT EXISTS TABLE_PREFIX_PLACEHOLDERserver_query_cache (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   home_id INT NOT NULL,
   ip VARCHAR(64) NOT NULL,
@@ -155,7 +155,7 @@ Future page: `protocol/query_test.php` (admin-only)
   - no anonymous/public proxy behavior
 
 ## Recommended next phase
-1. Switch one low-risk monitor path to read `gsp_query_server()` output in parallel with existing behavior (feature-flag style).
+1. Switch one low-risk monitor path to read `query_server()` output in parallel with existing behavior (feature-flag style).
 2. Standardize GameQ call style (single API usage pattern) and document supported protocol mappings.
 3. Add normalized cache write/read adapter (without removing existing caches yet).
 4. Add explicit start-state model and timeout policy constants.

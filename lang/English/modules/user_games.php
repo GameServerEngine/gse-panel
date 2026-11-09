@@ -25,7 +25,7 @@
 define('LANG_add_mods_note', "You need to add mods after adding server to user. This can be done by editing the server.");
 define('LANG_game_servers', "Game Servers");
 define('LANG_game_path', "Game Path");
-define('LANG_game_path_info', "An absolute server path. Example: /home/ogpbot/GSP_User_Files/My_Server");
+define('LANG_game_path_info', "An absolute server path. Example: /home/ogpbot/User_Files/My_Server");
 define('LANG_game_server_name_info', "Server name helps users to identify their servers.");
 define('LANG_control_password', "Control password");
 define('LANG_control_password_info', "This password is used for server control, such as RCON password. If the password is empty then other means are used.");

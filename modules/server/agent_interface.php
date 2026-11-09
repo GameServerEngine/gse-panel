@@ -4,7 +4,7 @@ require_once('modules/server/agent_helpers.php');
 require_once('modules/gamemanager/home_handling_functions.php');
 require_once('modules/config_games/server_config_parser.php');
 
-function gsp_agent_print_result($result)
+function agent_print_result($result)
 {
 	if (!is_array($result)) {
 		print_failure('Agent returned an invalid response.');
@@ -12,27 +12,27 @@ function gsp_agent_print_result($result)
 	}
 	$message = isset($result['message']) ? $result['message'] : '';
 	if (!empty($result['success'])) {
-		print_success(gsp_agent_html($message ?: 'Operation succeeded.'));
+		print_success(agent_html($message ?: 'Operation succeeded.'));
 	} else {
-		print_failure(gsp_agent_html($message ?: 'Operation failed.'));
+		print_failure(agent_html($message ?: 'Operation failed.'));
 	}
-	echo "<pre class='log'>" . gsp_agent_html(json_encode($result, JSON_PRETTY_PRINT)) . "</pre>";
+	echo "<pre class='log'>" . agent_html(json_encode($result, JSON_PRETTY_PRINT)) . "</pre>";
 }
 
-function gsp_agent_home_key($row)
+function agent_home_key($row)
 {
 	return (int)$row['home_id'] . '-' . (int)$row['mod_id'] . '-' . rawurlencode((string)$row['ip']) . '-' . (int)$row['port'];
 }
 
-function gsp_agent_get_server_xml($home)
+function agent_get_server_xml($home)
 {
 	if (empty($home['home_cfg_file'])) {
 		return false;
 	}
-	return read_server_config(SERVER_CONFIG_LOCATION . "/" . $home['home_cfg_file'], gsp_os_for_install_row($home));
+	return read_server_config(SERVER_CONFIG_LOCATION . "/" . $home['home_cfg_file'], os_for_install_row($home));
 }
 
-function gsp_agent_force_stop_action($db, $remote_server, $remote)
+function agent_force_stop_action($db, $remote_server, $remote)
 {
 	if (empty($_POST['force_stop_home_id']) || empty($_POST['force_stop_ip']) || empty($_POST['force_stop_port']) || empty($_POST['force_stop_confirm'])) {
 		return;
@@ -57,24 +57,24 @@ function gsp_agent_force_stop_action($db, $remote_server, $remote)
 		print_failure('Force Stop refused: selected IP/port is not assigned to this game server.');
 		return;
 	}
-	$server_xml = gsp_agent_get_server_xml($home);
+	$server_xml = agent_get_server_xml($home);
 	if ($server_xml) {
 		$path_error = '';
-		$home_with_root = gsp_with_game_root($home, $server_xml, $path_error);
+		$home_with_root = with_game_root($home, $server_xml, $path_error);
 		if ($home_with_root === false) {
-			print_failure('Force Stop refused: invalid game directory for this server: ' . gsp_agent_html($path_error));
+			print_failure('Force Stop refused: invalid game directory for this server: ' . agent_html($path_error));
 			return;
 		}
-		$payload = gsp_lifecycle_stop_payload($home_with_root, $server_xml, $ip, $port, true);
+		$payload = lifecycle_stop_payload($home_with_root, $server_xml, $ip, $port, true);
 		$result = $remote->remote_force_stop_server($home_id, $ip, $port, $home_with_root['management_home'], $payload);
 	} else {
 		$result = $remote->remote_force_stop_server($home_id, $ip, $port, clean_path($home['home_path']));
 	}
 	$db->logger('Admin Force Stop requested for HOME ID:' . $home_id . ' on agent ' . $remote_server['remote_server_id'] . ' target ' . $ip . ':' . $port);
-	gsp_agent_print_result($result);
+	agent_print_result($result);
 }
 
-function exec_gsp_module() {
+function exec_module() {
 	global $view;
 	global $db;
 
@@ -85,45 +85,45 @@ function exec_gsp_module() {
 		return;
 	}
 
-	gsp_agent_ensure_snapshot_table($db);
-	$remote = gsp_agent_build_remote($remote_server);
+	agent_ensure_snapshot_table($db);
+	$remote = agent_build_remote($remote_server);
 	$host_stat = $remote->status_chk();
-	$snapshot = gsp_agent_get_snapshot($db, $rhost_id);
+	$snapshot = agent_get_snapshot($db, $rhost_id);
 
-	echo "<h2>Agent Interface: " . gsp_agent_html($remote_server['remote_server_name']) . "</h2>";
+	echo "<h2>Agent Interface: " . agent_html($remote_server['remote_server_name']) . "</h2>";
 	echo "<p><a href='?m=server'>[Back to Agents]</a></p>";
 
 	if (isset($_POST['refresh_snapshot'])) {
-		$snapshot = gsp_agent_refresh_snapshot($db, $remote_server);
-		gsp_agent_print_result(array(
+		$snapshot = agent_refresh_snapshot($db, $remote_server);
+		agent_print_result(array(
 			'success' => !empty($snapshot['success']),
 			'status' => isset($snapshot['status']) ? $snapshot['status'] : 'unknown',
 			'message' => !empty($snapshot['success']) ? 'Resource snapshot refreshed.' : (isset($snapshot['message']) ? $snapshot['message'] : 'Resource snapshot failed.')
 		));
 	}
 
-	gsp_agent_force_stop_action($db, $remote_server, $remote);
+	agent_force_stop_action($db, $remote_server, $remote);
 
-	$os = gsp_agent_snapshot_field($snapshot, 'os', '');
-	$version = gsp_agent_snapshot_field($snapshot, 'agent_version', '');
-	$install_path = gsp_agent_snapshot_field($snapshot, 'install_path', '');
-	$cpu_percent = gsp_agent_snapshot_field($snapshot, 'cpu_percent', '');
-	$ram_percent = gsp_agent_snapshot_field($snapshot, 'ram_percent', '');
-	$disk_percent = gsp_agent_snapshot_field($snapshot, 'disk_percent', '');
-	$load_average = gsp_agent_snapshot_field($snapshot, 'load_average', '');
-	$snapshot_diagnostic = gsp_agent_snapshot_diagnostic($snapshot);
+	$os = agent_snapshot_field($snapshot, 'os', '');
+	$version = agent_snapshot_field($snapshot, 'agent_version', '');
+	$install_path = agent_snapshot_field($snapshot, 'install_path', '');
+	$cpu_percent = agent_snapshot_field($snapshot, 'cpu_percent', '');
+	$ram_percent = agent_snapshot_field($snapshot, 'ram_percent', '');
+	$disk_percent = agent_snapshot_field($snapshot, 'disk_percent', '');
+	$load_average = agent_snapshot_field($snapshot, 'load_average', '');
+	$snapshot_diagnostic = agent_snapshot_diagnostic($snapshot);
 
 	echo "<table class='center' style='width:100%;'>";
 	echo "<tr><th colspan='4'>Agent Summary</th></tr>";
-	echo "<tr><td><b>ID</b></td><td>" . (int)$remote_server['remote_server_id'] . "</td><td><b>Status</b></td><td>" . gsp_agent_status_label($host_stat) . "</td></tr>";
-	echo "<tr><td><b>Name</b></td><td>" . gsp_agent_html($remote_server['remote_server_name']) . "</td><td><b>Address</b></td><td>" . gsp_agent_html($remote_server['agent_ip']) . ":" . (int)$remote_server['agent_port'] . "</td></tr>";
-	echo "<tr><td><b>OS</b></td><td>" . gsp_agent_html($os ?: 'unknown') . "</td><td><b>Agent Version</b></td><td>" . gsp_agent_html($version ?: 'unknown') . "</td></tr>";
-	echo "<tr><td><b>Install Path</b></td><td colspan='3'>" . gsp_agent_html($install_path ?: 'not reported') . "</td></tr>";
-	echo "<tr><td><b>Resources</b></td><td colspan='3'>CPU: " . gsp_agent_html(is_numeric($cpu_percent) ? round($cpu_percent, 1) . '%' : 'n/a') .
-		" RAM: " . gsp_agent_html(is_numeric($ram_percent) ? round($ram_percent, 1) . '%' : 'n/a') .
-		" Disk: " . gsp_agent_html(is_numeric($disk_percent) ? round($disk_percent, 1) . '%' : 'n/a') .
-		" Load: " . gsp_agent_html($load_average !== '' ? $load_average : 'n/a') .
-		" Snapshot: " . gsp_agent_html(gsp_agent_format_age($snapshot)) . "<br />" . gsp_agent_resource_badges($snapshot) .
+	echo "<tr><td><b>ID</b></td><td>" . (int)$remote_server['remote_server_id'] . "</td><td><b>Status</b></td><td>" . agent_status_label($host_stat) . "</td></tr>";
+	echo "<tr><td><b>Name</b></td><td>" . agent_html($remote_server['remote_server_name']) . "</td><td><b>Address</b></td><td>" . agent_html($remote_server['agent_ip']) . ":" . (int)$remote_server['agent_port'] . "</td></tr>";
+	echo "<tr><td><b>OS</b></td><td>" . agent_html($os ?: 'unknown') . "</td><td><b>Agent Version</b></td><td>" . agent_html($version ?: 'unknown') . "</td></tr>";
+	echo "<tr><td><b>Install Path</b></td><td colspan='3'>" . agent_html($install_path ?: 'not reported') . "</td></tr>";
+	echo "<tr><td><b>Resources</b></td><td colspan='3'>CPU: " . agent_html(is_numeric($cpu_percent) ? round($cpu_percent, 1) . '%' : 'n/a') .
+		" RAM: " . agent_html(is_numeric($ram_percent) ? round($ram_percent, 1) . '%' : 'n/a') .
+		" Disk: " . agent_html(is_numeric($disk_percent) ? round($disk_percent, 1) . '%' : 'n/a') .
+		" Load: " . agent_html($load_average !== '' ? $load_average : 'n/a') .
+		" Snapshot: " . agent_html(agent_format_age($snapshot)) . "<br />" . agent_resource_badges($snapshot) .
 		($snapshot_diagnostic !== '' ? "<br />" . $snapshot_diagnostic : '') . "</td></tr>";
 	echo "<tr><td><b>Actions</b></td><td colspan='3'>
 		<form method='post' style='display:inline;'><button name='refresh_snapshot' value='1'>Refresh Now</button></form>
@@ -146,7 +146,7 @@ function exec_gsp_module() {
 		$ip = isset($home['ip']) ? $home['ip'] : '';
 		$port = isset($home['port']) ? $home['port'] : '';
 		$status = array('status' => 'UNKNOWN', 'last_error' => 'Status not checked.');
-		$server_xml = gsp_agent_get_server_xml($home);
+		$server_xml = agent_get_server_xml($home);
 		if ($host_stat === 1 && $server_xml && $ip !== '' && $port !== '') {
 			$status = get_agent_server_status($remote, $server_xml, $home['home_id'], $ip, $port);
 		} elseif ($host_stat === 0) {
@@ -154,7 +154,7 @@ function exec_gsp_module() {
 		} elseif ($host_stat === -1) {
 			$status['last_error'] = 'Encryption key mismatch.';
 		}
-		$home_key = (!empty($home['mod_id']) && $ip !== '' && $port !== '') ? gsp_agent_home_key($home) : '';
+		$home_key = (!empty($home['mod_id']) && $ip !== '' && $port !== '') ? agent_home_key($home) : '';
 		$actions = "";
 		if ($home_key !== '') {
 			$actions .= "<a href='?m=gamemanager&amp;p=log&amp;home_id-mod_id-ip-port=" . $home_key . "'>[View Game Log]</a> ";
@@ -164,7 +164,7 @@ function exec_gsp_module() {
 		if ($ip !== '' && $port !== '') {
 			$actions .= "<form method='post' style='display:inline;' onsubmit=\"return confirm('Force Stop will kill the tracked game process/session and any process listening on this game server port. It will not restart the server.');\">";
 			$actions .= "<input type='hidden' name='force_stop_home_id' value='" . (int)$home['home_id'] . "' />";
-			$actions .= "<input type='hidden' name='force_stop_ip' value='" . gsp_agent_html($ip) . "' />";
+			$actions .= "<input type='hidden' name='force_stop_ip' value='" . agent_html($ip) . "' />";
 			$actions .= "<input type='hidden' name='force_stop_port' value='" . (int)$port . "' />";
 			$actions .= "<input type='hidden' name='force_stop_confirm' value='1' />";
 			$actions .= "<button type='submit'>Force Stop</button>";
@@ -175,22 +175,22 @@ function exec_gsp_module() {
 			"<br />game port: " . (!empty($status['game_port_listening']) ? 'listening' : 'closed') .
 			"<br />query port: " . (!empty($status['query_port_listening']) ? 'listening' : 'n/a') .
 			"<br />rcon port: " . (!empty($status['rcon_port_listening']) ? 'listening' : 'n/a') .
-			"<br />source: " . gsp_agent_html(isset($status['status_source']) ? $status['status_source'] : '') .
-			"<br />hint: " . gsp_agent_html(isset($status['hint_state']) ? $status['hint_state'] : '') .
-			"<br />hint age: " . gsp_agent_html(isset($status['hint_age_seconds']) && $status['hint_age_seconds'] !== '' ? $status['hint_age_seconds'] . 's' : 'n/a') .
+			"<br />source: " . agent_html(isset($status['status_source']) ? $status['status_source'] : '') .
+			"<br />hint: " . agent_html(isset($status['hint_state']) ? $status['hint_state'] : '') .
+			"<br />hint age: " . agent_html(isset($status['hint_age_seconds']) && $status['hint_age_seconds'] !== '' ? $status['hint_age_seconds'] . 's' : 'n/a') .
 			"<br />autorestart: " . (!empty($status['autorestart_enabled']) ? 'yes' : 'no') .
 			"<br />pid metadata: " . (!empty($status['pid_metadata_present']) ? 'present' : 'none') .
-			"<br />pid: " . gsp_agent_html(isset($status['pid']) ? $status['pid'] : '') .
-			"<br />session: " . gsp_agent_html(isset($status['session_name']) ? $status['session_name'] : '');
+			"<br />pid: " . agent_html(isset($status['pid']) ? $status['pid'] : '') .
+			"<br />session: " . agent_html(isset($status['session_name']) ? $status['session_name'] : '');
 
 		echo "<tr>";
 		echo "<td>" . (int)$home['home_id'] . "</td>";
-		echo "<td>" . gsp_agent_html($home['home_name']) . "<br />" . gsp_agent_html($home['users_login'] ?: 'owner unknown') . "</td>";
-		echo "<td>" . gsp_agent_html($home['game_name']) . "<br />" . gsp_agent_html($home['mod_name'] ?: $home['mod_key']) . "</td>";
-		echo "<td>" . gsp_agent_html($ip ?: 'unassigned') . ":" . gsp_agent_html($port ?: 'n/a') . "</td>";
-		echo "<td>" . gsp_agent_html(isset($status['status']) ? $status['status'] : 'UNKNOWN') . "</td>";
+		echo "<td>" . agent_html($home['home_name']) . "<br />" . agent_html($home['users_login'] ?: 'owner unknown') . "</td>";
+		echo "<td>" . agent_html($home['game_name']) . "<br />" . agent_html($home['mod_name'] ?: $home['mod_key']) . "</td>";
+		echo "<td>" . agent_html($ip ?: 'unassigned') . ":" . agent_html($port ?: 'n/a') . "</td>";
+		echo "<td>" . agent_html(isset($status['status']) ? $status['status'] : 'UNKNOWN') . "</td>";
 		echo "<td>" . $details . "</td>";
-		echo "<td>" . gsp_agent_html(isset($status['last_error']) ? $status['last_error'] : '') . "</td>";
+		echo "<td>" . agent_html(isset($status['last_error']) ? $status['last_error'] : '') . "</td>";
 		echo "<td>" . $actions . "</td>";
 		echo "</tr>";
 	}

@@ -29,7 +29,7 @@ define('LANG_remote_host_info', "Se debe poder hacer ping al servidor remoto!");
 define('LANG_remote_host_port', "Puerto del servidor remoto");
 define('LANG_remote_host_port_info', "El puerto que es escuchado por el Agente de GSP en el host remoto. Defecto: 12679.");
 define('LANG_remote_host_name', "Nombre del servidor remoto");
-define('LANG_gsp_user', "Nombre de usuario de GSP Agent");
+define('LANG_user', "Nombre de usuario de GSP Agent");
 define('LANG_remote_host_name_info', "Solo sirve para que lo identifiquen los usuarios.");
 define('LANG_add_remote_host', "Asignar servidor remoto");
 define('LANG_remote_encryption_key', "Clave de cifrado del servidor remoto");

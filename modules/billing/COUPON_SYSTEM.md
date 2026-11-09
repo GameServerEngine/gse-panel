@@ -13,12 +13,12 @@ The billing module now includes a comprehensive coupon system that allows admini
 
 ## Database Schema
 
-### Table: `gsp_billing_coupons`
+### Table: `billing_coupons`
 
 The main coupon table stores all coupon definitions:
 
 ```sql
-CREATE TABLE `gsp_billing_coupons` (
+CREATE TABLE `billing_coupons` (
     `coupon_id` INT(11) NOT NULL AUTO_INCREMENT,
     `code` VARCHAR(50) NOT NULL UNIQUE,
     `name` VARCHAR(255) NOT NULL DEFAULT '',
@@ -40,12 +40,12 @@ CREATE TABLE `gsp_billing_coupons` (
 
 ### Updated Tables
 
-#### `gsp_billing_invoices`
+#### `billing_invoices`
 Added columns:
 - `coupon_id` INT(11) - Links to the coupon used
 - `discount_amount` DECIMAL(10,2) - Actual discount amount applied
 
-#### `gsp_billing_orders`
+#### `billing_orders`
 Added columns:
 - `coupon_id` INT(11) - Links to the coupon used (for permanent discounts)
 - `discount_amount` DECIMAL(10,2) - Discount amount for renewals
@@ -58,8 +58,8 @@ Added columns:
    ```
 
 2. **Verify installation:**
-   - Check that the `gsp_billing_coupons` table exists
-   - Verify that `coupon_id` and `discount_amount` columns were added to both `gsp_billing_invoices` and `gsp_billing_orders`
+   - Check that the `billing_coupons` table exists
+   - Verify that `coupon_id` and `discount_amount` columns were added to both `billing_invoices` and `billing_orders`
 
 ## Admin Interface
 
@@ -276,17 +276,17 @@ In `api/capture_order.php`, when PayPal payment completes:
 
 ```php
 // Update invoice with coupon
-UPDATE gsp_billing_invoices
+UPDATE billing_invoices
 SET status='paid', coupon_id=?, discount_amount=?
 WHERE user_id=? AND status='due'
 
 // Increment usage count
-UPDATE gsp_billing_coupons
+UPDATE billing_coupons
 SET current_uses = current_uses + 1
 WHERE coupon_id = ?
 
 // For permanent coupons, store in order
-INSERT INTO gsp_billing_orders (
+INSERT INTO billing_orders (
     ..., coupon_id, discount_amount
 ) VALUES (
     ..., ?, ?

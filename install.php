@@ -26,9 +26,9 @@ require_once('includes/functions.php');
 require_once('includes/install_engine.php');
 require_once('includes/lib_vhosts.php');
 
-gspLang();
+lang();
 
-$view = new GSPView();
+$view = new View();
 $view->setCharset(get_lang('lang_charset'));
 
 function install_h($value)
@@ -43,7 +43,7 @@ function install_value($name, $default = '')
 
 function install_read_config_options($base_dir, $include_secret = false)
 {
-    $config_path = gsp_install_path($base_dir, 'includes/config.inc.php');
+    $config_path = install_path($base_dir, 'includes/config.inc.php');
     if (!is_readable($config_path)) {
         return array();
     }
@@ -124,7 +124,7 @@ function install_form_defaults($base_dir)
         'db_port' => '3306',
         'db_user' => '',
         'db_name' => '',
-        'table_prefix' => 'gsp_',
+        'table_prefix' => '',
         'admin_user' => 'admin',
         'admin_email' => 'admin@localhost',
     );
@@ -178,7 +178,7 @@ function install_sanitize_progress_output($output, array $secrets = array())
 function install_run_engine_for_browser(array $options)
 {
     ob_start();
-    $result = gsp_install_run($options);
+    $result = install_run($options);
     $captured = ob_get_clean();
     $result['progress_lines'] = install_sanitize_progress_output(
         $captured,
@@ -235,7 +235,7 @@ function install_render_result_panel($title, $status_class, array $messages, arr
 function install_render_settings_form($base_dir, array $errors = array(), array $notices = array())
 {
     $values = install_form_defaults($base_dir);
-    $mode = gsp_install_panel_appears_installed($base_dir) ? 'reinstall' : 'install';
+    $mode = install_panel_appears_installed($base_dir) ? 'reinstall' : 'install';
 
     echo "<section class='install-panel'>\n";
     echo "<div class='install-panel-header'>\n";
@@ -290,7 +290,7 @@ function install_render_settings_form($base_dir, array $errors = array(), array 
     echo "<label><span>" . get_lang('database_name') . "</span><input type='text' value='" . install_h($values['db_name']) . "' name='db_name' /></label>";
     echo "</div>\n";
     echo "<details class='form-section'><summary>Advanced</summary><div class='form-grid' style='margin-top:12px;'>";
-    echo "<label><span>" . get_lang('database_prefix') . "</span><input type='text' value='" . install_h($values['table_prefix']) . "' name='table_prefix' placeholder='gsp_' /><small>Default is <code>gsp_</code>. Only change this if you intentionally want a different prefix.</small></label>";
+    echo "<label><span>" . get_lang('database_prefix') . "</span><input type='text' value='" . install_h($values['table_prefix']) . "' name='table_prefix' placeholder='' /><small>Leave empty for no prefix (the default). Only set this if you intentionally want a prefix.</small></label>";
     echo "</div></details>\n";
     echo "</fieldset>\n";
     echo "<fieldset class='form-section'><legend>Administrator</legend>";
@@ -345,7 +345,7 @@ function install_render_partial_recovery($base_dir, array $install_status)
 function install_installed_gate($render_partial = true)
 {
     $base_dir = __DIR__;
-    $install_status = gsp_install_get_installation_status($base_dir);
+    $install_status = install_get_installation_status($base_dir);
     if (empty($install_status['complete'])) {
         if ($render_partial && (!empty($install_status['state_exists']) || !empty($install_status['config_exists']))) {
             install_render_partial_recovery($base_dir, $install_status);
@@ -353,7 +353,7 @@ function install_installed_gate($render_partial = true)
         return true;
     }
 
-    $is_admin = gsp_install_current_session_is_admin($base_dir);
+    $is_admin = install_current_session_is_admin($base_dir);
     if (!$is_admin) {
         http_response_code(403);
         echo '<div id="install-title">Installer Locked</div>';
@@ -362,7 +362,7 @@ function install_installed_gate($render_partial = true)
         return false;
     }
 
-    if (!gsp_install_maintenance_gate_open($base_dir)) {
+    if (!install_maintenance_gate_open($base_dir)) {
         http_response_code(403);
         echo '<div id="install-title">Maintenance Gate Required</div>';
         echo '<p class="failure">You are authenticated as a panel admin, but web reinstall and repair also require a short-lived filesystem maintenance gate.</p>';
@@ -587,7 +587,7 @@ function install()
         echo '<section class="welcome-panel">';
         echo '<h1>Gameserver Engine Panel Installer</h1>';
         echo '<p>Run the dependency check before entering database settings. When required checks pass, it will show an <strong>Install Now</strong> button for the settings form.</p>';
-        echo '<p>The installer writes <code>includes/config.inc.php</code>, drops existing tables in the selected reinstall scope, creates the canonical GSE schema, registers built-in modules, creates an initial admin account, and writes <code>' . GSP_INSTALL_STATE_FILE . '</code>.</p>';
+        echo '<p>The installer writes <code>includes/config.inc.php</code>, drops existing tables in the selected reinstall scope, creates the canonical GSE schema, registers built-in modules, creates an initial admin account, and writes <code>' . INSTALL_STATE_FILE . '</code>.</p>';
         echo "<div class='welcome-actions'><a href='check.php' class='btn btn-primary btn-lg'>Run Dependency Check</a></div>";
         echo '</section>';
         echo "</div>\n";
@@ -639,7 +639,7 @@ function install()
             'db_user' => $using_existing_config ? trim((string)$config_options['db_user']) : trim((string)$_POST['db_user']),
             'db_pass' => $using_existing_config ? (string)($config_options['db_pass'] ?? '') : (string)($_POST['db_pass'] ?? ''),
             'db_name' => $using_existing_config ? trim((string)$config_options['db_name']) : trim((string)$_POST['db_name']),
-            'table_prefix' => $using_existing_config ? trim((string)$config_options['table_prefix']) : trim((string)($_POST['table_prefix'] ?? 'gsp_')),
+            'table_prefix' => $using_existing_config ? trim((string)$config_options['table_prefix']) : trim((string)($_POST['table_prefix'] ?? '')),
             'admin_user' => trim((string)$_POST['admin_user']),
             'admin_pass' => (string)$_POST['admin_pass'],
             'admin_email' => trim((string)($_POST['admin_email'] ?: 'admin@localhost')),
@@ -680,11 +680,11 @@ function install()
             $messages[] = 'Public Panel URL recorded: <code>' . install_h($public_scheme . '://' . $options['panel_domain'] . '/') . '</code>.';
         }
         $messages[] = 'Installer lock/state file written: <code>' . install_h($result['state_file']) . '</code>.';
-        $messages[] = 'Secure <code>includes/config.inc.php</code> and keep <code>' . install_h(GSP_INSTALL_STATE_FILE) . '</code> in place.';
+        $messages[] = 'Secure <code>includes/config.inc.php</code> and keep <code>' . install_h(INSTALL_STATE_FILE) . '</code> in place.';
         install_render_result_panel('Installation Complete', 'success', $messages, $result['progress_lines'] ?? array(), true);
 
         if (!empty($options['panel_domain'])) {
-            $vhost_preview = gsp_vhost_build_previews($base_dir, array(
+            $vhost_preview = vhost_build_previews($base_dir, array(
                 'panel_domain' => $options['panel_domain'],
                 'storefront_domain' => $options['storefront_domain'] ?? '',
                 'https_mode' => $options['https_mode'] ?? 'http-only',

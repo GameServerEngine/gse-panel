@@ -25,7 +25,7 @@ error_reporting(E_ALL);
 require_once('includes/lib_remote.php');
 require_once('modules/cron/shared_cron_functions.php');
 
-function exec_gsp_module()
+function exec_module()
 {
 	global $db, $view;
 	$isAdmin = $db->isAdmin($_SESSION['user_id']);
@@ -64,7 +64,7 @@ function exec_gsp_module()
 
 		if ( isset( $_POST['homeid_ip_port'] ) and isset($server_homes[$_POST['homeid_ip_port']]) )
 		{
-			$panelURL = getGSPSiteURL();
+			$panelURL = getSiteURL();
 			if($panelURL === false)
 			{
 				print_failure('Failed to retrieve panel URL.');
@@ -93,7 +93,7 @@ function exec_gsp_module()
 				   $_POST['dayOfTheWeek']." ".
 				   $command;
 
-			$remote = new GSPRemoteLibrary( $game_home['agent_ip'],
+			$remote = new RemoteLibrary( $game_home['agent_ip'],
 											$game_home['agent_port'],
 											$game_home['encryption_key'],
 											$game_home['timeout']);
@@ -107,7 +107,7 @@ function exec_gsp_module()
 	}
 	elseif( isset($_POST['removeJob']) and isset($remote_servers[$_POST['r_server_id']]) and isset($jobsArray[$_POST['r_server_id']][$_POST['job_id']]) )
 	{
-		$remote = new GSPRemoteLibrary( $remote_servers[$_POST['r_server_id']]['agent_ip'],
+		$remote = new RemoteLibrary( $remote_servers[$_POST['r_server_id']]['agent_ip'],
 										$remote_servers[$_POST['r_server_id']]['agent_port'],
 										$remote_servers[$_POST['r_server_id']]['encryption_key'],
 										$remote_servers[$_POST['r_server_id']]['timeout'] );

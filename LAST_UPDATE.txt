@@ -12,7 +12,7 @@ Updated files:
 - modules/addonsmanager/server_content_categories.php
 - modules/addonsmanager/server_content_helpers.php
 - modules/addonsmanager/workshop_action.php
-- Panel/gsp_api.php
+- Panel/api.php
 - Panel/CHANGELOG.md
 - docs/COPILOT_TODO.md
 - .github/module-map.md

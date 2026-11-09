@@ -65,7 +65,7 @@ $linuxHome = array(
 );
 $windowsHome = array(
 	'home_id' => 11,
-	'home_path' => '/cygdrive/c/GSP_User_Files/11',
+	'home_path' => '/cygdrive/c/User_Files/11',
 	'home_cfg_file' => 'arma3_win64.xml',
 	'game_key' => 'arma3_win64',
 	'game_name' => 'Arma 3',
@@ -75,19 +75,19 @@ $emptyXml = simplexml_load_string('<game_config></game_config>');
 $linuxRemote = new ScmWorkshopFakeRemote();
 $error = '';
 $script = scm_prepare_workshop_script_for_agent($linuxRemote, $linuxHome, $emptyXml, $error);
-scm_workshop_test_assert(strpos($script, '/srv/games/10/gsp_server_content/jobs/workshop/workshop_job_') === 0, 'stages per-job Linux script under management home');
+scm_workshop_test_assert(strpos($script, '/srv/games/10/server_content/jobs/workshop/workshop_job_') === 0, 'stages per-job Linux script under management home');
 scm_workshop_test_assert(strpos($script, '/srv/games/10/arma3_linux64/') !== 0, 'does not stage Workshop management script under game_root');
 scm_workshop_test_assert(isset($linuxRemote->files[$script]), 'writes Linux per-job script to fake agent');
 scm_workshop_test_assert(strpos($linuxRemote->files[$script], '+runscript') !== false, 'Linux per-job script runs SteamCMD through runscript');
 scm_workshop_test_assert(strpos($linuxRemote->files[$script], 'workshop_download_item $APPID $id validate') !== false, 'Linux per-job script generates workshop_download_item runscript command');
 scm_workshop_test_assert($error === '', 'default Linux job staging does not report missing agent script');
-scm_workshop_test_assert(scm_get_workshop_manifest_path($linuxHome) === '/srv/games/10/gsp_server_content/workshop_manifest.json', 'Workshop manifest path stays in management home');
+scm_workshop_test_assert(scm_get_workshop_manifest_path($linuxHome) === '/srv/games/10/server_content/workshop_manifest.json', 'Workshop manifest path stays in management home');
 scm_workshop_test_assert(strpos(scm_get_workshop_manifest_path($linuxHome), '/srv/games/10/arma3_linux64/') !== 0, 'Workshop manifest path is excluded from game_root');
 scm_workshop_test_assert(scm_path_is_under_home('/srv/games/10', '/srv/games/10/../secrets') === false, 'Server Content path boundary rejects parent segment escapes');
 
 $windowsRemote = new ScmWorkshopFakeRemote();
 $script = scm_prepare_workshop_script_for_agent($windowsRemote, $windowsHome, $emptyXml, $error);
-scm_workshop_test_assert(strpos($script, '/cygdrive/c/GSP_User_Files/11/gsp_server_content/jobs/workshop/workshop_job_') === 0, 'stages per-job Windows/Cygwin script under server home');
+scm_workshop_test_assert(strpos($script, '/cygdrive/c/User_Files/11/server_content/jobs/workshop/workshop_job_') === 0, 'stages per-job Windows/Cygwin script under server home');
 scm_workshop_test_assert(isset($windowsRemote->files[$script]), 'writes Windows/Cygwin per-job script to fake agent');
 scm_workshop_test_assert(strpos($windowsRemote->files[$script], '+runscript') !== false, 'Windows/Cygwin per-job script runs SteamCMD through runscript');
 scm_workshop_test_assert($error === '', 'default Windows/Cygwin job staging does not report missing agent script');
@@ -95,7 +95,7 @@ scm_workshop_test_assert($error === '', 'default Windows/Cygwin job staging does
 $configuredXml = simplexml_load_string('<game_config><workshop_support><enabled>1</enabled><workshop_app_id>107410</workshop_app_id></workshop_support></game_config>');
 $customRemote = new ScmWorkshopFakeRemote();
 $script = scm_prepare_workshop_script_for_agent($customRemote, $linuxHome, $configuredXml, $error);
-scm_workshop_test_assert(strpos($script, '/srv/games/10/gsp_server_content/jobs/workshop/workshop_job_') === 0, 'XML Workshop support still stages generated per-job script under management home');
+scm_workshop_test_assert(strpos($script, '/srv/games/10/server_content/jobs/workshop/workshop_job_') === 0, 'XML Workshop support still stages generated per-job script under management home');
 scm_workshop_test_assert($error === '', 'generated per-job script does not expose script-not-found error');
 @unlink(dirname(__DIR__) . '/logs/content_install.log');
 @rmdir(dirname(__DIR__) . '/logs');

@@ -22,7 +22,7 @@
  *
  */
 
-function exec_gsp_module()
+function exec_module()
 {
 	require_once(MODULES."/litefm/litefm.php");
 
@@ -86,7 +86,7 @@ function exec_gsp_module()
 		 "<td colspan='3' ><h3>$show_path</h3></td>".
 		 "</tr></table>\n";
 	//Logic to open the file we're editing
-	$remote = new GSPRemoteLibrary($home_cfg['agent_ip'], $home_cfg['agent_port'], $home_cfg['encryption_key'], $home_cfg['timeout']);
+	$remote = new RemoteLibrary($home_cfg['agent_ip'], $home_cfg['agent_port'], $home_cfg['encryption_key'], $home_cfg['timeout']);
 	$data = "";
 	$rel_path = isset($_SESSION[$cwd_session_key]) ? $_SESSION[$cwd_session_key]:'';
 	$filepath = litefm_safe_join_home_path(litefm_payload_root($home_cfg), $rel_path);

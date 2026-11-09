@@ -36,7 +36,7 @@ define('LANG_assign_game_homes', "Spielserver zuweisen
 define('LANG_user', "Benutzer");
 define('LANG_group', "Gruppe");
 define('LANG_start', "Start");
-define('LANG_gsp_agent_ip', "GSP Agent IP");
+define('LANG_agent_ip', "GSP Agent IP");
 define('LANG_max_players', "Max Spieler");
 define('LANG_max', "Max");
 define('LANG_ip_and_port', "IP und Port");
@@ -93,7 +93,7 @@ define('LANG_player_name', "Spielername");
 define('LANG_score', "Punkte");
 define('LANG_time', "Zeit");
 define('LANG_no_rights_to_stop_server', "Du hast nicht die Berechtigung den Server zu stoppen.");
-define('LANG_no_gsp_lgsl_support', "Dieser Server ( %s ) hat keine LGSL-Unterstützung in GSP und seine Statistiken können nicht angezeigt werden.");
+define('LANG_no_lgsl_support', "Dieser Server ( %s ) hat keine LGSL-Unterstützung in GSP und seine Statistiken können nicht angezeigt werden.");
 define('LANG_server_status', "Server auf %s ist %s.");
 define('LANG_server_stopped', "Server '%s' wurde gestoppt.
 ");

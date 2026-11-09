@@ -22,7 +22,7 @@
  *
  */
 
-function exec_gsp_module()
+function exec_module()
 {
     global $db;
 
@@ -72,7 +72,7 @@ function exec_gsp_module()
 
 		// Enable/disable toggle. Modules that can never be disabled
 		// (modulemanager, settings, user_admin) show a status note instead.
-		if (gsp_module_cannot_be_disabled($row['folder'])) {
+		if (module_cannot_be_disabled($row['folder'])) {
 			$html .= "<span class='note'>".get_lang('module_cannot_be_disabled_short')."</span>";
 		} elseif ($enabled) {
 			$html .= "<a href='?m=modulemanager&amp;p=toggle&amp;id=".$row['id']."&amp;module=".$row['folder']."&amp;enable=0'>";

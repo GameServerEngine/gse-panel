@@ -5956,7 +5956,7 @@
                 "protocol": null,
                 "server_exec_name": "srcds_run",
                 "exe_location": null,
-                "cli_template": "%GAME_TYPE% -console -usercon %MAP% %MAPGROUP% %IP% %PORT% %PLAYERS% -pidfile gsp_game_startup.pid",
+                "cli_template": "%GAME_TYPE% -console -usercon %MAP% %MAPGROUP% %IP% %PORT% %PLAYERS% -pidfile game_startup.pid",
                 "cli_params": [
                     {
                         "id": "MAP",

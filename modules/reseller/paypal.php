@@ -1,5 +1,5 @@
 <?php
-function exec_gsp_module()
+function exec_module()
 {
 	require('includes/config.inc.php');
 
@@ -11,8 +11,8 @@ function exec_gsp_module()
 
 	if(!empty($cart_id))
 	{
-		$accounts = $db->resultQuery( "SELECT * FROM GSP_DB_PREFIXreseller_accounts WHERE cart_id=".$cart_id );
-		$carts = $db->resultQuery( "SELECT * FROM GSP_DB_PREFIXreseller_carts WHERE cart_id=".$cart_id );
+		$accounts = $db->resultQuery( "SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE cart_id=".$cart_id );
+		$carts = $db->resultQuery( "SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_carts WHERE cart_id=".$cart_id );
 		$cart = $carts[0];
 		if( !empty( $accounts ) )
 		{

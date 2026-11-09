@@ -8,7 +8,7 @@
       <exe>srcds_run</exe>
     </linux>
   </os>
-  <cli_template>%GAME_TYPE% -console -usercon %MAP% %MAPGROUP% %IP% %PORT% %PLAYERS% -pidfile gsp_game_startup.pid</cli_template>
+  <cli_template>%GAME_TYPE% -console -usercon %MAP% %MAPGROUP% %IP% %PORT% %PLAYERS% -pidfile game_startup.pid</cli_template>
   <cli_params>
     <cli_param id="MAP" cli_string="+map" options="s"/>
     <cli_param id="IP" cli_string="+ip" options="s"/>

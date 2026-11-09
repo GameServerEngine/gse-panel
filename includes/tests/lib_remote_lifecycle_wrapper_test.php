@@ -2,7 +2,7 @@
 
 require_once(dirname(__DIR__) . '/lib_remote.php');
 
-class GspLifecycleWrapperFakeRemote extends GSPRemoteLibrary
+class LifecycleWrapperFakeRemote extends RemoteLibrary
 {
 	private $restartResult;
 
@@ -19,7 +19,7 @@ class GspLifecycleWrapperFakeRemote extends GSPRemoteLibrary
 	}
 }
 
-function gsp_lib_remote_test_assert($condition, $message)
+function lib_remote_test_assert($condition, $message)
 {
 	if (!$condition) {
 		fwrite(STDERR, "FAIL: {$message}\n");
@@ -28,20 +28,20 @@ function gsp_lib_remote_test_assert($condition, $message)
 	echo "PASS: {$message}\n";
 }
 
-$remote = new GspLifecycleWrapperFakeRemote(array('success' => 1, 'status' => 'restarted', 'message' => 'Restarted.'));
-gsp_lib_remote_test_assert(
+$remote = new LifecycleWrapperFakeRemote(array('success' => 1, 'status' => 'restarted', 'message' => 'Restarted.'));
+lib_remote_test_assert(
 	$remote->remote_restart_server(42, '192.0.2.10', 2302, 'rcon', 'secret', 'tcp', '/srv/gse/42', 'server', 'game/run', 'cmd', 'NA', '0', '', '', 'game_key') === 1,
 	'legacy restart wrapper maps structured success to scalar success'
 );
 
-$remote = new GspLifecycleWrapperFakeRemote(array('success' => 0, 'raw_response' => -2));
-gsp_lib_remote_test_assert(
+$remote = new LifecycleWrapperFakeRemote(array('success' => 0, 'raw_response' => -2));
+lib_remote_test_assert(
 	$remote->remote_restart_server(42, '192.0.2.10', 2302, 'rcon', 'secret', 'tcp', '/srv/gse/42', 'server', 'game/run', 'cmd', 'NA', '0', '', '', 'game_key') === -2,
 	'legacy restart wrapper preserves stop-phase failure code'
 );
 
-$remote = new GspLifecycleWrapperFakeRemote(array('success' => 0, 'raw_response' => -1));
-gsp_lib_remote_test_assert(
+$remote = new LifecycleWrapperFakeRemote(array('success' => 0, 'raw_response' => -1));
+lib_remote_test_assert(
 	$remote->remote_restart_server(42, '192.0.2.10', 2302, 'rcon', 'secret', 'tcp', '/srv/gse/42', 'server', 'game/run', 'cmd', 'NA', '0', '', '', 'game_key') === -1,
 	'legacy restart wrapper preserves start-phase failure code'
 );

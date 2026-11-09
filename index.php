@@ -62,8 +62,8 @@ $db = createDatabaseConnection($db_type, $db_host, $db_user, $db_pass, $db_name,
 // Load languages.
 include_once("includes/lang.php");
 
-if (!$db instanceof GSPDatabase) {
-	gspLang();
+if (!$db instanceof Database) {
+	lang();
 	die(get_lang('no_db_connection'));
 }
 
@@ -76,15 +76,15 @@ if(hasValue($sessionUserId)){
 
 $settings = $db->getSettings();
 @$GLOBALS['panel_language'] = $settings['panel_language'];
-gspLang();
+lang();
 
 // Apply debug level from panel settings (overrides the DEBUG_LEVEL constant)
-if (defined('DEBUG_MODE') && DEBUG_MODE && function_exists('gsp_apply_debug_level')) {
-    gsp_apply_debug_level((int)($settings['debug_level'] ?? DEBUG_LEVEL));
+if (defined('DEBUG_MODE') && DEBUG_MODE && function_exists('apply_debug_level')) {
+    apply_debug_level((int)($settings['debug_level'] ?? DEBUG_LEVEL));
 }
 
 require_once("includes/view.php");
-$view = new GSPView();
+$view = new View();
 $view->setCharset( get_lang('lang_charset') );
 if(isset($_GET['type']) && $_GET['type'] == 'cleared')
 {
@@ -93,7 +93,7 @@ if(isset($_GET['type']) && $_GET['type'] == 'cleared')
 }
 else
 {
-	gspHome();
+	home();
 	$view->printView();
 }
 
@@ -130,7 +130,7 @@ function heading()
 	if(isset($maintenance))echo $maintenance;
 }
 
-function gspHome()
+function home()
 {
     global $db,$view,$settings;
 
@@ -241,10 +241,10 @@ function gspHome()
 		{
 			$client_ip = getClientIPAddress();
 
-			$ban_list = $db->resultQuery("SHOW TABLES LIKE 'GSP_DB_PREFIXban_list';");
+			$ban_list = $db->resultQuery("SHOW TABLES LIKE 'TABLE_PREFIX_PLACEHOLDERban_list';");
 			if ( empty( $ban_list ) )
 			{
-				$db->query("CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXban_list` (
+				$db->query("CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERban_list` (
 							`client_ip` varchar(255) NOT NULL,
 							`logging_attempts` int(11) NOT NULL DEFAULT '0',
 							`banned_until` varchar(16) NOT NULL DEFAULT '0',
@@ -252,12 +252,12 @@ function gspHome()
 							) ENGINE=MyISAM DEFAULT CHARSET=latin1;");
 			}
 
-			$banlist_info = $db->resultQuery("SELECT logging_attempts, banned_until FROM `GSP_DB_PREFIXban_list` WHERE client_ip='".$client_ip."';");
+			$banlist_info = $db->resultQuery("SELECT logging_attempts, banned_until FROM `TABLE_PREFIX_PLACEHOLDERban_list` WHERE client_ip='".$client_ip."';");
 			$login_attempts = !$banlist_info ? 0 : $banlist_info['0']['logging_attempts'];
 
 			if( $banlist_info AND $banlist_info['0']['banned_until'] > 0 AND $banlist_info['0']['banned_until'] <= time() )
 			{
-				$db->query("DELETE FROM `GSP_DB_PREFIXban_list` WHERE client_ip='$client_ip';");
+				$db->query("DELETE FROM `TABLE_PREFIX_PLACEHOLDERban_list` WHERE client_ip='$client_ip';");
 				$login_attempts = 0;
 			}
 
@@ -320,7 +320,7 @@ function gspHome()
 				register_log_event('login_succeeded', array('username' => $userInfo['users_login'], 'user_id' => $userInfo['user_id']));
 				print_success( get_lang("logging_in") ."...");
 				$db->logger( get_lang("logging_in") ."...");
-				$db->query("DELETE FROM `GSP_DB_PREFIXban_list` WHERE client_ip='$client_ip';");
+				$db->query("DELETE FROM `TABLE_PREFIX_PLACEHOLDERban_list` WHERE client_ip='$client_ip';");
 				$view->refresh("home.php?$default_page",2);
 
 
@@ -336,26 +336,26 @@ function gspHome()
 					$banned_until = time() + (array_key_exists("login_ban_time", (array)$settings) && !empty($settings["login_ban_time"]) && is_numeric($settings["login_ban_time"]) ? $settings["login_ban_time"] : 300); // Five minutes or user defined setting.
 
 					if( !$banlist_info )
-						$db->query("INSERT INTO `GSP_DB_PREFIXban_list` (`client_ip`) VALUES('$client_ip');");
+						$db->query("INSERT INTO `TABLE_PREFIX_PLACEHOLDERban_list` (`client_ip`) VALUES('$client_ip');");
 
 					$db->logger( get_lang("bad_login") . " ( Banned until " . date("r", is_numeric($banned_until) ? (int)$banned_until : strtotime($banned_until)) . " ) [ login: $_POST[ulogin], password: ******** ]" );
-					$db->query("UPDATE `GSP_DB_PREFIXban_list` SET logging_attempts='$login_attempts', banned_until='$banned_until' WHERE client_ip='$client_ip';");
+					$db->query("UPDATE `TABLE_PREFIX_PLACEHOLDERban_list` SET logging_attempts='$login_attempts', banned_until='$banned_until' WHERE client_ip='$client_ip';");
 					print_failure("Banned until " . date("r", is_numeric($banned_until) ? (int)$banned_until : strtotime($banned_until)));
 				}
 				else
 				{
 					if( !$banlist_info )
-						$db->query("INSERT INTO `GSP_DB_PREFIXban_list` (`client_ip`) VALUES('$client_ip');");
+						$db->query("INSERT INTO `TABLE_PREFIX_PLACEHOLDERban_list` (`client_ip`) VALUES('$client_ip');");
 
 					$db->logger( get_lang("bad_login") . " ( $login_attempts ) [ login: $_POST[ulogin], password: ******** ]" );
-					$db->query("UPDATE `GSP_DB_PREFIXban_list` SET logging_attempts='$login_attempts' WHERE client_ip='$client_ip';");
+					$db->query("UPDATE `TABLE_PREFIX_PLACEHOLDERban_list` SET logging_attempts='$login_attempts' WHERE client_ip='$client_ip';");
 					$view->refresh("index.php",2);
 				}
 			}
 		//ADD USERS IN BANNED GROUP TO BAN TABLE
 		if($userInfo['users_role'] == "banned")
 		{
-			$db->query("INSERT INTO `GSP_DB_PREFIXban_list` (`client_ip`,`logging_attempts`) VALUES('$client_ip','-1');");
+			$db->query("INSERT INTO `TABLE_PREFIX_PLACEHOLDERban_list` (`client_ip`,`logging_attempts`) VALUES('$client_ip','-1');");
 			$db->logger("BANNED: Added IP ".$client_ip." to ban table of banned user " . $_POST[ulogin]);
 		}
 

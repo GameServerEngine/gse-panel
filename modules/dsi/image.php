@@ -26,7 +26,7 @@ require(DSI_BASEPATH . 'includes/functions.php');
 require("modules/gamemanager/home_handling_functions.php");
 require('modules/config_games/server_config_parser.php');
 
-function exec_gsp_module(){
+function exec_module(){
 	global $db,$view,$settings;
 
 	if(isset($_GET["s"])){
@@ -66,7 +66,7 @@ function exec_gsp_module(){
 		if(!$server_home){ dsi_error_img("IP: ".$s[0].":".$s[1], "Server does not exist in DB.", $img_type); }
 
 		$cfghome = $db->getCfgHomeById($server_home['home_cfg_id']);
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$cfghome['home_cfg_file'], gsp_os_for_install_row($cfghome));
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$cfghome['home_cfg_file'], os_for_install_row($cfghome));
 
 		$name = "";
 		$players = "";

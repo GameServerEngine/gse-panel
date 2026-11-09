@@ -68,19 +68,19 @@ define('CHECK_BASE', __DIR__);
 // installer (via install/read-requirements.php). Never hardcode these lists
 // here again - they drifted from scripts/install-panel.sh once already.
 require_once CHECK_BASE . '/install/read-requirements.php';
-$gsp_requirements = gsp_load_requirements(CHECK_BASE);
-if ($gsp_requirements === null) {
-    $gsp_requirements = array(
+$requirements = load_requirements(CHECK_BASE);
+if ($requirements === null) {
+    $requirements = array(
         'php' => array('min_version' => '8.3.0', 'install_hint' => 'sudo apt install php php-cli libapache2-mod-php -y'),
         'php_extensions' => array(),
         'php_libraries' => array(),
         'commands' => array(),
         'apache_modules' => array('required' => array('rewrite', 'headers'), 'https_required' => array('ssl')),
     );
-    $gsp_requirements_error = 'install/requirements.json is missing or unreadable. Dependency lists below are incomplete.';
+    $requirements_error = 'install/requirements.json is missing or unreadable. Dependency lists below are incomplete.';
 }
 
-define('PANEL_VERSION_MIN', $gsp_requirements['php']['min_version']);
+define('PANEL_VERSION_MIN', $requirements['php']['min_version']);
 
 // ---------------------------------------------------------------------------
 // Run all checks and collect rows
@@ -107,23 +107,23 @@ $rows[] = [
     'name'    => 'PHP Version',
     'status'  => $php_ok ? 'ok' : 'warning',
     'current' => $php_ver,
-    'fix'     => $php_ok ? '' : $gsp_requirements['php']['install_hint'],
+    'fix'     => $php_ok ? '' : $requirements['php']['install_hint'],
     'notes'   => 'Minimum recommended: PHP ' . PANEL_VERSION_MIN . '. Declared in install/requirements.json. The root installer installs distro PHP packages on Debian/Ubuntu.',
 ];
 
-if (isset($gsp_requirements_error)) {
+if (isset($requirements_error)) {
     $rows[] = [
         'section' => 'PHP Runtime',
         'name'    => 'Dependency manifest',
         'status'  => 'missing',
         'current' => 'install/requirements.json unreadable',
         'fix'     => 'Restore install/requirements.json from the release archive.',
-        'notes'   => $gsp_requirements_error,
+        'notes'   => $requirements_error,
     ];
 }
 
 // ── Required PHP extensions (from install/requirements.json) ────────────────
-foreach ($gsp_requirements['php_extensions'] as $ext => $meta) {
+foreach ($requirements['php_extensions'] as $ext => $meta) {
     $loaded = extension_loaded($ext);
     $rows[] = [
         'section' => 'PHP Extensions',
@@ -136,7 +136,7 @@ foreach ($gsp_requirements['php_extensions'] as $ext => $meta) {
 }
 
 // ── PHP libraries (from install/requirements.json) ──────────────────────────
-foreach ($gsp_requirements['php_libraries'] as $lib_name => $meta) {
+foreach ($requirements['php_libraries'] as $lib_name => $meta) {
     $lib_path = stream_resolve_include_path($meta['include_file']);
     $rows[] = [
         'section' => 'PHP Libraries',
@@ -265,7 +265,7 @@ foreach ($paths_to_check as $rel => $meta) {
 // Sourced from install/requirements.json so check.php and the shell installer
 // cannot drift apart.
 $commands = [];
-foreach ($gsp_requirements['commands'] as $cmd_name => $cmd_meta) {
+foreach ($requirements['commands'] as $cmd_name => $cmd_meta) {
     $commands[$cmd_name] = [
         'package'        => $cmd_meta['apt_package'],
         'missing_status' => $cmd_meta['missing_status'],
@@ -299,8 +299,8 @@ foreach ($commands as $cmd => $meta) {
 }
 
 // ── Apache modules ───────────────────────────────────────────────────────────
-$apache_required_mods = $gsp_requirements['apache_modules']['required'];
-$apache_https_mods    = $gsp_requirements['apache_modules']['https_required'];
+$apache_required_mods = $requirements['apache_modules']['required'];
+$apache_https_mods    = $requirements['apache_modules']['https_required'];
 $apache_mods_loaded   = function_exists('apache_get_modules') ? apache_get_modules() : null;
 
 $apache_mod_notes = [

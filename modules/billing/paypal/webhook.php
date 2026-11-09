@@ -77,7 +77,7 @@ if (!$wh_db) {
 }
 mysqli_set_charset($wh_db, 'utf8mb4');
 
-$pfx = $table_prefix ?? 'gsp_';
+$pfx = $table_prefix ?? '';
 
 // ---------------------------------------------------------------------------
 // 2a. Ensure the webhook event log table exists (idempotent DDL)
@@ -87,10 +87,10 @@ wh_ensure_event_table($wh_db, $pfx);
 // ---------------------------------------------------------------------------
 // 3. PayPal OAuth token
 // ---------------------------------------------------------------------------
-$api_base     = gsp_paypal_get_api_base();
-$client_id    = gsp_paypal_get_client_id();
-$client_secret = gsp_paypal_get_client_secret();
-$webhook_id   = gsp_paypal_get_webhook_id();
+$api_base     = paypal_get_api_base();
+$client_id    = paypal_get_client_id();
+$client_secret = paypal_get_client_secret();
+$webhook_id   = paypal_get_webhook_id();
 
 if (empty($client_id) || empty($client_secret)) {
     wh_log('error', 'paypal_not_configured');

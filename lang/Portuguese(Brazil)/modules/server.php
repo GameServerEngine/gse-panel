@@ -29,7 +29,7 @@ define('LANG_remote_host_info', "O host remoto deve ser um nome de host pingable
 define('LANG_remote_host_port', "Porta de host remoto");
 define('LANG_remote_host_port_info', "A porta que esta em escuta pelo Painel Agent no host remoto. Padrão: 12679.");
 define('LANG_remote_host_name', "Nome do host remoto");
-define('LANG_gsp_user', "GSP Agent Username");
+define('LANG_user', "GSP Agent Username");
 define('LANG_remote_host_name_info', "O nome do host remoto é usado para ajudar os usuários a identificar seus servidores.");
 define('LANG_add_remote_host', "Adicionar host remoto");
 define('LANG_remote_encryption_key', "Chave de criptografia remota");

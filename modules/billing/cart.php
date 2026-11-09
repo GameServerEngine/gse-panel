@@ -251,8 +251,8 @@ $final_amount_cents = max(0, $total_amount_cents - $discount_amount_cents);
 $final_amount = billing_cart_cents_to_money($final_amount_cents);
 
 // PayPal configuration (from config)
-$client_id = function_exists('gsp_paypal_get_client_id') ? gsp_paypal_get_client_id() : ($paypal_client_id ?? '');
-$sandbox   = function_exists('gsp_paypal_is_sandbox')    ? gsp_paypal_is_sandbox()    : ($paypal_sandbox ?? true);
+$client_id = function_exists('paypal_get_client_id') ? paypal_get_client_id() : ($paypal_client_id ?? '');
+$sandbox   = function_exists('paypal_is_sandbox')    ? paypal_is_sandbox()    : ($paypal_sandbox ?? true);
 
 // Prepare PayPal items
 $paypal_items = [];

@@ -3,7 +3,7 @@
 /**
  * Returns the protocol/port context the agent needs to validate runtime state.
  */
-function gsp_lifecycle_port_context($server_xml, $server_ip, $server_port)
+function lifecycle_port_context($server_xml, $server_ip, $server_port)
 {
 	$query_port = '';
 	$rcon_port = '';
@@ -44,25 +44,25 @@ function gsp_lifecycle_port_context($server_xml, $server_ip, $server_port)
 /**
  * Starts a fresh per-request replace-text result collector.
  */
-function gsp_lifecycle_begin_replace_text_tracking()
+function lifecycle_begin_replace_text_tracking()
 {
-	$GLOBALS['gsp_replace_text_results'] = array();
+	$GLOBALS['replace_text_results'] = array();
 }
 
 /**
  * Returns the replace-text results gathered by cfg_text_replace.php.
  */
-function gsp_lifecycle_replace_text_results()
+function lifecycle_replace_text_results()
 {
-	return isset($GLOBALS['gsp_replace_text_results']) && is_array($GLOBALS['gsp_replace_text_results'])
-		? $GLOBALS['gsp_replace_text_results']
+	return isset($GLOBALS['replace_text_results']) && is_array($GLOBALS['replace_text_results'])
+		? $GLOBALS['replace_text_results']
 		: array();
 }
 
 /**
  * Resolves the currently enabled one-bot definition from Server Content state.
  */
-function gsp_lifecycle_current_bot_definition($db, array $home_info)
+function lifecycle_current_bot_definition($db, array $home_info)
 {
 	$helper = dirname(__DIR__) . '/modules/addonsmanager/server_content_helpers.php';
 	if (!function_exists('scm_get_enabled_server_bot_rows') && file_exists($helper)) {
@@ -91,7 +91,7 @@ function gsp_lifecycle_current_bot_definition($db, array $home_info)
 /**
  * Checks whether an existing bot.def is absent or owned by the Panel generator.
  */
-function gsp_lifecycle_bot_def_is_managed($remote, $path)
+function lifecycle_bot_def_is_managed($remote, $path)
 {
 	$existing = '';
 	$read = (int)$remote->remote_readfile($path, $existing);
@@ -112,13 +112,13 @@ function gsp_lifecycle_bot_def_is_managed($remote, $path)
 	if ((string)$existing === '') {
 		return true;
 	}
-	return strpos((string)$existing, '# GSE_LIFECYCLE_BOT_DEF_GENERATED') === 0;
+	return strpos((string)$existing, '# LIFECYCLE_BOT_DEF_GENERATED') === 0;
 }
 
 /**
  * Writes the simple current bot.def in management_home for agents that read it.
  */
-function gsp_lifecycle_sync_bot_definition($remote, array $home_info, $bot_definition, &$error = '')
+function lifecycle_sync_bot_definition($remote, array $home_info, $bot_definition, &$error = '')
 {
 	$error = '';
 	$management_home = rtrim(clean_path((string)$home_info['management_home']), '/');
@@ -127,7 +127,7 @@ function gsp_lifecycle_sync_bot_definition($remote, array $home_info, $bot_defin
 		return false;
 	}
 	$bot_def_path = clean_path($management_home . '/bot.def');
-	if (!gsp_lifecycle_bot_def_is_managed($remote, $bot_def_path)) {
+	if (!lifecycle_bot_def_is_managed($remote, $bot_def_path)) {
 		$error = 'A non-generated bot.def already exists. Remove or migrate it before enabling lifecycle-managed Server Bot content.';
 		return false;
 	}
@@ -142,7 +142,7 @@ function gsp_lifecycle_sync_bot_definition($remote, array $home_info, $bot_defin
 			return false;
 		}
 	}
-	$contents = "# GSE_LIFECYCLE_BOT_DEF_GENERATED\n"
+	$contents = "# LIFECYCLE_BOT_DEF_GENERATED\n"
 		. "workdir=" . $bot_definition['working_directory'] . "\n"
 		. "executable=" . $bot_definition['command'] . "\n"
 		. "arguments=" . $bot_definition['arguments'] . "\n";
@@ -157,14 +157,14 @@ function gsp_lifecycle_sync_bot_definition($remote, array $home_info, $bot_defin
 /**
  * Builds the structured lifecycle payload appended to Start/Restart RPCs.
  */
-function gsp_lifecycle_start_payload($db, $remote, array $home_info, $server_xml, $mod_id, $server_ip, $server_port, $startup_cmd, $preStart, $envVars, $replace_text_results = array(), $restart_reason = '')
+function lifecycle_start_payload($db, $remote, array $home_info, $server_xml, $mod_id, $server_ip, $server_port, $startup_cmd, $preStart, $envVars, $replace_text_results = array(), $restart_reason = '')
 {
 	$run_dir = clean_path(isset($server_xml->exe_location) ? (string)$server_xml->exe_location : "");
 	$absolute_run_dir = clean_path(rtrim($home_info['game_root'], '/') . '/' . (isset($server_xml->exe_location) ? (string)$server_xml->exe_location : ''));
 	$last_param = json_decode(isset($home_info['last_param']) ? (string)$home_info['last_param'] : '', true);
-	$bot_definition = gsp_lifecycle_current_bot_definition($db, $home_info);
+	$bot_definition = lifecycle_current_bot_definition($db, $home_info);
 	$bot_error = '';
-	if (!gsp_lifecycle_sync_bot_definition($remote, $home_info, $bot_definition, $bot_error)) {
+	if (!lifecycle_sync_bot_definition($remote, $home_info, $bot_definition, $bot_error)) {
 		return array('error' => $bot_error);
 	}
 	return array(
@@ -180,7 +180,7 @@ function gsp_lifecycle_start_payload($db, $remote, array $home_info, $server_xml
 		'arguments' => (string)$startup_cmd,
 		'environment' => (string)$envVars,
 		'pre_start' => (string)$preStart,
-		'port_context' => gsp_lifecycle_port_context($server_xml, $server_ip, $server_port),
+		'port_context' => lifecycle_port_context($server_xml, $server_ip, $server_port),
 		'user_options' => is_array($last_param) ? $last_param : array(),
 		'mod' => isset($home_info['mods'][$mod_id]) ? $home_info['mods'][$mod_id] : array(),
 		'replace_text_results' => is_array($replace_text_results) ? $replace_text_results : array(),
@@ -192,7 +192,7 @@ function gsp_lifecycle_start_payload($db, $remote, array $home_info, $server_xml
 /**
  * Builds the structured lifecycle payload appended to Stop/Force Stop RPCs.
  */
-function gsp_lifecycle_stop_payload(array $home_info, $server_xml, $server_ip, $server_port, $force = false)
+function lifecycle_stop_payload(array $home_info, $server_xml, $server_ip, $server_port, $force = false)
 {
 	return array(
 		'contract' => 'gse.lifecycle.v2',
@@ -201,14 +201,14 @@ function gsp_lifecycle_stop_payload(array $home_info, $server_xml, $server_ip, $
 		'management_home' => isset($home_info['management_home']) ? $home_info['management_home'] : clean_path($home_info['home_path']),
 		'game_key' => isset($home_info['game_key']) ? $home_info['game_key'] : '',
 		'game_root' => isset($home_info['game_root']) ? $home_info['game_root'] : '',
-		'port_context' => gsp_lifecycle_port_context($server_xml, $server_ip, $server_port),
+		'port_context' => lifecycle_port_context($server_xml, $server_ip, $server_port),
 	);
 }
 
 /**
  * Returns true only when status evidence proves no managed runtime survived.
  */
-function gsp_lifecycle_status_is_verified_stopped($agent_status)
+function lifecycle_status_is_verified_stopped($agent_status)
 {
 	if (!is_array($agent_status)) {
 		return false;
@@ -236,9 +236,9 @@ function gsp_lifecycle_status_is_verified_stopped($agent_status)
 /**
  * Collects structured status plus narrow legacy session/port fallback evidence.
  */
-function gsp_lifecycle_collect_agent_status($remote, $server_xml, $home_id, $server_ip, $server_port, $state_hint = '', $startup_timeout = 180)
+function lifecycle_collect_agent_status($remote, $server_xml, $home_id, $server_ip, $server_port, $state_hint = '', $startup_timeout = 180)
 {
-	$ports = gsp_lifecycle_port_context($server_xml, $server_ip, $server_port);
+	$ports = lifecycle_port_context($server_xml, $server_ip, $server_port);
 	$agent_status = array(
 		'status' => 'UNKNOWN',
 		'ready' => 0,
@@ -261,7 +261,7 @@ function gsp_lifecycle_collect_agent_status($remote, $server_xml, $home_id, $ser
 	}
 	$fallback_session = null;
 	if (method_exists($remote, 'is_screen_running')) {
-		$screen_result = $remote->is_screen_running(GSP_SCREEN_TYPE_HOME, $home_id);
+		$screen_result = $remote->is_screen_running(SCREEN_TYPE_HOME, $home_id);
 		if ($screen_result === 1) {
 			$fallback_session = true;
 			$agent_status['session_running'] = 1;
@@ -277,12 +277,12 @@ function gsp_lifecycle_collect_agent_status($remote, $server_xml, $home_id, $ser
 			. '| tr -d "\r" '
 			. '| grep -Eai "(LISTEN|LISTENING|UDP|tcp|udp)" '
 			. '| grep -E ' . escapeshellarg($port_pattern) . ' >/dev/null '
-			. '&& echo GSP_PORT_LISTENING || echo GSP_PORT_CLOSED';
+			. '&& echo PORT_LISTENING || echo PORT_CLOSED';
 		$output = $remote->exec($command);
-		if (strpos((string)$output, 'GSP_PORT_LISTENING') !== false) {
+		if (strpos((string)$output, 'PORT_LISTENING') !== false) {
 			$fallback_port = true;
 			$agent_status['game_port_listening'] = 1;
-		} elseif (strpos((string)$output, 'GSP_PORT_CLOSED') !== false) {
+		} elseif (strpos((string)$output, 'PORT_CLOSED') !== false) {
 			$fallback_port = false;
 		}
 	}
@@ -303,7 +303,7 @@ function gsp_lifecycle_collect_agent_status($remote, $server_xml, $home_id, $ser
 /**
  * Formats structured agent failure evidence for API and UI messages.
  */
-function gsp_lifecycle_result_message($result, $fallback)
+function lifecycle_result_message($result, $fallback)
 {
 	if (is_array($result) && isset($result['message']) && (string)$result['message'] !== '') {
 		return (string)$result['message'];

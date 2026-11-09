@@ -22,7 +22,7 @@
  *
  */
 
-function exec_gsp_module() {
+function exec_module() {
 	global $db, $settings;
 
 	// Check if the user_id is set in the uri first. Prevents notices if it's been removed.

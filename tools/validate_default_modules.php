@@ -4,12 +4,12 @@
  */
 
 $base_dir = dirname(__DIR__);
-if (!defined('GSP_DB_PREFIX')) {
-    define('GSP_DB_PREFIX', '');
+if (!defined('TABLE_PREFIX_PLACEHOLDER')) {
+    define('TABLE_PREFIX_PLACEHOLDER', '');
 }
 require_once $base_dir . '/includes/install_engine.php';
 
-$default_modules = gsp_install_builtin_modules();
+$default_modules = install_builtin_modules();
 $default_lookup = array_fill_keys($default_modules, true);
 
 $required_defaults = array(
@@ -85,7 +85,7 @@ foreach ($expected_optional_dirs as $module) {
 }
 
 foreach ($default_modules as $module) {
-    $metadata = gsp_install_load_module_metadata($base_dir, $module);
+    $metadata = install_load_module_metadata($base_dir, $module);
     if (!$metadata) {
         $errors[] = "Default module metadata could not be loaded: {$module}";
         continue;

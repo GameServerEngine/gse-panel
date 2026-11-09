@@ -3,7 +3,6 @@
 -- Idempotent migration: adds columns required by the billing checkout fixes.
 -- Safe to run multiple times (uses IF-based prepared statements).
 -- Run against the panel database after deploying the updated PHP files.
--- IMPORTANT: Replace <PREFIX> with your actual table prefix (e.g. gsp_ or gsp_).
 -- =============================================================================
 
 SET @db  = DATABASE();

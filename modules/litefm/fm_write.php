@@ -24,7 +24,7 @@
 
 require_once(MODULES."/litefm/litefm.php");
 
-function exec_gsp_module()
+function exec_module()
 {
 	$home_id = $_REQUEST['home_id'];
 
@@ -79,7 +79,7 @@ function exec_gsp_module()
 	{
 		$_REQUEST['file_content'] = strip_real_escape_string($_REQUEST['file_content']);
 
-		$remote = new GSPRemoteLibrary($home_cfg['agent_ip'], $home_cfg['agent_port'], $home_cfg['encryption_key'], $home_cfg['timeout']);
+		$remote = new RemoteLibrary($home_cfg['agent_ip'], $home_cfg['agent_port'], $home_cfg['encryption_key'], $home_cfg['timeout']);
 		$target_path = litefm_safe_join_home_path(litefm_payload_root($home_cfg), isset($_SESSION[$cwd_session_key]) ? $_SESSION[$cwd_session_key] : '');
 		if ($target_path === false)
 		{

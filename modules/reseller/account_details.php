@@ -53,7 +53,7 @@ table.center tr.first_row td{
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  */
-function exec_gsp_module()
+function exec_module()
 {
 	error_reporting(E_ALL);
 
@@ -67,20 +67,20 @@ function exec_gsp_module()
 		require_once("modules/config_games/server_config_parser.php");
 		require_once("includes/lib_remote.php");
 		$user_homes = $db->resultQuery( "SELECT *
-								 FROM GSP_DB_PREFIXreseller_homes
+								 FROM TABLE_PREFIX_PLACEHOLDERreseller_homes
 								 WHERE home_id=" . $_POST['home_id'] );
 		$user_home = $user_homes[0];
 		$user_id = $user_home['user_id'];
 		$home_id = $user_home['home_id'];
 		$home_info = $db->getGameHomeWithoutMods($home_id);
 		$server_info = $db->getRemoteServerById($home_info['remote_server_id']);
-		$remote = new GSPRemoteLibrary($server_info['agent_ip'], $server_info['agent_port'], $server_info['encryption_key']);
+		$remote = new RemoteLibrary($server_info['agent_ip'], $server_info['agent_port'], $server_info['encryption_key']);
 		$update_ftp_users = "pure-pw userdel ".$home_id." && pure-pw mkdb";
 		$remote->sudo_exec( $update_ftp_users );
 		$addresses = $db->getHomeIpPorts($home_id);
 		foreach($addresses as $address)
 		{
-			$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], gsp_os_for_install_row($home_info));
+			$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], os_for_install_row($home_info));
 			if(isset($server_xml->control_protocol_type))$control_type = $server_xml->control_protocol_type; else $control_type = "";
 			$remote->remote_stop_server($home_id,$address['ip'],$address['port'],$server_xml->control_protocol,$home_info['control_password'],$control_type,$home_info['home_path']);
 		}
@@ -97,13 +97,13 @@ function exec_gsp_module()
 		print_success(get_lang_f('home_id_deleted_successfully', $home_id) );
 
 		// Restore slots in the reseller account
-		$qry_accounts = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_accounts WHERE account_id=".$user_home['account_id']);
+		$qry_accounts = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE account_id=".$user_home['account_id']);
 		$account = $qry_accounts[0];
 		$update_available_slots = $account['available_slots'] + $user_home['assigned_slots'];
-		$db->query("UPDATE GSP_DB_PREFIXreseller_accounts SET available_slots=".$update_available_slots." WHERE account_id=".$account['account_id']);
+		$db->query("UPDATE TABLE_PREFIX_PLACEHOLDERreseller_accounts SET available_slots=".$update_available_slots." WHERE account_id=".$account['account_id']);
 
 		// Delete the reseller home entry
-		$db->query( "DELETE FROM GSP_DB_PREFIXreseller_homes
+		$db->query( "DELETE FROM TABLE_PREFIX_PLACEHOLDERreseller_homes
 					 WHERE home_id=" . $home_id);
 
 		print_success(get_lang_f('the_amount_of_available_slots_has_been_incremented_to', $update_available_slots) );
@@ -111,9 +111,9 @@ function exec_gsp_module()
 
 	$filter = isset($_GET['account_id']) ? "account_id=".$_GET['account_id'] : "";
 	$filter_and = isset($_GET['account_id']) ? $filter." AND" : "";
-	$user_account = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_accounts WHERE $filter_and user_id=".$_SESSION['user_id']);
+	$user_account = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE $filter_and user_id=".$_SESSION['user_id']);
 	$where_filter = isset($_GET['account_id']) ? " WHERE ".$filter : "";
-	$reseller_homes = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_homes".$where_filter);
+	$reseller_homes = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_homes".$where_filter);
 
 	if( ! empty($reseller_homes) AND ( !empty($user_account[0]) or $isAdmin ) )
 	{
@@ -138,7 +138,7 @@ function exec_gsp_module()
 			$home_id = $user_home['home_id'];
 
 			// reseller account data
-			$rs_account = $db->resultQuery("SELECT * FROM GSP_DB_PREFIXreseller_accounts WHERE account_id=".$account_id);
+			$rs_account = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE account_id=".$account_id);
 			// reseller user info
 			$rs_user_info = $db->getUserById($rs_account[0]['user_id']);
 			$reseller_username = $rs_user_info['users_login'];

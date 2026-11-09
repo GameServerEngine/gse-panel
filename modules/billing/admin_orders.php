@@ -122,9 +122,9 @@ function billing_admin_orders_exec()
 
 	// Build query
 	$query = "SELECT o.*, s.service_name, u.users_login, u.users_email
-			  FROM GSP_DB_PREFIXbilling_orders o
-			  LEFT JOIN GSP_DB_PREFIXbilling_services s ON o.service_id = s.service_id
-			  LEFT JOIN GSP_DB_PREFIXusers u ON o.user_id = u.user_id
+			  FROM TABLE_PREFIX_PLACEHOLDERbilling_orders o
+			  LEFT JOIN TABLE_PREFIX_PLACEHOLDERbilling_services s ON o.service_id = s.service_id
+			  LEFT JOIN TABLE_PREFIX_PLACEHOLDERusers u ON o.user_id = u.user_id
 			  WHERE 1=1";
 
 	if ($status_filter != 'all') {
@@ -244,7 +244,7 @@ function billing_admin_orders_exec()
 
 	// Summary stats
 	$stats = $db->resultQuery("SELECT status, COUNT(*) as count, SUM(price) as total
-							   FROM GSP_DB_PREFIXbilling_orders
+							   FROM TABLE_PREFIX_PLACEHOLDERbilling_orders
 							   GROUP BY status");
 
 	echo "<div style='margin-top: 30px;'>";
@@ -264,13 +264,13 @@ function billing_admin_orders_exec()
 	echo "</div>";
 
 	// Orphaned home_id diagnostics —————————————————————————————————————————
-	// Find billing_orders rows where home_id != 0 but no matching GSP_DB_PREFIXserver_homes
+	// Find billing_orders rows where home_id != 0 but no matching TABLE_PREFIX_PLACEHOLDERserver_homes
 	// record exists. These indicate provisioning failures or stale data, and they
 	// are the reason the game monitor may show "No expiration date found".
 	$orphans = $db->resultQuery(
 		"SELECT o.order_id, o.user_id, o.home_name, o.home_id, o.status, o.end_date
-		   FROM GSP_DB_PREFIXbilling_orders o
-		   LEFT JOIN GSP_DB_PREFIXserver_homes sh ON sh.home_id = o.home_id
+		   FROM TABLE_PREFIX_PLACEHOLDERbilling_orders o
+		   LEFT JOIN TABLE_PREFIX_PLACEHOLDERserver_homes sh ON sh.home_id = o.home_id
 		  WHERE o.home_id != '0'
 		    AND o.home_id != ''
 		    AND sh.home_id IS NULL
@@ -279,7 +279,7 @@ function billing_admin_orders_exec()
 
 	echo "<div style='margin-top: 30px;'>";
 	echo "<h3>Orphaned home_id Diagnostics</h3>";
-	echo "<p style='color:#666;'>Billing orders that reference a <code>home_id</code> which no longer exists in <code>GSP_DB_PREFIXserver_homes</code>. ";
+	echo "<p style='color:#666;'>Billing orders that reference a <code>home_id</code> which no longer exists in <code>TABLE_PREFIX_PLACEHOLDERserver_homes</code>. ";
 	echo "These orders will not show an expiration date on the game monitor. ";
 	echo "Reset <code>home_id</code> to <code>0</code> or re-provision these orders to fix them. ";
 	echo "Run <code>normalize_billing_order_status.sql</code> to standardize any legacy status values.</p>";

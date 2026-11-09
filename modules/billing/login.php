@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['website_login_time'] = time();
                 require_once(__DIR__ . '/includes/panel_bridge.php');
                 $panelCtx = billing_panel_bootstrap();
-                if ($panelCtx && isset($panelCtx['db']) && $panelCtx['db'] instanceof GSPDatabase) {
+                if ($panelCtx && isset($panelCtx['db']) && $panelCtx['db'] instanceof Database) {
                     $_SESSION['users_api_key'] = $panelCtx['db']->getApiToken($userId);
                 } else {
                     $_SESSION['users_api_key'] = $_SESSION['users_api_key'] ?? '';

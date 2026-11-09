@@ -29,7 +29,7 @@ define('LANG_remote_host_info', "Удаленный хост должен пин
 define('LANG_remote_host_port', "Порт удаленного хоста");
 define('LANG_remote_host_port_info', "Порт, прослушиваемый GSP агентом на удалённом хосте. По умолчанию: 12679.");
 define('LANG_remote_host_name', "Название удаленного хоста");
-define('LANG_gsp_user', "Пользователь GSP Агента");
+define('LANG_user', "Пользователь GSP Агента");
 define('LANG_remote_host_name_info', "Название удаленного хоста используется, чтобы помочь пользователям идентифицировать свои сервера.");
 define('LANG_add_remote_host', "Добавить удаленный сервер");
 define('LANG_remote_encryption_key', "Зашифрованный ключ на удаленной машине");

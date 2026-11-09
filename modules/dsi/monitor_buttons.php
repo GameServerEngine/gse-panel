@@ -23,7 +23,7 @@
  */
 
 $module_buttons = array();
-if (function_exists('gsp_game_query_supported') && gsp_game_query_supported($server_xml)) {
+if (function_exists('game_query_supported') && game_query_supported($server_xml)) {
 	$module_buttons[] = "<a class='monitorbutton' href='?m=dsi&amp;p=user_dsi&amp;home_id-mod_id-ip-port=".$server_home['home_id']."-".$server_home['mod_id']."-".$server_home['ip']."-".$server_home['port']."'>
 		<img src='" . check_theme_image("images/dsi.png") . "' title='DSi'>
 		<span>DSi</span>

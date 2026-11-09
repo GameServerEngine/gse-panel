@@ -20,7 +20,7 @@ class PayPalGateway implements PaymentGatewayInterface
 
     /**
      * Build a PayPalGateway instance from global config variables.
-     * Prefers the new gsp_paypal_* helper functions; falls back to legacy globals.
+     * Prefers the new paypal_* helper functions; falls back to legacy globals.
      */
     public static function fromConfig(): self
     {
@@ -30,10 +30,10 @@ class PayPalGateway implements PaymentGatewayInterface
                 return new self((string)$db['paypal_client_id'], (string)$db['paypal_client_secret'], ($db['paypal_mode'] ?? 'sandbox') !== 'live');
             }
         }
-        if (function_exists('gsp_paypal_get_client_id')) {
-            $clientId     = gsp_paypal_get_client_id();
-            $clientSecret = gsp_paypal_get_client_secret();
-            $sandbox      = gsp_paypal_is_sandbox();
+        if (function_exists('paypal_get_client_id')) {
+            $clientId     = paypal_get_client_id();
+            $clientSecret = paypal_get_client_secret();
+            $sandbox      = paypal_is_sandbox();
         } else {
             $clientId     = $GLOBALS['paypal_client_id']     ?? '';
             $clientSecret = $GLOBALS['paypal_client_secret'] ?? '';

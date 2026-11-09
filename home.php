@@ -45,8 +45,8 @@ $db = createDatabaseConnection($db_type, $db_host, $db_user, $db_pass, $db_name,
 // Load languages.
 include_once("includes/lang.php");
 
-if (!$db instanceof GSPDatabase) {
-	gspLang();
+if (!$db instanceof Database) {
+	lang();
 	die(get_lang('no_db_connection'));
 }
 
@@ -57,15 +57,15 @@ if(hasValue($_SESSION['user_id'])){
 
 $settings = $db->getSettings();
 @$GLOBALS['panel_language'] = $settings['panel_language'];
-gspLang();
+lang();
 
 // Apply debug level from panel settings (overrides the DEBUG_LEVEL constant)
-if (defined('DEBUG_MODE') && DEBUG_MODE && function_exists('gsp_apply_debug_level')) {
-    gsp_apply_debug_level((int)($settings['debug_level'] ?? DEBUG_LEVEL));
+if (defined('DEBUG_MODE') && DEBUG_MODE && function_exists('apply_debug_level')) {
+    apply_debug_level((int)($settings['debug_level'] ?? DEBUG_LEVEL));
 }
 
 require_once("includes/view.php");
-$view = new GSPView();
+$view = new View();
 $view->setCharset(get_lang('lang_charset'));
 $view->setTimeZone($settings['time_zone']);
 if(isset($_GET['type']) && $_GET['type'] == 'cleared')
@@ -80,7 +80,7 @@ if(isset($_GET['type']) && $_GET['type'] == 'cleared')
 }
 else
 {
-	gspHome();
+	home();
 	$view->printView();
 }
 
@@ -154,7 +154,7 @@ function heading()
 	if(isset($maintenance))echo $maintenance;
 }
 
-function gspHome()
+function home()
 {
     global $db,$view,$settings;
 	?>
@@ -186,7 +186,7 @@ function gspHome()
 			require_once("modules/config_games/server_config_parser.php");
 			foreach ((array)$servers_by_game_name as $game_name => $server_homes )
 			{
-				$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_homes[0]['home_cfg_file'], gsp_os_for_install_row($server_homes[0]));
+				$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_homes[0]['home_cfg_file'], os_for_install_row($server_homes[0]));
 				if ($server_xml === FALSE)
 				{
 					// Bad XML – skip this game from the navigation list; error is
@@ -232,7 +232,7 @@ function gspHome()
 
 		// Show admin-only warning for any game config XMLs that failed to parse.
 		if ($isAdmin) {
-			$xml_errors = function_exists('gsp_get_xml_errors') ? gsp_get_xml_errors() : array();
+			$xml_errors = function_exists('get_xml_errors') ? get_xml_errors() : array();
 			if (!empty($xml_errors)) {
 				echo "<div class='gsp-xml-error-banner' style='background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:10px 14px;margin:10px 0;color:#856404;font-size:0.9em;'>";
 				echo "<strong>⚠ One or more game config XML files failed to load and have been skipped:</strong><ul style='margin:6px 0 0 16px;'>";
