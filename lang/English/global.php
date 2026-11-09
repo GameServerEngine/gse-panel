@@ -107,7 +107,7 @@ define('LANG_ftp_admin', "FTP users");
 define('LANG_orders', "Orders");
 define('LANG_services', "Services");
 define('LANG_shop_settings', "Shop Settings");
-define('LANG_update', "Update Panel");
+define('LANG_update', "Update");
 define('LANG_extras', "Extras");
 define('LANG_show', "Show");
 define('LANG_show_all', "Show All Servers");

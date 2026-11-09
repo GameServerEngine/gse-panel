@@ -274,6 +274,7 @@ function release_fetch_releases_live($repo_url, $token, $provider)
 			}
 			$rows[] = [
 				'tag' => (string)($entry['tag_name'] ?? ''),
+				'name' => (string)($entry['name'] ?? ''),
 				'prerelease' => !empty($entry['prerelease']),
 				'created_at' => (string)($entry['created_at'] ?? ''),
 				'assets' => $assets,
@@ -452,7 +453,7 @@ function release_tag_options($component)
 	if ($cfg['repo_url'] === '') {
 		return null;
 	}
-	$cache = sys_get_temp_dir() . '/gse-releases-v2-' . md5($cfg['repo_url']) . '.json';
+	$cache = sys_get_temp_dir() . '/gse-releases-v3-' . md5($cfg['repo_url']) . '.json';
 	if (is_file($cache) && (time() - filemtime($cache)) < 600) {
 		$cached = json_decode((string)file_get_contents($cache), true);
 		if (is_array($cached)) {
@@ -464,6 +465,16 @@ function release_tag_options($component)
 		@file_put_contents($cache, json_encode($tags));
 	}
 	return $tags;
+}
+
+function release_row_version($tag, $prefix, $row)
+{
+	$version = substr($tag, strlen($prefix));
+	if ($version === 'latest' && preg_match('/([0-9]+([.][0-9]+)+)[ ]*$/', (string)($row['name'] ?? ''), $m)) {
+		// Rolling release (working-latest): the version is in the release name, e.g. "working 2.5.2".
+		return $m[1];
+	}
+	return $version;
 }
 
 function release_tag_options_uncached($component)
@@ -492,7 +503,7 @@ function release_tag_options_uncached($component)
 				$out[] = array(
 					'tag' => $tag,
 					'channel' => $channel,
-					'version' => substr($tag, strlen($prefix)),
+					'version' => release_row_version($tag, $prefix, $row),
 					'created' => (string)$row['created_at'],
 					'prerelease' => !empty($row['prerelease']),
 				);
