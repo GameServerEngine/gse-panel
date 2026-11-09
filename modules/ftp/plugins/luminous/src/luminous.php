@@ -358,7 +358,7 @@ abstract class luminous {
         case 'luminous.css':
         case 'luminous_print.css':
         case 'luminous.min.css':
-          continue;
+          continue 2;
         default:
         $themes[] = $fn;
       }

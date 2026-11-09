@@ -89,6 +89,11 @@ class RemoteLibrary
 	{
 		$param = base64_encode((string)$param);
 		$param = $this->enc->encrypt($param);
+		if (!is_string($param)) {
+			// Crypt_XXTEA rejected the key (too long or empty), so no usable ciphertext exists.
+			// Return an empty value: the agent then reports a key mismatch instead of the page crashing.
+			return '';
+		}
 		return base64_encode($param);
 	}
 
