@@ -499,9 +499,7 @@ function gsp_install_split_sql_statements($sql)
 function gsp_install_rewrite_schema_sql($sql, $table_prefix)
 {
     $sql = preg_replace('/\bCREATE\s+TABLE\s+`/i', 'CREATE TABLE IF NOT EXISTS `', (string)$sql);
-    $sql = preg_replace_callback('/`gsp_([a-zA-Z0-9_]+)`/', function ($matches) use ($table_prefix) {
-        return '`' . str_replace('`', '``', $table_prefix . $matches[1]) . '`';
-    }, $sql);
+    $sql = str_replace('GSP_DB_PREFIX', (string)$table_prefix, (string)$sql);
     return $sql;
 }
 

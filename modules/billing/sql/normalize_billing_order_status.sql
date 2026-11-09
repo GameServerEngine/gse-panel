@@ -34,4 +34,4 @@ SET    `status` = 'Expired'
 WHERE  `status` = 'suspended';
 
 -- Optional: verify counts after migration
--- SELECT status, COUNT(*) AS count FROM gsp_billing_orders GROUP BY status ORDER BY count DESC;
+-- SELECT status, COUNT(*) AS count FROM GSP_DB_PREFIXbilling_orders GROUP BY status ORDER BY count DESC;

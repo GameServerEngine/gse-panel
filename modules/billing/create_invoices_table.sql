@@ -2,7 +2,7 @@
 -- Run this SQL to enable the new billing system
 -- Table prefix is hardcoded to gsp_ for standalone billing module
 
-CREATE TABLE IF NOT EXISTS `gsp_billing_invoices` (
+CREATE TABLE IF NOT EXISTS `GSP_DB_PREFIXbilling_invoices` (
     `invoice_id` INT(11) NOT NULL AUTO_INCREMENT,
     `order_id` INT(11) NOT NULL DEFAULT 0,
     `user_id` INT(11) NOT NULL,

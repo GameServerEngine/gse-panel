@@ -1,4 +1,4 @@
--- Fix missing columns / indexes for gsp_billing_invoices
+-- Fix missing columns / indexes for GSP_DB_PREFIXbilling_invoices
 -- Safe script: checks information_schema and adds each missing column/index using prepared statements.
 -- IMPORTANT: Run on the target database (use the panel DB). Make a backup before running.
 -- Table prefix is hardcoded to gsp_ for standalone billing module

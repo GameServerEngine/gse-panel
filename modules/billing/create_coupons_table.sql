@@ -3,10 +3,10 @@
 -- Table prefix is hardcoded to gsp_ for standalone billing module
 
 -- Drop existing table if upgrading from old coupon module
-DROP TABLE IF EXISTS `gsp_billing_coupons`;
+DROP TABLE IF EXISTS `GSP_DB_PREFIXbilling_coupons`;
 
 -- Create enhanced coupons table
-CREATE TABLE `gsp_billing_coupons` (
+CREATE TABLE `GSP_DB_PREFIXbilling_coupons` (
     `coupon_id` INT(11) NOT NULL AUTO_INCREMENT,
     `code` VARCHAR(50) NOT NULL UNIQUE,
     `name` VARCHAR(255) NOT NULL DEFAULT '',
@@ -38,8 +38,8 @@ SET @checkIfColumnExists = (
 );
 
 SET @addColumn = IF(@checkIfColumnExists = 0,
-    'ALTER TABLE `gsp_billing_orders` ADD COLUMN `coupon_id` INT(11) DEFAULT NULL AFTER `user_id`, ADD KEY `idx_coupon` (`coupon_id`)',
-    'SELECT "Column coupon_id already exists in gsp_billing_orders"'
+    'ALTER TABLE `GSP_DB_PREFIXbilling_orders` ADD COLUMN `coupon_id` INT(11) DEFAULT NULL AFTER `user_id`, ADD KEY `idx_coupon` (`coupon_id`)',
+    'SELECT "Column coupon_id already exists in GSP_DB_PREFIXbilling_orders"'
 );
 
 PREPARE stmt FROM @addColumn;
@@ -57,8 +57,8 @@ SET @checkIfColumnExists = (
 );
 
 SET @addColumn = IF(@checkIfColumnExists = 0,
-    'ALTER TABLE `gsp_billing_invoices` ADD COLUMN `coupon_id` INT(11) DEFAULT NULL AFTER `user_id`, ADD KEY `idx_coupon` (`coupon_id`)',
-    'SELECT "Column coupon_id already exists in gsp_billing_invoices"'
+    'ALTER TABLE `GSP_DB_PREFIXbilling_invoices` ADD COLUMN `coupon_id` INT(11) DEFAULT NULL AFTER `user_id`, ADD KEY `idx_coupon` (`coupon_id`)',
+    'SELECT "Column coupon_id already exists in GSP_DB_PREFIXbilling_invoices"'
 );
 
 PREPARE stmt FROM @addColumn;
@@ -75,8 +75,8 @@ SET @checkIfColumnExists = (
 );
 
 SET @addColumn = IF(@checkIfColumnExists = 0,
-    'ALTER TABLE `gsp_billing_invoices` ADD COLUMN `discount_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER `amount`',
-    'SELECT "Column discount_amount already exists in gsp_billing_invoices"'
+    'ALTER TABLE `GSP_DB_PREFIXbilling_invoices` ADD COLUMN `discount_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER `amount`',
+    'SELECT "Column discount_amount already exists in GSP_DB_PREFIXbilling_invoices"'
 );
 
 PREPARE stmt FROM @addColumn;
@@ -93,8 +93,8 @@ SET @checkIfColumnExists = (
 );
 
 SET @addColumn = IF(@checkIfColumnExists = 0,
-    'ALTER TABLE `gsp_billing_orders` ADD COLUMN `discount_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER `price`',
-    'SELECT "Column discount_amount already exists in gsp_billing_orders"'
+    'ALTER TABLE `GSP_DB_PREFIXbilling_orders` ADD COLUMN `discount_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER `price`',
+    'SELECT "Column discount_amount already exists in GSP_DB_PREFIXbilling_orders"'
 );
 
 PREPARE stmt FROM @addColumn;
@@ -102,6 +102,6 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 -- Sample coupons for testing
-INSERT INTO `gsp_billing_coupons` (`code`, `name`, `description`, `discount_percent`, `usage_type`, `game_filter_type`, `game_filter_list`, `expires`) VALUES
+INSERT INTO `GSP_DB_PREFIXbilling_coupons` (`code`, `name`, `description`, `discount_percent`, `usage_type`, `game_filter_type`, `game_filter_list`, `expires`) VALUES
 ('WELCOME10', 'Welcome 10% Off', 'New customer welcome discount - 10% off any game', 10.00, 'one_time', 'all_games', NULL, DATE_ADD(NOW(), INTERVAL 1 YEAR)),
 ('ARMA25', 'Arma Series 25% Off', 'Save 25% on any Arma game server', 25.00, 'permanent', 'specific_games', '["arma2_win32", "arma2oa_win32", "arma3_linux32", "arma3_linux64", "arma3_win64", "arma-reforger_linux64", "arma-reforger_win64"]', NULL);
