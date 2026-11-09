@@ -4259,6 +4259,24 @@ class DatabaseMySQL extends Database
 		return $tmp[0];
 	}
 
+	// Replaces the token of one user. The old token stops working at once because the row is overwritten.
+	public function regenerateApiToken($user_id)
+	{
+		if (is_numeric($user_id) === false)
+			return false;
+		$this->checkApiTable();
+
+		$user_id = (int)$user_id;
+		$token = api_new_token();
+		$query = 'INSERT INTO %sapi_tokens (user_id, token) VALUES (%2$d, \'%3$s\')'.
+				' ON DUPLICATE KEY UPDATE token = VALUES(token);';
+		$query = sprintf($query, $this->table_prefix, $user_id, $token);
+		if(!$this->query($query))
+			return false;
+
+		return $token;
+	}
+
 	public function saveGameServerOrder($order){
 		if(is_array($order) && count((array)$order)){
 			$sql = "";

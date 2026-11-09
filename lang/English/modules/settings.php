@@ -166,4 +166,8 @@ define('LANG_debug_off', "Off (production)");
 define('LANG_debug_fatal_only', "Fatal errors only (page-breaking)");
 define('LANG_debug_errors_warnings', "Errors & Warnings");
 define('LANG_debug_all', "All (verbose - E_ALL)");
+define('LANG_administration_menu', "Administration menu");
+define('LANG_administration_menu_info', "Choose what one click on Administration does. It opens the Administration page, or it opens a dropdown of the admin options.");
+define('LANG_administration_menu_page', "Open Administration page");
+define('LANG_administration_menu_dropdown', "Dropdown menu");
 ?>

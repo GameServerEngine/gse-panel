@@ -183,6 +183,7 @@ function home()
 			}
 			ksort($servers_by_game_name);
 			$game_homes_list = "<ul id='submenu_0' >\n";
+			$game_homes_list .= "<li><a class='user_menu_link' href='?m=gamemanager&p=game_monitor'>".get_lang('game_monitor_all')."</a></li>\n";
 			require_once("modules/config_games/server_config_parser.php");
 			foreach ((array)$servers_by_game_name as $game_name => $server_homes )
 			{
@@ -344,9 +345,13 @@ function home()
 				if ((isset($_GET['m']) AND $_GET['m'] == "administration") || $TotalSelected )
 					echo 'class="admin_menu_link_selected"'; else echo 'class="admin_menu_link"';
 				?> target="_self" ><span class="administration" ><?php echo get_lang('administration'); ?></span></a>
-				<ul id="administration" >
-					<?php echo $data ?>
-				</ul>
+				<?php
+					// Only show the dropdown when the Panel Setting asks for it.
+					if (($settings['administration_menu'] ?? 'page') == 'dropdown')
+					{
+						echo '<ul id="administration" >'.$data.'</ul>';
+					}
+					?>
 			</li>
 			<?php
 			}
@@ -358,6 +363,8 @@ function home()
 					<?php if (isset($_GET['p']) AND $_GET['p'] == "edit_user" ) echo 'class="user_menu_link_selected"'; else echo 'class="user_menu_link"';
 					?> target="_self" ><span class="username" ><?php echo $_SESSION['users_login']; ?></span></a>
 					<ul>
+						<li class="user_dropdown_item"><a href="?m=user_admin&p=edit_user&user_id=<?php echo $_SESSION['user_id'] ?>"><span class="username"><?php print_lang('profile_settings'); ?></span></a></li>
+						<li class="user_dropdown_item"><a href="?m=user_admin&p=api_page"><span class="api"><?php print_lang('api_menu'); ?></span></a></li>
 					<?php
 					// Normal users only!
 					if(!$isAdmin && !$isSubUser)

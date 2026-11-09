@@ -428,3 +428,7 @@ table.tablesorter thead tr .tablesorter-headerDesc {
 .nav-sidebar [href="?m=circular"] > .nav-icon:before,
 .administration-table [href="?m=circular"]:before { content: "\f0e0"; }
 .monitorbutton.getAPILinks:before { content: "\f1da"; }
+/* User name dropdown in the sidebar user panel */
+.user-panel > .info > .user-dropdown { list-style: none; margin: 4px 0 0; padding: 0; }
+.user-panel > .info > .user-dropdown a { display: block; padding: 2px 0; color: #c2c7d0; }
+.user-panel > .info > .user-dropdown a:hover { color: #fff; }

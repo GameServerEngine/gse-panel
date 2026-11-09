@@ -148,4 +148,7 @@ define('LANG_mysql_admin', "MySQL Admin");
 define('LANG_copied', "Copied!");
 define('LANG_ticket_settings', "Ticket Settings");
 define('LANG_form', "Register");
+define('LANG_profile_settings', "Profile Settings");
+define('LANG_api_menu', "API");
+define('LANG_game_monitor_all', "All");
 ?>

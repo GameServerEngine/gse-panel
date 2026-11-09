@@ -99,6 +99,7 @@ function exec_module()
 			"support_widget_content" => $_REQUEST['support_widget_content'],
 			"support_widget_link" => $_REQUEST['support_widget_link'],
 			"check_expiry_by" => $_REQUEST['check_expiry_by'],
+			"administration_menu" => ($_REQUEST['administration_menu'] ?? 'page') == 'dropdown' ? 'dropdown' : 'page',
 			"recaptcha_site_key" => $_REQUEST['recaptcha_site_key'],
 			"recaptcha_secret_key" => $_REQUEST['recaptcha_secret_key'],
 			"recaptcha_use_login" => $_REQUEST['recaptcha_use_login'],
@@ -213,6 +214,9 @@ function exec_module()
 	$ft->add_field('string','support_widget_link',@$row['support_widget_link']);
 	$ft->add_custom_field('check_expiry_by',
 		create_drop_box_from_array(array('once_logged_in' => get_lang('once_logged_in'), 'cron_job' => get_lang('cron_job')),"check_expiry_by",@$row['check_expiry_by'],false));
+	// Missing setting means "page", so no migration is needed.
+	$ft->add_custom_field('administration_menu',
+		create_drop_box_from_array(array('page' => get_lang('administration_menu_page'), 'dropdown' => get_lang('administration_menu_dropdown')),"administration_menu",@$row['administration_menu'] ?: 'page',false));
 	$ft->add_field('string','recaptcha_site_key',@$row['recaptcha_site_key']);
 	$ft->add_field('string','recaptcha_secret_key',@$row['recaptcha_secret_key']);
 	$ft->add_field('on_off','recaptcha_use_login',@$row['recaptcha_use_login']);

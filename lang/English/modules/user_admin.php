@@ -110,4 +110,15 @@ define('LANG_unexpected_role', "Unexpected user role received.");
 define('LANG_search', "Search");
 define('LANG_api_token', "API token");
 define('LANG_user_receives_emails', "Receive emails");
+define('LANG_api_page_title', "API");
+define('LANG_api_page_copy', "Copy");
+define('LANG_api_page_regenerate', "Regenerate");
+define('LANG_api_page_confirm_regenerate', "Create a new API token? The current token stops working immediately.");
+define('LANG_api_page_token_regenerated', "A new API token was created. The old token no longer works.");
+define('LANG_api_page_regenerate_failed', "The API token could not be regenerated.");
+define('LANG_api_page_bad_form_token', "The form token is not valid. Reload the page and try again.");
+define('LANG_api_page_commands', "API commands");
+define('LANG_api_page_commands_info', "Choose a server. Replace YOUR_TOKEN with the token shown above, and replace ... with your own values.");
+define('LANG_api_page_select_server', "Select a server...");
+define('LANG_api_page_no_servers', "You do not have any servers yet, so there are no server commands to show.");
 ?>

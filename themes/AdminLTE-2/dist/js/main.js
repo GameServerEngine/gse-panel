@@ -688,18 +688,9 @@ $(document).ready(function()
 			}
 		});
 
-		// Only follow Link when Menu is open
-		$('.nav-sidebar .nav-item > a').click(function(e)
-		{
-			if($(this).parent('li').hasClass('menu-open'))
-			{
-				e.stopPropagation();
-				// e.preventDefault();
-				window.location = $(this).attr('href');
-			}
-		});
 		// Remove User Element and update top User Area
-		var userNavItem = $('.nav-sidebar [href^="?m=user_admin&p=edit_user&user_id"]').parent('.nav-item');
+		// The dropdown also holds a Profile Settings link with the same href, so take only the outer item.
+		var userNavItem = $('.nav-sidebar [href^="?m=user_admin&p=edit_user&user_id"]').first().parent('.nav-item');
 		var userProfileLink = $(userNavItem).children('a').attr('href');
 		var userId = new URLSearchParams(userProfileLink).get('user_id');
 		var setUserAvatar = 'themes/AdminLTE-2/dist/img/default-avatar.png';
@@ -746,13 +737,26 @@ $(document).ready(function()
 		$('.user-panel > .info > a').text($(userNavItem).children('a').children('p').text()).attr('href', userProfileLink);
 
 		// check if user contains additional submenus
-		if($(userNavItem).find('.nav').find('.nav-item:not(:last-of-type)').length > 0)
+		if($(userNavItem).find('.nav').find('.nav-item:not(:last-of-type):not(.user_dropdown_item)').length > 0)
 		{
-			$(userNavItem).find('.nav').find('.nav-item:not(:last-of-type)').each(function()
+			$(userNavItem).find('.nav').find('.nav-item:not(:last-of-type):not(.user_dropdown_item)').each(function()
 			{
 				$('.main-sidebar .nav-sidebar').append('<li class="' + $(this).attr('class') + '">' + $(this).html() + '</li>');
 			});
 		}
+
+		// One click on the user name opens the dropdown (Profile Settings, API).
+		var userDropdown = $('<ul class="user-dropdown"></ul>').hide();
+		$(userNavItem).find('.user_dropdown_item').each(function()
+		{
+			userDropdown.append('<li><a href="' + $(this).children('a').attr('href') + '">' + $(this).find('p').text() + '</a></li>');
+		});
+		$('.user-panel > .info').append(userDropdown);
+		$('.user-panel > .info > a').click(function(e)
+		{
+			e.preventDefault();
+			userDropdown.toggle();
+		});
 
 		// remove old user menu item
 		$(userNavItem).remove();
