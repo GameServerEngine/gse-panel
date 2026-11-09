@@ -39,6 +39,7 @@ function get_function_args($main_request)
 	$functions["gamemanager/start"] = array("token" => true, "ip" => true, "port" => true, "mod_key" => false);
 	$functions["gamemanager/stop"] = array("token" => true, "ip" => true, "port" => true, "mod_key" => false);
 	$functions["gamemanager/restart"] = array("token" => true, "ip" => true, "port" => true, "mod_key" => false);
+	$functions["gamemanager/status"] = array("token" => true, "ip" => true, "port" => true, "mod_key" => false);
 	$functions["gamemanager/rcon"] = array("token" => true, "ip" => true, "port" => true, "mod_key" => false, "command" => true);
 	$functions["gamemanager/update"] = array("token" => true, "ip" => true, "port" => true, "mod_key" => false, "type" => true, "manual_url" => false);
 

@@ -36,7 +36,8 @@ ______________ Game Manager
 api.php?gamemanager/start 				(POST/GET {token}{ip}{port}{mod_key})
 api.php?gamemanager/stop 				(POST/GET {token}{ip}{port}{mod_key})
 api.php?gamemanager/restart 			(POST/GET {token}{ip}{port}{mod_key})
-api.php?gamemanager/rcon 				(POST/GET {token}{ip}{port}{mod_key}{command})
+api.php?gamemanager/status 				(POST/GET {token}{ip}{port}{mod_key})
+api.php?gamemanager/rcon				(POST/GET {token}{ip}{port}{mod_key}{command})
 api.php?gamemanager/update 				(POST/GET {token}{ip}{port}{mod_key}{type}{manual_url})
 
 ______________ Lite File Manager
@@ -1090,6 +1091,16 @@ function api_gamemanager()
 			$status = "200";
 			$message = "The server has been started.";
 		}
+	}
+
+	// Read-only: asks the agent for the game server state. Nothing is started, stopped or written.
+	if($request[0] == "status")
+	{
+		$agent_status = lifecycle_collect_agent_status($remote, $server_xml, $home_info['home_id'], $ip, $port);
+		$report = array();
+		foreach (array('status', 'ready', 'process_running', 'session_running', 'game_port_listening', 'query_port_listening', 'rcon_port_listening', 'last_error') as $field)
+			$report[$field] = isset($agent_status[$field]) ? $agent_status[$field] : '';
+		return array("status" => "200", "message" => "Server status for $ip:$port.", "server_status" => $report);
 	}
 
 	if($request[0] == "stop")

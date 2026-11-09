@@ -22,7 +22,31 @@ function api_page_machine_commands()
 // Game-server commands. Each one needs token, ip, port and mod_key.
 function api_page_game_commands()
 {
-	return array('gamemanager/start', 'gamemanager/stop', 'gamemanager/restart');
+	return array('gamemanager/start', 'gamemanager/stop', 'gamemanager/restart', 'gamemanager/status');
+}
+
+// Admin-only commands that need no machine id.
+function api_page_admin_commands($machine_id)
+{
+	return array(
+		'server/list' => array(),
+		'user_games/list_servers' => array(),
+		// Required arguments from get_function_args(): remote_server_id is filled from the selected machine.
+		'user_games/create' => array(
+			'remote_server_id' => (int)$machine_id,
+			'server_name' => 'ENTER_SERVER_NAME',
+			'home_cfg_id' => 'ENTER_HOME_CFG_ID',
+			'mod_cfg_id' => 'ENTER_MOD_CFG_ID',
+			'ip' => 'ENTER_IP',
+			'port' => 'ENTER_PORT',
+			'control_password' => 'ENTER_CONTROL_PASSWORD',
+			'enable_ftp' => 'ENTER_ENABLE_FTP',
+			'ftp_password' => 'ENTER_FTP_PASSWORD',
+			'slots' => 'ENTER_SLOTS',
+			'affinity' => 'ENTER_AFFINITY',
+			'nice' => 'ENTER_NICE',
+		),
+	);
 }
 
 // Returns array(machine_id => array('name' => ..., 'games' => array(...))).
@@ -139,6 +163,8 @@ function api_page_show_machine_commands($token, $machine_id)
 			$values[$input] = 'ENTER_' . strtoupper($input);
 		api_page_show_command($endpoint, api_page_command_line($endpoint, $values));
 	}
+	foreach (api_page_admin_commands($machine_id) as $endpoint => $fields)
+		api_page_show_command($endpoint, api_page_command_line($endpoint, array_merge(array('token' => $token), $fields)));
 }
 
 function api_page_show_game_commands($token, $game)
