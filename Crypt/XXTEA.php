@@ -99,7 +99,7 @@ class Crypt_XXTEA {
      *
      * @param mixed $key  the secret key (string or long integer array)
      *
-     * @return bool  true on success, PEAR_Error on failure
+     * @return bool  true on success, Crypt_XXTEA_Error on failure
      */
     function setKey($key) {
         if (is_string($key)) {
@@ -143,7 +143,7 @@ class Crypt_XXTEA {
      * @param mixed $plaintext  the plain text (string or long integer array)
      *
      * @return mixed  the cipher text as the same type as the parameter $plaintext
-     *                on success, PEAR_Error on failure
+     *                on success, Crypt_XXTEA_Error on failure
      */
     function encrypt($plaintext) {
         if ($this->_key == null) {
@@ -170,7 +170,7 @@ class Crypt_XXTEA {
      * @param mixed $chipertext  the cipher text (string or long integer array)
      *
      * @return mixed  the plain text as the same type as the parameter $chipertext
-     *                on success, PEAR_Error on failure
+     *                on success, Crypt_XXTEA_Error on failure
      */
     function decrypt($chipertext) {
         if ($this->_key == null) {
@@ -197,7 +197,7 @@ class Crypt_XXTEA {
      * @param string $str  the string to encrypt
      *
      * @return string  the string type of the cipher text on success,
-     *                 PEAR_Error on failure
+     *                 Crypt_XXTEA_Error on failure
      */
     function _encryptString($str) {
         if ($str == '') {
@@ -220,7 +220,7 @@ class Crypt_XXTEA {
      * @param array $v  the long integer array to encrypt
      *
      * @return array  the array type of the cipher text on success,
-     *                PEAR_Error on failure
+     *                Crypt_XXTEA_Error on failure
      */
     function _encryptArray($v) {
         $n = count((array)$v) - 1;
@@ -255,7 +255,7 @@ class Crypt_XXTEA {
      * @param string $str  the string to decrypt
      *
      * @return string  the string type of the plain text on success,
-     *                 PEAR_Error on failure
+     *                 Crypt_XXTEA_Error on failure
      */
     function _decryptString($str) {
         if ($str == '') {
@@ -278,7 +278,7 @@ class Crypt_XXTEA {
      * @param array $v  the long integer array to decrypt
      *
      * @return array  the array type of the plain text on success,
-     *                PEAR_Error on failure
+     *                Crypt_XXTEA_Error on failure
      */
     function _decryptArray($v) {
         $n = count((array)$v) - 1;

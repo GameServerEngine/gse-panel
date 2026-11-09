@@ -565,7 +565,7 @@ foreach ($rows as $r) {
     <?php elseif ($count_missing > 0): ?>
     <div class="note-box note-box-error">
         <strong><?= $count_missing ?> required item<?= $count_missing > 1 ? 's are' : ' is' ?> missing.</strong>
-        Install the missing packages before using the Panel in production. XML-RPC and PEAR are required by the current agent communication path.
+        Install the missing packages before using the Panel in production. XML-RPC is required by the current agent communication path.
     </div>
     <?php elseif ($count_missing === 0 && $count_warning === 0): ?>
     <div class="note-box">
@@ -630,7 +630,7 @@ foreach ($rows as $r) {
 'sudo apt update
 sudo apt install apache2 mysql-client unzip tar screen sudo git rsync \
     php php-cli php-common php-mysql php-gd php-curl php-mbstring php-zip \
-    php-xml php-xmlrpc php-pear libapache2-mod-php -y
+    php-xml php-xmlrpc libapache2-mod-php -y
 sudo a2enmod rewrite headers
 sudo systemctl reload apache2'
             ) ?></pre></td></tr>

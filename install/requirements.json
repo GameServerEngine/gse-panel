@@ -51,13 +51,7 @@
             "apt_package": "php-xmlrpc"
         }
     },
-    "php_libraries": {
-        "PEAR": {
-            "include_file": "PEAR.php",
-            "description": "Crypt/XXTEA.php requires PEAR.php for current agent encryption support.",
-            "apt_package": "php-pear"
-        }
-    },
+    "php_libraries": {},
     "commands": {
         "unzip": {
             "apt_package": "unzip",
@@ -120,8 +114,7 @@
             "php-mbstring",
             "php-zip",
             "php-xml",
-            "php-xmlrpc",
-            "php-pear"
+            "php-xmlrpc"
         ],
         "apache_mod_php": [
             "libapache2-mod-php"
