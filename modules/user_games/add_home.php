@@ -62,8 +62,10 @@ function exec_module()
 	foreach($db->getModulesAccessRights() as $ar)
 		$selections[$ar['description']] = $ar['flag'];
 
-	if ( isset($_REQUEST['add_game_home']) )
+	// Re-entry guard: a nested call to this page must never start another add.
+	if ( isset($_REQUEST['add_game_home']) && empty($GLOBALS['GSE_ADD_HOME_RUNNING']) )
 	{
+		$GLOBALS['GSE_ADD_HOME_RUNNING'] = true;
 		$rserver_id = $_POST['rserver_id'];
 		$home_cfg_id = $_POST['home_cfg_id'];
 		$web_user_id = trim($_POST['web_user_id']);

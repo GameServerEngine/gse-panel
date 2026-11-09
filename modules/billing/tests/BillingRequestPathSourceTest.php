@@ -18,8 +18,8 @@ assertSourceContains($root . '/admin_orders.php', '$db->isAdmin($user_id)', 'adm
 assertSourceContains($root . '/admin_orders.php', "billing_action_validate_csrf", 'admin orders page must validate CSRF for term edits');
 assertSourceContains($root . '/admin_orders.php', "adminChangeServiceTerm", 'admin service-term edit must use lifecycle service');
 
-assertSourceContains($root . '/create_servers_page.php', "unsafe_get_request", 'provisioning must reject GET state-changing requests');
-assertSourceContains($root . '/create_servers_page.php', "billing_action_validate_csrf", 'provisioning must validate CSRF for form requests');
+assertSourceContains($root . '/includes/provision_body.php', "unsafe_get_request", 'provisioning must reject GET state-changing requests');
+assertSourceContains($root . '/includes/provision_body.php', "billing_action_validate_csrf", 'provisioning must validate CSRF for form requests');
 
 assertSourceContains($root . '/renew_server.php', "\$_SERVER['REQUEST_METHOD'] !== 'POST'", 'renew endpoint must reject non-POST requests');
 assertSourceContains($root . '/renew_server.php', "billing_action_validate_csrf", 'renew endpoint must validate CSRF');

@@ -360,7 +360,8 @@ if (!function_exists('billing_invoke_provision')) {
 		unset($GLOBALS['BILLING_PROVISION_TRACE_ERROR'], $GLOBALS['BILLING_PROVISION_TRACE_CONTEXT']);
 		$GLOBALS['BILLING_PROVISION_OVERRIDE'] = $options;
 		ob_start();
-		exec_module();
+		require_once __DIR__ . '/includes/provision_body.php';
+		billing_run_provision_body();
 		$output = ob_get_clean();
 		$result = isset($GLOBALS['BILLING_PROVISION_LAST_RESULT']) ? $GLOBALS['BILLING_PROVISION_LAST_RESULT'] : array();
 		$result['output'] = $output;

@@ -146,7 +146,7 @@ if (!function_exists('admin_register_server_in_billing')) {
             'home_id'                  => intval($home_id),
             'status'                   => 'Active',
             'order_date'               => $now,
-            'end_date'                 => $end_date,
+            'end_date'                 => null, // demo: no expiration until set on the configure page
             'payment_txid'             => 'admin-created',
             'paid_ts'                  => $now,
             'coupon_id'                => 0,
