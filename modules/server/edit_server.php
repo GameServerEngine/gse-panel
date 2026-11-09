@@ -110,6 +110,12 @@ function exec_module() {
     }
     else if ( isset($_REQUEST['save_settings']) )
     {
+        if ( strlen(trim($_REQUEST['remote_encryption_key'])) > 16 )
+        {
+            print_failure( 'The agent encryption key must be 16 characters or fewer.' );
+            $view->refresh("?m=server&amp;p=edit&amp;rhost_id=".$rhost_id."&amp;edit");
+            return;
+        }
         $db->changeRemoteServerSettings($remote_server['remote_server_id'],
             $_REQUEST['remote_host'],
             $_REQUEST['remote_host_port'],
