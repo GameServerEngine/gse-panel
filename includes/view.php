@@ -295,7 +295,7 @@ class View {
 		}
 
 		if($cleared){
-			$page = $buffer;
+			$page = str_replace("%topbody%", "", $buffer);
 		}
 		else
 		{

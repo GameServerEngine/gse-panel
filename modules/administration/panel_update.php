@@ -2254,7 +2254,11 @@ echo "<td>" . update_badge($panel_known ? $panel_version : '', $panel_latest) . 
 $all_agents = (array)$db->getRemoteServers();
 // Refresh each agent's version and resource snapshot on page load, so the table shows what the agent reports now.
 foreach ($all_agents as $agent_row) {
-	agent_refresh_snapshot($db, $agent_row);
+	$snap_before = agent_get_snapshot($db, $agent_row['remote_server_id']);
+	$collected = is_array($snap_before) ? (int)($snap_before['collected_at'] ?? 0) : 0;
+	if ($collected === 0 || (time() - $collected) > 60) {
+		agent_refresh_snapshot($db, $agent_row);
+	}
 }
 if (empty($all_agents)) {
 	echo "<tr><td colspan='5'>No agents registered.</td></tr>\n";

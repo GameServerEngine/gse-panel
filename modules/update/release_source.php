@@ -519,7 +519,31 @@ function release_branch_allowed($component, $branch)
 	return $list === null || in_array($branch, $list, true);
 }
 
+/**
+ * Release tags for a component, cached for 10 minutes so the Update page does
+ * not call the git host on every load. Null when the lookup fails (not cached).
+ */
 function release_tag_options($component)
+{
+	$cfg = release_source_settings($component);
+	if ($cfg['repo_url'] === '') {
+		return null;
+	}
+	$cache = sys_get_temp_dir() . '/gse-tags-' . md5($cfg['repo_url']) . '.json';
+	if (is_file($cache) && (time() - filemtime($cache)) < 600) {
+		$cached = json_decode((string)file_get_contents($cache), true);
+		if (is_array($cached)) {
+			return $cached;
+		}
+	}
+	$tags = release_tag_options_uncached($component);
+	if (is_array($tags)) {
+		@file_put_contents($cache, json_encode($tags));
+	}
+	return $tags;
+}
+
+function release_tag_options_uncached($component)
 {
 	$cfg = release_source_settings($component);
 	if ($cfg['repo_url'] === '') {
