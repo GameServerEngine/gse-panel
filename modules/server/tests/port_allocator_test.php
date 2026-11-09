@@ -26,23 +26,23 @@ class PortAllocatorFakeDb
 		if (strpos($query, 'SHOW TABLES LIKE') !== false) {
 			return array(array('Tables_in_test' => 'ok'));
 		}
-		if (strpos($query, 'FROM `TABLE_PREFIX_PLACEHOLDERsettings`') !== false && strpos($query, "setting`='port_block_size'") !== false) {
+		if (strpos($query, 'FROM `DB_PREFIXsettings`') !== false && strpos($query, "setting`='port_block_size'") !== false) {
 			return array(array('value' => $this->portBlockSize));
 		}
-		if (strpos($query, 'FROM `TABLE_PREFIX_PLACEHOLDERconfig_homes`') !== false) {
+		if (strpos($query, 'FROM `DB_PREFIXconfig_homes`') !== false) {
 			if (preg_match('/home_cfg_id=(\d+)/', $query, $m) && isset($this->configHomes[(int)$m[1]])) {
 				return array($this->configHomes[(int)$m[1]]);
 			}
 			return array();
 		}
-		if (strpos($query, 'FROM `TABLE_PREFIX_PLACEHOLDERremote_server_ips`') !== false) {
+		if (strpos($query, 'FROM `DB_PREFIXremote_server_ips`') !== false) {
 			if (preg_match('/ip_id=(\d+)/', $query, $m)) {
 				$ipId = (int)$m[1];
 				return in_array($ipId, array(10, 11), true) ? array(array('ip_id' => $ipId, 'remote_server_id' => 1)) : array();
 			}
 			return array(array('ip_id' => 10), array('ip_id' => 11));
 		}
-		if (strpos($query, 'FROM `TABLE_PREFIX_PLACEHOLDERserver_homes`') !== false) {
+		if (strpos($query, 'FROM `DB_PREFIXserver_homes`') !== false) {
 			if (preg_match('/home_id=(\d+)/', $query, $m)) {
 				return array(array('home_id' => (int)$m[1], 'remote_server_id' => 1, 'home_cfg_id' => 5));
 			}
@@ -69,7 +69,7 @@ class PortAllocatorFakeDb
 				'block_size' => 10,
 			));
 		}
-		if (strpos($query, 'FROM `TABLE_PREFIX_PLACEHOLDERarrange_ports`') !== false) {
+		if (strpos($query, 'FROM `DB_PREFIXarrange_ports`') !== false) {
 			if (preg_match('/ip_id=(\d+)/', $query, $ip) && preg_match('/home_cfg_id=(\d+)/', $query, $cfg)) {
 				foreach ($this->arrangePorts as $row) {
 					if ((int)$row['ip_id'] === (int)$ip[1] && (int)$row['home_cfg_id'] === (int)$cfg[1]) {
@@ -85,7 +85,7 @@ class PortAllocatorFakeDb
 		if (strpos($query, 'FROM `static_port_reservations`') !== false) {
 			return $this->matchingStaticReservation($query);
 		}
-		if (strpos($query, 'FROM `TABLE_PREFIX_PLACEHOLDERhome_ip_ports`') !== false) {
+		if (strpos($query, 'FROM `DB_PREFIXhome_ip_ports`') !== false) {
 			return $this->matchingHomeIpPorts($query);
 		}
 		if (strpos($query, 'FROM `home_port_blocks`') !== false) {
@@ -116,7 +116,7 @@ class PortAllocatorFakeDb
 			);
 			return true;
 		}
-		if (strpos($query, 'INSERT INTO `TABLE_PREFIX_PLACEHOLDERhome_ip_ports`') !== false) {
+		if (strpos($query, 'INSERT INTO `DB_PREFIXhome_ip_ports`') !== false) {
 			if (!preg_match('/SELECT\s+(\d+),\s+(\d+),\s+(\d+)/', $query, $m)) {
 				return false;
 			}

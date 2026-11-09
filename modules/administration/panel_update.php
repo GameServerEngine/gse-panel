@@ -132,7 +132,7 @@ $file_backup_esc = $file_backup_path !== null ? "'" . $db->real_escape_string((s
 $started_esc = "'" . $db->real_escape_string((string)$started_at) . "'";
 $finished_esc = $finished_at !== null ? "'" . $db->real_escape_string((string)$finished_at) . "'" : 'NULL';
 $db->query(
-"INSERT INTO TABLE_PREFIX_PLACEHOLDERpanel_update_log"
+"INSERT INTO DB_PREFIXpanel_update_log"
 . " (channel, branch, status, message, backup_path, db_backup_path, file_backup_path, started_at, finished_at)"
 . " VALUES ('{$channel}', {$branch}, '{$status}', {$message_esc}, {$backup_path_esc}, {$db_backup_esc}, {$file_backup_esc}, {$started_esc}, {$finished_esc})"
 );

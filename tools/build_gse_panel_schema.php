@@ -78,10 +78,10 @@ run_client_command(array(
 
 echo "[2/7] Importing panel.sql baseline...\n";
 $panel_sql = file_get_contents($base_dir . '/panel.sql');
-// panel.sql contains at least one duplicate CREATE TABLE (TABLE_PREFIX_PLACEHOLDERban_list); make the
+// panel.sql contains at least one duplicate CREATE TABLE (DB_PREFIXban_list); make the
 // import idempotent the same way the existing installer's import already does.
 $panel_sql = preg_replace('/CREATE TABLE `/', 'CREATE TABLE IF NOT EXISTS `', $panel_sql);
-$panel_sql = str_replace('TABLE_PREFIX_PLACEHOLDER', $table_prefix, $panel_sql);
+$panel_sql = str_replace('DB_PREFIX', $table_prefix, $panel_sql);
 run_client_command(array('mysql', '-h', $db_host, '-P', (string)$db_port, '-u', $db_user, '-p' . $db_pass, $db_name), $panel_sql);
 
 $db = new DatabaseMySQL();
@@ -220,7 +220,7 @@ $header = <<<SQL
 -- DO NOT EDIT BY HAND. Regenerate with scripts/build-schema.sh whenever panel.sql or any
 -- modules/*/module.php install_queries change.
 --
--- Table names use the TABLE_PREFIX_PLACEHOLDER placeholder. The installer replaces it with the configured table_prefix at
+-- Table names use the DB_PREFIX placeholder. The installer replaces it with the configured table_prefix at
 -- import time if a non-default table_prefix is configured.
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -232,10 +232,10 @@ SQL;
 
 $footer = "\nSET FOREIGN_KEY_CHECKS = 1;\n";
 
-// Table names are written with the TABLE_PREFIX_PLACEHOLDER placeholder so the installer applies the
+// Table names are written with the DB_PREFIX placeholder so the installer applies the
 // configured table_prefix at install time (empty on our instance, so names are bare).
 $dump = preg_replace_callback('/(CREATE TABLE(?: IF NOT EXISTS)?|INSERT INTO|REPLACE INTO|ALTER TABLE|DROP TABLE(?: IF EXISTS)?|LOCK TABLES)(\s+)`([A-Za-z0-9_]+)`/', function ($m) {
-    return $m[1] . $m[2] . '`TABLE_PREFIX_PLACEHOLDER' . $m[3] . '`';
+    return $m[1] . $m[2] . '`DB_PREFIX' . $m[3] . '`';
 }, $dump);
 file_put_contents($out_path, $header . $dump . $footer);
 

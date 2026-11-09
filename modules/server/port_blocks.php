@@ -27,7 +27,7 @@ if (!function_exists('port_blocks_table_exists')) {
 	function port_blocks_table_exists($db, $table)
 	{
 		$table = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$table);
-		$rows = $db->resultQuery("SHOW TABLES LIKE 'TABLE_PREFIX_PLACEHOLDER" . $table . "'");
+		$rows = $db->resultQuery("SHOW TABLES LIKE 'DB_PREFIX" . $table . "'");
 		return is_array($rows) && count($rows) > 0;
 	}
 }
@@ -45,7 +45,7 @@ if (!function_exists('port_blocks_schema_status')) {
 		$missing = array();
 		foreach ($required as $table) {
 			if (!port_blocks_table_exists($db, $table)) {
-				$missing[] = 'TABLE_PREFIX_PLACEHOLDER' . $table;
+				$missing[] = 'DB_PREFIX' . $table;
 			}
 		}
 		return array(
@@ -134,7 +134,7 @@ if (!function_exists('port_blocks_id_exists')) {
 		if ($id <= 0) {
 			return false;
 		}
-		$rows = port_blocks_rows($db, "SELECT `{$column}` FROM `TABLE_PREFIX_PLACEHOLDER{$table}` WHERE `{$column}`={$id} LIMIT 1");
+		$rows = port_blocks_rows($db, "SELECT `{$column}` FROM `DB_PREFIX{$table}` WHERE `{$column}`={$id} LIMIT 1");
 		return !empty($rows);
 	}
 }
@@ -189,7 +189,7 @@ if (!function_exists('port_blocks_audit')) {
 		$message = $db->realEscapeSingle(substr((string)$message, 0, 255));
 		$metadata_json = $db->realEscapeSingle(json_encode($metadata));
 		$db->query(
-			"INSERT INTO `TABLE_PREFIX_PLACEHOLDERport_allocation_events`
+			"INSERT INTO `DB_PREFIXport_allocation_events`
 			 (`event_type`, `actor_user_id`, `source`, `message`, `metadata_json`, `created_at`)
 			 VALUES ('{$event_type}', {$actor}, 'admin_ui', '{$message}', '{$metadata_json}', NOW())"
 		);
@@ -217,7 +217,7 @@ if (!function_exists('port_blocks_handle_post')) {
 				$error = 'Port block size must be an integer from 1 to 1000.';
 			} else {
 				$ok = $db->query(
-					"INSERT INTO `TABLE_PREFIX_PLACEHOLDERsettings` (`setting`,`value`)
+					"INSERT INTO `DB_PREFIXsettings` (`setting`,`value`)
 					 VALUES ('port_block_size','" . $db->realEscapeSingle($block_size) . "')
 					 ON DUPLICATE KEY UPDATE `value`=VALUES(`value`)"
 				);
@@ -244,7 +244,7 @@ if (!function_exists('port_blocks_handle_post')) {
 				$error = 'Base port must be inside the pool range.';
 			} else {
 				$ok = $db->query(
-					"INSERT INTO `TABLE_PREFIX_PLACEHOLDERport_pools`
+					"INSERT INTO `DB_PREFIXport_pools`
 					 (`pool_key`,`name`,`purpose`,`base_port`,`range_start`,`range_end`,`block_size`,`priority`,`enabled`,`allow_manual`,`notes`,`created_at`)
 					 VALUES ('" . $db->realEscapeSingle($pool_key) . "','" . $db->realEscapeSingle($name) . "','" . $db->realEscapeSingle($purpose) . "',{$base_port},{$range_start},{$range_end},{$block_size},{$priority},{$enabled},{$allow_manual},'" . $db->realEscapeSingle($notes) . "',NOW())"
 				);
@@ -262,7 +262,7 @@ if (!function_exists('port_blocks_handle_post')) {
 				$error = 'Valid pool and name are required.';
 			} else {
 				$ok = $db->query(
-					"UPDATE `TABLE_PREFIX_PLACEHOLDERport_pools`
+					"UPDATE `DB_PREFIXport_pools`
 					    SET `name`='" . $db->realEscapeSingle($name) . "',
 					        `purpose`='" . $db->realEscapeSingle($purpose) . "',
 					        `priority`={$priority},
@@ -291,7 +291,7 @@ if (!function_exists('port_blocks_handle_post')) {
 				$error = 'Block size override must be empty or greater than zero.';
 			} elseif ($pool_game_id > 0) {
 				$ok = $db->query(
-					"UPDATE `TABLE_PREFIX_PLACEHOLDERport_pool_games`
+					"UPDATE `DB_PREFIXport_pool_games`
 					    SET `pool_id`={$pool_id}, `home_cfg_id`={$home_cfg_id}, `role`='" . $db->realEscapeSingle($role) . "',
 					        `priority`={$priority}, `block_size_override`={$override_sql}, `allocation_policy`='" . $db->realEscapeSingle($policy) . "',
 					        `enabled`={$enabled}, `notes`='" . $db->realEscapeSingle($notes) . "', `updated_at`=NOW()
@@ -300,7 +300,7 @@ if (!function_exists('port_blocks_handle_post')) {
 				port_blocks_audit($db, $schema, 'manual_override', 'Game pool mapping updated', array('pool_game_id' => $pool_game_id));
 			} else {
 				$ok = $db->query(
-					"INSERT INTO `TABLE_PREFIX_PLACEHOLDERport_pool_games`
+					"INSERT INTO `DB_PREFIXport_pool_games`
 					 (`pool_id`,`home_cfg_id`,`role`,`priority`,`block_size_override`,`allocation_policy`,`enabled`,`notes`,`created_at`)
 					 VALUES ({$pool_id},{$home_cfg_id},'" . $db->realEscapeSingle($role) . "',{$priority},{$override_sql},'" . $db->realEscapeSingle($policy) . "',{$enabled},'" . $db->realEscapeSingle($notes) . "',NOW())"
 				);
@@ -326,7 +326,7 @@ if (!function_exists('port_blocks_handle_post')) {
 				$error = 'Offset value is outside the supported port range.';
 			} elseif ($offset_id > 0) {
 				$ok = $db->query(
-					"UPDATE `TABLE_PREFIX_PLACEHOLDERgame_port_offsets`
+					"UPDATE `DB_PREFIXgame_port_offsets`
 					    SET `home_cfg_id`={$home_cfg_id}, `port_role`='" . $db->realEscapeSingle($role) . "',
 					        `token_name`='" . $db->realEscapeSingle($token_name) . "', `protocol`='" . $db->realEscapeSingle($protocol) . "',
 					        `offset_type`='" . $db->realEscapeSingle($offset_type) . "', `offset_value`={$offset_value},
@@ -337,7 +337,7 @@ if (!function_exists('port_blocks_handle_post')) {
 				port_blocks_audit($db, $schema, 'manual_override', 'Game port offset updated', array('offset_id' => $offset_id));
 			} else {
 				$ok = $db->query(
-					"INSERT INTO `TABLE_PREFIX_PLACEHOLDERgame_port_offsets`
+					"INSERT INTO `DB_PREFIXgame_port_offsets`
 					 (`home_cfg_id`,`port_role`,`token_name`,`protocol`,`offset_type`,`offset_value`,`required`,`fits_standard_block`,`source`,`notes`,`created_at`)
 					 VALUES ({$home_cfg_id},'" . $db->realEscapeSingle($role) . "','" . $db->realEscapeSingle($token_name) . "','" . $db->realEscapeSingle($protocol) . "','" . $db->realEscapeSingle($offset_type) . "',{$offset_value},{$required},{$fits},'" . $db->realEscapeSingle($source) . "','" . $db->realEscapeSingle($notes) . "',NOW())"
 				);
@@ -369,7 +369,7 @@ if (!function_exists('port_blocks_handle_post')) {
 				$remote_sql = $scope === 'remote_server' ? (string)$remote_server_id : 'NULL';
 				if ($reservation_id > 0) {
 					$ok = $db->query(
-						"UPDATE `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations`
+						"UPDATE `DB_PREFIXstatic_port_reservations`
 						    SET `scope`='" . $db->realEscapeSingle($scope) . "', `ip_id`={$ip_sql}, `remote_server_id`={$remote_sql},
 						        `service_name`='" . $db->realEscapeSingle($service_name) . "', `reservation_type`='" . $db->realEscapeSingle($type) . "',
 						        `port_start`={$port_start}, `port_end`={$port_end}, `protocol`='" . $db->realEscapeSingle($protocol) . "',
@@ -380,7 +380,7 @@ if (!function_exists('port_blocks_handle_post')) {
 					port_blocks_audit($db, $schema, 'reservation_added', 'Static reservation updated', array('reservation_id' => $reservation_id));
 				} else {
 					$ok = $db->query(
-						"INSERT INTO `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations`
+						"INSERT INTO `DB_PREFIXstatic_port_reservations`
 						 (`scope`,`ip_id`,`remote_server_id`,`service_name`,`reservation_type`,`port_start`,`port_end`,`protocol`,`source`,`status`,`notes`,`created_at`)
 						 VALUES ('" . $db->realEscapeSingle($scope) . "',{$ip_sql},{$remote_sql},'" . $db->realEscapeSingle($service_name) . "','" . $db->realEscapeSingle($type) . "',{$port_start},{$port_end},'" . $db->realEscapeSingle($protocol) . "','" . $db->realEscapeSingle($source) . "','" . $db->realEscapeSingle($status) . "','" . $db->realEscapeSingle($notes) . "',NOW())"
 					);
@@ -470,9 +470,9 @@ if (!function_exists('port_blocks_render_pool_rows')) {
 if (!function_exists('port_blocks_current_block_size')) {
 	function port_blocks_current_block_size($db)
 	{
-		$rows = port_blocks_rows($db, "SELECT `value` FROM `TABLE_PREFIX_PLACEHOLDERsettings` WHERE `setting`='port_block_size' LIMIT 1");
+		$rows = port_blocks_rows($db, "SELECT `value` FROM `DB_PREFIXsettings` WHERE `setting`='port_block_size' LIMIT 1");
 		if (empty($rows)) {
-			$db->query("INSERT INTO `TABLE_PREFIX_PLACEHOLDERsettings` (`setting`,`value`) VALUES ('port_block_size','10') ON DUPLICATE KEY UPDATE `value`=`value`");
+			$db->query("INSERT INTO `DB_PREFIXsettings` (`setting`,`value`) VALUES ('port_block_size','10') ON DUPLICATE KEY UPDATE `value`=`value`");
 		}
 		$value = !empty($rows) ? intval($rows[0]['value']) : 10;
 		if ($value < 1 || $value > 1000) {
@@ -485,15 +485,15 @@ if (!function_exists('port_blocks_current_block_size')) {
 if (!function_exists('port_blocks_render')) {
 	function port_blocks_render($db, $schema)
 	{
-		$remote_servers = port_blocks_rows($db, "SELECT remote_server_id, remote_server_name, agent_ip FROM `TABLE_PREFIX_PLACEHOLDERremote_servers` ORDER BY remote_server_name ASC");
-		$ips = port_blocks_rows($db, "SELECT i.ip_id, i.ip, r.remote_server_name FROM `TABLE_PREFIX_PLACEHOLDERremote_server_ips` i LEFT JOIN `TABLE_PREFIX_PLACEHOLDERremote_servers` r ON r.remote_server_id=i.remote_server_id ORDER BY r.remote_server_name ASC, i.ip ASC");
+		$remote_servers = port_blocks_rows($db, "SELECT remote_server_id, remote_server_name, agent_ip FROM `DB_PREFIXremote_servers` ORDER BY remote_server_name ASC");
+		$ips = port_blocks_rows($db, "SELECT i.ip_id, i.ip, r.remote_server_name FROM `DB_PREFIXremote_server_ips` i LEFT JOIN `DB_PREFIXremote_servers` r ON r.remote_server_id=i.remote_server_id ORDER BY r.remote_server_name ASC, i.ip ASC");
 		$remote_options = port_blocks_options($remote_servers, 'remote_server_id', array('remote_server_name', 'agent_ip'));
 		$ip_options = port_blocks_options($ips, 'ip_id', array('ip', 'remote_server_name'));
 		$block_size = port_blocks_current_block_size($db);
 
 		echo "<style>.port-blocks-wrap{overflow-x:auto;max-width:100%;}.port-blocks-setting input[type=text]{max-width:90px;}.port-blocks-note{line-height:1.5;}</style>";
 		echo "<h2>Automatic Port Allocation</h2>";
-		echo "<p class='info port-blocks-note'>GSE now uses each game's default base port, assigns the first available contiguous block of N ports on the selected remote server/IP, and skips reserved ports plus already used blocks. Existing homes remain compatible through <b>TABLE_PREFIX_PLACEHOLDERhome_ip_ports</b>. Legacy pool, mapping, and offset tables are retained for compatibility but are not part of the normal admin workflow.</p>";
+		echo "<p class='info port-blocks-note'>GSE now uses each game's default base port, assigns the first available contiguous block of N ports on the selected remote server/IP, and skips reserved ports plus already used blocks. Existing homes remain compatible through <b>DB_PREFIXhome_ip_ports</b>. Legacy pool, mapping, and offset tables are retained for compatibility but are not part of the normal admin workflow.</p>";
 
 		echo "<h3>Global Block Size</h3>";
 		echo "<form class='port-blocks-setting' method='post' action='?m=server&amp;p=port_blocks'>";
@@ -502,7 +502,7 @@ if (!function_exists('port_blocks_render')) {
 		echo "<p><input type='submit' value='Save block size' /></p>";
 		echo "</form>";
 
-		$reservations = port_blocks_rows($db, "SELECT spr.*, i.ip, rs.remote_server_name FROM `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations` spr LEFT JOIN `TABLE_PREFIX_PLACEHOLDERremote_server_ips` i ON i.ip_id=spr.ip_id LEFT JOIN `TABLE_PREFIX_PLACEHOLDERremote_servers` rs ON rs.remote_server_id=spr.remote_server_id ORDER BY spr.status ASC, spr.port_start ASC, spr.reservation_id ASC");
+		$reservations = port_blocks_rows($db, "SELECT spr.*, i.ip, rs.remote_server_name FROM `DB_PREFIXstatic_port_reservations` spr LEFT JOIN `DB_PREFIXremote_server_ips` i ON i.ip_id=spr.ip_id LEFT JOIN `DB_PREFIXremote_servers` rs ON rs.remote_server_id=spr.remote_server_id ORDER BY spr.status ASC, spr.port_start ASC, spr.reservation_id ASC");
 		echo "<h3>Reserved Ports And Ranges</h3>";
 		echo "<p class='info'>Active reservations block automatic allocation on their matching IP, remote server, or global scope. Use this for services, manually reserved single ports, and protected ranges.</p>";
 		$protocols = array('tcp' => 'tcp', 'udp' => 'udp', 'tcp_udp' => 'tcp_udp', 'unknown' => 'unknown');
@@ -533,7 +533,7 @@ if (!function_exists('port_blocks_render')) {
 
 		$status_filter = isset($_GET['block_status']) ? preg_replace('/[^a-zA-Z_-]/', '', $_GET['block_status']) : '';
 		$status_sql = $status_filter !== '' ? "WHERE hpb.status='" . $db->realEscapeSingle($status_filter) . "'" : '';
-		$blocks = port_blocks_rows($db, "SELECT hpb.*, sh.home_name, i.ip, pp.name AS pool_name, ch.game_name FROM `TABLE_PREFIX_PLACEHOLDERhome_port_blocks` hpb LEFT JOIN `TABLE_PREFIX_PLACEHOLDERserver_homes` sh ON sh.home_id=hpb.home_id LEFT JOIN `TABLE_PREFIX_PLACEHOLDERremote_server_ips` i ON i.ip_id=hpb.ip_id LEFT JOIN `TABLE_PREFIX_PLACEHOLDERport_pools` pp ON pp.pool_id=hpb.pool_id LEFT JOIN `TABLE_PREFIX_PLACEHOLDERconfig_homes` ch ON ch.home_cfg_id=hpb.home_cfg_id {$status_sql} ORDER BY hpb.created_at DESC, hpb.block_id DESC LIMIT 200");
+		$blocks = port_blocks_rows($db, "SELECT hpb.*, sh.home_name, i.ip, pp.name AS pool_name, ch.game_name FROM `DB_PREFIXhome_port_blocks` hpb LEFT JOIN `DB_PREFIXserver_homes` sh ON sh.home_id=hpb.home_id LEFT JOIN `DB_PREFIXremote_server_ips` i ON i.ip_id=hpb.ip_id LEFT JOIN `DB_PREFIXport_pools` pp ON pp.pool_id=hpb.pool_id LEFT JOIN `DB_PREFIXconfig_homes` ch ON ch.home_cfg_id=hpb.home_cfg_id {$status_sql} ORDER BY hpb.created_at DESC, hpb.block_id DESC LIMIT 200");
 		echo "<h3>Allocated Blocks</h3>";
 		echo "<form method='get' action='home.php'><input type='hidden' name='m' value='server' /><input type='hidden' name='p' value='port_blocks' />Status: " . port_blocks_select('block_status', array('active' => 'active', 'pending' => 'pending', 'released' => 'released', 'needs-review' => 'needs-review', 'conflict' => 'conflict'), $status_filter, 'All') . " <input type='submit' value='Filter' /></form>";
 		echo "<div class='port-blocks-wrap'><table class='center'><tr><th>Block</th><th>Home</th><th>Game</th><th>IP</th><th>Primary</th><th>Range</th><th>Size</th><th>Source</th><th>Status</th><th>Created</th></tr>";
@@ -547,7 +547,7 @@ if (!function_exists('port_blocks_render')) {
 
 		echo "<h3>Allocation Events</h3>";
 		if (!empty($schema['events'])) {
-			$events = port_blocks_rows($db, "SELECT pae.*, pp.name AS pool_name, i.ip FROM `TABLE_PREFIX_PLACEHOLDERport_allocation_events` pae LEFT JOIN `TABLE_PREFIX_PLACEHOLDERport_pools` pp ON pp.pool_id=pae.pool_id LEFT JOIN `TABLE_PREFIX_PLACEHOLDERremote_server_ips` i ON i.ip_id=pae.ip_id ORDER BY pae.created_at DESC, pae.event_id DESC LIMIT 50");
+			$events = port_blocks_rows($db, "SELECT pae.*, pp.name AS pool_name, i.ip FROM `DB_PREFIXport_allocation_events` pae LEFT JOIN `DB_PREFIXport_pools` pp ON pp.pool_id=pae.pool_id LEFT JOIN `DB_PREFIXremote_server_ips` i ON i.ip_id=pae.ip_id ORDER BY pae.created_at DESC, pae.event_id DESC LIMIT 50");
 			echo "<div class='port-blocks-wrap'><table class='center'><tr><th>Event</th><th>Type</th><th>Home</th><th>IP</th><th>Source</th><th>Message</th><th>Created</th></tr>";
 			foreach ($events as $event) {
 				echo "<tr><td>" . intval($event['event_id']) . "</td><td>" . port_blocks_h($event['event_type']) . "</td><td>" . intval($event['home_id']) . "</td><td>" . port_blocks_h($event['ip']) . "</td><td>" . port_blocks_h($event['source']) . "</td><td>" . port_blocks_h($event['message']) . "</td><td>" . port_blocks_h($event['created_at']) . "</td></tr>";

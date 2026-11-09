@@ -498,7 +498,7 @@ function api_user_games()
 		if($mod_key === FALSE)
 			return array("status" => '307', "message" => "The mod_cfg_id #" . $mod_cfg_id . " does not belong to the game configuration for home_cfg_id #" . $home_cfg_id . ".");
 
-		$ip_info = $db->resultQuery( "SELECT ip,ip_id FROM TABLE_PREFIX_PLACEHOLDERremote_server_ips WHERE ip='".$db->real_escape_string($ip)."' AND remote_server_id=".$db->real_escape_string($remote_server_id));
+		$ip_info = $db->resultQuery( "SELECT ip,ip_id FROM DB_PREFIXremote_server_ips WHERE ip='".$db->real_escape_string($ip)."' AND remote_server_id=".$db->real_escape_string($remote_server_id));
 		if($ip_info === FALSE)
 			return array("status" => '308', "message" => "The given IP address does not belongs to the given remote server.");
 
@@ -604,7 +604,7 @@ function api_user_games()
 		if($host_stat !== 1)
 			return array("status" => '310', "message" => "The remote server is offline.");
 
-		$ip_info = $db->resultQuery("SELECT ip,ip_id FROM TABLE_PREFIX_PLACEHOLDERremote_server_ips WHERE ip='".$db->real_escape_string($ip)."' AND remote_server_id=".$db->real_escape_string($game_home['remote_server_id']));
+		$ip_info = $db->resultQuery("SELECT ip,ip_id FROM DB_PREFIXremote_server_ips WHERE ip='".$db->real_escape_string($ip)."' AND remote_server_id=".$db->real_escape_string($game_home['remote_server_id']));
 		if($ip_info === FALSE)
 			return array("status" => '308', "message" => "The given IP address does not belongs to the given remote server.");
 
@@ -1444,7 +1444,7 @@ function api_addonsmanager()
 
 	if($request[0] == "list")
 	{
-		$addons_rows = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERaddons");
+		$addons_rows = $db->resultQuery("SELECT * FROM DB_PREFIXaddons");
 		$status = "200";
 		$message = $addons_rows;
 	}
@@ -1505,7 +1505,7 @@ function api_addonsmanager()
 			$query_groups .= "group_id=0 OR group_id IS NULL)";
 		}
 
-		$addons_rows = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERaddons WHERE home_cfg_id=".$home_info['home_cfg_id']." AND addon_id=".$addon_id.$query_groups);
+		$addons_rows = $db->resultQuery("SELECT * FROM DB_PREFIXaddons WHERE home_cfg_id=".$home_info['home_cfg_id']." AND addon_id=".$addon_id.$query_groups);
 
 		if($addons_rows === FALSE)
 			return array("status" => '341', "message" => "Invalid addon id #" . $addon_id . ".");

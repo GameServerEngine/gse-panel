@@ -46,7 +46,7 @@ $install_queries = array();
 // -----------------------------------------------------------------------
 $install_queries[1] = array(
     // Billing Services — available game server packages
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."billing_services` (
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."billing_services` (
         `service_id`       INT(11)          NOT NULL AUTO_INCREMENT,
         `home_cfg_id`      INT(11)          NOT NULL DEFAULT 0,
         `mod_cfg_id`       INT(11)          NOT NULL DEFAULT 0,
@@ -71,7 +71,7 @@ $install_queries[1] = array(
     ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;",
 
     // Billing Orders — active game server instances
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."billing_orders` (
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."billing_orders` (
         `order_id`               INT(11)      NOT NULL AUTO_INCREMENT,
         `user_id`                INT(11)      NOT NULL,
         `service_id`             INT(11)      NOT NULL,
@@ -102,7 +102,7 @@ $install_queries[1] = array(
     // home_id is 0 until the service is provisioned after payment.
     // billing_status tracks the renewal lifecycle (Active / Invoiced / Expired)
     // independently of payment_status which tracks the payment state.
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."billing_invoices` (
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."billing_invoices` (
         `invoice_id`             INT(11)          NOT NULL AUTO_INCREMENT,
         `order_id`               INT(11)          NOT NULL DEFAULT 0,
         `user_id`                INT(11)          NOT NULL,
@@ -148,7 +148,7 @@ $install_queries[1] = array(
     ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;",
 
     // Billing Transactions — immutable payment audit trail
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."billing_transactions` (
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."billing_transactions` (
         `transaction_id`          INT(11)      NOT NULL AUTO_INCREMENT,
         `invoice_id`              INT(11)      NOT NULL DEFAULT 0,
         `user_id`                 INT(11)      NOT NULL DEFAULT 0,
@@ -170,7 +170,7 @@ $install_queries[1] = array(
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;",
 
     // Billing Coupons — discount codes
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."billing_coupons` (
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."billing_coupons` (
         `coupon_id`         INT(11)                              NOT NULL AUTO_INCREMENT,
         `code`              VARCHAR(50)                          NOT NULL,
         `name`              VARCHAR(255)                         NOT NULL DEFAULT '',
@@ -192,7 +192,7 @@ $install_queries[1] = array(
     ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;",
 
     // Billing Config — global and per-game-key billing settings used by cron
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."billing_config` (
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."billing_config` (
         `config_id`                 INT(11)                          NOT NULL AUTO_INCREMENT,
         `game_key`                  VARCHAR(100)                     NULL DEFAULT NULL,
         `enabled`                   TINYINT(1)                       NOT NULL DEFAULT 1,
@@ -211,52 +211,52 @@ $install_queries[1] = array(
 
 // db_version 11 — explicit billing suspension and reminder idempotency.
 $install_queries[11] = array(
-    function($db) { $r=$db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='TABLE_PREFIX_PLACEHOLDERserver_homes' AND COLUMN_NAME='billing_suspended'"); return ($r && (int)$r[0]['cnt']>0) || (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` ADD `billing_suspended` TINYINT(1) NOT NULL DEFAULT 0"); },
-    function($db) { $r=$db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='TABLE_PREFIX_PLACEHOLDERserver_homes' AND COLUMN_NAME='billing_reminder_sent_for'"); return ($r && (int)$r[0]['cnt']>0) || (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` ADD `billing_reminder_sent_for` DATE NULL"); }
+    function($db) { $r=$db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='DB_PREFIXserver_homes' AND COLUMN_NAME='billing_suspended'"); return ($r && (int)$r[0]['cnt']>0) || (bool)$db->query("ALTER TABLE `DB_PREFIXserver_homes` ADD `billing_suspended` TINYINT(1) NOT NULL DEFAULT 0"); },
+    function($db) { $r=$db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='DB_PREFIXserver_homes' AND COLUMN_NAME='billing_reminder_sent_for'"); return ($r && (int)$r[0]['cnt']>0) || (bool)$db->query("ALTER TABLE `DB_PREFIXserver_homes` ADD `billing_reminder_sent_for` DATE NULL"); }
 );
 
 // db_version 12 — restore billing admin menu entries for existing installs.
 $install_queries[12] = array(
-    "INSERT INTO `".TABLE_PREFIX_PLACEHOLDER."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+    "INSERT INTO `".DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
      SELECT m.id, 'admin_config', 'admin', 'Billing Configuration', 0
-     FROM `".TABLE_PREFIX_PLACEHOLDER."modules` m
+     FROM `".DB_PREFIX."modules` m
      WHERE m.folder = 'billing'
-       AND NOT EXISTS (SELECT 1 FROM `".TABLE_PREFIX_PLACEHOLDER."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_config' AND mm.group = 'admin')",
-    "INSERT INTO `".TABLE_PREFIX_PLACEHOLDER."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
-     SELECT m.id, 'admin_payments', 'admin', 'Billing Payments', 1 FROM `".TABLE_PREFIX_PLACEHOLDER."modules` m
-     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".TABLE_PREFIX_PLACEHOLDER."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_payments' AND mm.group = 'admin')",
-    "INSERT INTO `".TABLE_PREFIX_PLACEHOLDER."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
-     SELECT m.id, 'admin_orders', 'admin', 'Billing Orders', 2 FROM `".TABLE_PREFIX_PLACEHOLDER."modules` m
-     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".TABLE_PREFIX_PLACEHOLDER."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_orders' AND mm.group = 'admin')",
-    "INSERT INTO `".TABLE_PREFIX_PLACEHOLDER."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
-     SELECT m.id, 'admin_invoices', 'admin', 'Billing Invoices', 3 FROM `".TABLE_PREFIX_PLACEHOLDER."modules` m
-     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".TABLE_PREFIX_PLACEHOLDER."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_invoices' AND mm.group = 'admin')",
-    "INSERT INTO `".TABLE_PREFIX_PLACEHOLDER."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
-     SELECT m.id, 'admin_cancellations', 'admin', 'Billing Cancellations', 4 FROM `".TABLE_PREFIX_PLACEHOLDER."modules` m
-     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".TABLE_PREFIX_PLACEHOLDER."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_cancellations' AND mm.group = 'admin')",
-    "INSERT INTO `".TABLE_PREFIX_PLACEHOLDER."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
-     SELECT m.id, 'admin_coupons', 'admin', 'Billing Coupons', 5 FROM `".TABLE_PREFIX_PLACEHOLDER."modules` m
-     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".TABLE_PREFIX_PLACEHOLDER."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_coupons' AND mm.group = 'admin')",
-    "INSERT INTO `".TABLE_PREFIX_PLACEHOLDER."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
-     SELECT m.id, 'admin_locations', 'admin', 'Billing Locations', 6 FROM `".TABLE_PREFIX_PLACEHOLDER."modules` m
-     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".TABLE_PREFIX_PLACEHOLDER."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_locations' AND mm.group = 'admin')"
+       AND NOT EXISTS (SELECT 1 FROM `".DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_config' AND mm.group = 'admin')",
+    "INSERT INTO `".DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+     SELECT m.id, 'admin_payments', 'admin', 'Billing Payments', 1 FROM `".DB_PREFIX."modules` m
+     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_payments' AND mm.group = 'admin')",
+    "INSERT INTO `".DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+     SELECT m.id, 'admin_orders', 'admin', 'Billing Orders', 2 FROM `".DB_PREFIX."modules` m
+     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_orders' AND mm.group = 'admin')",
+    "INSERT INTO `".DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+     SELECT m.id, 'admin_invoices', 'admin', 'Billing Invoices', 3 FROM `".DB_PREFIX."modules` m
+     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_invoices' AND mm.group = 'admin')",
+    "INSERT INTO `".DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+     SELECT m.id, 'admin_cancellations', 'admin', 'Billing Cancellations', 4 FROM `".DB_PREFIX."modules` m
+     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_cancellations' AND mm.group = 'admin')",
+    "INSERT INTO `".DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+     SELECT m.id, 'admin_coupons', 'admin', 'Billing Coupons', 5 FROM `".DB_PREFIX."modules` m
+     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_coupons' AND mm.group = 'admin')",
+    "INSERT INTO `".DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+     SELECT m.id, 'admin_locations', 'admin', 'Billing Locations', 6 FROM `".DB_PREFIX."modules` m
+     WHERE m.folder = 'billing' AND NOT EXISTS (SELECT 1 FROM `".DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'admin_locations' AND mm.group = 'admin')"
 );
 
 // db_version 13 — consolidate the billing administration menu.
 $install_queries[13] = array(
-    "DELETE mm FROM `".TABLE_PREFIX_PLACEHOLDER."module_menus` mm
-     INNER JOIN `".TABLE_PREFIX_PLACEHOLDER."modules` m ON m.id = mm.module_id
+    "DELETE mm FROM `".DB_PREFIX."module_menus` mm
+     INNER JOIN `".DB_PREFIX."modules` m ON m.id = mm.module_id
      WHERE m.folder = 'billing' AND mm.group = 'admin'",
-    "INSERT INTO `".TABLE_PREFIX_PLACEHOLDER."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+    "INSERT INTO `".DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
      SELECT m.id, 'billing_setup', 'admin', 'Billing Setup', 0
-     FROM `".TABLE_PREFIX_PLACEHOLDER."modules` m
+     FROM `".DB_PREFIX."modules` m
      WHERE m.folder = 'billing'
-       AND NOT EXISTS (SELECT 1 FROM `".TABLE_PREFIX_PLACEHOLDER."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'billing_setup' AND mm.group = 'admin')",
-    "INSERT INTO `".TABLE_PREFIX_PLACEHOLDER."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+       AND NOT EXISTS (SELECT 1 FROM `".DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'billing_setup' AND mm.group = 'admin')",
+    "INSERT INTO `".DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
      SELECT m.id, 'billing_operations', 'admin', 'Billing Operations', 1
-     FROM `".TABLE_PREFIX_PLACEHOLDER."modules` m
+     FROM `".DB_PREFIX."modules` m
      WHERE m.folder = 'billing'
-       AND NOT EXISTS (SELECT 1 FROM `".TABLE_PREFIX_PLACEHOLDER."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'billing_operations' AND mm.group = 'admin')"
+       AND NOT EXISTS (SELECT 1 FROM `".DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'billing_operations' AND mm.group = 'admin')"
 );
 
 // -----------------------------------------------------------------------
@@ -264,82 +264,82 @@ $install_queries[13] = array(
 // Each callable queries INFORMATION_SCHEMA to confirm the column is absent
 // before issuing ALTER TABLE, so this migration is safe to re-run.
 //
-// NOTE: The 'TABLE_PREFIX_PLACEHOLDERtable_name' placeholder inside SQL string
+// NOTE: The 'DB_PREFIXtable_name' placeholder inside SQL string
 // literals is intentional.  Both $db->query() and $db->resultQuery()
-// call str_replace("TABLE_PREFIX_PLACEHOLDER", $this->table_prefix, $query) at
+// call str_replace("DB_PREFIX", $this->table_prefix, $query) at
 // the PHP level before passing the SQL to MySQL, so the placeholder is
-// resolved to the real prefix (e.g. 'TABLE_PREFIX_PLACEHOLDERbilling_orders') even when it
+// resolved to the real prefix (e.g. 'DB_PREFIXbilling_orders') even when it
 // appears inside a single-quoted string in the SQL text.
 // -----------------------------------------------------------------------
 $install_queries[2] = array(
     // billing_orders: add discount_amount if missing
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERbilling_orders' AND COLUMN_NAME = 'discount_amount'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_orders' AND COLUMN_NAME = 'discount_amount'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_orders` ADD `discount_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER `price`");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXbilling_orders` ADD `discount_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER `price`");
     },
     // billing_invoices: add home_id if missing (needed by cron-shop.php join)
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERbilling_invoices' AND COLUMN_NAME = 'home_id'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_invoices' AND COLUMN_NAME = 'home_id'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices` ADD `home_id` INT(11) NOT NULL DEFAULT 0 AFTER `service_id`");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXbilling_invoices` ADD `home_id` INT(11) NOT NULL DEFAULT 0 AFTER `service_id`");
     },
     // billing_invoices: add discount_amount if missing
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERbilling_invoices' AND COLUMN_NAME = 'discount_amount'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_invoices' AND COLUMN_NAME = 'discount_amount'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices` ADD `discount_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER `amount`");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXbilling_invoices` ADD `discount_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER `amount`");
     },
     // billing_invoices: add billing_status (lifecycle: Active/Invoiced/Expired) if missing
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERbilling_invoices' AND COLUMN_NAME = 'billing_status'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_invoices' AND COLUMN_NAME = 'billing_status'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices` ADD `billing_status` VARCHAR(16) NOT NULL DEFAULT 'due' AFTER `status`");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXbilling_invoices` ADD `billing_status` VARCHAR(16) NOT NULL DEFAULT 'due' AFTER `status`");
     },
     // billing_invoices: add rate_type enum if missing
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERbilling_invoices' AND COLUMN_NAME = 'rate_type'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_invoices' AND COLUMN_NAME = 'rate_type'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices` ADD `rate_type` ENUM('daily','monthly','yearly') NOT NULL DEFAULT 'monthly' AFTER `invoice_duration`");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXbilling_invoices` ADD `rate_type` ENUM('daily','monthly','yearly') NOT NULL DEFAULT 'monthly' AFTER `invoice_duration`");
     },
     // billing_invoices: add rate_per_player if missing
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERbilling_invoices' AND COLUMN_NAME = 'rate_per_player'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_invoices' AND COLUMN_NAME = 'rate_per_player'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices` ADD `rate_per_player` DECIMAL(15,4) NOT NULL DEFAULT 0 AFTER `rate_type`");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXbilling_invoices` ADD `rate_per_player` DECIMAL(15,4) NOT NULL DEFAULT 0 AFTER `rate_type`");
     },
     // billing_invoices: add players if missing
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERbilling_invoices' AND COLUMN_NAME = 'players'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_invoices' AND COLUMN_NAME = 'players'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices` ADD `players` INT(11) NOT NULL DEFAULT 0 AFTER `rate_per_player`");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXbilling_invoices` ADD `players` INT(11) NOT NULL DEFAULT 0 AFTER `rate_per_player`");
     },
     // billing_invoices: add subtotal if missing
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERbilling_invoices' AND COLUMN_NAME = 'subtotal'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_invoices' AND COLUMN_NAME = 'subtotal'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices` ADD `subtotal` DECIMAL(15,2) NOT NULL DEFAULT 0 AFTER `players`");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXbilling_invoices` ADD `subtotal` DECIMAL(15,2) NOT NULL DEFAULT 0 AFTER `players`");
     },
     // billing_invoices: add total_due if missing
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERbilling_invoices' AND COLUMN_NAME = 'total_due'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_invoices' AND COLUMN_NAME = 'total_due'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices` ADD `total_due` DECIMAL(15,2) NOT NULL DEFAULT 0 AFTER `subtotal`");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXbilling_invoices` ADD `total_due` DECIMAL(15,2) NOT NULL DEFAULT 0 AFTER `subtotal`");
     },
     // billing_invoices: add payment_status enum if missing
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERbilling_invoices' AND COLUMN_NAME = 'payment_status'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_invoices' AND COLUMN_NAME = 'payment_status'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices` ADD `payment_status` ENUM('unpaid','paid','cancelled','refunded') NOT NULL DEFAULT 'unpaid' AFTER `currency`");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXbilling_invoices` ADD `payment_status` ENUM('unpaid','paid','cancelled','refunded') NOT NULL DEFAULT 'unpaid' AFTER `currency`");
     },
     // billing_invoices: add coupon_id if missing
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERbilling_invoices' AND COLUMN_NAME = 'coupon_id'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_invoices' AND COLUMN_NAME = 'coupon_id'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices` ADD `coupon_id` INT(11) NOT NULL DEFAULT 0 AFTER `qty`");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXbilling_invoices` ADD `coupon_id` INT(11) NOT NULL DEFAULT 0 AFTER `qty`");
     },
     // Create billing_config table for cron-shop settings if missing
-    "CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERbilling_config` (
+    "CREATE TABLE IF NOT EXISTS `DB_PREFIXbilling_config` (
         `config_id`                 INT(11)                          NOT NULL AUTO_INCREMENT,
         `game_key`                  VARCHAR(100)                     NULL DEFAULT NULL,
         `enabled`                   TINYINT(1)                       NOT NULL DEFAULT 1,
@@ -352,7 +352,7 @@ $install_queries[2] = array(
         KEY `enabled`  (`enabled`)
     ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;",
     // Create billing_coupons table if missing (older installs using panel.sql may not have it)
-    "CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERbilling_coupons` (
+    "CREATE TABLE IF NOT EXISTS `DB_PREFIXbilling_coupons` (
         `coupon_id`         INT(11)                              NOT NULL AUTO_INCREMENT,
         `code`              VARCHAR(50)                          NOT NULL,
         `name`              VARCHAR(255)                         NOT NULL DEFAULT '',
@@ -379,7 +379,7 @@ $install_queries[2] = array(
 // webhook event processing.
 // -----------------------------------------------------------------------
 $install_queries[3] = array(
-    "CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERbilling_paypal_webhook_events` (
+    "CREATE TABLE IF NOT EXISTS `DB_PREFIXbilling_paypal_webhook_events` (
         `id`                INT(11)       NOT NULL AUTO_INCREMENT,
         `paypal_event_id`   VARCHAR(100)  NOT NULL DEFAULT '',
         `event_type`        VARCHAR(100)  NOT NULL DEFAULT '',
@@ -402,7 +402,7 @@ $install_queries[3] = array(
 // db_version 4 — Add billing_paypal_errors table for checkout error logging.
 // -----------------------------------------------------------------------
 $install_queries[4] = array(
-    "CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERbilling_paypal_errors` (
+    "CREATE TABLE IF NOT EXISTS `DB_PREFIXbilling_paypal_errors` (
         `id`                INT           NOT NULL AUTO_INCREMENT,
         `context`           VARCHAR(64)   NOT NULL DEFAULT '',
         `error_code`        VARCHAR(128)  NOT NULL DEFAULT '',
@@ -426,8 +426,8 @@ $install_queries[4] = array(
 // -----------------------------------------------------------------------
 $install_queries[5] = array(
     function($db) {
-        $legacy = 'TABLE_PREFIX_PLACEHOLDERbilling_service_remote_servers';
-        $backup = 'TABLE_PREFIX_PLACEHOLDERbilling_service_remote_servers_deprecated_backup';
+        $legacy = 'DB_PREFIXbilling_service_remote_servers';
+        $backup = 'DB_PREFIXbilling_service_remote_servers_deprecated_backup';
         $legacyCheck = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$legacy}'");
         if (!$legacyCheck || empty($legacyCheck[0]['cnt']) || (int)$legacyCheck[0]['cnt'] === 0) return true;
 
@@ -445,9 +445,9 @@ $install_queries[5] = array(
 // -----------------------------------------------------------------------
 $install_queries[6] = array(
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERremote_servers' AND COLUMN_NAME = 'server_os'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXremote_servers' AND COLUMN_NAME = 'server_os'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERremote_servers` ADD `server_os` ENUM('linux','windows','any') NOT NULL DEFAULT 'linux' AFTER `display_public_ip`");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXremote_servers` ADD `server_os` ENUM('linux','windows','any') NOT NULL DEFAULT 'linux' AFTER `display_public_ip`");
     }
 );
 
@@ -462,15 +462,15 @@ $install_queries[6] = array(
 $install_queries[7] = array(
     // billing_invoices: add period_start if missing
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERbilling_invoices' AND COLUMN_NAME = 'period_start'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_invoices' AND COLUMN_NAME = 'period_start'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices` ADD `period_start` DATETIME NULL AFTER `players`");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXbilling_invoices` ADD `period_start` DATETIME NULL AFTER `players`");
     },
     // billing_invoices: add period_end if missing
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERbilling_invoices' AND COLUMN_NAME = 'period_end'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_invoices' AND COLUMN_NAME = 'period_end'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices` ADD `period_end` DATETIME NULL AFTER `period_start`");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXbilling_invoices` ADD `period_end` DATETIME NULL AFTER `period_start`");
     },
 );
 
@@ -480,30 +480,30 @@ $install_queries[7] = array(
 // -----------------------------------------------------------------------
 $install_queries[8] = array(
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERbilling_orders' AND COLUMN_NAME = 'paypal_data'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_orders' AND COLUMN_NAME = 'paypal_data'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_orders` ADD `paypal_data` TEXT NULL AFTER `coupon_id`");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXbilling_orders` ADD `paypal_data` TEXT NULL AFTER `coupon_id`");
     },
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERbilling_invoices' AND COLUMN_NAME = 'home_id'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_invoices' AND COLUMN_NAME = 'home_id'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices` ADD INDEX `idx_billing_invoices_home_id` (`home_id`)");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXbilling_invoices` ADD INDEX `idx_billing_invoices_home_id` (`home_id`)");
     },
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERserver_homes' AND INDEX_NAME = 'idx_server_homes_billing_cron'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXserver_homes' AND INDEX_NAME = 'idx_server_homes_billing_cron'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` ADD INDEX `idx_server_homes_billing_cron` (`billing_enabled`, `billing_status`, `next_invoice_date`)");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXserver_homes` ADD INDEX `idx_server_homes_billing_cron` (`billing_enabled`, `billing_status`, `next_invoice_date`)");
     },
     function($db) {
-        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'TABLE_PREFIX_PLACEHOLDERserver_homes' AND INDEX_NAME = 'idx_server_homes_last_invoice_id'");
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXserver_homes' AND INDEX_NAME = 'idx_server_homes_last_invoice_id'");
         if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
-        return (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` ADD INDEX `idx_server_homes_last_invoice_id` (`last_invoice_id`)");
+        return (bool)$db->query("ALTER TABLE `DB_PREFIXserver_homes` ADD INDEX `idx_server_homes_last_invoice_id` (`last_invoice_id`)");
     },
 );
 
 // db_version 9 — cancellation requests, refund policy, and expiry cancellation.
 $install_queries[9] = array(
-    "CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERbilling_cancellation_requests` (
+    "CREATE TABLE IF NOT EXISTS `DB_PREFIXbilling_cancellation_requests` (
         `request_id` INT(11) NOT NULL AUTO_INCREMENT,
         `home_id` INT(11) NOT NULL, `order_id` INT(11) NOT NULL, `user_id` INT(11) NOT NULL,
         `mode` ENUM('immediate','end_of_term') NOT NULL,
@@ -515,8 +515,8 @@ $install_queries[9] = array(
         `refund_txid` VARCHAR(255) NULL, `note` TEXT NULL,
         PRIMARY KEY (`request_id`), KEY `idx_cancel_home_status` (`home_id`,`status`), KEY `idx_cancel_status` (`status`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
-    function($db) { $r=$db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='TABLE_PREFIX_PLACEHOLDERbilling_config' AND COLUMN_NAME='refund_full_days'"); return ($r && (int)$r[0]['cnt']>0) || (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_config` ADD `refund_full_days` INT(11) NOT NULL DEFAULT 30"); },
-    function($db) { $r=$db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='TABLE_PREFIX_PLACEHOLDERserver_homes' AND COLUMN_NAME='cancel_at_expiry'"); return ($r && (int)$r[0]['cnt']>0) || (bool)$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` ADD `cancel_at_expiry` TINYINT(1) NOT NULL DEFAULT 0"); }
+    function($db) { $r=$db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='DB_PREFIXbilling_config' AND COLUMN_NAME='refund_full_days'"); return ($r && (int)$r[0]['cnt']>0) || (bool)$db->query("ALTER TABLE `DB_PREFIXbilling_config` ADD `refund_full_days` INT(11) NOT NULL DEFAULT 30"); },
+    function($db) { $r=$db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='DB_PREFIXserver_homes' AND COLUMN_NAME='cancel_at_expiry'"); return ($r && (int)$r[0]['cnt']>0) || (bool)$db->query("ALTER TABLE `DB_PREFIXserver_homes` ADD `cancel_at_expiry` TINYINT(1) NOT NULL DEFAULT 0"); }
 );
 
 
@@ -533,7 +533,7 @@ if (!function_exists('billing_add_column_if_missing')) {
     }
 }
 $install_queries[10] = array(
-    "CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERbilling_locations` (
+    "CREATE TABLE IF NOT EXISTS `DB_PREFIXbilling_locations` (
         `location_id` INT(11) NOT NULL AUTO_INCREMENT,
         `parent_id` INT(11) NULL,
         `kind` ENUM('region','city') NOT NULL,
@@ -541,52 +541,52 @@ $install_queries[10] = array(
         `enabled` TINYINT(1) NOT NULL DEFAULT 1,
         PRIMARY KEY (`location_id`), KEY `idx_loc_parent` (`parent_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
-    function($db) { return billing_add_column_if_missing($db, 'TABLE_PREFIX_PLACEHOLDERremote_servers', 'location_id', 'INT(11) NULL'); },
-    function($db) { return billing_add_column_if_missing($db, 'TABLE_PREFIX_PLACEHOLDERremote_servers', 'install_enabled', 'TINYINT(1) NOT NULL DEFAULT 1'); },
-    "CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERbilling_service_requirements` (
+    function($db) { return billing_add_column_if_missing($db, 'DB_PREFIXremote_servers', 'location_id', 'INT(11) NULL'); },
+    function($db) { return billing_add_column_if_missing($db, 'DB_PREFIXremote_servers', 'install_enabled', 'TINYINT(1) NOT NULL DEFAULT 1'); },
+    "CREATE TABLE IF NOT EXISTS `DB_PREFIXbilling_service_requirements` (
         `home_cfg_id` INT(11) NOT NULL,
         `min_cpu_cores` DECIMAL(6,2) NOT NULL DEFAULT 0,
         `min_ram_mb` INT(11) NOT NULL DEFAULT 0,
         `min_disk_gb` INT(11) NOT NULL DEFAULT 0,
         PRIMARY KEY (`home_cfg_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
-    function($db) { return billing_add_column_if_missing($db, 'TABLE_PREFIX_PLACEHOLDERbilling_config', 'headroom_cpu_pct', 'TINYINT NOT NULL DEFAULT 70'); },
-    function($db) { return billing_add_column_if_missing($db, 'TABLE_PREFIX_PLACEHOLDERbilling_config', 'headroom_ram_pct', 'TINYINT NOT NULL DEFAULT 70'); },
-    function($db) { return billing_add_column_if_missing($db, 'TABLE_PREFIX_PLACEHOLDERbilling_config', 'headroom_disk_pct', 'TINYINT NOT NULL DEFAULT 85'); },
-    function($db) { return billing_add_column_if_missing($db, 'TABLE_PREFIX_PLACEHOLDERbilling_config', 'paypal_mode', "ENUM('sandbox','live') NOT NULL DEFAULT 'sandbox'"); },
-    function($db) { return billing_add_column_if_missing($db, 'TABLE_PREFIX_PLACEHOLDERbilling_config', 'paypal_client_id', 'VARCHAR(255) NULL'); },
-    function($db) { return billing_add_column_if_missing($db, 'TABLE_PREFIX_PLACEHOLDERbilling_config', 'paypal_client_secret_enc', 'TEXT NULL'); },
-    function($db) { return billing_add_column_if_missing($db, 'TABLE_PREFIX_PLACEHOLDERbilling_config', 'paypal_webhook_id', 'VARCHAR(255) NULL'); }
+    function($db) { return billing_add_column_if_missing($db, 'DB_PREFIXbilling_config', 'headroom_cpu_pct', 'TINYINT NOT NULL DEFAULT 70'); },
+    function($db) { return billing_add_column_if_missing($db, 'DB_PREFIXbilling_config', 'headroom_ram_pct', 'TINYINT NOT NULL DEFAULT 70'); },
+    function($db) { return billing_add_column_if_missing($db, 'DB_PREFIXbilling_config', 'headroom_disk_pct', 'TINYINT NOT NULL DEFAULT 85'); },
+    function($db) { return billing_add_column_if_missing($db, 'DB_PREFIXbilling_config', 'paypal_mode', "ENUM('sandbox','live') NOT NULL DEFAULT 'sandbox'"); },
+    function($db) { return billing_add_column_if_missing($db, 'DB_PREFIXbilling_config', 'paypal_client_id', 'VARCHAR(255) NULL'); },
+    function($db) { return billing_add_column_if_missing($db, 'DB_PREFIXbilling_config', 'paypal_client_secret_enc', 'TEXT NULL'); },
+    function($db) { return billing_add_column_if_missing($db, 'DB_PREFIXbilling_config', 'paypal_webhook_id', 'VARCHAR(255) NULL'); }
 );
 
 // db_version 11 - game catalog on billing_services: one row per game, pricing modes on the game,
 // agents allowed per game, and a location tree of any depth (billing_locations.kind is a free label).
 $install_queries[11] = array(
-    "ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_locations` MODIFY `kind` VARCHAR(32) NOT NULL DEFAULT 'region'",
-    "CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERbilling_service_agents` (
+    "ALTER TABLE `DB_PREFIXbilling_locations` MODIFY `kind` VARCHAR(32) NOT NULL DEFAULT 'region'",
+    "CREATE TABLE IF NOT EXISTS `DB_PREFIXbilling_service_agents` (
         `service_id` INT(11) NOT NULL,
         `remote_server_id` INT(11) NOT NULL,
         PRIMARY KEY (`service_id`, `remote_server_id`),
         KEY `idx_bsa_remote` (`remote_server_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
     function($db) {
-        $rows = $db->resultQuery("SELECT service_id, remote_server_id FROM `TABLE_PREFIX_PLACEHOLDERbilling_services` WHERE remote_server_id <> ''");
+        $rows = $db->resultQuery("SELECT service_id, remote_server_id FROM `DB_PREFIXbilling_services` WHERE remote_server_id <> ''");
         foreach ((array)$rows as $row) {
             foreach (preg_split('/[\s,]+/', trim((string)$row['remote_server_id'])) as $rsid) {
                 $rsid = (int)$rsid;
                 if ($rsid > 0) {
-                    $db->query("INSERT IGNORE INTO `TABLE_PREFIX_PLACEHOLDERbilling_service_agents` (service_id, remote_server_id) VALUES (" . (int)$row['service_id'] . ", " . $rsid . ")");
+                    $db->query("INSERT IGNORE INTO `DB_PREFIXbilling_service_agents` (service_id, remote_server_id) VALUES (" . (int)$row['service_id'] . ", " . $rsid . ")");
                 }
             }
         }
         return true;
     },
-    function($db) { return billing_add_column_if_missing($db, 'TABLE_PREFIX_PLACEHOLDERbilling_services', 'pricing_mode', "VARCHAR(16) NOT NULL DEFAULT 'per_slot'"); },
-    function($db) { return billing_add_column_if_missing($db, 'TABLE_PREFIX_PLACEHOLDERbilling_services', 'base_slots', 'INT(11) NOT NULL DEFAULT 0'); },
-    function($db) { return billing_add_column_if_missing($db, 'TABLE_PREFIX_PLACEHOLDERbilling_services', 'per_slot_price_monthly', 'FLOAT(15,4) NOT NULL DEFAULT 0'); },
-    function($db) { return billing_add_column_if_missing($db, 'TABLE_PREFIX_PLACEHOLDERbilling_services', 'base_price_monthly', 'FLOAT(15,4) NOT NULL DEFAULT 0'); },
-    function($db) { return billing_add_column_if_missing($db, 'TABLE_PREFIX_PLACEHOLDERbilling_services', 'extra_price_per_slot_monthly', 'FLOAT(15,4) NOT NULL DEFAULT 0'); },
-    "CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERbilling_service_tiers` (
+    function($db) { return billing_add_column_if_missing($db, 'DB_PREFIXbilling_services', 'pricing_mode', "VARCHAR(16) NOT NULL DEFAULT 'per_slot'"); },
+    function($db) { return billing_add_column_if_missing($db, 'DB_PREFIXbilling_services', 'base_slots', 'INT(11) NOT NULL DEFAULT 0'); },
+    function($db) { return billing_add_column_if_missing($db, 'DB_PREFIXbilling_services', 'per_slot_price_monthly', 'FLOAT(15,4) NOT NULL DEFAULT 0'); },
+    function($db) { return billing_add_column_if_missing($db, 'DB_PREFIXbilling_services', 'base_price_monthly', 'FLOAT(15,4) NOT NULL DEFAULT 0'); },
+    function($db) { return billing_add_column_if_missing($db, 'DB_PREFIXbilling_services', 'extra_price_per_slot_monthly', 'FLOAT(15,4) NOT NULL DEFAULT 0'); },
+    "CREATE TABLE IF NOT EXISTS `DB_PREFIXbilling_service_tiers` (
         `service_id` INT(11) NOT NULL,
         `tier_key` VARCHAR(16) NOT NULL,
         `slot_count` INT(11) NOT NULL DEFAULT 0,

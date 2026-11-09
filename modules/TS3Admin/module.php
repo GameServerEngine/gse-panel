@@ -30,7 +30,7 @@ $module_required = TRUE;
 $module_menus = array( array( 'subpage' => '', 'name'=>'ts3admin', 'group'=>'user' ) );
 $install_queries = array();
 $install_queries[0] = array(
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."ts3_homes` (
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."ts3_homes` (
         `ts3_id` int(50) NOT NULL auto_increment,
         `rserver_id` int(50) NOT NULL,
         `ip` varchar(20) NOT NULL,

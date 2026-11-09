@@ -181,7 +181,7 @@ function exec_module() {
     {
         $addon_id = (int)$_REQUEST['addon_id'];
 
-		$addons_rows = $db->resultQuery("SELECT url, path, post_script, addon_type, install_method, content_version, requires_stop, restart_after_install, workshop_item_id, workshop_app_id, target_path_template, optional_folder_name, config_edit_rule, launch_param_additions, name, bot_working_dir, bot_executable, bot_arguments, bot_install_folder, bot_os_support, bot_enable_default, bot_uninstall_script, checksum_sha256 FROM TABLE_PREFIX_PLACEHOLDERaddons WHERE addon_id=".$addon_id.$query_groups.$server_bot_os_filter);
+		$addons_rows = $db->resultQuery("SELECT url, path, post_script, addon_type, install_method, content_version, requires_stop, restart_after_install, workshop_item_id, workshop_app_id, target_path_template, optional_folder_name, config_edit_rule, launch_param_additions, name, bot_working_dir, bot_executable, bot_arguments, bot_install_folder, bot_os_support, bot_enable_default, bot_uninstall_script, checksum_sha256 FROM DB_PREFIXaddons WHERE addon_id=".$addon_id.$query_groups.$server_bot_os_filter);
 		if (!is_array($addons_rows)) {
 			$addons_rows = [];
 		}
@@ -660,7 +660,7 @@ function exec_module() {
 		if ($addon_type === 'workshop_item') {
 			$first_addon_id = 0;
 			$wk_addons = $db->resultQuery(
-				"SELECT addon_id FROM TABLE_PREFIX_PLACEHOLDERaddons
+				"SELECT addon_id FROM DB_PREFIXaddons
 				  WHERE addon_type='workshop_item' AND home_cfg_id=" . (int)$home_cfg_id . $query_groups . "
 				  ORDER BY name ASC LIMIT 1"
 			);
@@ -681,7 +681,7 @@ function exec_module() {
 				$addon_type_lang = isset($category_labels[$addon_type]) ? $category_labels[$addon_type] : ucfirst(str_replace('_', ' ', $addon_type));
 				$addons = $db->resultQuery(
 					"SELECT addon_id, name, install_method, workshop_item_id, workshop_app_id, target_path_template, optional_folder_name, bot_arguments
-					   FROM TABLE_PREFIX_PLACEHOLDERaddons
+					   FROM DB_PREFIXaddons
 					  WHERE addon_type='".$addon_type."' AND home_cfg_id=" . $home_cfg_id . $query_groups . $server_bot_os_filter . "
 					  ORDER BY name ASC"
 				);

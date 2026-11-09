@@ -29,7 +29,7 @@ function exec_module()
 	// expiration falls on today is still considered active for the full
 	// calendar day.  Only timestamps strictly before today midnight are expired.
 	$today_midnight = strtotime(date('Y-m-d'));
-	$expired_servers = $db->resultQuery("SELECT home_name, home_id, server_expiration_date FROM TABLE_PREFIX_PLACEHOLDERserver_homes WHERE server_expiration_date NOT LIKE 'X' AND server_expiration_date < " . $today_midnight . ";");
+	$expired_servers = $db->resultQuery("SELECT home_name, home_id, server_expiration_date FROM DB_PREFIXserver_homes WHERE server_expiration_date NOT LIKE 'X' AND server_expiration_date < " . $today_midnight . ";");
 	if($expired_servers)
 	{
 		foreach ((array)$expired_servers as $expired_server)
@@ -39,7 +39,7 @@ function exec_module()
 		}
 	}
 
-	$expired_users	 = $db->resultQuery("SELECT user_id, home_id, user_expiration_date FROM TABLE_PREFIX_PLACEHOLDERuser_homes WHERE user_expiration_date NOT LIKE 'X' AND user_expiration_date < " . $today_midnight . ";");
+	$expired_users	 = $db->resultQuery("SELECT user_id, home_id, user_expiration_date FROM DB_PREFIXuser_homes WHERE user_expiration_date NOT LIKE 'X' AND user_expiration_date < " . $today_midnight . ";");
 	if($expired_users)
 	{
 		foreach ((array)$expired_users as $expired_user)
@@ -50,9 +50,9 @@ function exec_module()
 	}
 
 	$expired_groups	 = $db->resultQuery("SELECT g.group_id, g.home_id, g.user_group_expiration_date, ug.user_id
-										 FROM TABLE_PREFIX_PLACEHOLDERuser_group_homes g
+										 FROM DB_PREFIXuser_group_homes g
 										 INNER JOIN
-										 TABLE_PREFIX_PLACEHOLDERuser_groups ug
+										 DB_PREFIXuser_groups ug
 										 ON ug.group_id=g.group_id
 										 WHERE g.user_group_expiration_date NOT LIKE 'X' AND g.user_group_expiration_date < " . $today_midnight . " GROUP BY g.home_id;");
 	if($expired_groups)

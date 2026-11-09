@@ -137,7 +137,7 @@ if (method_exists($db, 'getRemoteServers')) {
   $rows = $db->getRemoteServers();
 } else {
   // Fallback SQL (prefix best-effort)
-  $prefix = defined('TABLE_PREFIX_PLACEHOLDER') ? TABLE_PREFIX_PLACEHOLDER : (defined('DB_TABLE_PREFIX') ? DB_TABLE_PREFIX : '');
+  $prefix = defined('DB_PREFIX') ? DB_PREFIX : (defined('DB_TABLE_PREFIX') ? DB_TABLE_PREFIX : '');
   $rows = $db->resultQuery("SELECT remote_server_id, hostname, agent_ip, agent_port FROM {$prefix}remote_servers ORDER BY hostname");
 }
 

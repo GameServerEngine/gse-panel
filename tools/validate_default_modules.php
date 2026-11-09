@@ -4,8 +4,8 @@
  */
 
 $base_dir = dirname(__DIR__);
-if (!defined('TABLE_PREFIX_PLACEHOLDER')) {
-    define('TABLE_PREFIX_PLACEHOLDER', '');
+if (!defined('DB_PREFIX')) {
+    define('DB_PREFIX', '');
 }
 require_once $base_dir . '/includes/install_engine.php';
 

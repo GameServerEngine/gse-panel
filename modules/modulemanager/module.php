@@ -32,7 +32,7 @@ array( 'subpage' => '', 'name'=>'Modules', 'group'=>'admin' )
 );
 
 $install_queries[0] = array(
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."module_access_rights` (".
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."module_access_rights` (".
     "`module_id` int(11) NOT NULL COMMENT 'This references to modules.id',".
     "`flag` char(1) NOT NULL,".
     "`description` varchar(64) NOT NULL,".

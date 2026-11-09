@@ -11,7 +11,7 @@ class TicketSettings
 
     public function get($setting = '*')
     {
-        $query = "SELECT setting_name, setting_value FROM TABLE_PREFIX_PLACEHOLDERticket_settings";
+        $query = "SELECT setting_name, setting_value FROM DB_PREFIXticket_settings";
 
         if (is_array($setting) && !empty($setting)) {
             $in = '';
@@ -44,7 +44,7 @@ class TicketSettings
         $setting_name = $this->db->real_escape_string($setting_name);
         $setting_value = $this->db->real_escape_string($setting_value);
 
-        $queryString = "INSERT INTO TABLE_PREFIX_PLACEHOLDERticket_settings (setting_name, setting_value)
+        $queryString = "INSERT INTO DB_PREFIXticket_settings (setting_name, setting_value)
                             VALUES (
                                 '". $setting_name ."', '". $setting_value ."'
                             )

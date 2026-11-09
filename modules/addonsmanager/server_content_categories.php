@@ -31,7 +31,7 @@
 /**
  * Returns the full Server Content category map.
  *
- * Keys   : addon_type values stored in TABLE_PREFIX_PLACEHOLDERaddons.addon_type
+ * Keys   : addon_type values stored in DB_PREFIXaddons.addon_type
  * Values : Human-readable display label shown in admin and user UI
  *
  * @return array<string,string>

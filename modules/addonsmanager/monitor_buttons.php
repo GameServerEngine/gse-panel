@@ -23,7 +23,7 @@ if($session_role != "admin")
 		$query_groups .= "group_id=".$group['group_id']." OR ";
 	$query_groups .= "group_id=0 OR group_id IS NULL)";
 }
-$addons = $db->resultQuery("SELECT addon_id FROM TABLE_PREFIX_PLACEHOLDERaddons WHERE home_cfg_id=".$server_home['home_cfg_id'].$query_groups);
+$addons = $db->resultQuery("SELECT addon_id FROM DB_PREFIXaddons WHERE home_cfg_id=".$server_home['home_cfg_id'].$query_groups);
 $addons_qty = is_array($addons) ? count((array)$addons) : 0;
 if($addons and $addons_qty >= 1){
 	$module_buttons = array(

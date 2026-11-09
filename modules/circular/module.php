@@ -35,16 +35,16 @@ $module_menus = array(
 				);
 
 $install_queries[0] = array(
-	"DROP TABLE IF EXISTS `".TABLE_PREFIX_PLACEHOLDER."circular`",
-	"CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."circular` (
+	"DROP TABLE IF EXISTS `".DB_PREFIX."circular`",
+	"CREATE TABLE IF NOT EXISTS `".DB_PREFIX."circular` (
 		`circular_id` int NOT NULL AUTO_INCREMENT,
 		`subject` TEXT NOT NULL,
 		`message` TEXT NOT NULL,
 		`timestamp` TIMESTAMP,
 		PRIMARY KEY (`circular_id`)
 	);",
-	"DROP TABLE IF EXISTS `".TABLE_PREFIX_PLACEHOLDER."circular_recipients`",
-	"CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."circular_recipients` (
+	"DROP TABLE IF EXISTS `".DB_PREFIX."circular_recipients`",
+	"CREATE TABLE IF NOT EXISTS `".DB_PREFIX."circular_recipients` (
 	`user_id` int NOT NULL,
 	`circular_id` int NOT NULL,
 	`status` tinyint NOT NULL,

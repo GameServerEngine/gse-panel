@@ -26,7 +26,7 @@ function get_usernames_not_read_circular($circular_id)
 	global $db;
 	$circular_id = $db->real_escape_string($circular_id);
 	$query = "SELECT user_id ".
-			 "FROM `TABLE_PREFIX_PLACEHOLDERcircular_recipients` ".
+			 "FROM `DB_PREFIXcircular_recipients` ".
 			 "WHERE `circular_id` = '$circular_id' ".
 			 "AND `status` = '0'";
 	$users = $db->resultQuery($query);
@@ -50,14 +50,14 @@ function remove_circular($circular_id, $admin = false)
 
 	if($admin)
 	{
-		$db->query("DELETE FROM `TABLE_PREFIX_PLACEHOLDERcircular_recipients` ".
+		$db->query("DELETE FROM `DB_PREFIXcircular_recipients` ".
 				   "WHERE `circular_id` = '$circular_id'");
-		$db->query("DELETE FROM `TABLE_PREFIX_PLACEHOLDERcircular` ".
+		$db->query("DELETE FROM `DB_PREFIXcircular` ".
 				   "WHERE `circular_id` = '$circular_id'");
 	}
 	else
 	{
-		$db->query("DELETE FROM `TABLE_PREFIX_PLACEHOLDERcircular_recipients` ".
+		$db->query("DELETE FROM `DB_PREFIXcircular_recipients` ".
 				   "WHERE `circular_id` = '$circular_id' ".
 				   "AND `user_id` = '$_SESSION[user_id]'");
 	}
@@ -67,7 +67,7 @@ function set_circular_readed($circular_id)
 {
 	global $db;
 	$circular_id = $db->real_escape_string($circular_id);
-	$db->query("UPDATE `TABLE_PREFIX_PLACEHOLDERcircular_recipients` ".
+	$db->query("UPDATE `DB_PREFIXcircular_recipients` ".
 			   "SET `status` = '1' ".
 			   "WHERE `circular_id` = '$circular_id' ".
 			   "AND `user_id` = '$_SESSION[user_id]'");
@@ -77,11 +77,11 @@ function get_circulars($all = false)
 {
 	global $db;
 	if($all)
-		$query = "SELECT * FROM `TABLE_PREFIX_PLACEHOLDERcircular`";
+		$query = "SELECT * FROM `DB_PREFIXcircular`";
 	else
 		$query = "SELECT * ".
-				 "FROM `TABLE_PREFIX_PLACEHOLDERcircular_recipients` ".
-				 "NATURAL JOIN `TABLE_PREFIX_PLACEHOLDERcircular` ".
+				 "FROM `DB_PREFIXcircular_recipients` ".
+				 "NATURAL JOIN `DB_PREFIXcircular` ".
 				 "WHERE user_id = $_SESSION[user_id]";
 
 	return $db->resultQuery($query);
@@ -92,7 +92,7 @@ function send_to_user($user_id, $circular_id)
 	global $db;
 	$user_id = $db->real_escape_string($user_id);
 	$circular_id = $db->real_escape_string($circular_id);
-	return $db->query("INSERT INTO `TABLE_PREFIX_PLACEHOLDERcircular_recipients` VALUES('$user_id','$circular_id','0');");
+	return $db->query("INSERT INTO `DB_PREFIXcircular_recipients` VALUES('$user_id','$circular_id','0');");
 }
 
 function get_user_ids($type, $ids, &$user_ids)

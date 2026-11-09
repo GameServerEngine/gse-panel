@@ -1,7 +1,7 @@
 -- DEPRECATED: This file is no longer needed.
 --
--- The TABLE_PREFIX_PLACEHOLDERbilling_service_remote_servers mapping table has been removed.
--- Server availability per game/service is now stored in TABLE_PREFIX_PLACEHOLDERbilling_services.remote_server_id
+-- The DB_PREFIXbilling_service_remote_servers mapping table has been removed.
+-- Server availability per game/service is now stored in DB_PREFIXbilling_services.remote_server_id
 -- as a comma-separated list of numeric server IDs (e.g. "1,3,7").
 -- The module migration (db_version 4) drops the mapping table automatically.
 --
@@ -16,10 +16,10 @@
 --
 -- This statement is safe to run multiple times only if your MySQL version supports
 -- ADD COLUMN IF NOT EXISTS (MySQL 8.0.3+).  On older versions, check first:
---   SHOW COLUMNS FROM TABLE_PREFIX_PLACEHOLDERbilling_service_remote_servers LIKE 'override_price';
+--   SHOW COLUMNS FROM DB_PREFIXbilling_service_remote_servers LIKE 'override_price';
 
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_service_remote_servers`
+ALTER TABLE `DB_PREFIXbilling_service_remote_servers`
     ADD COLUMN IF NOT EXISTS `override_price` DECIMAL(10,2) NULL AFTER `enabled`;
 
 -- If your MySQL is older than 8.0.3, use the conditional form instead:
--- ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_service_remote_servers` ADD COLUMN `override_price` DECIMAL(10,2) NULL AFTER `enabled`;
+-- ALTER TABLE `DB_PREFIXbilling_service_remote_servers` ADD COLUMN `override_price` DECIMAL(10,2) NULL AFTER `enabled`;

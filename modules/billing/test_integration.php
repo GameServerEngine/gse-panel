@@ -57,7 +57,7 @@ function exec_module()
 	);
 
 	foreach ((array)$tables as $table => $desc) {
-		$result = $db->query("SHOW TABLES LIKE 'TABLE_PREFIX_PLACEHOLDER".$table."'");
+		$result = $db->query("SHOW TABLES LIKE 'DB_PREFIX".$table."'");
 		if ($result && $db->num_rows($result) > 0) {
 			echo "<div class='success'>✓ $table - $desc</div>";
 		} else {
@@ -67,7 +67,7 @@ function exec_module()
 
 	// Test 4: Order status counts
 	echo "<h3>4. Order Statistics</h3>";
-	$stats = $db->resultQuery("SELECT status, COUNT(*) as count FROM TABLE_PREFIX_PLACEHOLDERbilling_orders GROUP BY status");
+	$stats = $db->resultQuery("SELECT status, COUNT(*) as count FROM DB_PREFIXbilling_orders GROUP BY status");
 
 	if (!empty($stats)) {
 		echo "<table class='tablesorter'>";
@@ -103,9 +103,9 @@ function exec_module()
 	// normalize_billing_order_status.sql has been run — include them here.
 	echo "<h3>7. Active Orders Ready for Provisioning</h3>";
 	if ($isAdmin) {
-		$paid_orders = $db->resultQuery("SELECT COUNT(*) as count FROM TABLE_PREFIX_PLACEHOLDERbilling_orders WHERE status IN ('Active','paid')");
+		$paid_orders = $db->resultQuery("SELECT COUNT(*) as count FROM DB_PREFIXbilling_orders WHERE status IN ('Active','paid')");
 	} else {
-		$paid_orders = $db->resultQuery("SELECT COUNT(*) as count FROM TABLE_PREFIX_PLACEHOLDERbilling_orders WHERE status IN ('Active','paid') AND user_id=".$db->realEscapeSingle($user_id));
+		$paid_orders = $db->resultQuery("SELECT COUNT(*) as count FROM DB_PREFIXbilling_orders WHERE status IN ('Active','paid') AND user_id=".$db->realEscapeSingle($user_id));
 	}
 
 	if (!empty($paid_orders)) {

@@ -22,8 +22,8 @@
  *
  */
 
-$mysql_dbs = $db->resultQuery("SELECT db_id FROM `".TABLE_PREFIX_PLACEHOLDER."mysql_databases` WHERE enabled=1 AND home_id=".$server_home['home_id']);
-//$mysql_dbs = $db->resultQuery("SELECT db_id FROM TABLE_PREFIX_PLACEHOLDERmysql_databases WHERE enabled=1 AND home_id=".$server_home['home_id']);
+$mysql_dbs = $db->resultQuery("SELECT db_id FROM `".DB_PREFIX."mysql_databases` WHERE enabled=1 AND home_id=".$server_home['home_id']);
+//$mysql_dbs = $db->resultQuery("SELECT db_id FROM DB_PREFIXmysql_databases WHERE enabled=1 AND home_id=".$server_home['home_id']);
 if(!empty($mysql_dbs))
 {
 	$module_buttons = array(

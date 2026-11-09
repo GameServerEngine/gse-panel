@@ -10,10 +10,10 @@ class PortBlocksFakeDb
 	public function resultQuery($query)
 	{
 		if (strpos($query, 'SHOW TABLES LIKE') !== false && preg_match("/LIKE '([^']+)'/", $query, $m)) {
-			$table = str_replace('TABLE_PREFIX_PLACEHOLDER', '', $m[1]);
+			$table = str_replace('DB_PREFIX', '', $m[1]);
 			return in_array($table, $this->tables, true) ? array(array('table' => $table)) : false;
 		}
-		if (strpos($query, 'FROM `TABLE_PREFIX_PLACEHOLDERsettings`') !== false) {
+		if (strpos($query, 'FROM `DB_PREFIXsettings`') !== false) {
 			return isset($this->settings['port_block_size']) ? array(array('value' => $this->settings['port_block_size'])) : array();
 		}
 		return array();

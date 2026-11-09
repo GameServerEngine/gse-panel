@@ -97,12 +97,12 @@ function exec_module()
 
 
 
-	$widgets = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERwidgets_users WHERE user_id='".$_SESSION['user_id']."' ORDER BY sort_no");
+	$widgets = $db->resultQuery("SELECT * FROM DB_PREFIXwidgets_users WHERE user_id='".$_SESSION['user_id']."' ORDER BY sort_no");
 
 	if(!$widgets)
 	{
 		if($db->createUserWidgets($_SESSION['user_id']))
-			$widgets = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERwidgets_users WHERE user_id='".$_SESSION['user_id']."' ORDER BY sort_no");
+			$widgets = $db->resultQuery("SELECT * FROM DB_PREFIXwidgets_users WHERE user_id='".$_SESSION['user_id']."' ORDER BY sort_no");
 	}
 
 	if($widgets)

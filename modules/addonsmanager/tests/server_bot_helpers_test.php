@@ -1,7 +1,7 @@
 <?php
 
-if (!defined('TABLE_PREFIX_PLACEHOLDER')) {
-	define('TABLE_PREFIX_PLACEHOLDER', '');
+if (!defined('DB_PREFIX')) {
+	define('DB_PREFIX', '');
 }
 
 if (!function_exists('clean_path')) {
@@ -255,6 +255,6 @@ $lifeDb->rows = array(array(
 ));
 $remote = new ScmServerBotFakeRemote();
 scm_server_bot_test_assert(scm_server_bot_manifest_action($lifeDb, $remote, $linuxHome, $serverXml, 1, 'uninstall', 99, $message), 'uninstall action succeeds');
-scm_server_bot_test_assert(strpos(implode("\n", $lifeDb->queries), 'DELETE FROM `TABLE_PREFIX_PLACEHOLDERserver_content_manifest`') !== false, 'uninstall removes installed-content row after generation');
+scm_server_bot_test_assert(strpos(implode("\n", $lifeDb->queries), 'DELETE FROM `DB_PREFIXserver_content_manifest`') !== false, 'uninstall removes installed-content row after generation');
 
 echo "All Server Bot helper smoke tests passed.\n";

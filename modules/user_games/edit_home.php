@@ -435,7 +435,7 @@ function exec_module()
 			if ( $db->changeUserIdMain($home_id,$user_id_main) == TRUE )
 			{
 				$db->assignHomeTo("user",$user_id_main,$home_id,$old_home['access_rights']);
-                                $query="UPDATE `TABLE_PREFIX_PLACEHOLDERbilling_orders` SET `user_id`=".$user_id_main." WHERE `home_id` = ".$home_id.";";
+                                $query="UPDATE `DB_PREFIXbilling_orders` SET `user_id`=".$user_id_main." WHERE `home_id` = ".$home_id.";";
 	                        $db->query($query);
 				echo json_encode(array('result' => 'success', 'info' => get_lang("successfully_changed_game_server")));
 				$db->logger( get_lang("successfully_changed_game_server") ." HOME ID:$home_id - ". get_lang("change_user_id_main") .":$user_id_main");
@@ -857,7 +857,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				if( isset($_REQUEST['set_ip']) )
 				{
 					$ip_id = $db->real_escape_string($_POST['ip']);
-					$ip_row = $db->resultQuery( "SELECT ip FROM TABLE_PREFIX_PLACEHOLDERremote_server_ips WHERE ip_id=".$ip_id );
+					$ip_row = $db->resultQuery( "SELECT ip FROM DB_PREFIXremote_server_ips WHERE ip_id=".$ip_id );
 					$ip = $ip_row['0']['ip'];
 					$port = $_POST['port'];
 					$port = (int)(trim($port));

@@ -30,7 +30,7 @@ function agent_ensure_snapshot_table($db)
 	if ($done) {
 		return;
 	}
-	$db->query("CREATE TABLE IF NOT EXISTS `" . TABLE_PREFIX_PLACEHOLDER . "agent_resource_snapshots` (
+	$db->query("CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "agent_resource_snapshots` (
 		`remote_server_id` int(11) NOT NULL,
 		`agent_ip` varchar(255) NOT NULL DEFAULT '',
 		`agent_port` int(11) NOT NULL DEFAULT 0,
@@ -259,7 +259,7 @@ function agent_refresh_one_stale_snapshot($db, $servers, $max_age = 300)
 function agent_count_homes($db, $remote_server_id)
 {
 	$remote_server_id = (int)$remote_server_id;
-	$row = $db->resultQuery("SELECT COUNT(*) AS home_count FROM `" . TABLE_PREFIX_PLACEHOLDER . "server_homes` WHERE remote_server_id = " . $remote_server_id);
+	$row = $db->resultQuery("SELECT COUNT(*) AS home_count FROM `" . DB_PREFIX . "server_homes` WHERE remote_server_id = " . $remote_server_id);
 	if (is_array($row) && isset($row[0]['home_count'])) {
 		return (int)$row[0]['home_count'];
 	}

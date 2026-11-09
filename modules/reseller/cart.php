@@ -50,7 +50,7 @@ function saveOrderToDb($account_id,$service_id,$user_id,$qty,$invoice_duration,$
 	else
 	{
 		$query = sprintf("UPDATE
-						 `TABLE_PREFIX_PLACEHOLDERreseller_accounts` SET
+						 `DB_PREFIXreseller_accounts` SET
 						 `service_id` = '%d',
 						 `user_id` = '%d',
 						 `qty` = '%s',
@@ -107,7 +107,7 @@ function exec_module()
 				$discount = $account['discount'];
 				$price = $account['price'];
 				$paid = $account['paid'];
-				$service_info = $db->resultQuery( "SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_services WHERE service_id=".$service_id );
+				$service_info = $db->resultQuery( "SELECT * FROM DB_PREFIXreseller_services WHERE service_id=".$service_id );
 				$available_slots = $service_info[0]['slot_max_qty'];
 				//Save account to DB
 				if(!saveOrderToDb('',$service_id,$user_id,$qty,$invoice_duration,$discount,$price,$cart_id,$available_slots,"0"))
@@ -115,7 +115,7 @@ function exec_module()
 			}
 			// Remove Cart From Session
 			unset($_SESSION['CART']);
-			$db->query( "UPDATE TABLE_PREFIX_PLACEHOLDERreseller_carts
+			$db->query( "UPDATE DB_PREFIXreseller_carts
 						 SET paid=2
 						 WHERE cart_id=".$cart_id);
 		}
@@ -127,7 +127,7 @@ function exec_module()
 
 	if( isset( $_POST["extend"] ) or isset( $_POST["extend_and_pay"] ) )
 	{
-		$accounts = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE account_id=".$_POST['account_id']);
+		$accounts = $db->resultQuery("SELECT * FROM DB_PREFIXreseller_accounts WHERE account_id=".$_POST['account_id']);
 		// Create a new cart on DB
 		$cart_id = assignOrdersToCart($_SESSION['user_id'],$settings['tax_amount'],$settings['currency']);
 		$account = $accounts[0];
@@ -145,7 +145,7 @@ function exec_module()
 
 		//Calculating New Price
 		$services = $db->resultQuery( "SELECT *
-									   FROM TABLE_PREFIX_PLACEHOLDERreseller_services
+									   FROM DB_PREFIXreseller_services
 									   WHERE service_id=".$service_id );
 		$service = $services[0];
 		if ($invoice_duration == "month")
@@ -163,7 +163,7 @@ function exec_module()
 		$ext_account_id = ( 0 - $account['account_id'] ) * 1000000;
 
 		do {
-			$test_account_query = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE account_id=".$ext_account_id);
+			$test_account_query = $db->resultQuery("SELECT * FROM DB_PREFIXreseller_accounts WHERE account_id=".$ext_account_id);
 			if( empty( $test_account_query[0] ) ) break;
 			--$ext_account_id;
 		} while( ! empty( $test_account_query[0] ) );
@@ -174,17 +174,17 @@ function exec_module()
 		saveOrderToDb("$account_id",$service_id,$_SESSION['user_id'],$qty,$invoice_duration,"0",$price,$cart_id,$available_slots,"0");
 
 		//Set status to -2 at the old account information so it's known as an extended account.
-		$db->query( "UPDATE TABLE_PREFIX_PLACEHOLDERreseller_accounts
+		$db->query( "UPDATE DB_PREFIXreseller_accounts
 					 SET status=-2
 					 WHERE account_id=$ext_account_id");
 
 		//Set status to 0 at the account information at the new cart, waiting for account extension payment.
-		$db->query( "UPDATE TABLE_PREFIX_PLACEHOLDERreseller_accounts
+		$db->query( "UPDATE DB_PREFIXreseller_accounts
 					 SET status=0
 					 WHERE account_id=$account_id");
 
 		//Set status to 0 at the account information at the new cart, awaiting payment.
-		$db->query( "UPDATE TABLE_PREFIX_PLACEHOLDERreseller_carts
+		$db->query( "UPDATE DB_PREFIXreseller_carts
 						 SET paid=2
 						 WHERE cart_id=".$cart_id);
 	}
@@ -197,11 +197,11 @@ function exec_module()
 			unset($_SESSION['CART'][$cart_id]);
 		}
 		$account_id = $_POST['account_id'];
-		$db->query( "DELETE FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE account_id=".$account_id );
-		$accounts_in_cart = $db->resultQuery( "SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE cart_id=".$cart_id );
+		$db->query( "DELETE FROM DB_PREFIXreseller_accounts WHERE account_id=".$account_id );
+		$accounts_in_cart = $db->resultQuery( "SELECT * FROM DB_PREFIXreseller_accounts WHERE cart_id=".$cart_id );
 		if( !$accounts_in_cart )
 		{
-			$db->query( "DELETE FROM TABLE_PREFIX_PLACEHOLDERreseller_carts WHERE cart_id=".$cart_id );
+			$db->query( "DELETE FROM DB_PREFIXreseller_carts WHERE cart_id=".$cart_id );
 		}
 	}
 
@@ -216,15 +216,15 @@ function exec_module()
 		$carts[0] = $_SESSION['CART'];
 	}
 
-	$user_carts = $db->resultQuery( "SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_carts WHERE user_id=".$_SESSION['user_id'] );
+	$user_carts = $db->resultQuery( "SELECT * FROM DB_PREFIXreseller_carts WHERE user_id=".$_SESSION['user_id'] );
 
 	if( $user_carts >=1 )
 	{
 		foreach ( $user_carts as $user_cart )
 		{
 			$cart_id = $user_cart['cart_id'];
-			$carts[$cart_id] = $db->resultQuery( "SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_carts AS cart JOIN
-																TABLE_PREFIX_PLACEHOLDERreseller_accounts AS account
+			$carts[$cart_id] = $db->resultQuery( "SELECT * FROM DB_PREFIXreseller_carts AS cart JOIN
+																DB_PREFIXreseller_accounts AS account
 																ON account.cart_id=cart.cart_id
 																WHERE cart.cart_id=".$cart_id );
 		}
@@ -269,7 +269,7 @@ function exec_module()
 				$invoice_duration = ( $account['qty'] > 1 ) ? $account['invoice_duration']."s" : $account['invoice_duration'];
 
 				$subtotal += $account['price'];
-				$service_info = $db->resultQuery( "SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_services WHERE service_id=".$account['service_id'] );
+				$service_info = $db->resultQuery( "SELECT * FROM DB_PREFIXreseller_services WHERE service_id=".$account['service_id'] );
 				?>
 			<tr class="tr<?php echo($i++%2);?>">
 			 <td>

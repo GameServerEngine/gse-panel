@@ -499,7 +499,6 @@ function install_split_sql_statements($sql)
 function install_rewrite_schema_sql($sql, $table_prefix)
 {
     $sql = preg_replace('/\bCREATE\s+TABLE\s+`/i', 'CREATE TABLE IF NOT EXISTS `', (string)$sql);
-    $sql = str_replace('TABLE_PREFIX_PLACEHOLDER', (string)$table_prefix, (string)$sql);
     $sql = str_replace('DB_PREFIX', (string)$table_prefix, (string)$sql);
     return $sql;
 }
@@ -667,14 +666,14 @@ function install_register_builtin_modules($db, $base_dir)
         $folder = $db->realEscapeSingle($module);
         $version = $db->realEscapeSingle($metadata['version']);
         $db_version = (int)$metadata['db_version'];
-        $query = "INSERT INTO `" . TABLE_PREFIX_PLACEHOLDER . "modules` (`title`,`folder`,`version`,`db_version`,`enabled`) " .
+        $query = "INSERT INTO `" . DB_PREFIX . "modules` (`title`,`folder`,`version`,`db_version`,`enabled`) " .
             "VALUES ('{$title}','{$folder}','{$version}',{$db_version},1) " .
             "ON DUPLICATE KEY UPDATE `title`=VALUES(`title`), `version`=VALUES(`version`), `db_version`=VALUES(`db_version`)";
         if (!$db->query($query)) {
             return array('success' => false, 'errors' => array('Built-in module registration failed. Sensitive database details are hidden.'));
         }
 
-        $rows = $db->resultQuery("SELECT `id` FROM `" . TABLE_PREFIX_PLACEHOLDER . "modules` WHERE `folder` = '{$folder}' LIMIT 1");
+        $rows = $db->resultQuery("SELECT `id` FROM `" . DB_PREFIX . "modules` WHERE `folder` = '{$folder}' LIMIT 1");
         if (!$rows || !isset($rows[0]['id'])) {
             return array('success' => false, 'errors' => array('Built-in module registration could not verify module row.'));
         }
@@ -747,7 +746,7 @@ function install_extract_panel_table_suffixes($text)
 {
     $suffixes = array();
 
-    if (preg_match_all('/TABLE_PREFIX_PLACEHOLDER(?:"\s*\.\s*"|\'\s*\.\s*\'|\s*\.\s*"|\s*\.\s*\'|`)?([a-zA-Z0-9_]+)/', (string)$text, $matches)) {
+    if (preg_match_all('/DB_PREFIX(?:"\s*\.\s*"|\'\s*\.\s*\'|\s*\.\s*"|\s*\.\s*\'|`)?([a-zA-Z0-9_]+)/', (string)$text, $matches)) {
         foreach ($matches[1] as $suffix) {
             $suffixes[$suffix] = true;
         }
@@ -1273,7 +1272,7 @@ function install_list_migration_files($base_dir)
 /*
  * upgrade mode: applies pending versioned migrations from sql/ against an
  * existing, populated database. Tracks progress via a `schema_migration_version`
- * row in TABLE_PREFIX_PLACEHOLDERsettings so re-running upgrade is idempotent. Does not touch
+ * row in DB_PREFIXsettings so re-running upgrade is idempotent. Does not touch
  * config.inc.php or vhosts.
  */
 function install_run_upgrade(array $options)

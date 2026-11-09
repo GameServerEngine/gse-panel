@@ -25,10 +25,10 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERban_list`
+-- Table structure for table `DB_PREFIXban_list`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERban_list` (
+CREATE TABLE `DB_PREFIXban_list` (
   `client_ip` varchar(255) NOT NULL,
   `logging_attempts` int(11) NOT NULL DEFAULT '0',
   `banned_until` varchar(16) NOT NULL DEFAULT '0'
@@ -37,10 +37,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERban_list` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERmachines`
+-- Table structure for table `DB_PREFIXmachines`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmachines` (
+CREATE TABLE `DB_PREFIXmachines` (
   `id` int(11) NOT NULL,
   `machine_id` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
   `hostname` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -51,10 +51,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmachines` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERmachine_samples`
+-- Table structure for table `DB_PREFIXmachine_samples`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmachine_samples` (
+CREATE TABLE `DB_PREFIXmachine_samples` (
   `id` bigint(20) NOT NULL,
   `machine_id` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
   `ts` datetime NOT NULL,
@@ -80,10 +80,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmachine_samples` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERprocess_samples`
+-- Table structure for table `DB_PREFIXprocess_samples`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERprocess_samples` (
+CREATE TABLE `DB_PREFIXprocess_samples` (
   `id` bigint(20) NOT NULL,
   `machine_id` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
   `ts` datetime NOT NULL,
@@ -106,10 +106,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERprocess_samples` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERaddons`
+-- Table structure for table `DB_PREFIXaddons`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERaddons` (
+CREATE TABLE `DB_PREFIXaddons` (
   `addon_id` int(10) UNSIGNED NOT NULL,
   `name` varchar(80) NOT NULL,
   `url` varchar(200) NOT NULL,
@@ -123,10 +123,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERaddons` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERadminexternallinks`
+-- Table structure for table `DB_PREFIXadminexternallinks`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERadminexternallinks` (
+CREATE TABLE `DB_PREFIXadminexternallinks` (
   `link_id` int(10) UNSIGNED NOT NULL,
   `name` varchar(80) NOT NULL,
   `url` varchar(200) NOT NULL,
@@ -136,10 +136,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERadminexternallinks` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERadminlte_serverstats`
+-- Table structure for table `DB_PREFIXadminlte_serverstats`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERadminlte_serverstats` (
+CREATE TABLE `DB_PREFIXadminlte_serverstats` (
   `home_id` int(4) NOT NULL,
   `users_online` int(4) NOT NULL,
   `current_stamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -148,10 +148,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERadminlte_serverstats` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERadminlte_settings`
+-- Table structure for table `DB_PREFIXadminlte_settings`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERadminlte_settings` (
+CREATE TABLE `DB_PREFIXadminlte_settings` (
   `id` int(20) NOT NULL,
   `user` int(4) NOT NULL,
   `name` varchar(255) NOT NULL,
@@ -161,10 +161,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERadminlte_settings` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERapi_tokens`
+-- Table structure for table `DB_PREFIXapi_tokens`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERapi_tokens` (
+CREATE TABLE `DB_PREFIXapi_tokens` (
   `user_id` int(11) NOT NULL,
   `token` varchar(64) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -172,10 +172,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERapi_tokens` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERarrange_ports`
+-- Table structure for table `DB_PREFIXarrange_ports`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERarrange_ports` (
+CREATE TABLE `DB_PREFIXarrange_ports` (
   `range_id` int(11) NOT NULL,
   `ip_id` int(11) NOT NULL,
   `home_cfg_id` int(11) NOT NULL,
@@ -187,10 +187,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERarrange_ports` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERport_pools`
+-- Table structure for table `DB_PREFIXport_pools`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERport_pools` (
+CREATE TABLE `DB_PREFIXport_pools` (
   `pool_id` int(11) NOT NULL,
   `pool_key` varchar(64) NOT NULL,
   `name` varchar(128) NOT NULL,
@@ -210,10 +210,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERport_pools` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERport_pool_games`
+-- Table structure for table `DB_PREFIXport_pool_games`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERport_pool_games` (
+CREATE TABLE `DB_PREFIXport_pool_games` (
   `pool_game_id` int(11) NOT NULL,
   `pool_id` int(11) NOT NULL,
   `home_cfg_id` int(11) NOT NULL,
@@ -230,10 +230,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERport_pool_games` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERgame_port_offsets`
+-- Table structure for table `DB_PREFIXgame_port_offsets`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERgame_port_offsets` (
+CREATE TABLE `DB_PREFIXgame_port_offsets` (
   `offset_id` int(11) NOT NULL,
   `home_cfg_id` int(11) NOT NULL,
   `port_role` enum('primary','query','rcon','web','steam','peer','admin','filetransfer','query_ssh','custom') NOT NULL,
@@ -252,10 +252,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERgame_port_offsets` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations`
+-- Table structure for table `DB_PREFIXstatic_port_reservations`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations` (
+CREATE TABLE `DB_PREFIXstatic_port_reservations` (
   `reservation_id` int(11) NOT NULL,
   `scope` enum('ip','remote_server','global') NOT NULL DEFAULT 'ip',
   `ip_id` int(11) DEFAULT NULL,
@@ -275,10 +275,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERhome_port_blocks`
+-- Table structure for table `DB_PREFIXhome_port_blocks`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERhome_port_blocks` (
+CREATE TABLE `DB_PREFIXhome_port_blocks` (
   `block_id` bigint(20) NOT NULL,
   `home_id` int(11) DEFAULT NULL,
   `ip_id` int(11) NOT NULL,
@@ -301,10 +301,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERhome_port_blocks` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERport_allocation_events`
+-- Table structure for table `DB_PREFIXport_allocation_events`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERport_allocation_events` (
+CREATE TABLE `DB_PREFIXport_allocation_events` (
   `event_id` bigint(20) NOT NULL,
   `block_id` bigint(20) DEFAULT NULL,
   `home_id` int(11) DEFAULT NULL,
@@ -321,20 +321,20 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERport_allocation_events` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERbackup_restore`
+-- Table structure for table `DB_PREFIXbackup_restore`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbackup_restore` (
+CREATE TABLE `DB_PREFIXbackup_restore` (
   `id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERbilling_coupons`
+-- Table structure for table `DB_PREFIXbilling_coupons`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_coupons` (
+CREATE TABLE `DB_PREFIXbilling_coupons` (
   `coupon_id` int(11) NOT NULL,
   `code` varchar(50) NOT NULL,
   `name` varchar(255) NOT NULL DEFAULT '',
@@ -354,10 +354,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_coupons` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERbilling_invoices`
+-- Table structure for table `DB_PREFIXbilling_invoices`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices` (
+CREATE TABLE `DB_PREFIXbilling_invoices` (
   `invoice_id` int(11) NOT NULL,
   `order_id` int(11) NOT NULL DEFAULT '0',
   `user_id` int(11) NOT NULL,
@@ -387,10 +387,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERbilling_orders`
+-- Table structure for table `DB_PREFIXbilling_orders`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_orders` (
+CREATE TABLE `DB_PREFIXbilling_orders` (
   `order_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `service_id` int(11) NOT NULL,
@@ -416,10 +416,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_orders` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERbilling_services`
+-- Table structure for table `DB_PREFIXbilling_services`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_services` (
+CREATE TABLE `DB_PREFIXbilling_services` (
   `service_id` int(11) NOT NULL,
   `home_cfg_id` int(11) NOT NULL,
   `mod_cfg_id` int(11) NOT NULL,
@@ -443,10 +443,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERbilling_services` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERcircular`
+-- Table structure for table `DB_PREFIXcircular`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERcircular` (
+CREATE TABLE `DB_PREFIXcircular` (
   `circular_id` int(11) NOT NULL,
   `subject` text NOT NULL,
   `message` text NOT NULL,
@@ -456,10 +456,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERcircular` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERcircular_recipients`
+-- Table structure for table `DB_PREFIXcircular_recipients`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERcircular_recipients` (
+CREATE TABLE `DB_PREFIXcircular_recipients` (
   `user_id` int(11) NOT NULL,
   `circular_id` int(11) NOT NULL,
   `status` tinyint(4) NOT NULL
@@ -468,10 +468,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERcircular_recipients` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERconfig_homes`
+-- Table structure for table `DB_PREFIXconfig_homes`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERconfig_homes` (
+CREATE TABLE `DB_PREFIXconfig_homes` (
   `home_cfg_id` int(20) NOT NULL,
   `game_key` varchar(64) NOT NULL,
   `game_name` varchar(255) NOT NULL,
@@ -481,10 +481,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERconfig_homes` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERconfig_mods`
+-- Table structure for table `DB_PREFIXconfig_mods`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERconfig_mods` (
+CREATE TABLE `DB_PREFIXconfig_mods` (
   `mod_cfg_id` int(50) NOT NULL,
   `home_cfg_id` varchar(50) NOT NULL,
   `mod_key` varchar(100) NOT NULL COMMENT 'mod short name - used by the game server for startup commands - ex cstrike',
@@ -496,10 +496,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERconfig_mods` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERgame_mods`
+-- Table structure for table `DB_PREFIXgame_mods`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERgame_mods` (
+CREATE TABLE `DB_PREFIXgame_mods` (
   `mod_id` int(50) NOT NULL,
   `home_id` int(255) NOT NULL,
   `mod_cfg_id` int(11) NOT NULL,
@@ -514,10 +514,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERgame_mods` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERhome_ip_ports`
+-- Table structure for table `DB_PREFIXhome_ip_ports`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERhome_ip_ports` (
+CREATE TABLE `DB_PREFIXhome_ip_ports` (
   `ip_id` int(11) NOT NULL,
   `port` int(11) NOT NULL,
   `home_id` int(11) NOT NULL,
@@ -527,10 +527,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERhome_ip_ports` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERlgsl`
+-- Table structure for table `DB_PREFIXlgsl`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERlgsl` (
+CREATE TABLE `DB_PREFIXlgsl` (
   `id` int(11) NOT NULL,
   `type` varchar(50) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   `ip` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
@@ -548,10 +548,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERlgsl` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERlogger`
+-- Table structure for table `DB_PREFIXlogger`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERlogger` (
+CREATE TABLE `DB_PREFIXlogger` (
   `log_id` int(10) UNSIGNED NOT NULL,
   `date` varchar(20) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -562,10 +562,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERlogger` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERmaster_server_homes`
+-- Table structure for table `DB_PREFIXmaster_server_homes`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmaster_server_homes` (
+CREATE TABLE `DB_PREFIXmaster_server_homes` (
   `home_id` int(11) NOT NULL,
   `home_cfg_id` int(11) NOT NULL,
   `remote_server_id` int(11) NOT NULL
@@ -574,10 +574,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmaster_server_homes` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERmodules`
+-- Table structure for table `DB_PREFIXmodules`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmodules` (
+CREATE TABLE `DB_PREFIXmodules` (
   `id` smallint(5) UNSIGNED NOT NULL,
   `title` varchar(100) NOT NULL DEFAULT '',
   `folder` varchar(100) NOT NULL DEFAULT '',
@@ -589,10 +589,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmodules` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERmodule_access_rights`
+-- Table structure for table `DB_PREFIXmodule_access_rights`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmodule_access_rights` (
+CREATE TABLE `DB_PREFIXmodule_access_rights` (
   `module_id` int(11) NOT NULL COMMENT 'This references to modules.id',
   `flag` char(1) NOT NULL,
   `description` varchar(64) NOT NULL
@@ -601,10 +601,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmodule_access_rights` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERmodule_menus`
+-- Table structure for table `DB_PREFIXmodule_menus`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmodule_menus` (
+CREATE TABLE `DB_PREFIXmodule_menus` (
   `module_id` int(11) NOT NULL COMMENT 'This references to modules.id',
   `subpage` varchar(64) NOT NULL DEFAULT '',
   `group` varchar(32) NOT NULL,
@@ -615,10 +615,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmodule_menus` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERmysql_databases`
+-- Table structure for table `DB_PREFIXmysql_databases`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmysql_databases` (
+CREATE TABLE `DB_PREFIXmysql_databases` (
   `db_id` int(11) NOT NULL,
   `mysql_server_id` int(11) NOT NULL,
   `home_id` int(11) NOT NULL,
@@ -631,10 +631,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmysql_databases` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERmysql_servers`
+-- Table structure for table `DB_PREFIXmysql_servers`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmysql_servers` (
+CREATE TABLE `DB_PREFIXmysql_servers` (
   `mysql_server_id` int(11) NOT NULL,
   `remote_server_id` int(11) NOT NULL,
   `mysql_name` varchar(100) NOT NULL,
@@ -647,10 +647,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERmysql_servers` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERnotification`
+-- Table structure for table `DB_PREFIXnotification`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERnotification` (
+CREATE TABLE `DB_PREFIXnotification` (
   `notification_id` int(11) NOT NULL,
   `subject` text NOT NULL,
   `message` text NOT NULL,
@@ -660,10 +660,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERnotification` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERnotification_recipients`
+-- Table structure for table `DB_PREFIXnotification_recipients`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERnotification_recipients` (
+CREATE TABLE `DB_PREFIXnotification_recipients` (
   `user_id` int(11) NOT NULL,
   `notification_id` int(11) NOT NULL,
   `status` tinyint(4) NOT NULL
@@ -672,10 +672,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERnotification_recipients` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERrcon_presets`
+-- Table structure for table `DB_PREFIXrcon_presets`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERrcon_presets` (
+CREATE TABLE `DB_PREFIXrcon_presets` (
   `preset_id` int(50) NOT NULL,
   `name` varchar(20) NOT NULL,
   `command` varchar(100) NOT NULL,
@@ -686,13 +686,13 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERrcon_presets` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERremote_servers`
+-- Table structure for table `DB_PREFIXremote_servers`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERremote_servers` (
+CREATE TABLE `DB_PREFIXremote_servers` (
   `remote_server_id` int(11) NOT NULL,
   `remote_server_name` varchar(100) NOT NULL,
-  `TABLE_PREFIX_PLACEHOLDERuser` varchar(100) NOT NULL,
+  `DB_PREFIXuser` varchar(100) NOT NULL,
   `agent_ip` varchar(255) NOT NULL,
   `agent_port` int(11) NOT NULL,
   `ftp_port` int(11) NOT NULL,
@@ -708,10 +708,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERremote_servers` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERremote_server_ips`
+-- Table structure for table `DB_PREFIXremote_server_ips`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERremote_server_ips` (
+CREATE TABLE `DB_PREFIXremote_server_ips` (
   `ip_id` int(11) NOT NULL,
   `remote_server_id` int(11) NOT NULL,
   `ip` varchar(255) NOT NULL
@@ -720,10 +720,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERremote_server_ips` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERreseller_accounts`
+-- Table structure for table `DB_PREFIXreseller_accounts`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_accounts` (
+CREATE TABLE `DB_PREFIXreseller_accounts` (
   `account_id` int(11) NOT NULL,
   `service_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -741,10 +741,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_accounts` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERreseller_carts`
+-- Table structure for table `DB_PREFIXreseller_carts`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_carts` (
+CREATE TABLE `DB_PREFIXreseller_carts` (
   `cart_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `paid` int(11) DEFAULT NULL,
@@ -755,10 +755,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_carts` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERreseller_discount_codes`
+-- Table structure for table `DB_PREFIXreseller_discount_codes`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_discount_codes` (
+CREATE TABLE `DB_PREFIXreseller_discount_codes` (
   `discount_id` int(11) NOT NULL,
   `service_id` int(11) NOT NULL,
   `percentage` int(11) NOT NULL,
@@ -769,10 +769,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_discount_codes` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERreseller_homes`
+-- Table structure for table `DB_PREFIXreseller_homes`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_homes` (
+CREATE TABLE `DB_PREFIXreseller_homes` (
   `home_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `account_id` int(11) NOT NULL,
@@ -783,10 +783,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_homes` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERreseller_services`
+-- Table structure for table `DB_PREFIXreseller_services`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_services` (
+CREATE TABLE `DB_PREFIXreseller_services` (
   `service_id` int(11) NOT NULL,
   `service_name` varchar(60) NOT NULL,
   `slot_max_qty` int(11) NOT NULL,
@@ -802,10 +802,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERreseller_services` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERserver_homes`
+-- Table structure for table `DB_PREFIXserver_homes`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` (
+CREATE TABLE `DB_PREFIXserver_homes` (
   `home_id` int(50) NOT NULL,
   `remote_server_id` int(11) NOT NULL,
   `user_id_main` int(11) NOT NULL,
@@ -825,10 +825,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERserver_status`
+-- Table structure for table `DB_PREFIXserver_status`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERserver_status` (
+CREATE TABLE `DB_PREFIXserver_status` (
   `status_id` int(11) NOT NULL,
   `remote_server_id` int(11) NOT NULL,
   `server_name` varchar(255) NOT NULL,
@@ -845,10 +845,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERserver_status` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERsettings`
+-- Table structure for table `DB_PREFIXsettings`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERsettings` (
+CREATE TABLE `DB_PREFIXsettings` (
   `setting` varchar(63) NOT NULL,
   `value` varchar(1024) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -856,10 +856,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERsettings` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERstatus_cache`
+-- Table structure for table `DB_PREFIXstatus_cache`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERstatus_cache` (
+CREATE TABLE `DB_PREFIXstatus_cache` (
   `date_timestamp` char(16) NOT NULL,
   `ip_id` char(3) NOT NULL,
   `port` char(6) NOT NULL,
@@ -869,10 +869,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERstatus_cache` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERtickets`
+-- Table structure for table `DB_PREFIXtickets`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERtickets` (
+CREATE TABLE `DB_PREFIXtickets` (
   `tid` int(11) NOT NULL,
   `uid` varchar(32) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -889,10 +889,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERtickets` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERticket_attachments`
+-- Table structure for table `DB_PREFIXticket_attachments`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERticket_attachments` (
+CREATE TABLE `DB_PREFIXticket_attachments` (
   `attachment_id` int(11) NOT NULL,
   `ticket_id` int(11) NOT NULL,
   `reply_id` int(11) DEFAULT NULL,
@@ -903,10 +903,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERticket_attachments` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERticket_messages`
+-- Table structure for table `DB_PREFIXticket_messages`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERticket_messages` (
+CREATE TABLE `DB_PREFIXticket_messages` (
   `reply_id` int(11) NOT NULL,
   `ticket_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -920,10 +920,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERticket_messages` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERticket_settings`
+-- Table structure for table `DB_PREFIXticket_settings`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERticket_settings` (
+CREATE TABLE `DB_PREFIXticket_settings` (
   `id` int(11) NOT NULL,
   `setting_name` varchar(32) NOT NULL,
   `setting_value` text NOT NULL
@@ -932,10 +932,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERticket_settings` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERts3_homes`
+-- Table structure for table `DB_PREFIXts3_homes`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERts3_homes` (
+CREATE TABLE `DB_PREFIXts3_homes` (
   `ts3_id` int(50) NOT NULL,
   `rserver_id` int(50) NOT NULL,
   `ip` varchar(20) NOT NULL,
@@ -948,10 +948,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERts3_homes` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERtshock`
+-- Table structure for table `DB_PREFIXtshock`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERtshock` (
+CREATE TABLE `DB_PREFIXtshock` (
   `token_id` int(11) NOT NULL,
   `ip` varchar(255) NOT NULL,
   `port` int(11) NOT NULL,
@@ -961,20 +961,20 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERtshock` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERupdate_blacklist`
+-- Table structure for table `DB_PREFIXupdate_blacklist`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERupdate_blacklist` (
+CREATE TABLE `DB_PREFIXupdate_blacklist` (
   `file_path` varchar(1000) DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERusers`
+-- Table structure for table `DB_PREFIXusers`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERusers` (
+CREATE TABLE `DB_PREFIXusers` (
   `user_id` int(11) NOT NULL,
   `users_login` varchar(255) NOT NULL,
   `users_passwd` varchar(255) NOT NULL,
@@ -999,10 +999,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERusers` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERuser_groups`
+-- Table structure for table `DB_PREFIXuser_groups`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_groups` (
+CREATE TABLE `DB_PREFIXuser_groups` (
   `user_id` int(11) NOT NULL,
   `role_id` int(11) DEFAULT NULL,
   `group_id` int(11) NOT NULL
@@ -1011,10 +1011,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_groups` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERuser_group_homes`
+-- Table structure for table `DB_PREFIXuser_group_homes`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_homes` (
+CREATE TABLE `DB_PREFIXuser_group_homes` (
   `home_id` int(11) NOT NULL,
   `group_id` int(11) NOT NULL,
   `access_rights` varchar(63) DEFAULT NULL,
@@ -1024,10 +1024,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_homes` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERuser_group_info`
+-- Table structure for table `DB_PREFIXuser_group_info`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_info` (
+CREATE TABLE `DB_PREFIXuser_group_info` (
   `group_id` int(11) NOT NULL,
   `group_name` varchar(255) DEFAULT NULL,
   `main_user_id` int(11) DEFAULT NULL
@@ -1036,10 +1036,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_info` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERuser_group_remote_servers`
+-- Table structure for table `DB_PREFIXuser_group_remote_servers`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_remote_servers` (
+CREATE TABLE `DB_PREFIXuser_group_remote_servers` (
   `remote_server_id` int(11) NOT NULL,
   `group_id` int(11) NOT NULL,
   `access_rights` varchar(63) DEFAULT NULL
@@ -1048,10 +1048,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_remote_servers` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERuser_homes`
+-- Table structure for table `DB_PREFIXuser_homes`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_homes` (
+CREATE TABLE `DB_PREFIXuser_homes` (
   `home_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `access_rights` varchar(63) DEFAULT NULL,
@@ -1061,10 +1061,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_homes` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERuser_role_info`
+-- Table structure for table `DB_PREFIXuser_role_info`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_role_info` (
+CREATE TABLE `DB_PREFIXuser_role_info` (
   `role_id` int(11) NOT NULL,
   `role_name` varchar(100) DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -1072,10 +1072,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERuser_role_info` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERwidgets`
+-- Table structure for table `DB_PREFIXwidgets`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERwidgets` (
+CREATE TABLE `DB_PREFIXwidgets` (
   `id` int(11) NOT NULL,
   `column_id` int(11) NOT NULL,
   `sort_no` int(11) NOT NULL,
@@ -1086,10 +1086,10 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERwidgets` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `TABLE_PREFIX_PLACEHOLDERwidgets_users`
+-- Table structure for table `DB_PREFIXwidgets_users`
 --
 
-CREATE TABLE `TABLE_PREFIX_PLACEHOLDERwidgets_users` (
+CREATE TABLE `DB_PREFIXwidgets_users` (
   `user_id` int(11) NOT NULL,
   `widget_id` int(11) NOT NULL,
   `column_id` int(11) NOT NULL,
@@ -1103,99 +1103,99 @@ CREATE TABLE `TABLE_PREFIX_PLACEHOLDERwidgets_users` (
 --
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERban_list`
+-- Indexes for table `DB_PREFIXban_list`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERban_list`
+ALTER TABLE `DB_PREFIXban_list`
   ADD PRIMARY KEY (`client_ip`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERmachines`
+-- Indexes for table `DB_PREFIXmachines`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmachines`
+ALTER TABLE `DB_PREFIXmachines`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uniq_machine` (`machine_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERmachine_samples`
+-- Indexes for table `DB_PREFIXmachine_samples`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmachine_samples`
+ALTER TABLE `DB_PREFIXmachine_samples`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_machine_ts` (`machine_id`,`ts`),
   ADD KEY `idx_ts` (`ts`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERprocess_samples`
+-- Indexes for table `DB_PREFIXprocess_samples`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERprocess_samples`
+ALTER TABLE `DB_PREFIXprocess_samples`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_proc_server` (`machine_id`,`server_name`,`ts`),
   ADD KEY `idx_proc_pid` (`machine_id`,`pid`,`ts`),
   ADD KEY `idx_ts` (`ts`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERaddons`
+-- Indexes for table `DB_PREFIXaddons`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERaddons`
+ALTER TABLE `DB_PREFIXaddons`
   ADD PRIMARY KEY (`addon_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERadminexternallinks`
+-- Indexes for table `DB_PREFIXadminexternallinks`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERadminexternallinks`
+ALTER TABLE `DB_PREFIXadminexternallinks`
   ADD PRIMARY KEY (`link_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERadminlte_settings`
+-- Indexes for table `DB_PREFIXadminlte_settings`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERadminlte_settings`
+ALTER TABLE `DB_PREFIXadminlte_settings`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `UniqueSetting` (`user`,`name`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERapi_tokens`
+-- Indexes for table `DB_PREFIXapi_tokens`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERapi_tokens`
+ALTER TABLE `DB_PREFIXapi_tokens`
   ADD PRIMARY KEY (`user_id`),
   ADD UNIQUE KEY `user_id` (`user_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERarrange_ports`
+-- Indexes for table `DB_PREFIXarrange_ports`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERarrange_ports`
+ALTER TABLE `DB_PREFIXarrange_ports`
   ADD PRIMARY KEY (`range_id`),
   ADD UNIQUE KEY `ip_id` (`ip_id`,`home_cfg_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERport_pools`
+-- Indexes for table `DB_PREFIXport_pools`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERport_pools`
+ALTER TABLE `DB_PREFIXport_pools`
   ADD PRIMARY KEY (`pool_id`),
   ADD UNIQUE KEY `uq_port_pools_key` (`pool_key`),
   ADD KEY `idx_port_pools_enabled_priority` (`enabled`,`priority`),
   ADD KEY `idx_port_pools_range` (`range_start`,`range_end`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERport_pool_games`
+-- Indexes for table `DB_PREFIXport_pool_games`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERport_pool_games`
+ALTER TABLE `DB_PREFIXport_pool_games`
   ADD PRIMARY KEY (`pool_game_id`),
   ADD UNIQUE KEY `uq_pool_game_role` (`home_cfg_id`,`pool_id`,`role`),
   ADD KEY `idx_pool_games_home_role_priority` (`home_cfg_id`,`role`,`priority`),
   ADD KEY `idx_pool_games_pool` (`pool_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERgame_port_offsets`
+-- Indexes for table `DB_PREFIXgame_port_offsets`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERgame_port_offsets`
+ALTER TABLE `DB_PREFIXgame_port_offsets`
   ADD PRIMARY KEY (`offset_id`),
   ADD UNIQUE KEY `uq_game_port_offset` (`home_cfg_id`,`port_role`,`token_name`),
   ADD KEY `idx_game_port_offsets_home` (`home_cfg_id`),
   ADD KEY `idx_game_port_offsets_fit` (`fits_standard_block`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations`
+-- Indexes for table `DB_PREFIXstatic_port_reservations`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations`
+ALTER TABLE `DB_PREFIXstatic_port_reservations`
   ADD PRIMARY KEY (`reservation_id`),
   ADD UNIQUE KEY `uq_static_res_exact` (`scope`,`ip_id`,`remote_server_id`,`service_name`,`port_start`,`port_end`,`protocol`),
   ADD KEY `idx_static_res_ip_range` (`ip_id`,`port_start`,`port_end`,`status`),
@@ -1203,9 +1203,9 @@ ALTER TABLE `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations`
   ADD KEY `idx_static_res_service` (`service_name`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERhome_port_blocks`
+-- Indexes for table `DB_PREFIXhome_port_blocks`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERhome_port_blocks`
+ALTER TABLE `DB_PREFIXhome_port_blocks`
   ADD PRIMARY KEY (`block_id`),
   ADD KEY `idx_home_port_blocks_home` (`home_id`,`status`),
   ADD KEY `idx_home_port_blocks_ip_range` (`ip_id`,`block_start`,`block_end`,`status`),
@@ -1213,24 +1213,24 @@ ALTER TABLE `TABLE_PREFIX_PLACEHOLDERhome_port_blocks`
   ADD KEY `idx_home_port_blocks_primary` (`ip_id`,`primary_port`,`status`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERport_allocation_events`
+-- Indexes for table `DB_PREFIXport_allocation_events`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERport_allocation_events`
+ALTER TABLE `DB_PREFIXport_allocation_events`
   ADD PRIMARY KEY (`event_id`),
   ADD KEY `idx_port_events_home_time` (`home_id`,`created_at`),
   ADD KEY `idx_port_events_ip_time` (`ip_id`,`created_at`),
   ADD KEY `idx_port_events_type_time` (`event_type`,`created_at`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERbackup_restore`
+-- Indexes for table `DB_PREFIXbackup_restore`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbackup_restore`
+ALTER TABLE `DB_PREFIXbackup_restore`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERbilling_coupons`
+-- Indexes for table `DB_PREFIXbilling_coupons`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_coupons`
+ALTER TABLE `DB_PREFIXbilling_coupons`
   ADD PRIMARY KEY (`coupon_id`),
   ADD UNIQUE KEY `code` (`code`),
   ADD UNIQUE KEY `idx_code` (`code`),
@@ -1238,9 +1238,9 @@ ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_coupons`
   ADD KEY `idx_created_by` (`created_by`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERbilling_invoices`
+-- Indexes for table `DB_PREFIXbilling_invoices`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices`
+ALTER TABLE `DB_PREFIXbilling_invoices`
   ADD PRIMARY KEY (`invoice_id`),
   ADD KEY `order_id` (`order_id`),
   ADD KEY `user_id` (`user_id`),
@@ -1250,289 +1250,289 @@ ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices`
   ADD KEY `idx_coupon` (`coupon_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERbilling_orders`
+-- Indexes for table `DB_PREFIXbilling_orders`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_orders`
+ALTER TABLE `DB_PREFIXbilling_orders`
   ADD PRIMARY KEY (`order_id`),
   ADD KEY `idx_user_id` (`user_id`),
   ADD KEY `idx_status` (`status`),
   ADD KEY `idx_home_id` (`home_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERbilling_services`
+-- Indexes for table `DB_PREFIXbilling_services`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_services`
+ALTER TABLE `DB_PREFIXbilling_services`
   ADD PRIMARY KEY (`service_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERcircular`
+-- Indexes for table `DB_PREFIXcircular`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERcircular`
+ALTER TABLE `DB_PREFIXcircular`
   ADD PRIMARY KEY (`circular_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERcircular_recipients`
+-- Indexes for table `DB_PREFIXcircular_recipients`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERcircular_recipients`
+ALTER TABLE `DB_PREFIXcircular_recipients`
   ADD PRIMARY KEY (`user_id`,`circular_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERconfig_homes`
+-- Indexes for table `DB_PREFIXconfig_homes`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERconfig_homes`
+ALTER TABLE `DB_PREFIXconfig_homes`
   ADD PRIMARY KEY (`home_cfg_id`),
   ADD UNIQUE KEY `game_key` (`game_key`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERconfig_mods`
+-- Indexes for table `DB_PREFIXconfig_mods`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERconfig_mods`
+ALTER TABLE `DB_PREFIXconfig_mods`
   ADD PRIMARY KEY (`mod_cfg_id`),
   ADD UNIQUE KEY `home_cfg_id` (`home_cfg_id`,`mod_key`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERgame_mods`
+-- Indexes for table `DB_PREFIXgame_mods`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERgame_mods`
+ALTER TABLE `DB_PREFIXgame_mods`
   ADD PRIMARY KEY (`mod_id`),
   ADD UNIQUE KEY `home_id` (`home_id`,`mod_cfg_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERhome_ip_ports`
+-- Indexes for table `DB_PREFIXhome_ip_ports`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERhome_ip_ports`
+ALTER TABLE `DB_PREFIXhome_ip_ports`
   ADD PRIMARY KEY (`ip_id`,`port`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERlgsl`
+-- Indexes for table `DB_PREFIXlgsl`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERlgsl`
+ALTER TABLE `DB_PREFIXlgsl`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERlogger`
+-- Indexes for table `DB_PREFIXlogger`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERlogger`
+ALTER TABLE `DB_PREFIXlogger`
   ADD PRIMARY KEY (`log_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERmaster_server_homes`
+-- Indexes for table `DB_PREFIXmaster_server_homes`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmaster_server_homes`
+ALTER TABLE `DB_PREFIXmaster_server_homes`
   ADD PRIMARY KEY (`remote_server_id`,`home_cfg_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERmodules`
+-- Indexes for table `DB_PREFIXmodules`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmodules`
+ALTER TABLE `DB_PREFIXmodules`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `folder` (`folder`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERmodule_access_rights`
+-- Indexes for table `DB_PREFIXmodule_access_rights`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmodule_access_rights`
+ALTER TABLE `DB_PREFIXmodule_access_rights`
   ADD UNIQUE KEY `flag` (`flag`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERmodule_menus`
+-- Indexes for table `DB_PREFIXmodule_menus`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmodule_menus`
+ALTER TABLE `DB_PREFIXmodule_menus`
   ADD PRIMARY KEY (`module_id`,`subpage`,`group`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERmysql_databases`
+-- Indexes for table `DB_PREFIXmysql_databases`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmysql_databases`
+ALTER TABLE `DB_PREFIXmysql_databases`
   ADD PRIMARY KEY (`db_id`),
   ADD UNIQUE KEY `mysql_server_id` (`mysql_server_id`,`db_name`),
   ADD UNIQUE KEY `mysql_server_id_2` (`mysql_server_id`,`db_user`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERmysql_servers`
+-- Indexes for table `DB_PREFIXmysql_servers`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmysql_servers`
+ALTER TABLE `DB_PREFIXmysql_servers`
   ADD PRIMARY KEY (`mysql_server_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERnotification`
+-- Indexes for table `DB_PREFIXnotification`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERnotification`
+ALTER TABLE `DB_PREFIXnotification`
   ADD PRIMARY KEY (`notification_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERnotification_recipients`
+-- Indexes for table `DB_PREFIXnotification_recipients`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERnotification_recipients`
+ALTER TABLE `DB_PREFIXnotification_recipients`
   ADD PRIMARY KEY (`user_id`,`notification_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERrcon_presets`
+-- Indexes for table `DB_PREFIXrcon_presets`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERrcon_presets`
+ALTER TABLE `DB_PREFIXrcon_presets`
   ADD PRIMARY KEY (`preset_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERremote_servers`
+-- Indexes for table `DB_PREFIXremote_servers`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERremote_servers`
+ALTER TABLE `DB_PREFIXremote_servers`
   ADD PRIMARY KEY (`remote_server_id`),
   ADD UNIQUE KEY `agent_ip` (`agent_ip`,`agent_port`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERremote_server_ips`
+-- Indexes for table `DB_PREFIXremote_server_ips`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERremote_server_ips`
+ALTER TABLE `DB_PREFIXremote_server_ips`
   ADD PRIMARY KEY (`ip_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERreseller_accounts`
+-- Indexes for table `DB_PREFIXreseller_accounts`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_accounts`
+ALTER TABLE `DB_PREFIXreseller_accounts`
   ADD PRIMARY KEY (`account_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERreseller_carts`
+-- Indexes for table `DB_PREFIXreseller_carts`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_carts`
+ALTER TABLE `DB_PREFIXreseller_carts`
   ADD PRIMARY KEY (`cart_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERreseller_discount_codes`
+-- Indexes for table `DB_PREFIXreseller_discount_codes`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_discount_codes`
+ALTER TABLE `DB_PREFIXreseller_discount_codes`
   ADD PRIMARY KEY (`discount_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERreseller_homes`
+-- Indexes for table `DB_PREFIXreseller_homes`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_homes`
+ALTER TABLE `DB_PREFIXreseller_homes`
   ADD PRIMARY KEY (`home_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERreseller_services`
+-- Indexes for table `DB_PREFIXreseller_services`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_services`
+ALTER TABLE `DB_PREFIXreseller_services`
   ADD PRIMARY KEY (`service_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERserver_homes`
+-- Indexes for table `DB_PREFIXserver_homes`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes`
+ALTER TABLE `DB_PREFIXserver_homes`
   ADD PRIMARY KEY (`home_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERserver_status`
+-- Indexes for table `DB_PREFIXserver_status`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_status`
+ALTER TABLE `DB_PREFIXserver_status`
   ADD PRIMARY KEY (`status_id`),
   ADD UNIQUE KEY `unique_server` (`remote_server_id`),
   ADD KEY `idx_remote_server` (`remote_server_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERsettings`
+-- Indexes for table `DB_PREFIXsettings`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERsettings`
+ALTER TABLE `DB_PREFIXsettings`
   ADD PRIMARY KEY (`setting`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERtickets`
+-- Indexes for table `DB_PREFIXtickets`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERtickets`
+ALTER TABLE `DB_PREFIXtickets`
   ADD PRIMARY KEY (`tid`),
   ADD UNIQUE KEY `uid` (`uid`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERticket_attachments`
+-- Indexes for table `DB_PREFIXticket_attachments`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERticket_attachments`
+ALTER TABLE `DB_PREFIXticket_attachments`
   ADD PRIMARY KEY (`attachment_id`),
   ADD UNIQUE KEY `unique_name` (`unique_name`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERticket_messages`
+-- Indexes for table `DB_PREFIXticket_messages`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERticket_messages`
+ALTER TABLE `DB_PREFIXticket_messages`
   ADD PRIMARY KEY (`reply_id`),
-  ADD KEY `TABLE_PREFIX_PLACEHOLDERticket_messages_fk0` (`ticket_id`);
+  ADD KEY `DB_PREFIXticket_messages_fk0` (`ticket_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERticket_settings`
+-- Indexes for table `DB_PREFIXticket_settings`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERticket_settings`
+ALTER TABLE `DB_PREFIXticket_settings`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `setting_name` (`setting_name`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERts3_homes`
+-- Indexes for table `DB_PREFIXts3_homes`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERts3_homes`
+ALTER TABLE `DB_PREFIXts3_homes`
   ADD PRIMARY KEY (`ts3_id`),
   ADD UNIQUE KEY `rserver_id` (`rserver_id`,`vserver_id`,`user_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERtshock`
+-- Indexes for table `DB_PREFIXtshock`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERtshock`
+ALTER TABLE `DB_PREFIXtshock`
   ADD PRIMARY KEY (`token_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERupdate_blacklist`
+-- Indexes for table `DB_PREFIXupdate_blacklist`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERupdate_blacklist`
+ALTER TABLE `DB_PREFIXupdate_blacklist`
   ADD UNIQUE KEY `file_path` (`file_path`),
   ADD UNIQUE KEY `file_path_2` (`file_path`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERusers`
+-- Indexes for table `DB_PREFIXusers`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERusers`
+ALTER TABLE `DB_PREFIXusers`
   ADD PRIMARY KEY (`users_login`),
   ADD UNIQUE KEY `id` (`user_id`),
   ADD UNIQUE KEY `email` (`users_email`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERuser_groups`
+-- Indexes for table `DB_PREFIXuser_groups`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERuser_groups`
+ALTER TABLE `DB_PREFIXuser_groups`
   ADD PRIMARY KEY (`user_id`,`group_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERuser_group_homes`
+-- Indexes for table `DB_PREFIXuser_group_homes`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_homes`
+ALTER TABLE `DB_PREFIXuser_group_homes`
   ADD PRIMARY KEY (`home_id`,`group_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERuser_group_info`
+-- Indexes for table `DB_PREFIXuser_group_info`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_info`
+ALTER TABLE `DB_PREFIXuser_group_info`
   ADD PRIMARY KEY (`group_id`),
   ADD UNIQUE KEY `group_name` (`group_name`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERuser_group_remote_servers`
+-- Indexes for table `DB_PREFIXuser_group_remote_servers`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_remote_servers`
+ALTER TABLE `DB_PREFIXuser_group_remote_servers`
   ADD PRIMARY KEY (`remote_server_id`,`group_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERuser_homes`
+-- Indexes for table `DB_PREFIXuser_homes`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERuser_homes`
+ALTER TABLE `DB_PREFIXuser_homes`
   ADD PRIMARY KEY (`user_id`,`home_id`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERuser_role_info`
+-- Indexes for table `DB_PREFIXuser_role_info`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERuser_role_info`
+ALTER TABLE `DB_PREFIXuser_role_info`
   ADD PRIMARY KEY (`role_id`),
   ADD UNIQUE KEY `role_name` (`role_name`);
 
 --
--- Indexes for table `TABLE_PREFIX_PLACEHOLDERwidgets`
+-- Indexes for table `DB_PREFIXwidgets`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERwidgets`
+ALTER TABLE `DB_PREFIXwidgets`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -1540,285 +1540,285 @@ ALTER TABLE `TABLE_PREFIX_PLACEHOLDERwidgets`
 --
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERmachines`
+-- AUTO_INCREMENT for table `DB_PREFIXmachines`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmachines`
+ALTER TABLE `DB_PREFIXmachines`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERmachine_samples`
+-- AUTO_INCREMENT for table `DB_PREFIXmachine_samples`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmachine_samples`
+ALTER TABLE `DB_PREFIXmachine_samples`
   MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERprocess_samples`
+-- AUTO_INCREMENT for table `DB_PREFIXprocess_samples`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERprocess_samples`
+ALTER TABLE `DB_PREFIXprocess_samples`
   MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERaddons`
+-- AUTO_INCREMENT for table `DB_PREFIXaddons`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERaddons`
+ALTER TABLE `DB_PREFIXaddons`
   MODIFY `addon_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERadminexternallinks`
+-- AUTO_INCREMENT for table `DB_PREFIXadminexternallinks`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERadminexternallinks`
+ALTER TABLE `DB_PREFIXadminexternallinks`
   MODIFY `link_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERadminlte_settings`
+-- AUTO_INCREMENT for table `DB_PREFIXadminlte_settings`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERadminlte_settings`
+ALTER TABLE `DB_PREFIXadminlte_settings`
   MODIFY `id` int(20) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERarrange_ports`
+-- AUTO_INCREMENT for table `DB_PREFIXarrange_ports`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERarrange_ports`
+ALTER TABLE `DB_PREFIXarrange_ports`
   MODIFY `range_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERport_pools`
+-- AUTO_INCREMENT for table `DB_PREFIXport_pools`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERport_pools`
+ALTER TABLE `DB_PREFIXport_pools`
   MODIFY `pool_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERport_pool_games`
+-- AUTO_INCREMENT for table `DB_PREFIXport_pool_games`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERport_pool_games`
+ALTER TABLE `DB_PREFIXport_pool_games`
   MODIFY `pool_game_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERgame_port_offsets`
+-- AUTO_INCREMENT for table `DB_PREFIXgame_port_offsets`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERgame_port_offsets`
+ALTER TABLE `DB_PREFIXgame_port_offsets`
   MODIFY `offset_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations`
+-- AUTO_INCREMENT for table `DB_PREFIXstatic_port_reservations`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERstatic_port_reservations`
+ALTER TABLE `DB_PREFIXstatic_port_reservations`
   MODIFY `reservation_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERhome_port_blocks`
+-- AUTO_INCREMENT for table `DB_PREFIXhome_port_blocks`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERhome_port_blocks`
+ALTER TABLE `DB_PREFIXhome_port_blocks`
   MODIFY `block_id` bigint(20) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERport_allocation_events`
+-- AUTO_INCREMENT for table `DB_PREFIXport_allocation_events`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERport_allocation_events`
+ALTER TABLE `DB_PREFIXport_allocation_events`
   MODIFY `event_id` bigint(20) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERbackup_restore`
+-- AUTO_INCREMENT for table `DB_PREFIXbackup_restore`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbackup_restore`
+ALTER TABLE `DB_PREFIXbackup_restore`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERbilling_coupons`
+-- AUTO_INCREMENT for table `DB_PREFIXbilling_coupons`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_coupons`
+ALTER TABLE `DB_PREFIXbilling_coupons`
   MODIFY `coupon_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERbilling_invoices`
+-- AUTO_INCREMENT for table `DB_PREFIXbilling_invoices`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_invoices`
+ALTER TABLE `DB_PREFIXbilling_invoices`
   MODIFY `invoice_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERbilling_orders`
+-- AUTO_INCREMENT for table `DB_PREFIXbilling_orders`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_orders`
+ALTER TABLE `DB_PREFIXbilling_orders`
   MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERbilling_services`
+-- AUTO_INCREMENT for table `DB_PREFIXbilling_services`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERbilling_services`
+ALTER TABLE `DB_PREFIXbilling_services`
   MODIFY `service_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERcircular`
+-- AUTO_INCREMENT for table `DB_PREFIXcircular`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERcircular`
+ALTER TABLE `DB_PREFIXcircular`
   MODIFY `circular_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERconfig_homes`
+-- AUTO_INCREMENT for table `DB_PREFIXconfig_homes`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERconfig_homes`
+ALTER TABLE `DB_PREFIXconfig_homes`
   MODIFY `home_cfg_id` int(20) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERconfig_mods`
+-- AUTO_INCREMENT for table `DB_PREFIXconfig_mods`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERconfig_mods`
+ALTER TABLE `DB_PREFIXconfig_mods`
   MODIFY `mod_cfg_id` int(50) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERgame_mods`
+-- AUTO_INCREMENT for table `DB_PREFIXgame_mods`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERgame_mods`
+ALTER TABLE `DB_PREFIXgame_mods`
   MODIFY `mod_id` int(50) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERlgsl`
+-- AUTO_INCREMENT for table `DB_PREFIXlgsl`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERlgsl`
+ALTER TABLE `DB_PREFIXlgsl`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERlogger`
+-- AUTO_INCREMENT for table `DB_PREFIXlogger`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERlogger`
+ALTER TABLE `DB_PREFIXlogger`
   MODIFY `log_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERmodules`
+-- AUTO_INCREMENT for table `DB_PREFIXmodules`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmodules`
+ALTER TABLE `DB_PREFIXmodules`
   MODIFY `id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERmysql_databases`
+-- AUTO_INCREMENT for table `DB_PREFIXmysql_databases`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmysql_databases`
+ALTER TABLE `DB_PREFIXmysql_databases`
   MODIFY `db_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERmysql_servers`
+-- AUTO_INCREMENT for table `DB_PREFIXmysql_servers`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERmysql_servers`
+ALTER TABLE `DB_PREFIXmysql_servers`
   MODIFY `mysql_server_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERnotification`
+-- AUTO_INCREMENT for table `DB_PREFIXnotification`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERnotification`
+ALTER TABLE `DB_PREFIXnotification`
   MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERrcon_presets`
+-- AUTO_INCREMENT for table `DB_PREFIXrcon_presets`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERrcon_presets`
+ALTER TABLE `DB_PREFIXrcon_presets`
   MODIFY `preset_id` int(50) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERremote_servers`
+-- AUTO_INCREMENT for table `DB_PREFIXremote_servers`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERremote_servers`
+ALTER TABLE `DB_PREFIXremote_servers`
   MODIFY `remote_server_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERremote_server_ips`
+-- AUTO_INCREMENT for table `DB_PREFIXremote_server_ips`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERremote_server_ips`
+ALTER TABLE `DB_PREFIXremote_server_ips`
   MODIFY `ip_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERreseller_accounts`
+-- AUTO_INCREMENT for table `DB_PREFIXreseller_accounts`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_accounts`
+ALTER TABLE `DB_PREFIXreseller_accounts`
   MODIFY `account_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERreseller_carts`
+-- AUTO_INCREMENT for table `DB_PREFIXreseller_carts`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_carts`
+ALTER TABLE `DB_PREFIXreseller_carts`
   MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERreseller_discount_codes`
+-- AUTO_INCREMENT for table `DB_PREFIXreseller_discount_codes`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_discount_codes`
+ALTER TABLE `DB_PREFIXreseller_discount_codes`
   MODIFY `discount_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERreseller_services`
+-- AUTO_INCREMENT for table `DB_PREFIXreseller_services`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERreseller_services`
+ALTER TABLE `DB_PREFIXreseller_services`
   MODIFY `service_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERserver_homes`
+-- AUTO_INCREMENT for table `DB_PREFIXserver_homes`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes`
+ALTER TABLE `DB_PREFIXserver_homes`
   MODIFY `home_id` int(50) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERserver_status`
+-- AUTO_INCREMENT for table `DB_PREFIXserver_status`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_status`
+ALTER TABLE `DB_PREFIXserver_status`
   MODIFY `status_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERtickets`
+-- AUTO_INCREMENT for table `DB_PREFIXtickets`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERtickets`
+ALTER TABLE `DB_PREFIXtickets`
   MODIFY `tid` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERticket_attachments`
+-- AUTO_INCREMENT for table `DB_PREFIXticket_attachments`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERticket_attachments`
+ALTER TABLE `DB_PREFIXticket_attachments`
   MODIFY `attachment_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERticket_messages`
+-- AUTO_INCREMENT for table `DB_PREFIXticket_messages`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERticket_messages`
+ALTER TABLE `DB_PREFIXticket_messages`
   MODIFY `reply_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERticket_settings`
+-- AUTO_INCREMENT for table `DB_PREFIXticket_settings`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERticket_settings`
+ALTER TABLE `DB_PREFIXticket_settings`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERts3_homes`
+-- AUTO_INCREMENT for table `DB_PREFIXts3_homes`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERts3_homes`
+ALTER TABLE `DB_PREFIXts3_homes`
   MODIFY `ts3_id` int(50) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERtshock`
+-- AUTO_INCREMENT for table `DB_PREFIXtshock`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERtshock`
+ALTER TABLE `DB_PREFIXtshock`
   MODIFY `token_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERusers`
+-- AUTO_INCREMENT for table `DB_PREFIXusers`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERusers`
+ALTER TABLE `DB_PREFIXusers`
   MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERuser_group_info`
+-- AUTO_INCREMENT for table `DB_PREFIXuser_group_info`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERuser_group_info`
+ALTER TABLE `DB_PREFIXuser_group_info`
   MODIFY `group_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERuser_role_info`
+-- AUTO_INCREMENT for table `DB_PREFIXuser_role_info`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERuser_role_info`
+ALTER TABLE `DB_PREFIXuser_role_info`
   MODIFY `role_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `TABLE_PREFIX_PLACEHOLDERwidgets`
+-- AUTO_INCREMENT for table `DB_PREFIXwidgets`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERwidgets`
+ALTER TABLE `DB_PREFIXwidgets`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -1826,19 +1826,19 @@ ALTER TABLE `TABLE_PREFIX_PLACEHOLDERwidgets`
 --
 
 --
--- Constraints for table `TABLE_PREFIX_PLACEHOLDERticket_messages`
+-- Constraints for table `DB_PREFIXticket_messages`
 --
-ALTER TABLE `TABLE_PREFIX_PLACEHOLDERticket_messages`
-  ADD CONSTRAINT `TABLE_PREFIX_PLACEHOLDERticket_messages_fk0` FOREIGN KEY (`ticket_id`) REFERENCES `TABLE_PREFIX_PLACEHOLDERtickets` (`tid`);
+ALTER TABLE `DB_PREFIXticket_messages`
+  ADD CONSTRAINT `DB_PREFIXticket_messages_fk0` FOREIGN KEY (`ticket_id`) REFERENCES `DB_PREFIXtickets` (`tid`);
 -- Core tables created at runtime by the update runner and addons helpers,
 -- plus the customer restic tables. Part of the base schema, not install_queries.
-CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERschema_migrations` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXschema_migrations` (
   `migration_id` VARCHAR(191) NOT NULL,
   `applied_at` DATETIME NOT NULL,
   PRIMARY KEY (`migration_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERserver_content_workshop_catalog` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXserver_content_workshop_catalog` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `workshop_id` VARCHAR(64) NOT NULL,
   `app_id` VARCHAR(32) NOT NULL DEFAULT '',
@@ -1859,7 +1859,7 @@ CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERserver_content_workshop_cata
   KEY `idx_last_installed` (`last_installed`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERrestic_homes` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXrestic_homes` (
   `home_id` INT UNSIGNED NOT NULL PRIMARY KEY,
   `rest_user` VARCHAR(64) NOT NULL,
   `repo_state` VARCHAR(20) NOT NULL DEFAULT 'pending',
@@ -1867,7 +1867,7 @@ CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERrestic_homes` (
   `delete_after` INT UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERrestic_snapshots` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXrestic_snapshots` (
   `snapshot_row_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `home_id` INT UNSIGNED NOT NULL,
   `snapshot_id` VARCHAR(64) NOT NULL,

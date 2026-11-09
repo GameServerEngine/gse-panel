@@ -92,7 +92,7 @@
 
 ## Proposed query cache table (planning only, no migration applied)
 ```sql
-CREATE TABLE IF NOT EXISTS TABLE_PREFIX_PLACEHOLDERserver_query_cache (
+CREATE TABLE IF NOT EXISTS DB_PREFIXserver_query_cache (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   home_id INT NOT NULL,
   ip VARCHAR(64) NOT NULL,

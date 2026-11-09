@@ -194,10 +194,10 @@ function exec_module()
 			$users_pass_hash = password_hash($users_passwd, PASSWORD_DEFAULT);
 			if($users_pass_hash !== false)
 			{
-				$hash_column = $db->resultQuery("SHOW COLUMNS FROM `TABLE_PREFIX_PLACEHOLDERusers` LIKE 'users_pass_hash';");
+				$hash_column = $db->resultQuery("SHOW COLUMNS FROM `DB_PREFIXusers` LIKE 'users_pass_hash';");
 				if($hash_column)
 				{
-					$db->query("UPDATE `TABLE_PREFIX_PLACEHOLDERusers` SET `users_pass_hash` = '".$db->realEscapeSingle($users_pass_hash)."' WHERE `user_id` = ".(int)$user_id." LIMIT 1;");
+					$db->query("UPDATE `DB_PREFIXusers` SET `users_pass_hash` = '".$db->realEscapeSingle($users_pass_hash)."' WHERE `user_id` = ".(int)$user_id." LIMIT 1;");
 				}
 			}
 

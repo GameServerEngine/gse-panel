@@ -393,7 +393,7 @@ class Theme
 
 					// delete old stats (keep only entries from last 1 day)
 					$ThemeDB->query("
-						DELETE FROM TABLE_PREFIX_PLACEHOLDERadminlte_serverstats WHERE current_stamp < DATE_ADD(NOW(), INTERVAL -1 DAY)
+						DELETE FROM DB_PREFIXadminlte_serverstats WHERE current_stamp < DATE_ADD(NOW(), INTERVAL -1 DAY)
 					");
 
 					return "successfully updated";

@@ -5,7 +5,7 @@
  *
  * Statically parses every module's module.php for CREATE TABLE IF NOT EXISTS
  * statements inside its install_queries (both `foo` literal-prefix and
- * `".TABLE_PREFIX_PLACEHOLDER."foo` / `TABLE_PREFIX_PLACEHOLDERfoo` placeholder-prefix styles are
+ * `".DB_PREFIX."foo` / `DB_PREFIXfoo` placeholder-prefix styles are
  * recognized, matching includes/install_engine.php's own
  * install_extract_panel_table_suffixes() convention) and asserts every
  * such table name also appears in install/gse_panel.sql, the canonical

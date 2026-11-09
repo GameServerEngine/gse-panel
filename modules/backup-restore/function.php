@@ -108,7 +108,7 @@ function restic_pipe_stdin($command, $stdin, &$output)
 function restic_home_row($home_id)
 {
     global $db;
-    $rows = $db->queryRows('SELECT * FROM `TABLE_PREFIX_PLACEHOLDERrestic_homes` WHERE `home_id` = ' . (int)$home_id);
+    $rows = $db->queryRows('SELECT * FROM `DB_PREFIXrestic_homes` WHERE `home_id` = ' . (int)$home_id);
     return (is_array($rows) && isset($rows[0])) ? $rows[0] : NULL;
 }
 
@@ -119,7 +119,7 @@ function restic_home_ensure($home_id)
     if ($row !== NULL)
         return $row;
     $user = 'home-' . (int)$home_id;
-    $db->query('INSERT INTO `TABLE_PREFIX_PLACEHOLDERrestic_homes` (`home_id`, `rest_user`, `repo_state`, `created_at`) VALUES ('
+    $db->query('INSERT INTO `DB_PREFIXrestic_homes` (`home_id`, `rest_user`, `repo_state`, `created_at`) VALUES ('
         . (int)$home_id . ", '" . $db->realEscapeSingle($user) . "', 'pending', " . time() . ')');
     return restic_home_row($home_id);
 }
@@ -127,7 +127,7 @@ function restic_home_ensure($home_id)
 function restic_snapshot_rows($home_id)
 {
     global $db;
-    $rows = $db->queryRows('SELECT * FROM `TABLE_PREFIX_PLACEHOLDERrestic_snapshots` WHERE `home_id` = ' . (int)$home_id
+    $rows = $db->queryRows('SELECT * FROM `DB_PREFIXrestic_snapshots` WHERE `home_id` = ' . (int)$home_id
         . ' ORDER BY `created_at` DESC, `snapshot_row_id` DESC');
     return is_array($rows) ? $rows : array();
 }
@@ -135,7 +135,7 @@ function restic_snapshot_rows($home_id)
 function restic_snapshot_row_for($home_id, $snapshot_id)
 {
     global $db;
-    $rows = $db->queryRows('SELECT * FROM `TABLE_PREFIX_PLACEHOLDERrestic_snapshots` WHERE `home_id` = ' . (int)$home_id
+    $rows = $db->queryRows('SELECT * FROM `DB_PREFIXrestic_snapshots` WHERE `home_id` = ' . (int)$home_id
         . " AND `snapshot_id` = '" . $db->realEscapeSingle($snapshot_id) . "'");
     return (is_array($rows) && isset($rows[0])) ? $rows[0] : NULL;
 }
@@ -143,7 +143,7 @@ function restic_snapshot_row_for($home_id, $snapshot_id)
 function restic_snapshot_forget_row($home_id, $snapshot_id)
 {
     global $db;
-    $db->query('DELETE FROM `TABLE_PREFIX_PLACEHOLDERrestic_snapshots` WHERE `home_id` = ' . (int)$home_id
+    $db->query('DELETE FROM `DB_PREFIXrestic_snapshots` WHERE `home_id` = ' . (int)$home_id
         . " AND `snapshot_id` = '" . $db->realEscapeSingle($snapshot_id) . "'");
 }
 
@@ -199,7 +199,7 @@ function restic_provision_home($home_id, $master)
     if ($rc !== 0)
         return 'Could not create the backup account on the backup server (exit ' . $rc . ').';
 
-    $db->query("UPDATE `TABLE_PREFIX_PLACEHOLDERrestic_homes` SET `repo_state` = 'ready' WHERE `home_id` = " . (int)$home_id);
+    $db->query("UPDATE `DB_PREFIXrestic_homes` SET `repo_state` = 'ready' WHERE `home_id` = " . (int)$home_id);
     return TRUE;
 }
 
@@ -264,7 +264,7 @@ function restic_do_backup($cfg, $home_id)
         return array(FALSE, 'The backup finished, but no snapshot id came back.');
 
     $user = isset($_SESSION['loginuser']) ? (string)$_SESSION['loginuser'] : '';
-    $db->query('INSERT INTO `TABLE_PREFIX_PLACEHOLDERrestic_snapshots` (`home_id`, `snapshot_id`, `kind`, `comment`, `created_by`, `created_at`) VALUES ('
+    $db->query('INSERT INTO `DB_PREFIXrestic_snapshots` (`home_id`, `snapshot_id`, `kind`, `comment`, `created_by`, `created_at`) VALUES ('
         . (int)$home_id . ", '" . $db->realEscapeSingle($snapshot_id) . "', 'customer', '"
         . $db->realEscapeSingle($comment) . "', '" . $db->realEscapeSingle($user) . "', " . time() . ')');
 
@@ -331,7 +331,7 @@ function restic_reconcile_pending($cfg, $home_id, $master)
     $snapshot_id = restic_parse_backup_snapshot_id($status['output']);
     if ($snapshot_id === NULL)
         return 'A backup that was started earlier finished without a snapshot id, so nothing was saved.';
-    $db->query('INSERT INTO `TABLE_PREFIX_PLACEHOLDERrestic_snapshots` (`home_id`, `snapshot_id`, `kind`, `comment`, `created_by`, `created_at`) VALUES ('
+    $db->query('INSERT INTO `DB_PREFIXrestic_snapshots` (`home_id`, `snapshot_id`, `kind`, `comment`, `created_by`, `created_at`) VALUES ('
         . (int)$home_id . ", '" . $db->realEscapeSingle($snapshot_id) . "', 'customer', '"
         . $db->realEscapeSingle($pending['comment']) . "', '" . $db->realEscapeSingle($pending['user']) . "', "
         . (int)$pending['started_at'] . ')');
@@ -455,7 +455,7 @@ function restic_mark_home_deleted($home_id, $now = NULL)
 {
     global $db;
     $now = ($now === NULL) ? time() : (int)$now;
-    $db->query("UPDATE `TABLE_PREFIX_PLACEHOLDERrestic_homes` SET `repo_state` = 'deleted', `delete_after` = "
+    $db->query("UPDATE `DB_PREFIXrestic_homes` SET `repo_state` = 'deleted', `delete_after` = "
         . restic_delete_after_ts($now) . ' WHERE `home_id` = ' . (int)$home_id);
 }
 
@@ -465,7 +465,7 @@ function restic_purge_due_homes($now = NULL)
     global $db;
     $now = ($now === NULL) ? time() : (int)$now;
     $purged = array();
-    $rows = $db->queryRows("SELECT * FROM `TABLE_PREFIX_PLACEHOLDERrestic_homes` WHERE `repo_state` = 'deleted'");
+    $rows = $db->queryRows("SELECT * FROM `DB_PREFIXrestic_homes` WHERE `repo_state` = 'deleted'");
     if (!is_array($rows))
         return $purged;
     foreach ($rows as $row) {
@@ -473,8 +473,8 @@ function restic_purge_due_homes($now = NULL)
             continue;
         if (restic_purge_remote($db, $row['rest_user']) !== TRUE)
             continue;
-        $db->query('DELETE FROM `TABLE_PREFIX_PLACEHOLDERrestic_snapshots` WHERE `home_id` = ' . (int)$row['home_id']);
-        $db->query("UPDATE `TABLE_PREFIX_PLACEHOLDERrestic_homes` SET `repo_state` = 'purged' WHERE `home_id` = " . (int)$row['home_id']);
+        $db->query('DELETE FROM `DB_PREFIXrestic_snapshots` WHERE `home_id` = ' . (int)$row['home_id']);
+        $db->query("UPDATE `DB_PREFIXrestic_homes` SET `repo_state` = 'purged' WHERE `home_id` = " . (int)$row['home_id']);
         $purged[] = (int)$row['home_id'];
     }
     return $purged;

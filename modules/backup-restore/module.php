@@ -24,14 +24,14 @@ $install_queries = array();
 // so running them again is safe.
 // -----------------------------------------------------------------------
 $install_queries[1] = array(
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."restic_homes` (
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."restic_homes` (
         `home_id` INT UNSIGNED NOT NULL PRIMARY KEY,
         `rest_user` VARCHAR(64) NOT NULL,
         `repo_state` VARCHAR(20) NOT NULL DEFAULT 'pending',
         `created_at` INT UNSIGNED NOT NULL DEFAULT 0,
         `delete_after` INT UNSIGNED DEFAULT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=latin1",
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."restic_snapshots` (
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."restic_snapshots` (
         `snapshot_row_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         `home_id` INT UNSIGNED NOT NULL,
         `snapshot_id` VARCHAR(64) NOT NULL,

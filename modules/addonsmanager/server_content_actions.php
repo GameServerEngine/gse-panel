@@ -28,7 +28,7 @@ function server_content_collect_workshop_ids($db, $home_id, $pending_only = fals
 		$where .= " AND pending_action='install_on_restart'";
 	}
 	$rows = $db->resultQuery(
-		"SELECT workshop_item_id FROM `".TABLE_PREFIX_PLACEHOLDER."server_content_workshop`
+		"SELECT workshop_item_id FROM `".DB_PREFIX."server_content_workshop`
 		 WHERE {$where}"
 	);
 	$item_ids = array();
@@ -47,8 +47,8 @@ function server_content_collect_manifest_addon_rows($db, $home_id)
 {
 	$rows = $db->resultQuery(
 		"SELECT m.addon_id, m.install_method, m.content_version, m.install_state, a.name, a.url
-		   FROM `".TABLE_PREFIX_PLACEHOLDER."server_content_manifest` m
-		   LEFT JOIN `".TABLE_PREFIX_PLACEHOLDER."addons` a ON a.addon_id = m.addon_id
+		   FROM `".DB_PREFIX."server_content_manifest` m
+		   LEFT JOIN `".DB_PREFIX."addons` a ON a.addon_id = m.addon_id
 		  WHERE m.home_id=".(int)$home_id."
 		    AND m.install_state <> 'uninstalled'
 		  ORDER BY m.updated_at DESC, m.installed_at DESC"

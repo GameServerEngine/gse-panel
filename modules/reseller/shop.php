@@ -53,7 +53,7 @@ function exec_module()
 		$new_description = clean($_POST['description']);
 		$service = clean($_POST['service_id']);
 
-		$change_description = "UPDATE TABLE_PREFIX_PLACEHOLDERreseller_services
+		$change_description = "UPDATE DB_PREFIXreseller_services
 						       SET description ='".$new_description."'
 						       WHERE service_id=".$service;
 		$save = $db->query($change_description);
@@ -87,7 +87,7 @@ function exec_module()
 	// Shop Form
 	$isAdmin = $db->isAdmin($_SESSION['user_id'] );
 	if(isset($_REQUEST['service_id'])) $where_service_id = " WHERE service_id=".$_REQUEST['service_id']; else $where_service_id = "";
-	$qry_services = "SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_services".$where_service_id;
+	$qry_services = "SELECT * FROM DB_PREFIXreseller_services".$where_service_id;
 	$services = $db->resultQuery($qry_services);
 	if(empty($services))
 	{

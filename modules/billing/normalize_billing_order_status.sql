@@ -1,6 +1,6 @@
 -- normalize_billing_order_status.sql
 --
--- One-time migration: standardize TABLE_PREFIX_PLACEHOLDERbilling_orders.status to the canonical
+-- One-time migration: standardize DB_PREFIXbilling_orders.status to the canonical
 -- three-value set used by cron-shop.php, create_servers.php, and the game
 -- monitor expiration lookup:
 --

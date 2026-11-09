@@ -18,7 +18,7 @@
  *   7. A config preset (type=config).
  *   8. A full server profile built from multiple actions (type=profile).
  *
- * DB table: TABLE_PREFIX_PLACEHOLDERaddons (unchanged for backward compatibility).
+ * DB table: DB_PREFIXaddons (unchanged for backward compatibility).
  * See SERVER_CONTENT_ROADMAP.md for the full migration plan.
  *
  */
@@ -134,7 +134,7 @@ function exec_module() {
 			{
 				print_success(get_lang_f("addon_has_been_created", $fields['name']));
 				if (isset($_POST['addon_id']) && (int)$_POST['addon_id'] > 0 && isset($_POST['edit']))
-					$db->query("DELETE FROM TABLE_PREFIX_PLACEHOLDERaddons WHERE addon_id=" . (int)$_POST['addon_id']);
+					$db->query("DELETE FROM DB_PREFIXaddons WHERE addon_id=" . (int)$_POST['addon_id']);
 			}
 		}
 	}
@@ -166,7 +166,7 @@ function exec_module() {
 
 	if (isset($_POST['addon_id']) && (int)$_POST['addon_id'] > 0 && isset($_POST['edit']))
 	{
-		$addons_rows = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERaddons WHERE addon_id=".(int)$_POST['addon_id']);
+		$addons_rows = $db->resultQuery("SELECT * FROM DB_PREFIXaddons WHERE addon_id=".(int)$_POST['addon_id']);
 		if (!is_array($addons_rows)) {
 			$addons_rows = [];
 		}
@@ -569,7 +569,7 @@ function exec_module() {
 	<?php
 	if (isset($_POST['addon_id']) && (int)$_POST['addon_id'] > 0 && isset($_POST['remove']))
 	{
-		if (!$db->query("DELETE FROM TABLE_PREFIX_PLACEHOLDERaddons WHERE addon_id=" . (int)$_POST['addon_id']))
+		if (!$db->query("DELETE FROM DB_PREFIXaddons WHERE addon_id=" . (int)$_POST['addon_id']))
 			print_lang('can_not_remove_addon');
 	}
 
@@ -579,24 +579,24 @@ function exec_module() {
 
 	if ( isset($_GET['show']) )
 	{
-		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM TABLE_PREFIX_PLACEHOLDERaddons NATURAL JOIN TABLE_PREFIX_PLACEHOLDERconfig_homes WHERE addon_type='".$addon_type."' AND home_cfg_id=".$home_cfg_id);
+		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM DB_PREFIXaddons NATURAL JOIN DB_PREFIXconfig_homes WHERE addon_type='".$addon_type."' AND home_cfg_id=".$home_cfg_id);
 	}
 	elseif ( isset($_GET['show_all']) )
 	{
-		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM TABLE_PREFIX_PLACEHOLDERaddons NATURAL JOIN TABLE_PREFIX_PLACEHOLDERconfig_homes");
+		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM DB_PREFIXaddons NATURAL JOIN DB_PREFIXconfig_homes");
 	}
 	elseif ( isset($_GET['show_type']))
 	{
-		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM TABLE_PREFIX_PLACEHOLDERaddons NATURAL JOIN TABLE_PREFIX_PLACEHOLDERconfig_homes WHERE addon_type='".$addon_type."'");
+		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM DB_PREFIXaddons NATURAL JOIN DB_PREFIXconfig_homes WHERE addon_type='".$addon_type."'");
 	}
 	elseif ( isset($_GET['show_game']))
 	{
-		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM TABLE_PREFIX_PLACEHOLDERaddons NATURAL JOIN TABLE_PREFIX_PLACEHOLDERconfig_homes WHERE home_cfg_id=".$home_cfg_id);
+		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM DB_PREFIXaddons NATURAL JOIN DB_PREFIXconfig_homes WHERE home_cfg_id=".$home_cfg_id);
 	}
 	elseif ( isset($_GET['show_group']))
 	{
 		$group_id = $group_id == '0' ? $group_id." OR group_id IS NULL" : $group_id;
-		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM TABLE_PREFIX_PLACEHOLDERaddons NATURAL JOIN TABLE_PREFIX_PLACEHOLDERconfig_homes WHERE group_id=".$group_id);
+		$result = $db->resultQuery("SELECT DISTINCT addon_id, name, game_name, url, path, group_id FROM DB_PREFIXaddons NATURAL JOIN DB_PREFIXconfig_homes WHERE group_id=".$group_id);
 	}
 	if (isset($result) && !is_array($result)) {
 		$result = [];

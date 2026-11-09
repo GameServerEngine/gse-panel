@@ -20,11 +20,11 @@ function exec_module()
 		$isAdmin = $db->isAdmin( $_SESSION['user_id'] );
 
 		if ( $isAdmin )
-			$accounts = $db->resultQuery( "SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE cart_id=".$cart_id );
+			$accounts = $db->resultQuery( "SELECT * FROM DB_PREFIXreseller_accounts WHERE cart_id=".$cart_id );
 		else
-			$accounts = $db->resultQuery( "SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE cart_id=".$cart_id." AND user_id=".$user_id );
+			$accounts = $db->resultQuery( "SELECT * FROM DB_PREFIXreseller_accounts WHERE cart_id=".$cart_id." AND user_id=".$user_id );
 
-		$cart = $db->resultQuery( "SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_carts WHERE cart_id=".$cart_id );
+		$cart = $db->resultQuery( "SELECT * FROM DB_PREFIXreseller_carts WHERE cart_id=".$cart_id );
 
 		if( !empty($accounts) )
 		{
@@ -65,11 +65,11 @@ function exec_module()
 				$user_id = $account['user_id'];
 				$service_id = $account['service_id'];
 				$service = $db->resultQuery( "SELECT *
-											   FROM TABLE_PREFIX_PLACEHOLDERreseller_services
+											   FROM DB_PREFIXreseller_services
 											   WHERE service_id=".$service_id );
 
 				$cart = $db->resultQuery( "SELECT *
-										   FROM TABLE_PREFIX_PLACEHOLDERreseller_carts
+										   FROM DB_PREFIXreseller_carts
 										   WHERE cart_id=".$account['cart_id'] );
 
 				$currency = $cart[0]['currency'];

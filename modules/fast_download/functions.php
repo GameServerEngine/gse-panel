@@ -52,15 +52,15 @@ function get_access_rules($home_cfg_id = "")
 	global $db;
 	if($home_cfg_id == "")
 	{
-		return $db->resultQuery("SELECT * FROM `".TABLE_PREFIX_PLACEHOLDER."fastdl_access_rules`;");
+		return $db->resultQuery("SELECT * FROM `".DB_PREFIX."fastdl_access_rules`;");
 	}
 	else
 	{
-		$result = $db->resultQuery("SELECT * FROM `".TABLE_PREFIX_PLACEHOLDER."fastdl_access_rules`
+		$result = $db->resultQuery("SELECT * FROM `".DB_PREFIX."fastdl_access_rules`
 									WHERE `home_cfg_id`='".$db->realEscapeSingle($home_cfg_id)."'");
 		if($result === FALSE)
 		{
-			$result = $db->resultQuery("SELECT * FROM `".TABLE_PREFIX_PLACEHOLDER."fastdl_access_rules`
+			$result = $db->resultQuery("SELECT * FROM `".DB_PREFIX."fastdl_access_rules`
 										WHERE `home_cfg_id`='0'");
 			if($result === FALSE)
 				return array('match_file_extension' => NULL,'match_client_ip', NULL);
@@ -72,12 +72,12 @@ function get_access_rules($home_cfg_id = "")
 function set_access_rule($home_cfg_id, $match_file_extension, $match_client_ip)
 {
 	global $db;
-	if (!$db->resultQuery("SELECT * FROM `".TABLE_PREFIX_PLACEHOLDER."fastdl_access_rules`
+	if (!$db->resultQuery("SELECT * FROM `".DB_PREFIX."fastdl_access_rules`
 								WHERE `home_cfg_id`='".$db->realEscapeSingle($home_cfg_id)."'"))
 	{
 		if($match_file_extension == "" and  $match_client_ip == "")
 			return TRUE;
-		return $db->query("INSERT INTO `".TABLE_PREFIX_PLACEHOLDER."fastdl_access_rules`
+		return $db->query("INSERT INTO `".DB_PREFIX."fastdl_access_rules`
 						  (`home_cfg_id`,`match_file_extension`,`match_client_ip`)
 						  VALUES('" . $db->realEscapeSingle($home_cfg_id) . "','" . $db->realEscapeSingle($match_file_extension) . "','" . $db->realEscapeSingle($match_client_ip) . "');");
 	}
@@ -85,11 +85,11 @@ function set_access_rule($home_cfg_id, $match_file_extension, $match_client_ip)
 	{
 		if($match_file_extension == "" and  $match_client_ip == "")
 		{
-			return $db->query("DELETE FROM `".TABLE_PREFIX_PLACEHOLDER."fastdl_access_rules` WHERE `home_cfg_id`='" . $db->realEscapeSingle($home_cfg_id) . "';");
+			return $db->query("DELETE FROM `".DB_PREFIX."fastdl_access_rules` WHERE `home_cfg_id`='" . $db->realEscapeSingle($home_cfg_id) . "';");
 		}
 		else
 		{
-			return $db->query("UPDATE `".TABLE_PREFIX_PLACEHOLDER."fastdl_access_rules`
+			return $db->query("UPDATE `".DB_PREFIX."fastdl_access_rules`
 							  SET `match_file_extension`='" . $db->realEscapeSingle($match_file_extension) . "',
 								  `match_client_ip`='" . $db->realEscapeSingle($match_client_ip) . "'
 							  WHERE `home_cfg_id`='" . $db->realEscapeSingle($home_cfg_id) . "';");
@@ -100,7 +100,7 @@ function set_access_rule($home_cfg_id, $match_file_extension, $match_client_ip)
 function del_access_rule($home_cfg_id)
 {
 	global $db;
-	return $db->query("DELETE FROM `".TABLE_PREFIX_PLACEHOLDER."fastdl_access_rules` WHERE `home_cfg_id`='" . $db->realEscapeSingle($home_cfg_id) . "';");
+	return $db->query("DELETE FROM `".DB_PREFIX."fastdl_access_rules` WHERE `home_cfg_id`='" . $db->realEscapeSingle($home_cfg_id) . "';");
 }
 
 function check_access_rules_entries()
@@ -165,7 +165,7 @@ function get_fastdl_settings($remote_server_id)
 {
 	global $db;
 	if( !is_numeric($remote_server_id) ) return FALSE;
-	$result = $db->resultQuery("SELECT `setting`,`value` FROM `".TABLE_PREFIX_PLACEHOLDER."fastdl_settings`
+	$result = $db->resultQuery("SELECT `setting`,`value` FROM `".DB_PREFIX."fastdl_settings`
 								WHERE `remote_server_id`='".$db->realEscapeSingle($remote_server_id)."'");
 	if(!$result) return FALSE;
 	$results = array();
@@ -184,7 +184,7 @@ function set_fastdl_settings($remote_server_id, $settings)
 	if( !is_array($settings) ) return FALSE;
 	foreach ((array)$settings as $s_key => $s_value )
 	{
-		$query = 'INSERT INTO `'.TABLE_PREFIX_PLACEHOLDER.'fastdl_settings` (`remote_server_id`,`setting`,`value`)
+		$query = 'INSERT INTO `'.DB_PREFIX.'fastdl_settings` (`remote_server_id`,`setting`,`value`)
 			VALUES(\''.$db->realEscapeSingle($remote_server_id).'\', \''.$db->realEscapeSingle($s_key).'\', \''.$db->realEscapeSingle($s_value).'\') ON DUPLICATE KEY
 			UPDATE value=\''.$db->realEscapeSingle($s_value).'\'';
 		$db->query($query);

@@ -36,8 +36,8 @@ $module_menus = array(
 
 $install_queries = array();
 $install_queries[0] = array(
-	"DROP TABLE IF EXISTS `".TABLE_PREFIX_PLACEHOLDER."reseller_services`;",
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."reseller_services` (
+	"DROP TABLE IF EXISTS `".DB_PREFIX."reseller_services`;",
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."reseller_services` (
 	`service_id` int(11) NOT NULL auto_increment,
 	`service_name` varchar(60) NOT NULL,
 	`slot_max_qty` int(11) NOT NULL,
@@ -51,8 +51,8 @@ $install_queries[0] = array(
 	PRIMARY KEY  (`service_id`)
     ) ENGINE=MyISAM DEFAULT CHARSET=UTF8;",
 
-    "DROP TABLE IF EXISTS `".TABLE_PREFIX_PLACEHOLDER."reseller_accounts`;",
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."reseller_accounts` (
+    "DROP TABLE IF EXISTS `".DB_PREFIX."reseller_accounts`;",
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."reseller_accounts` (
 	`account_id` int(11) NOT NULL auto_increment,
 	`service_id` int(11) NOT NULL,
 	`user_id` int(11) NOT NULL,
@@ -68,8 +68,8 @@ $install_queries[0] = array(
 	PRIMARY KEY  (`account_id`)
     ) ENGINE=MyISAM DEFAULT CHARSET=UTF8;",
 
-	"DROP TABLE IF EXISTS `".TABLE_PREFIX_PLACEHOLDER."reseller_carts`;",
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."reseller_carts` (
+	"DROP TABLE IF EXISTS `".DB_PREFIX."reseller_carts`;",
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."reseller_carts` (
 	`cart_id` int(11) NOT NULL auto_increment,
 	`user_id` int(11) NOT NULL,
 	`paid` int(11) NULL,
@@ -78,8 +78,8 @@ $install_queries[0] = array(
 	PRIMARY KEY  (`cart_id`)
     ) ENGINE=MyISAM DEFAULT CHARSET=UTF8;",
 
-	"DROP TABLE IF EXISTS `".TABLE_PREFIX_PLACEHOLDER."reseller_discount_codes`;",
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."reseller_discount_codes` (
+	"DROP TABLE IF EXISTS `".DB_PREFIX."reseller_discount_codes`;",
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."reseller_discount_codes` (
 	`discount_id` int(11) NOT NULL auto_increment,
 	`service_id` int(11) NOT NULL,
 	`percentage` int(11) NOT NULL,
@@ -88,8 +88,8 @@ $install_queries[0] = array(
 	PRIMARY KEY  (`discount_id`)
 	) ENGINE=MyISAM;",
 
-	"DROP TABLE IF EXISTS `".TABLE_PREFIX_PLACEHOLDER."reseller_homes`;",
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."reseller_homes` (
+	"DROP TABLE IF EXISTS `".DB_PREFIX."reseller_homes`;",
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."reseller_homes` (
 	`home_id` int(11) NOT NULL,
 	`user_id` int(11) NOT NULL,
 	`account_id` int(11) NOT NULL,

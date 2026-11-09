@@ -67,7 +67,7 @@ function exec_module()
 		require_once("modules/config_games/server_config_parser.php");
 		require_once("includes/lib_remote.php");
 		$user_homes = $db->resultQuery( "SELECT *
-								 FROM TABLE_PREFIX_PLACEHOLDERreseller_homes
+								 FROM DB_PREFIXreseller_homes
 								 WHERE home_id=" . $_POST['home_id'] );
 		$user_home = $user_homes[0];
 		$user_id = $user_home['user_id'];
@@ -97,13 +97,13 @@ function exec_module()
 		print_success(get_lang_f('home_id_deleted_successfully', $home_id) );
 
 		// Restore slots in the reseller account
-		$qry_accounts = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE account_id=".$user_home['account_id']);
+		$qry_accounts = $db->resultQuery("SELECT * FROM DB_PREFIXreseller_accounts WHERE account_id=".$user_home['account_id']);
 		$account = $qry_accounts[0];
 		$update_available_slots = $account['available_slots'] + $user_home['assigned_slots'];
-		$db->query("UPDATE TABLE_PREFIX_PLACEHOLDERreseller_accounts SET available_slots=".$update_available_slots." WHERE account_id=".$account['account_id']);
+		$db->query("UPDATE DB_PREFIXreseller_accounts SET available_slots=".$update_available_slots." WHERE account_id=".$account['account_id']);
 
 		// Delete the reseller home entry
-		$db->query( "DELETE FROM TABLE_PREFIX_PLACEHOLDERreseller_homes
+		$db->query( "DELETE FROM DB_PREFIXreseller_homes
 					 WHERE home_id=" . $home_id);
 
 		print_success(get_lang_f('the_amount_of_available_slots_has_been_incremented_to', $update_available_slots) );
@@ -111,9 +111,9 @@ function exec_module()
 
 	$filter = isset($_GET['account_id']) ? "account_id=".$_GET['account_id'] : "";
 	$filter_and = isset($_GET['account_id']) ? $filter." AND" : "";
-	$user_account = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE $filter_and user_id=".$_SESSION['user_id']);
+	$user_account = $db->resultQuery("SELECT * FROM DB_PREFIXreseller_accounts WHERE $filter_and user_id=".$_SESSION['user_id']);
 	$where_filter = isset($_GET['account_id']) ? " WHERE ".$filter : "";
-	$reseller_homes = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_homes".$where_filter);
+	$reseller_homes = $db->resultQuery("SELECT * FROM DB_PREFIXreseller_homes".$where_filter);
 
 	if( ! empty($reseller_homes) AND ( !empty($user_account[0]) or $isAdmin ) )
 	{
@@ -138,7 +138,7 @@ function exec_module()
 			$home_id = $user_home['home_id'];
 
 			// reseller account data
-			$rs_account = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE account_id=".$account_id);
+			$rs_account = $db->resultQuery("SELECT * FROM DB_PREFIXreseller_accounts WHERE account_id=".$account_id);
 			// reseller user info
 			$rs_user_info = $db->getUserById($rs_account[0]['user_id']);
 			$reseller_username = $rs_user_info['users_login'];

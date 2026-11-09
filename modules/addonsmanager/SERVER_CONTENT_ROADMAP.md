@@ -17,7 +17,7 @@ homes by users.
 
 ```
 Admin creates Server Content item  (addons_manager.php)
-  └─> stored in TABLE_PREFIX_PLACEHOLDERaddons
+  └─> stored in DB_PREFIXaddons
 
 User visits game monitor
   └─> monitor_buttons.php checks for content items for that game type
@@ -36,7 +36,7 @@ User clicks button
 
 ## 2. Database Schema (db_version 4 — Phase 2)
 
-### `TABLE_PREFIX_PLACEHOLDERaddons` (content item catalogue)
+### `DB_PREFIXaddons` (content item catalogue)
 
 | Column                | Type            | Default       | Description |
 |-----------------------|-----------------|---------------|-------------|
@@ -58,7 +58,7 @@ User clicks button
 
 ¹ Added in db_version 4 (Phase 2).
 
-### `TABLE_PREFIX_PLACEHOLDERserver_content_manifest` (Phase 2 — per-server installed state)
+### `DB_PREFIXserver_content_manifest` (Phase 2 — per-server installed state)
 
 One row per (home_id, addon_id) pair.  Updated on every successful install.
 
@@ -77,7 +77,7 @@ One row per (home_id, addon_id) pair.  Updated on every successful install.
 | updated_at      | DATETIME NULL    | Last update time |
 | notes           | TEXT NULL        | Free-text admin notes |
 
-### `TABLE_PREFIX_PLACEHOLDERserver_content_install_history` (Phase 2 — install log)
+### `DB_PREFIXserver_content_install_history` (Phase 2 — install log)
 
 One row per install attempt.  Never deleted (audit trail).
 
@@ -163,7 +163,7 @@ All replacements are case-insensitive (`preg_replace … /i`).
 ## 6. Proposed Next Database Fields
 
 ```sql
-ALTER TABLE TABLE_PREFIX_PLACEHOLDERaddons
+ALTER TABLE DB_PREFIXaddons
   MODIFY addon_type VARCHAR(32) NOT NULL,          -- already applied in db_version 2
   ADD COLUMN install_method    VARCHAR(32) NOT NULL DEFAULT 'download_zip',
   ADD COLUMN content_version   VARCHAR(64) NULL,

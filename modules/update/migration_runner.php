@@ -12,7 +12,7 @@
 
 function migrations_table_name()
 {
-	return 'TABLE_PREFIX_PLACEHOLDERschema_migrations';
+	return 'DB_PREFIXschema_migrations';
 }
 
 function migrations_ensure_table($db)

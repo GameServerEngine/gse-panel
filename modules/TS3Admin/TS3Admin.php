@@ -69,11 +69,11 @@ function exec_module()
 			$_SESSION['rserver_id'] = $_GET['rserver_id'];
 			if( $isAdmin )
 			{
-				$TS3_list = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERts3_homes WHERE rserver_id='".$_SESSION['rserver_id']."'");
+				$TS3_list = $db->resultQuery("SELECT * FROM DB_PREFIXts3_homes WHERE rserver_id='".$_SESSION['rserver_id']."'");
 			}
 			else
 			{
-				$sql = "SELECT * FROM TABLE_PREFIX_PLACEHOLDERts3_homes WHERE";
+				$sql = "SELECT * FROM DB_PREFIXts3_homes WHERE";
 				if(!$isAdmin){
 					$sql .= " user_id='".$_SESSION['user_id']."' AND";
 				}

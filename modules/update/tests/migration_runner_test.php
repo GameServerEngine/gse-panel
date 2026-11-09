@@ -41,11 +41,11 @@ class MigrationTestDb
             return false;
         }
 
-        if (preg_match('/^CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERschema_migrations`/', $sql)) {
+        if (preg_match('/^CREATE TABLE IF NOT EXISTS `DB_PREFIXschema_migrations`/', $sql)) {
             $this->tables['schema_migrations'] = true;
             return true;
         }
-        if (preg_match('/^INSERT INTO `TABLE_PREFIX_PLACEHOLDERschema_migrations` \(migration_id, applied_at\) VALUES \(\'([^\']+)\', \'([^\']+)\'\)/', $sql, $m)) {
+        if (preg_match('/^INSERT INTO `DB_PREFIXschema_migrations` \(migration_id, applied_at\) VALUES \(\'([^\']+)\', \'([^\']+)\'\)/', $sql, $m)) {
             $this->tables['schema_migrations_rows'][$m[1]] = $m[2];
             return true;
         }
@@ -55,7 +55,7 @@ class MigrationTestDb
 
     public function resultQuery($sql)
     {
-        if (preg_match('/^SELECT migration_id, applied_at FROM `TABLE_PREFIX_PLACEHOLDERschema_migrations`/', $sql)) {
+        if (preg_match('/^SELECT migration_id, applied_at FROM `DB_PREFIXschema_migrations`/', $sql)) {
             $rows = [];
             foreach ((array)($this->tables['schema_migrations_rows'] ?? []) as $id => $at) {
                 $rows[] = ['migration_id' => $id, 'applied_at' => $at];

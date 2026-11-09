@@ -44,7 +44,7 @@ function exec_module()
 		$widget_id = preg_replace('/[^\d\s]/', '', $item->id);
 
 		if (is_numeric($col_id) && is_numeric($widget_id)) {
-			$db->query("UPDATE ".TABLE_PREFIX_PLACEHOLDER."widgets_users SET column_id='$col_id', sort_no='".(int)$item->order."', collapsed='".(int)$item->collapsed."' WHERE widget_id='".$widget_id."' AND user_id='".$_SESSION['user_id']."'");
+			$db->query("UPDATE ".DB_PREFIX."widgets_users SET column_id='$col_id', sort_no='".(int)$item->order."', collapsed='".(int)$item->collapsed."' WHERE widget_id='".$widget_id."' AND user_id='".$_SESSION['user_id']."'");
 		}
 	}
 

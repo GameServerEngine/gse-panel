@@ -22,7 +22,7 @@
  *
  */
 
-define("TABLE_PREFIX_PLACEHOLDER", "TABLE_PREFIX_PLACEHOLDER");
+define("DB_PREFIX", "DB_PREFIX");
 
 abstract class Database {
 

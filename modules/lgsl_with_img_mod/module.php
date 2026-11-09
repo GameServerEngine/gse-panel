@@ -33,7 +33,7 @@ $module_menus = array( array( 'subpage' => 'lgsl', 'name'=>'LGSL', 'group'=>'use
 
 $install_queries = array();
 $install_queries[0] = array(
-						"CREATE TABLE IF NOT EXISTS ".TABLE_PREFIX_PLACEHOLDER."lgsl
+						"CREATE TABLE IF NOT EXISTS ".DB_PREFIX."lgsl
 						 (
 
 						  `id`         INT     (11)  NOT NULL auto_increment,

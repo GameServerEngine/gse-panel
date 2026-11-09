@@ -1,7 +1,7 @@
 -- Create billing_invoices table for invoice-first flow
 -- Run this SQL to enable the new billing system
 
-CREATE TABLE IF NOT EXISTS `TABLE_PREFIX_PLACEHOLDERbilling_invoices` (
+CREATE TABLE IF NOT EXISTS `DB_PREFIXbilling_invoices` (
     `invoice_id` INT(11) NOT NULL AUTO_INCREMENT,
     `order_id` INT(11) NOT NULL DEFAULT 0,
     `user_id` INT(11) NOT NULL,

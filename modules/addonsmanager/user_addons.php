@@ -79,8 +79,8 @@ function exec_module() {
 		{
 			$items = $db->resultQuery(
 				"SELECT DISTINCT addon_id, name, game_name " .
-				"FROM TABLE_PREFIX_PLACEHOLDERaddons " .
-				"NATURAL JOIN TABLE_PREFIX_PLACEHOLDERconfig_homes " .
+				"FROM DB_PREFIXaddons " .
+				"NATURAL JOIN DB_PREFIXconfig_homes " .
 				"WHERE addon_type='" . $db->realEscapeSingle($type_key) . "' " .
 				"AND home_cfg_id=" . (int)$home_cfg_id . $query_groups . $server_bot_os_filter
 				);

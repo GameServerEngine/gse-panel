@@ -31,7 +31,7 @@ $module_menus = array( array( 'subpage' => 'game_monitor', 'name'=>'Game Monitor
 $module_access_rights = array('u' => 'allow_updates', 'p' => 'allow_parameter_usage', 'e' => 'allow_extra_params', 'c' => 'allow_custom_fields');
 
 $install_queries[0] = array(
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."home_ip_ports` (
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."home_ip_ports` (
         `ip_id` int(11) NOT NULL,
         `port` int(11) NOT NULL,
         `home_id` int(11) NOT NULL,
@@ -39,7 +39,7 @@ $install_queries[0] = array(
         PRIMARY KEY  (`ip_id`,`port`)
     ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
 
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."server_homes` (
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."server_homes` (
         `home_id` int(50) NOT NULL auto_increment,
         `remote_server_id` int(11) NOT NULL,
         `user_id_main` int(11) NOT NULL,
@@ -57,7 +57,7 @@ $install_queries[0] = array(
         PRIMARY KEY  (`home_id`)
     ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
 
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."rcon_presets` (
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."rcon_presets` (
         `preset_id` int(50) NOT NULL auto_increment,
         `name` varchar(20) NOT NULL,
         `command` varchar(100) NOT NULL,
@@ -66,7 +66,7 @@ $install_queries[0] = array(
         PRIMARY KEY  (`preset_id`)
     ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
 
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."game_mods` (
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."game_mods` (
         `mod_id` int(50) NOT NULL auto_increment,
         `home_id` int(255) NOT NULL,
         `mod_cfg_id` int(11) NOT NULL,
@@ -80,7 +80,7 @@ $install_queries[0] = array(
         UNIQUE KEY home_id (home_id,mod_cfg_id)
     ) ENGINE=MyISAM;",
 
-    "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX_PLACEHOLDER."status_cache` (
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."status_cache` (
         `date_timestamp` char(16) NOT NULL,
         `ip_id` char(3) NOT NULL,
         `port` char(6) NOT NULL,
@@ -96,63 +96,63 @@ $install_queries[0] = array(
 $install_queries[2] = array(
     // billing_status: current lifecycle state (Active / Invoiced / Expired)
     function($db) {
-        if (!$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` ADD `billing_status` VARCHAR(16) NOT NULL DEFAULT 'Active'")) {
+        if (!$db->query("ALTER TABLE `DB_PREFIXserver_homes` ADD `billing_status` VARCHAR(16) NOT NULL DEFAULT 'Active'")) {
             return (stripos((string)$db->getError(), 'Duplicate column') !== false);
         }
         return true;
     },
     // billing_enabled: whether this server participates in billing automation
     function($db) {
-        if (!$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` ADD `billing_enabled` TINYINT(1) NOT NULL DEFAULT 0")) {
+        if (!$db->query("ALTER TABLE `DB_PREFIXserver_homes` ADD `billing_enabled` TINYINT(1) NOT NULL DEFAULT 0")) {
             return (stripos((string)$db->getError(), 'Duplicate column') !== false);
         }
         return true;
     },
     // next_invoice_date: when cron-shop should generate the next renewal invoice
     function($db) {
-        if (!$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` ADD `next_invoice_date` DATETIME NULL DEFAULT NULL")) {
+        if (!$db->query("ALTER TABLE `DB_PREFIXserver_homes` ADD `next_invoice_date` DATETIME NULL DEFAULT NULL")) {
             return (stripos((string)$db->getError(), 'Duplicate column') !== false);
         }
         return true;
     },
     // last_invoice_id: FK to billing_invoices.invoice_id (most recent renewal)
     function($db) {
-        if (!$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` ADD `last_invoice_id` INT(11) NOT NULL DEFAULT 0")) {
+        if (!$db->query("ALTER TABLE `DB_PREFIXserver_homes` ADD `last_invoice_id` INT(11) NOT NULL DEFAULT 0")) {
             return (stripos((string)$db->getError(), 'Duplicate column') !== false);
         }
         return true;
     },
     // billing_expires_at: canonical billing expiration date (DATETIME)
     function($db) {
-        if (!$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` ADD `billing_expires_at` DATETIME NULL DEFAULT NULL")) {
+        if (!$db->query("ALTER TABLE `DB_PREFIXserver_homes` ADD `billing_expires_at` DATETIME NULL DEFAULT NULL")) {
             return (stripos((string)$db->getError(), 'Duplicate column') !== false);
         }
         return true;
     },
     // billing_price: price stored at provisioning time for renewals
     function($db) {
-        if (!$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` ADD `billing_price` DECIMAL(15,4) NOT NULL DEFAULT 0.0000")) {
+        if (!$db->query("ALTER TABLE `DB_PREFIXserver_homes` ADD `billing_price` DECIMAL(15,4) NOT NULL DEFAULT 0.0000")) {
             return (stripos((string)$db->getError(), 'Duplicate column') !== false);
         }
         return true;
     },
     // billing_rate_type: 'daily' / 'monthly' / 'yearly'
     function($db) {
-        if (!$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` ADD `billing_rate_type` ENUM('daily','monthly','yearly') NOT NULL DEFAULT 'monthly'")) {
+        if (!$db->query("ALTER TABLE `DB_PREFIXserver_homes` ADD `billing_rate_type` ENUM('daily','monthly','yearly') NOT NULL DEFAULT 'monthly'")) {
             return (stripos((string)$db->getError(), 'Duplicate column') !== false);
         }
         return true;
     },
     // billing_players: slot count used to calculate per-player pricing
     function($db) {
-        if (!$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` ADD `billing_players` INT(11) NOT NULL DEFAULT 0")) {
+        if (!$db->query("ALTER TABLE `DB_PREFIXserver_homes` ADD `billing_players` INT(11) NOT NULL DEFAULT 0")) {
             return (stripos((string)$db->getError(), 'Duplicate column') !== false);
         }
         return true;
     },
     // billing_invoice_sent_at: timestamp of last renewal invoice email
     function($db) {
-        if (!$db->query("ALTER TABLE `TABLE_PREFIX_PLACEHOLDERserver_homes` ADD `billing_invoice_sent_at` DATETIME NULL DEFAULT NULL")) {
+        if (!$db->query("ALTER TABLE `DB_PREFIXserver_homes` ADD `billing_invoice_sent_at` DATETIME NULL DEFAULT NULL")) {
             return (stripos((string)$db->getError(), 'Duplicate column') !== false);
         }
         return true;

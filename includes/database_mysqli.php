@@ -1211,12 +1211,12 @@ class DatabaseMySQL extends Database
 	/// \brief Used to make plain query to the database.
 	/// \return true if success and false otherwise.
 	/// When false is returned user can check error with getError() function.
-	// Runs a SELECT and returns all rows as arrays (TABLE_PREFIX_PLACEHOLDER placeholder allowed). FALSE on failure.
+	// Runs a SELECT and returns all rows as arrays (DB_PREFIX placeholder allowed). FALSE on failure.
 	public function queryRows( $query )
 	{
 		if ( !$this->link ) return FALSE;
 
-		$query = str_replace( "TABLE_PREFIX_PLACEHOLDER", $this->table_prefix, $query );
+		$query = str_replace( "DB_PREFIX", $this->table_prefix, $query );
 
 		++$this->queries_;
 		$result = mysqli_query($this->link,$query);
@@ -1231,7 +1231,7 @@ class DatabaseMySQL extends Database
 	{
 		if ( !$this->link ) return FALSE;
 
-		$query = str_replace( "TABLE_PREFIX_PLACEHOLDER", $this->table_prefix, $query );
+		$query = str_replace( "DB_PREFIX", $this->table_prefix, $query );
 
 		++$this->queries_;
 		try {
@@ -1251,7 +1251,7 @@ class DatabaseMySQL extends Database
 
 	/// \brief This query return array of values or false on failure.
 	public function resultQuery( $query ) {
-		$query = str_replace( "TABLE_PREFIX_PLACEHOLDER", $this->table_prefix, $query );
+		$query = str_replace( "DB_PREFIX", $this->table_prefix, $query );
 		return $this->listQuery($query);
 	}
 

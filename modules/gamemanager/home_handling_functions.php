@@ -755,16 +755,16 @@ function get_server_billing_expiration_html(int $home_id): string
 	// statuses ('installed', 'paid', 'suspended') are not matched here.
 	// Run normalize_billing_order_status.sql to migrate any legacy rows first.
 	//
-	// TABLE_PREFIX_PLACEHOLDER is replaced at runtime by the panel DB wrapper (str_replace).
+	// DB_PREFIX is replaced at runtime by the panel DB wrapper (str_replace).
 	// Server-level 'never expires' flag (server_expiration_date X or empty).
-	$flagRows = $db->resultQuery("SELECT server_expiration_date FROM TABLE_PREFIX_PLACEHOLDERserver_homes WHERE home_id = '" . intval($home_id) . "'");
+	$flagRows = $db->resultQuery("SELECT server_expiration_date FROM DB_PREFIXserver_homes WHERE home_id = '" . intval($home_id) . "'");
 	if (is_array($flagRows) && isset($flagRows[0]['server_expiration_date']) && in_array(trim((string)$flagRows[0]['server_expiration_date']), array('X', ''), true)) {
 		return "<span style='color:green;'>Never Expires</span>";
 	}
 
 	$rows = $db->resultQuery(
 		"SELECT end_date
-		   FROM TABLE_PREFIX_PLACEHOLDERbilling_orders
+		   FROM DB_PREFIXbilling_orders
 		  WHERE home_id = '" . intval($home_id) . "'
 		    AND home_id != '0'
 		    AND status IN ('Active','Invoiced')

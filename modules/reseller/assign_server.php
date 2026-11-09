@@ -65,9 +65,9 @@ function exec_module()
 		$mod_cfg_id = $_POST['mod_cfg_id'];
 		$max_players = $_POST['max_players'];
 		$web_user_id = trim($_POST['web_user_id']);
-		$qry_accounts = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE account_id=".$_POST['account_id']);
+		$qry_accounts = $db->resultQuery("SELECT * FROM DB_PREFIXreseller_accounts WHERE account_id=".$_POST['account_id']);
 		$account = $qry_accounts[0];
-		$qry_service = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_services WHERE service_id=".$account['service_id']);
+		$qry_service = $db->resultQuery("SELECT * FROM DB_PREFIXreseller_services WHERE service_id=".$account['service_id']);
 		$service = $qry_service[0];
 		$max_access_rights = $service['max_access_rights'];
 		$start_port = $service['start_port'];
@@ -164,7 +164,7 @@ function exec_module()
 						else
 						{
 							$update_available_slots = $account['available_slots'] - $max_players;
-							$db->query("UPDATE TABLE_PREFIX_PLACEHOLDERreseller_accounts SET available_slots=".$update_available_slots." WHERE account_id=".$account['account_id']);
+							$db->query("UPDATE DB_PREFIXreseller_accounts SET available_slots=".$update_available_slots." WHERE account_id=".$account['account_id']);
 
 							$status = "ADDDATE(DATE(NOW() + INTERVAL ".$assigned_months." MONTH), 1)";
 
@@ -175,7 +175,7 @@ function exec_module()
 												account_id=VALUES(account_id),
 												assigned_slots=VALUES(assigned_slots),
 												status=VALUES(status);',
-												'TABLE_PREFIX_PLACEHOLDER',
+												'DB_PREFIX',
 												$db->real_escape_string($home_id),
 												$db->real_escape_string($web_user_id),
 												$db->real_escape_string($account['account_id']),
@@ -192,10 +192,10 @@ function exec_module()
 							else
 							{
 								// Getting pre and post commands
-								$game_mod_precmd = $db->resultQuery("SELECT DISTINCT precmd FROM TABLE_PREFIX_PLACEHOLDERgame_mods WHERE mod_id='$mod_id'");
+								$game_mod_precmd = $db->resultQuery("SELECT DISTINCT precmd FROM DB_PREFIXgame_mods WHERE mod_id='$mod_id'");
 								if($game_mod_precmd[0]['precmd'] === NULL OR empty($game_mod_precmd[0]['precmd']))
 								{
-									$config_mod_precmd = $db->resultQuery("SELECT DISTINCT def_precmd FROM TABLE_PREFIX_PLACEHOLDERconfig_mods WHERE mod_cfg_id='$mod_cfg_id'");
+									$config_mod_precmd = $db->resultQuery("SELECT DISTINCT def_precmd FROM DB_PREFIXconfig_mods WHERE mod_cfg_id='$mod_cfg_id'");
 									if ($config_mod_precmd[0]['def_precmd'] === NULL OR empty($config_mod_precmd[0]['def_precmd']))
 										$precmd = "";
 									else
@@ -205,10 +205,10 @@ function exec_module()
 									$precmd = $game_mod_precmd[0]['precmd'];
 
 
-								$game_mod_postcmd = $db->resultQuery("SELECT DISTINCT postcmd FROM TABLE_PREFIX_PLACEHOLDERgame_mods WHERE mod_id='$mod_id'");
+								$game_mod_postcmd = $db->resultQuery("SELECT DISTINCT postcmd FROM DB_PREFIXgame_mods WHERE mod_id='$mod_id'");
 								if($game_mod_postcmd[0]['postcmd'] === NULL OR empty($game_mod_postcmd[0]['postcmd']))
 								{
-									$config_mod_postcmd = $db->resultQuery("SELECT DISTINCT def_postcmd FROM TABLE_PREFIX_PLACEHOLDERconfig_mods WHERE mod_cfg_id='$mod_cfg_id'");
+									$config_mod_postcmd = $db->resultQuery("SELECT DISTINCT def_postcmd FROM DB_PREFIXconfig_mods WHERE mod_cfg_id='$mod_cfg_id'");
 									if ($config_mod_postcmd[0]['def_postcmd'] === NULL OR empty($config_mod_postcmd[0]['def_postcmd']))
 										$postcmd = "";
 									else
@@ -321,9 +321,9 @@ function exec_module()
 
 	if( isset($_POST['account_id']) )
 	{
-		$qry_accounts = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE user_id=".$_SESSION['user_id']." AND account_id=".$_POST['account_id']);
+		$qry_accounts = $db->resultQuery("SELECT * FROM DB_PREFIXreseller_accounts WHERE user_id=".$_SESSION['user_id']." AND account_id=".$_POST['account_id']);
 		$account = $qry_accounts[0];
-		$qry_service = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_services WHERE service_id=".$account['service_id']);
+		$qry_service = $db->resultQuery("SELECT * FROM DB_PREFIXreseller_services WHERE service_id=".$account['service_id']);
 		$service = $qry_service[0];
 		$invoice_duration_string = $account['qty'] > 1 ? $account['invoice_duration']."s" : $account['invoice_duration'];
 		echo "<h4>" . $service['service_name'] . "&nbsp;/&nbsp;" . $account['qty'] . " " . get_lang( $invoice_duration_string ) . "&nbsp;&nbsp;&nbsp;[".get_lang_f( 'available_slots', $account['available_slots'] ).
@@ -336,14 +336,14 @@ function exec_module()
 	echo "<table class='center'>";
 	if( !isset($_POST['account_id']) )
 	{
-		$accounts = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE user_id=".$_SESSION['user_id']. "");
+		$accounts = $db->resultQuery("SELECT * FROM DB_PREFIXreseller_accounts WHERE user_id=".$_SESSION['user_id']. "");
 		if( ! empty( $accounts ) )
 		{
 			echo "<tr><td align=right><b>".get_lang('select_reseller_account')."</b></td><td align=left><select onchange=".'"this.form.submit()"'." name='account_id'>\n";
 			echo "<option></option>\n";
 			foreach( $accounts as $account )
 			{
-				$qry_service = $db->resultQuery("SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_services WHERE service_id=".$account['service_id']);
+				$qry_service = $db->resultQuery("SELECT * FROM DB_PREFIXreseller_services WHERE service_id=".$account['service_id']);
 				$service = $qry_service[0];
 					echo "<option value='".$account['account_id']."'>".
 						$service['service_name']." (".get_lang_f('available_slots', $account['available_slots'])."&nbsp;/&nbsp;".get_lang_f('available_months', $account['available_months']).")</option>\n";
@@ -478,7 +478,7 @@ function exec_module()
 			<select name="mod_cfg_id" onchange="this.form.submit()" >
 			<option></option>
 			<?php
-			$mod_qry = $db->resultQuery("SELECT DISTINCT mod_cfg_id, mod_name, game_name FROM TABLE_PREFIX_PLACEHOLDERconfig_mods NATURAL JOIN TABLE_PREFIX_PLACEHOLDERconfig_homes WHERE home_cfg_id=" . $_POST['home_cfg_id']);
+			$mod_qry = $db->resultQuery("SELECT DISTINCT mod_cfg_id, mod_name, game_name FROM DB_PREFIXconfig_mods NATURAL JOIN DB_PREFIXconfig_homes WHERE home_cfg_id=" . $_POST['home_cfg_id']);
 			foreach($mod_qry as $array_mods)
 			{
 				if($array_mods['mod_name'] == "none")$array_mods['mod_name']=$array_mods['game_name'];
@@ -498,7 +498,7 @@ function exec_module()
 		}
 		elseif( ! isset( $_POST['max_players'] ) )
 		{
-			$cfg_info = $db->resultQuery("SELECT DISTINCT home_cfg_file FROM TABLE_PREFIX_PLACEHOLDERconfig_homes WHERE home_cfg_id=" . $_POST['home_cfg_id']);
+			$cfg_info = $db->resultQuery("SELECT DISTINCT home_cfg_file FROM DB_PREFIXconfig_homes WHERE home_cfg_id=" . $_POST['home_cfg_id']);
 			$server_xml = read_server_config(SERVER_CONFIG_LOCATION.$cfg_info[0]['home_cfg_file'], os_for_install_row($cfg_info[0]));
 
 			if( isset( $server_xml->installer )  )

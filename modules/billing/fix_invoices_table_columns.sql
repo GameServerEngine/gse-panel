@@ -1,4 +1,4 @@
--- Fix missing columns / indexes for TABLE_PREFIX_PLACEHOLDERbilling_invoices
+-- Fix missing columns / indexes for DB_PREFIXbilling_invoices
 -- Safe script: checks information_schema and adds each missing column/index using prepared statements.
 -- IMPORTANT: Run on the target database (use the panel DB). Make a backup before running.
 

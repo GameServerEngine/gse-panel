@@ -40,9 +40,9 @@ Phase 1 adds manual Workshop ID support inside the existing `addonsmanager` modu
 
 Phase 1 introduces:
 
-- `TABLE_PREFIX_PLACEHOLDERserver_content_workshop`
+- `DB_PREFIXserver_content_workshop`
 
-and keeps `TABLE_PREFIX_PLACEHOLDERaddons.addon_type` at `VARCHAR(32)` so `workshop` is valid.
+and keeps `DB_PREFIXaddons.addon_type` at `VARCHAR(32)` so `workshop` is valid.
 
 ## Game/admin config TODO (next phase hardening)
 

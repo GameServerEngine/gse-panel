@@ -18,7 +18,7 @@ if (!defined('CRASH_TICKET_LOG_BYTES')) {
 /** Owner (user_id) of a game home, or 0 if none is linked. */
 function crash_owner_user_id($db, $home_id)
 {
-    $rows = $db->resultQuery('SELECT user_id FROM TABLE_PREFIX_PLACEHOLDERuser_homes WHERE home_id = ' . (int)$home_id . ' LIMIT 1');
+    $rows = $db->resultQuery('SELECT user_id FROM DB_PREFIXuser_homes WHERE home_id = ' . (int)$home_id . ' LIMIT 1');
     return (is_array($rows) && isset($rows[0]['user_id'])) ? (int)$rows[0]['user_id'] : 0;
 }
 
@@ -76,7 +76,7 @@ function open_crash_ticket($db, array $incident, $log_tail = '')
 
     $since = date('Y-m-d H:i:s', time() - CRASH_TICKET_WINDOW_SECONDS);
     $existing = $db->resultQuery(
-        "SELECT tid, uid FROM TABLE_PREFIX_PLACEHOLDERtickets WHERE user_id = " . (int)$user_id
+        "SELECT tid, uid FROM DB_PREFIXtickets WHERE user_id = " . (int)$user_id
         . " AND subject = '" . $db->realEscapeSingle($subject) . "'"
         . " AND status = 1 AND created_at >= '" . $db->realEscapeSingle($since) . "'"
         . " ORDER BY tid DESC LIMIT 1"

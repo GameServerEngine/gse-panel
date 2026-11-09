@@ -220,7 +220,7 @@ function os_for_install_row($row)
 	}
 	$homeId = is_array($row) && isset($row['home_id']) ? (int)$row['home_id'] : 0;
 	if ($homeId > 0 && isset($db) && $db) {
-		$rows = $db->resultQuery("SELECT rs.server_os FROM TABLE_PREFIX_PLACEHOLDERserver_homes sh INNER JOIN TABLE_PREFIX_PLACEHOLDERremote_servers rs ON rs.remote_server_id = sh.remote_server_id WHERE sh.home_id = {$homeId} LIMIT 1");
+		$rows = $db->resultQuery("SELECT rs.server_os FROM DB_PREFIXserver_homes sh INNER JOIN DB_PREFIXremote_servers rs ON rs.remote_server_id = sh.remote_server_id WHERE sh.home_id = {$homeId} LIMIT 1");
 		if (!empty($rows[0]['server_os'])) {
 			return $rows[0]['server_os'];
 		}

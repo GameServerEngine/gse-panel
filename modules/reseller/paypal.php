@@ -11,8 +11,8 @@ function exec_module()
 
 	if(!empty($cart_id))
 	{
-		$accounts = $db->resultQuery( "SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_accounts WHERE cart_id=".$cart_id );
-		$carts = $db->resultQuery( "SELECT * FROM TABLE_PREFIX_PLACEHOLDERreseller_carts WHERE cart_id=".$cart_id );
+		$accounts = $db->resultQuery( "SELECT * FROM DB_PREFIXreseller_accounts WHERE cart_id=".$cart_id );
+		$carts = $db->resultQuery( "SELECT * FROM DB_PREFIXreseller_carts WHERE cart_id=".$cart_id );
 		$cart = $carts[0];
 		if( !empty( $accounts ) )
 		{
