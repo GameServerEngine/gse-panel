@@ -58,20 +58,20 @@ function showAPILinks(elem){
 	if(apiToken && ipAddr && port && modKey && panelURL){
 
 		var actions = new Array(
-			{url: 'gsp_api.php?gamemanager/start', lang: 'start_server'},
-			{url: 'gsp_api.php?gamemanager/stop', lang: 'stop_server'},
-			{url: 'gsp_api.php?gamemanager/restart', lang: 'restart_server'}
+			{url: 'api.php?gamemanager/start', lang: 'start_server'},
+			{url: 'api.php?gamemanager/stop', lang: 'stop_server'},
+			{url: 'api.php?gamemanager/restart', lang: 'restart_server'}
 		);
 
 
 		var hasRcon = elem.attr('hasrcon');
 		if(hasRcon && hasRcon === 'true'){
-			actions.push({url: 'gsp_api.php?gamemanager/rcon', lang: 'rcon_command_title', additional: '&command={YOUR_RCON_COMMAND}'});
+			actions.push({url: 'api.php?gamemanager/rcon', lang: 'rcon_command_title', additional: '&command={YOUR_RCON_COMMAND}'});
 		}
 
 		var isSteam = elem.attr('hassteam');
 		if(isSteam && isSteam === 'true'){
-			actions.push({url: 'gsp_api.php?gamemanager/update', lang: 'get_steam_autoupdate_api_link', additional: '&type=steam', selected: true});
+			actions.push({url: 'api.php?gamemanager/update', lang: 'get_steam_autoupdate_api_link', additional: '&type=steam', selected: true});
 		}
 
 		var selectListHTML = '<select class="ogpAPIActions">';

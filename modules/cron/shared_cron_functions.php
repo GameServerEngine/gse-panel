@@ -150,18 +150,18 @@ function build_cron_scheduler_command($panelURL, $token, $game_home, $action) {
 			$options['pending_only'] = true;
 		}
 		$options_json = urlencode(json_encode($options));
-		return "wget -qO- \"{$panelURL}/gsp_api.php?server_content/run_scheduled_action&token={$token}&home_id={$home_id}&action={$action}&options={$options_json}\" --no-check-certificate > /dev/null 2>&1";
+		return "wget -qO- \"{$panelURL}/api.php?server_content/run_scheduled_action&token={$token}&home_id={$home_id}&action={$action}&options={$options_json}\" --no-check-certificate > /dev/null 2>&1";
 	}
 	switch ($action) {
 		case "stop":
-			return "wget -qO- \"{$panelURL}/gsp_api.php?gamemanager/stop&token={$token}&ip={$ip}&port={$port}&mod_key={$mod_key}\" --no-check-certificate > /dev/null 2>&1";
+			return "wget -qO- \"{$panelURL}/api.php?gamemanager/stop&token={$token}&ip={$ip}&port={$port}&mod_key={$mod_key}\" --no-check-certificate > /dev/null 2>&1";
 		case "start":
-			return "wget -qO- \"{$panelURL}/gsp_api.php?gamemanager/start&token={$token}&ip={$ip}&port={$port}&mod_key={$mod_key}\" --no-check-certificate > /dev/null 2>&1";
+			return "wget -qO- \"{$panelURL}/api.php?gamemanager/start&token={$token}&ip={$ip}&port={$port}&mod_key={$mod_key}\" --no-check-certificate > /dev/null 2>&1";
 		case "restart":
 			$options_json = urlencode(json_encode(array('triggered_by' => 'scheduler')));
-			return "wget -qO- \"{$panelURL}/gsp_api.php?gamemanager/restart&token={$token}&ip={$ip}&port={$port}&mod_key={$mod_key}&options={$options_json}\" --no-check-certificate > /dev/null 2>&1";
+			return "wget -qO- \"{$panelURL}/api.php?gamemanager/restart&token={$token}&ip={$ip}&port={$port}&mod_key={$mod_key}&options={$options_json}\" --no-check-certificate > /dev/null 2>&1";
 		case "steam_auto_update":
-			return "wget -qO- \"{$panelURL}/gsp_api.php?gamemanager/update&token={$token}&ip={$ip}&port={$port}&mod_key={$mod_key}&type=steam\" --no-check-certificate > /dev/null 2>&1";
+			return "wget -qO- \"{$panelURL}/api.php?gamemanager/update&token={$token}&ip={$ip}&port={$port}&mod_key={$mod_key}&type=steam\" --no-check-certificate > /dev/null 2>&1";
 	}
 	return false;
 }
@@ -322,16 +322,16 @@ function updateCronJobsToNewApi()
 
 						switch ($action) {
 							case "stopServer":
-								$command = "wget -qO- \"{$panelURL}/gsp_api.php?gamemanager/stop&token={$token}&ip={$ip}&port={$port}&mod_key={$mod_key}\" --no-check-certificate > /dev/null 2>&1";
+								$command = "wget -qO- \"{$panelURL}/api.php?gamemanager/stop&token={$token}&ip={$ip}&port={$port}&mod_key={$mod_key}\" --no-check-certificate > /dev/null 2>&1";
 								break;
 							case "startServer":
-								$command = "wget -qO- \"{$panelURL}/gsp_api.php?gamemanager/start&token={$token}&ip={$ip}&port={$port}&mod_key={$mod_key}\" --no-check-certificate > /dev/null 2>&1";
+								$command = "wget -qO- \"{$panelURL}/api.php?gamemanager/start&token={$token}&ip={$ip}&port={$port}&mod_key={$mod_key}\" --no-check-certificate > /dev/null 2>&1";
 								break;
 							case "restartServer":
-								$command = "wget -qO- \"{$panelURL}/gsp_api.php?gamemanager/restart&token={$token}&ip={$ip}&port={$port}&mod_key={$mod_key}\" --no-check-certificate > /dev/null 2>&1";
+								$command = "wget -qO- \"{$panelURL}/api.php?gamemanager/restart&token={$token}&ip={$ip}&port={$port}&mod_key={$mod_key}\" --no-check-certificate > /dev/null 2>&1";
 								break;
 							case "autoUpdateSteamHome":
-								$command = "wget -qO- \"{$panelURL}/gsp_api.php?gamemanager/update&token={$token}&ip={$ip}&port={$port}&mod_key={$mod_key}&type=steam\" --no-check-certificate > /dev/null 2>&1";
+								$command = "wget -qO- \"{$panelURL}/api.php?gamemanager/update&token={$token}&ip={$ip}&port={$port}&mod_key={$mod_key}&type=steam\" --no-check-certificate > /dev/null 2>&1";
 								break;
 						}
 						list($minute,$hour,$dayOfTheMonth,$month,$dayOfTheWeek,$old_command) = explode(" ", $job, 6);
