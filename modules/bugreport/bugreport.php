@@ -1,5 +1,5 @@
 <?php
-// Admin bug report page: sets the GitHub token and creates an issue from the form.
+// Admin bug report page: sends the form to the bug report relay.
 
 require_once(dirname(__FILE__) . '/bugreport_lib.php');
 
@@ -28,25 +28,6 @@ function bugreport_panel_version()
 	return PANEL_VERSION;
 }
 
-function bugreport_save_token($db)
-{
-	$token = isset($_POST['github_token']) && is_string($_POST['github_token']) ? trim($_POST['github_token']) : '';
-	if ($token === '') {
-		echo "<div class='error'>Token not saved: the field was empty.</div>";
-		return;
-	}
-	$db->setSettings(array(BUGREPORT_TOKEN_SETTING => $token));
-	$db->logger('Bug report: GitHub token set.');
-	echo "<div class='success'>GitHub token saved.</div>";
-}
-
-function bugreport_clear_token($db)
-{
-	$db->setSettings(array(BUGREPORT_TOKEN_SETTING => ''));
-	$db->logger('Bug report: GitHub token cleared.');
-	echo "<div class='success'>GitHub token cleared.</div>";
-}
-
 function bugreport_send($db, $modules)
 {
 	return bugreport_send_with($db, $modules, 'bugreport_http_post');
@@ -60,11 +41,10 @@ function bugreport_send_with($db, $modules, $poster)
 		echo "<div class='error'>" . implode('<br>', array_map('bugreport_h', $errors)) . "</div>";
 		return $clean;
 	}
-	$token = $db->getSetting(BUGREPORT_TOKEN_SETTING);
-	list($ok, $text) = bugreport_create_issue($clean, bugreport_panel_version(), $_SESSION['users_login'], $token, $poster);
+	list($ok, $text) = bugreport_send_to_relay($clean, bugreport_panel_version(), $_SESSION['users_login'], $poster);
 	if ($ok) {
 		$db->logger('Bug report created: ' . $text);
-		echo "<div class='success'>Issue created: <a href='" . bugreport_h($text) . "' target='_blank' rel='noopener'>" . bugreport_h($text) . "</a></div>";
+		echo "<div class='success'>Report sent: <a href='" . bugreport_h($text) . "' target='_blank' rel='noopener'>" . bugreport_h($text) . "</a></div>";
 		return array();
 	}
 	$db->logger('Bug report failed: ' . $text);
@@ -72,7 +52,7 @@ function bugreport_send_with($db, $modules, $poster)
 	return $clean;
 }
 
-function bugreport_show_form($values, $modules, $token_is_set)
+function bugreport_show_form($values, $modules)
 {
 	$csrf = bugreport_h(bugreport_csrf_token());
 	$get = function ($key) use ($values) {
@@ -101,18 +81,9 @@ function bugreport_show_form($values, $modules, $token_is_set)
 	foreach (array('bug', 'steps', 'expected') as $key) {
 		echo "<p><label>" . bugreport_h($fields[$key][0]) . "<br><textarea name='$key' rows='6' cols='80' maxlength='" . $fields[$key][1] . "'>" . bugreport_h($get($key)) . "</textarea></label></p>";
 	}
+	echo "<p><strong>Do not paste customer data, passwords, keys or tokens into a bug report.</strong></p>";
 	echo "<p><button type='submit' name='action' value='send'>Send report</button></p></form>";
 
-	// The saved token is never printed, only whether one is set.
-	$state = $token_is_set ? 'set' : 'not set';
-	echo "<h3>GitHub token</h3><p>Status: <strong>$state</strong></p>";
-	if (!$token_is_set) {
-		echo "<div class='error'>No GitHub token is set. Reports cannot be sent until one is saved.</div>";
-	}
-	echo "<form method='post' autocomplete='off'><input type='hidden' name='csrf' value='$csrf'>";
-	echo "<p><label>GitHub token<br><input type='password' name='github_token' size='60' value='' autocomplete='new-password'></label></p>";
-	echo "<button type='submit' name='action' value='save_token'>Save token</button> ";
-	echo "<button type='submit' name='action' value='clear_token'>Clear token</button></form>";
 }
 
 function exec_module()
@@ -128,13 +99,9 @@ function exec_module()
 	if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		if (!bugreport_csrf_ok()) {
 			echo "<div class='error'>Form expired. Please try again.</div>";
-		} elseif (($_POST['action'] ?? '') === 'save_token') {
-			bugreport_save_token($db);
-		} elseif (($_POST['action'] ?? '') === 'clear_token') {
-			bugreport_clear_token($db);
 		} elseif (($_POST['action'] ?? '') === 'send') {
 			$values = bugreport_send($db, $modules);
 		}
 	}
-	bugreport_show_form($values, $modules, (string)$db->getSetting(BUGREPORT_TOKEN_SETTING) !== '');
+	bugreport_show_form($values, $modules);
 }

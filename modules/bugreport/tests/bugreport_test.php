@@ -1,6 +1,6 @@
 <?php
 // Bug report module. Run: php modules/bugreport/tests/bugreport_test.php   (exit 0 = all passed)
-// Uses a fake HTTP poster. GitHub is never called. No files are written.
+// Uses a fake HTTP poster. The relay is never called. No files are written.
 
 require_once(dirname(__DIR__) . '/bugreport_lib.php');
 
@@ -17,7 +17,6 @@ function br_assert($condition, $message)
 }
 
 $modules = array('update', 'settings', 'billing');
-$secret = 'ghp_SECRET_TOKEN_VALUE_123';
 $good = array(
 	'module' => 'update', 'type' => 'Bug', 'title' => 'Update fails',
 	'bug' => 'It stops at step 3.', 'steps' => '1. Open Update 2. Click install',
@@ -69,92 +68,87 @@ br_assert(strpos($body, 'It should finish.') !== false, 'body has the expected f
 br_assert(strpos($body, '2.7.0') !== false && strpos($body, 'admin1') !== false, 'body has version and user');
 br_assert(strpos($body, '@') === false, 'body has no email');
 
-// Posting with a fake poster
+// Request body and relay answers, with a fake poster
 $calls = array();
 $poster_ok = function ($url, $headers, $json) use (&$calls) {
 	$calls[] = array($url, $headers, $json);
-	return array(201, json_encode(array('html_url' => 'https://github.com/GameServerEngine/gse-panel/issues/9')));
+	return array(200, json_encode(array('ok' => true, 'issue_url' => 'https://gitlab.example/issues/9')));
 };
-list($ok, $text) = bugreport_create_issue($clean, '2.7.0', 'admin1', $secret, $poster_ok);
-br_assert($ok && $text === 'https://github.com/GameServerEngine/gse-panel/issues/9', 'success returns the issue URL');
-br_assert($calls[0][0] === 'https://api.github.com/repos/GameServerEngine/gse-panel/issues', 'posts to the issues endpoint');
+list($ok, $text) = bugreport_send_to_relay($clean, '2.7.0', 'admin1', $poster_ok);
+br_assert($ok && $text === 'https://gitlab.example/issues/9', 'success returns the issue URL');
+br_assert($calls[0][0] === 'https://gameserverengine.com/bugreport/' && BUGREPORT_RELAY_URL === $calls[0][0], 'posts to the relay URL');
 $sent = json_decode($calls[0][2], true);
-br_assert($sent['title'] === '[Bug] Update fails', 'issue title has the type prefix');
-br_assert(strpos($text, $secret) === false, 'result does not contain the token');
+br_assert(array_keys($sent) === array('type', 'title', 'description', 'module', 'version', 'reporter', 'website'), 'body has exactly the relay keys');
+br_assert($sent['type'] === 'bug' && $sent['title'] === 'Update fails', 'body has type and title');
+br_assert($sent['module'] === 'update' && $sent['version'] === '2.7.0' && $sent['reporter'] === 'admin1', 'body has module, version, reporter');
+br_assert($sent['website'] === '', 'honeypot is empty');
+br_assert(strpos($sent['description'], '1. Open Update 2. Click install') !== false, 'description has the steps');
+br_assert(stripos(implode("\n", $calls[0][1]), 'authorization') === false, 'request carries no token header');
+$feature = $clean;
+$feature['type'] = 'Feature request';
+$sent = json_decode(bugreport_relay_payload($feature, '2.7.0', 'admin1'), true);
+br_assert($sent['type'] === 'feature', 'feature request maps to feature');
 
-// No token: no post
-$calls = array();
-foreach (array('', false) as $empty) {
-	list($ok, $text) = bugreport_create_issue($clean, '2.7.0', 'admin1', $empty, $poster_ok);
-	br_assert(!$ok && count($calls) === 0 && strpos($text, 'No GitHub token') !== false, 'no token does not post');
+// Error answers
+$cases = array(
+	'relay error text' => array(array(400, json_encode(array('ok' => false, 'error' => 'Title too short'))), 'Title too short'),
+	'ok without url' => array(array(200, json_encode(array('ok' => true))), 'did not accept'),
+	'non-200 with ok' => array(array(500, json_encode(array('ok' => true, 'issue_url' => 'https://x'))), 'HTTP 500'),
+	'not json' => array(array(502, '<html>'), 'HTTP 502'),
+	'network error' => array(array(0, ''), 'Could not reach'),
+);
+foreach ($cases as $name => $case) {
+	$poster = function ($url, $headers, $json) use ($case) { return $case[0]; };
+	list($ok, $text) = bugreport_send_to_relay($clean, '2.7.0', 'admin1', $poster);
+	br_assert(!$ok && strpos($text, $case[1]) !== false, "$name: failure message");
 }
 
-// GitHub error: message is returned, token is not
-$poster_fail = function ($url, $headers, $json) {
-	return array(401, json_encode(array('message' => 'Bad credentials')));
-};
-list($ok, $text) = bugreport_create_issue($clean, '2.7.0', 'admin1', $secret, $poster_fail);
-br_assert(!$ok && strpos($text, 'Bad credentials') !== false && strpos($text, $secret) === false, 'error result has no token');
-$poster_down = function ($url, $headers, $json) {
-	return array(0, '');
-};
-list($ok, $text) = bugreport_create_issue($clean, '2.7.0', 'admin1', $secret, $poster_down);
-br_assert(!$ok && strpos($text, $secret) === false, 'network failure result has no token');
-
-// The page never prints the token and never logs it
+// The page
 $_SESSION = array('users_login' => 'admin1', 'users_role' => 'admin');
 require_once(dirname(__DIR__) . '/bugreport.php');
 
 class FakeDb
 {
-	public $settings = array();
 	public $log = array();
-	public function setSettings($s) { $this->settings = array_merge($this->settings, $s); }
-	public function getSetting($n) { return isset($this->settings[$n]) ? $this->settings[$n] : false; }
 	public function logger($m) { $this->log[] = $m; }
 }
 
+ob_start();
+bugreport_show_form(array(), $modules);
+$form = ob_get_clean();
+br_assert(strpos($form, 'Do not paste customer data, passwords, keys or tokens') !== false, 'form shows the warning');
+br_assert(stripos($form, 'token') === stripos($form, 'tokens into'), 'form has no token field');
+
 $db = new FakeDb();
-$_POST = array('github_token' => $secret);
-ob_start();
-bugreport_save_token($db);
-$saved_out = ob_get_clean();
-br_assert($db->getSetting(BUGREPORT_TOKEN_SETTING) === $secret, 'token is saved in the settings table');
-br_assert(strpos($saved_out, $secret) === false, 'save message does not echo the token');
-
-ob_start();
-bugreport_show_form(array(), $modules, true);
-$form = ob_get_clean();
-br_assert(strpos($form, $secret) === false, 'form does not contain the saved token');
-br_assert(strpos($form, '<strong>set</strong>') !== false, 'form shows "set" when a token exists');
-ob_start();
-bugreport_show_form(array(), $modules, false);
-$form = ob_get_clean();
-br_assert(strpos($form, '<strong>not set</strong>') !== false && strpos($form, 'No GitHub token is set') !== false, 'form shows "not set" with a message');
-
-// Sending with a token: log has the URL, not the token
 $_POST = $good;
 ob_start();
-bugreport_send_with($db, $modules, $poster_ok);
+$kept = bugreport_send_with($db, $modules, $poster_ok);
 $out = ob_get_clean();
-br_assert(strpos($out, 'issues/9') !== false, 'success page shows the issue URL');
+br_assert(strpos($out, 'issues/9') !== false && $kept === array(), 'success page shows the link and clears the form');
 br_assert(strpos(implode("\n", $db->log), 'issues/9') !== false, 'log has the issue URL');
-br_assert(strpos(implode("\n", $db->log), $secret) === false && strpos($out, $secret) === false, 'log and page never hold the token');
 
-// Sending without a token: no post, form data kept, error logged
+// Failure keeps the admin's text
 $db2 = new FakeDb();
-$calls = array();
+$poster_down = function ($url, $headers, $json) { return array(0, ''); };
 $_POST = $good;
 $_POST['title'] = 'Keep <b>me</b>';
 ob_start();
-$kept = bugreport_send_with($db2, $modules, $poster_ok);
+$kept = bugreport_send_with($db2, $modules, $poster_down);
 $out = ob_get_clean();
-br_assert(count($calls) === 0, 'no token: nothing was posted');
-br_assert($kept['title'] === 'Keep <b>me</b>', 'no token: form data is kept');
-br_assert(strpos($out, 'No GitHub token') !== false, 'no token: clear message shown');
+br_assert(strpos($out, 'Could not reach') !== false, 'network error: clear message shown');
+br_assert($kept['title'] === 'Keep <b>me</b>', 'network error: form data is kept');
 ob_start();
-bugreport_show_form($kept, $modules, false);
+bugreport_show_form($kept, $modules);
 $form = ob_get_clean();
 br_assert(strpos($form, 'Keep &lt;b&gt;me&lt;/b&gt;') !== false && strpos($form, '<b>me</b>') === false, 'form output is escaped');
+
+// Invalid input: no post
+$calls = array();
+$_POST = $good;
+$_POST['type'] = 'Other';
+ob_start();
+bugreport_send_with($db2, $modules, $poster_ok);
+ob_get_clean();
+br_assert(count($calls) === 0, 'invalid input is not posted');
 
 echo "\n{$passed} checks passed\n";

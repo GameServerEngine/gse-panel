@@ -1,8 +1,7 @@
 <?php
 // Bug report helpers. No database or session access here, so tests can run them alone.
 
-define('BUGREPORT_REPO', 'GameServerEngine/gse-panel');
-define('BUGREPORT_TOKEN_SETTING', 'bugreport_github_token');
+define('BUGREPORT_RELAY_URL', 'https://gameserverengine.com/bugreport/');
 
 // Field name => array(label, max length). Used by the form and by validation.
 function bugreport_fields()
@@ -65,11 +64,6 @@ function bugreport_validate($input, $modules)
 	return array($clean, $errors);
 }
 
-function bugreport_issue_title($clean)
-{
-	return '[' . $clean['type'] . '] ' . $clean['title'];
-}
-
 function bugreport_build_body($clean, $version, $username)
 {
 	return "**Type:** " . $clean['type'] . "\n"
@@ -95,32 +89,48 @@ function bugreport_http_post($url, $headers, $json)
 	return array($status, is_string($response) ? $response : '');
 }
 
-// Creates the issue. $poster is a callable(url, headers, json) so tests can replace it.
-// Returns array(ok, issue url or error text). Never includes the token in the result.
-function bugreport_create_issue($clean, $version, $username, $token, $poster)
+// The relay wants 'bug' or 'feature'. The form uses 'Bug' and 'Feature request'.
+function bugreport_relay_type($type)
 {
-	if ($token === '' || $token === false || $token === null) {
-		return array(false, 'No GitHub token is set. Set one below, then send the report again.');
-	}
-	$payload = json_encode(array(
-		'title' => bugreport_issue_title($clean),
-		'body'  => bugreport_build_body($clean, $version, $username),
-	));
-	$headers = array(
-		'Authorization: Bearer ' . $token,
-		'Accept: application/vnd.github+json',
-		'Content-Type: application/json',
-		'User-Agent: gse-panel-bugreport',
-	);
-	list($status, $response) = call_user_func($poster, 'https://api.github.com/repos/' . BUGREPORT_REPO . '/issues', $headers, $payload);
+	return $type === 'Bug' ? 'bug' : 'feature';
+}
 
+// JSON body for the relay. No token goes in it. "website" is the honeypot and stays empty.
+function bugreport_relay_payload($clean, $version, $username)
+{
+	return json_encode(array(
+		'type'        => bugreport_relay_type($clean['type']),
+		'title'       => $clean['title'],
+		'description' => bugreport_build_body($clean, $version, $username),
+		'module'      => $clean['module'],
+		'version'     => $version,
+		'reporter'    => $username,
+		'website'     => '',
+	));
+}
+
+// Turns the relay answer into array(ok, issue url or error text).
+function bugreport_read_relay_response($status, $response)
+{
 	$data = json_decode($response, true);
-	if ($status === 201 && is_array($data) && !empty($data['html_url'])) {
-		return array(true, $data['html_url']);
+	if ($status === 200 && is_array($data) && !empty($data['ok']) && !empty($data['issue_url'])) {
+		return array(true, $data['issue_url']);
+	}
+	if (is_array($data) && !empty($data['error']) && is_string($data['error'])) {
+		return array(false, $data['error']);
 	}
 	if ($status === 0) {
-		return array(false, 'Could not reach GitHub.');
+		return array(false, 'Could not reach the bug report service. Please try again later.');
 	}
-	$reason = is_array($data) && isset($data['message']) ? ': ' . $data['message'] : '';
-	return array(false, 'GitHub refused the report (HTTP ' . $status . ')' . $reason);
+	return array(false, 'The bug report service did not accept the report (HTTP ' . $status . '). Please try again later.');
+}
+
+// Sends the report to the relay. $poster is a callable(url, headers, json) so tests can replace it.
+// Returns array(ok, issue url or error text).
+function bugreport_send_to_relay($clean, $version, $username, $poster)
+{
+	$headers = array('Content-Type: application/json', 'Accept: application/json');
+	$payload = bugreport_relay_payload($clean, $version, $username);
+	list($status, $response) = call_user_func($poster, BUGREPORT_RELAY_URL, $headers, $payload);
+	return bugreport_read_relay_response($status, $response);
 }

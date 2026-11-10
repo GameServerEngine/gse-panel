@@ -1,6 +1,5 @@
 <?php
-// Admin bug report module. Creates a GitHub issue from a form.
-// The GitHub token is stored in the settings table (setting name: bugreport_github_token).
+// Admin bug report module. Sends a bug report to the bug report relay. The panel holds no token.
 $module_title = "Bug report";
 $module_version = "1.0";
 $db_version = 0;
