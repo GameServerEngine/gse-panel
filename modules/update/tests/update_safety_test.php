@@ -1,5 +1,5 @@
 <?php
-// Panel update safety: preflight, ownership-blind restore, files + database rollback, no channels.
+// Panel update safety: preflight, copy restore, files + database rollback, no channels.
 // Run: php modules/update/tests/update_safety_test.php   (exit 0 = all passed)
 // Uses only temp directories and fake database objects. No real panel, database or network is touched.
 
@@ -79,22 +79,15 @@ if (safety_is_root()) {
 }
 safety_assert(update_check_free_space($work, PHP_INT_MAX) !== '', 'preflight reports too little free disk space');
 
-// ---- 2. ownership-blind restore
-$command = restore_archive_command('/b/panel-files.tar.gz', '/panel');
-safety_assert(strpos($command, '--no-same-owner') !== false, 'tar restore command has --no-same-owner');
-safety_assert(strpos($command, '--no-same-permissions') !== false, 'tar restore command has --no-same-permissions');
-safety_assert(strpos($command, '--touch') !== false, 'tar restore command does not restore modification times (--touch)');
-
-$src = $work . '/tar_src';
+// ---- 2. restore is a copy back from the plain backup folder
+$src = $work . '/copy_src';
 mkdir($src, 0777, true);
 file_put_contents($src . '/a.txt', 'hello');
-touch($src . '/a.txt', 946684800); // year 2000
-exec('tar -czf ' . escapeshellarg($work . '/t.tar.gz') . ' -C ' . escapeshellarg($src) . ' .');
-$dest = $work . '/tar_dest';
+$dest = $work . '/copy_dest';
 mkdir($dest);
-$restore = restore_archive($work . '/t.tar.gz', $dest);
-safety_assert($restore['success'] && file_get_contents($dest . '/a.txt') === 'hello', 'restore_archive extracts the backup');
-safety_assert(filemtime($dest . '/a.txt') > 1000000000, 'restored file has a new modification time, not the archived one');
+$restore = update_backup_restore($src, $dest);
+safety_assert($restore['success'] && file_get_contents($dest . '/a.txt') === 'hello', 'update_backup_restore copies the backup folder back');
+safety_assert(!update_backup_restore($work . '/no_such_backup', $dest)['success'], 'restore from a missing backup folder fails');
 
 // ---- 3. copy_file reports the failing path; the tree copy stops
 $copy = copy_file($work . '/does-not-exist', $work . '/copy_out/x');

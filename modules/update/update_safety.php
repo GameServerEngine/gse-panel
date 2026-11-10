@@ -15,6 +15,9 @@
  * can call it without a real database or web server.
  */
 
+require_once(dirname(__DIR__, 2) . '/includes/panel_permissions.php');
+require_once(dirname(__FILE__) . '/update_manifest.php');
+
 // Directories that are never part of a panel release (same list used by the copy and the preflight).
 function update_protected_prefixes()
 {
@@ -25,6 +28,8 @@ function update_protected_prefixes()
 		'logs/', 'log/', 'backups/', 'backup/', 'cache/', 'tmp/', 'temp/',
 		'uploads/', 'upload/', 'home/', 'homes/', 'servers/', 'game_servers/',
 		'steamcmd/', 'startups/', 'node_modules/', 'vendor/',
+		// The update's own records. They are not in any release ZIP and are never overwritten.
+		'update_manifest.json', 'update_exclusions.txt',
 	];
 }
 
@@ -44,95 +49,56 @@ function update_should_skip($rel)
 }
 
 // ---------------------------------------------------------------- ownership
-// The update never changes ownership. It only checks, and tells the admin what to run.
+// Before the files are copied the updater repairs owner, group and modes of the panel tree.
+// The definition lives in includes/panel_permissions.php, the same code install-panel.sh --repair-permissions runs.
+// It only ever touches paths inside the panel root.
 
-// The user that must own the panel files. A site can define UPDATE_WEB_USER to change it.
+// The user and group that must own the panel files. A site can define UPDATE_WEB_USER to change the user.
 function update_expected_owner()
 {
 	return defined('UPDATE_WEB_USER') ? UPDATE_WEB_USER : 'www-data';
 }
 
-// Owner name of a path, or '' when unknown.
-function update_path_owner($path)
+function update_expected_group()
 {
-	$uid = @fileowner($path);
-	if ($uid === false) {
-		return '';
-	}
-	if (function_exists('posix_getpwuid')) {
-		$info = posix_getpwuid($uid);
-		if (is_array($info)) {
-			return $info['name'];
-		}
-	}
-	return (string)$uid;
+	return defined('UPDATE_WEB_GROUP') ? UPDATE_WEB_GROUP : 'www-data';
 }
 
-// Every existing panel path the update could replace, as absolute paths. Skipped paths are left out.
-function update_owned_paths($panel_dir)
+// True for paths the repair leaves alone: the protected folders. The config and the update's own files are repaired.
+function update_repair_skip($rel)
 {
-	$panel_dir = rtrim($panel_dir, '/');
-	$paths = [$panel_dir];
-	if (!is_dir($panel_dir)) {
-		return $paths;
-	}
-	$iter = new RecursiveIteratorIterator(
-		new RecursiveCallbackFilterIterator(
-			new RecursiveDirectoryIterator($panel_dir, RecursiveDirectoryIterator::SKIP_DOTS),
-			function ($current) use ($panel_dir) {
-				$rel = substr($current->getPathname(), strlen($panel_dir) + 1);
-				return !update_should_skip($rel);
-			}
-		),
-		RecursiveIteratorIterator::SELF_FIRST
-	);
-	foreach ($iter as $item) {
-		$paths[] = $item->getPathname();
-	}
-	return $paths;
+	$repaired = array_merge(perm_secret_files(), um_own_files());
+	return update_should_skip($rel) && !in_array($rel, $repaired, true);
 }
 
 /**
- * Check owner and write access of every panel path the update touches.
- * $owner_lookup is an optional callable (path) => owner name, so tests need no chown.
- * Returns a list of error strings, empty when everything passes. Changes nothing.
+ * Repair owner, group and modes of the panel tree and log every path that changed.
+ * $label says when it ran ("before the copy" / "after the copy"). $ops is for tests.
+ * Returns success, changed (paths), failed (paths with the reason), message.
  */
-function update_ownership_errors($panel_dir, $expected_owner = null, $owner_lookup = null)
+function update_repair_panel_tree($panel_dir, $label, $ops = null)
 {
-	$expected_owner = $expected_owner === null ? update_expected_owner() : $expected_owner;
-	$owner_lookup = $owner_lookup === null ? 'update_path_owner' : $owner_lookup;
-	$wrong_owner = [];
-	$not_writable = [];
-	$owners_seen = [];
-	foreach (update_owned_paths($panel_dir) as $path) {
-		$owner = (string)call_user_func($owner_lookup, $path);
-		if ($owner !== $expected_owner) {
-			$wrong_owner[] = $path;
-			$owners_seen[$owner === '' ? 'unknown' : $owner] = true;
-		} elseif (!is_writable($path)) {
-			$not_writable[] = $path;
-		}
+	$panel_dir = rtrim($panel_dir, '/');
+	$owner = update_expected_owner();
+	$group = update_expected_group();
+	$result = perm_repair_tree($panel_dir, $owner, $group, $ops, 'update_repair_skip');
+	foreach ($result['changed'] as $line) {
+		update_log('Permission repair ' . $label . ': ' . $line);
 	}
-	if (empty($wrong_owner) && empty($not_writable)) {
-		return [];
+	foreach ($result['failed'] as $line) {
+		update_log('Permission repair ' . $label . ' FAILED: ' . $line);
 	}
-	$problems = [];
-	if (!empty($wrong_owner)) {
-		$problems[] = count($wrong_owner) . ' paths not owned by ' . $expected_owner
-			. ' (owner ' . implode(', ', array_keys($owners_seen)) . ')';
+	if (empty($result['failed'])) {
+		return array('success' => true, 'changed' => $result['changed'], 'failed' => array(), 'message' => '');
 	}
-	if (!empty($not_writable)) {
-		$problems[] = count($not_writable) . ' paths not writable by ' . $expected_owner;
+	$listed = array_slice($result['failed'], 0, 20);
+	$message = 'Permission repair ' . $label . ' could not fix ' . count($result['failed']) . ' paths: ' . implode('; ', $listed);
+	if (count($result['failed']) > 20) {
+		$message .= ' and ' . (count($result['failed']) - 20) . ' more';
 	}
-	$failed = array_merge($wrong_owner, $not_writable);
-	$listed = array_slice($failed, 0, 20);
-	$message = 'No write access: ' . implode('; ', $problems) . '. Paths: ' . implode(', ', $listed);
-	if (count($failed) > 20) {
-		$message .= ' and ' . (count($failed) - 20) . ' more';
-	}
-	$message .= '. Suggested fix, not run by the updater: sudo chown -R ' . $expected_owner . ':' . $expected_owner
-		. ' ' . escapeshellarg(rtrim($panel_dir, '/'));
-	return [$message];
+	$message .= '. Likely causes: the file is immutable, the disk is read-only, or the updater is not allowed to change that owner.'
+		. ' Fix: ' . update_repair_hint($panel_dir);
+	return array('success' => false, 'changed' => $result['changed'], 'failed' => $result['failed'], 'message' => $message);
 }
 
 // ---------------------------------------------------------------- preflight
@@ -194,21 +160,15 @@ function update_check_free_space($path, $needed_bytes)
 	return '';
 }
 
-// Size of the panel tree in bytes, ignoring directories the backup leaves out.
+// Size of the panel tree in bytes. The backup copies all of it.
 function update_tree_size($dir)
 {
 	$total = 0;
 	if (!is_dir($dir)) {
 		return 0;
 	}
-	$skip = ['backups', 'logs', 'cache', 'tmp', 'node_modules', 'vendor', '.git'];
 	$iter = new RecursiveIteratorIterator(
-		new RecursiveCallbackFilterIterator(
-			new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
-			function ($current) use ($skip) {
-				return !($current->isDir() && in_array($current->getFilename(), $skip, true));
-			}
-		)
+		new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS)
 	);
 	foreach ($iter as $item) {
 		if ($item->isFile()) {
@@ -218,7 +178,7 @@ function update_tree_size($dir)
 	return $total;
 }
 
-// Free space the update needs: the backup archive, the staged release, plus a margin for the dump.
+// Free space the update needs: the backup copy, the staged release, plus a margin for the dump.
 function update_required_free_bytes($panel_dir)
 {
 	return (int)(update_tree_size($panel_dir) * 1.2) + 100 * 1048576;
@@ -227,7 +187,7 @@ function update_required_free_bytes($panel_dir)
 // Database dump check. $full takes a real dump into the temp directory and deletes it.
 function update_check_database_dump($panel_dir, $full)
 {
-	foreach (['mysqldump', 'mysql', 'tar'] as $tool) {
+	foreach (['mysqldump', 'mysql', 'cp'] as $tool) {
 		$found = [];
 		$ret = 0;
 		exec('command -v ' . escapeshellarg($tool) . ' 2>/dev/null', $found, $ret);
@@ -291,10 +251,7 @@ function update_preflight_errors($panel_dir, $backup_base, $full_dump_check)
 {
 	$panel_dir = rtrim($panel_dir, '/');
 	$hint = ' Fix: ' . update_repair_hint($panel_dir);
-	$errors = update_ownership_errors($panel_dir);
-	if (!empty($errors)) {
-		return $errors;
-	}
+	$errors = array();
 
 	$backup_problem = update_ensure_backup_base($backup_base);
 	if ($backup_problem !== '') {
@@ -439,15 +396,83 @@ function copy_file($src, $dst)
 	return ['success' => true, 'path' => $dst];
 }
 
-// ------------------------------------------------------------------ restore
+// ------------------------------------------------------------------ backup copy
+// The backup is a plain folder copy made with cp -a. No archive, so any file can be copied back by hand.
+// Ownership is not copied: the copy belongs to whoever runs the update.
 
-// Extract a backup. Ownership-blind: files get the owner of the user running this,
-// permissions follow the umask, and modification times are set to now.
-function restore_archive_command($archive, $target)
+// Never copy these into a backup: the backup area itself (copying it into itself would never end).
+function update_backup_excluded_roots($backup_base)
 {
-	return 'tar -xzf ' . escapeshellarg($archive)
-		. ' -C ' . escapeshellarg($target)
-		. ' --no-same-owner --no-same-permissions --touch 2>&1';
+	return array(rtrim((string)$backup_base, '/'), '/var/lib/gse-panel');
+}
+
+function update_backup_run_cp($from, $to)
+{
+	$out = array();
+	$ret = 0;
+	exec('cp -a --no-preserve=ownership -- ' . escapeshellarg($from) . ' ' . escapeshellarg($to) . ' 2>&1', $out, $ret);
+	return $ret === 0 ? '' : 'cp failed for ' . $from . ': ' . implode(' | ', $out);
+}
+
+/**
+ * Copy the panel folder into $dest_dir (created here). Each top-level entry is copied with cp -a.
+ * Anything at or under an excluded root is left out. Returns success and error.
+ */
+function update_backup_copy($panel_dir, $dest_dir, array $excluded_roots)
+{
+	$panel_dir = rtrim($panel_dir, '/');
+	if (!is_dir($panel_dir)) {
+		return array('success' => false, 'error' => 'Panel folder is missing: ' . $panel_dir);
+	}
+	if (!is_dir($dest_dir) && !@mkdir($dest_dir, 0750, true)) {
+		return array('success' => false, 'error' => 'Cannot create backup folder: ' . $dest_dir);
+	}
+	$roots = array();
+	foreach ($excluded_roots as $root) {
+		$real = realpath($root);
+		$roots[] = rtrim($real === false ? $root : $real, '/');
+	}
+	foreach (scandir($panel_dir) as $name) {
+		if ($name === '.' || $name === '..') {
+			continue;
+		}
+		$path = $panel_dir . '/' . $name;
+		$real = realpath($path);
+		$real = $real === false ? $path : $real;
+		$skip = false;
+		foreach ($roots as $root) {
+			if ($real === $root || strpos($real, $root . '/') === 0) {
+				$skip = true;
+			} elseif (strpos($root, $real . '/') === 0) {
+				return array('success' => false, 'error' => 'The backup folder ' . $root . ' is inside ' . $path . '. Choose a backup folder outside the panel.');
+			}
+		}
+		if ($skip) {
+			continue;
+		}
+		$error = update_backup_run_cp($path, $dest_dir . '/');
+		if ($error !== '') {
+			return array('success' => false, 'error' => $error);
+		}
+	}
+	return array('success' => true, 'error' => '');
+}
+
+// Restore: copy everything in the backup folder back over the panel with cp -a. Returns success and error.
+function update_backup_restore($copy_dir, $panel_dir)
+{
+	if (!is_dir($copy_dir)) {
+		return array('success' => false, 'error' => 'Backup folder not found: ' . $copy_dir);
+	}
+	$error = update_backup_run_cp(rtrim($copy_dir, '/') . '/.', rtrim($panel_dir, '/') . '/');
+	return $error === '' ? array('success' => true) : array('success' => false, 'error' => $error);
+}
+
+// Name of a backup folder: <timestamp>-<from_version>, for example 2026-11-10_04-12-33-2.5.10.
+function update_backup_folder_name($timestamp, $from_version)
+{
+	$version = preg_replace('/[^A-Za-z0-9._+-]+/', '-', (string)$from_version);
+	return $timestamp . '-' . ($version === '' ? 'unknown' : $version);
 }
 
 function update_read_version_file($panel_dir)
@@ -470,7 +495,7 @@ function update_table_list($db)
 }
 
 // Hash of every release file in the panel tree: relative path => sha1.
-// It skips what the update never replaces (update_should_skip) and what the backup archive leaves out.
+// It skips what the update never replaces (update_should_skip) and what the backup leaves out.
 // The runtime files (config and local settings) are protected from the copy but are restored, so they are always added.
 function update_file_manifest($panel_dir)
 {

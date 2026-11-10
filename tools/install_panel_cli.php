@@ -68,18 +68,14 @@ if (cli_has_arg($argv, '--repair-permissions')) {
         exit(1);
     }
 
-    $path = escapeshellarg($base_dir);
-    $owner_group = escapeshellarg($owner . ':' . $group);
-    $ok = true;
-    $ok = cli_run("chown -R {$owner_group} {$path}") && $ok;
-    $ok = cli_run("find {$path} -type d -exec chmod 2775 {} +") && $ok;
-    $ok = cli_run("find {$path} -type f -exec chmod 664 {} +") && $ok;
-    foreach (array('includes/config.inc.php', 'includes/install.state.json') as $rel) {
-        $target = $base_dir . '/' . $rel;
-        if (file_exists($target)) {
-            $ok = cli_run('chmod 660 ' . escapeshellarg($target)) && $ok;
-        }
+    // One definition of owner and modes, shared with the panel updater.
+    require_once($base_dir . '/includes/panel_permissions.php');
+    $repair = perm_repair_tree($base_dir, $owner, $group);
+    echo "Permission repair changed " . count($repair['changed']) . " paths.\n";
+    foreach ($repair['failed'] as $line) {
+        fwrite(STDERR, "FAILED " . $line . "\n");
     }
+    $ok = empty($repair['failed']);
     exit($ok ? 0 : 1);
 }
 
