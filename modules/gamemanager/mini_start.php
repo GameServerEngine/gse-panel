@@ -673,6 +673,11 @@ elseif($server_home['home_id'] == $_POST['home_id'])
 		(isset( $server_xml->console_log ) ? $server_xml->console_log : ""),
 		$lifecycle_payload
 		);
+	if (isset($start_result['status']) && $start_result['status'] === 'invalid_port')
+	{
+		print_failure(htmlentities($start_result['message']));
+		return;
+	}
 	$start_retval = isset($start_result['raw_response']) ? $start_result['raw_response'] : (!empty($start_result['success']) ? 1 : 0);
 	$db->logger(  get_lang("server_started")  . " (".$server_home['home_name']." $ip:$port)" );
 	if ( $start_retval == AGENT_ERROR_NOT_EXECUTABLE )

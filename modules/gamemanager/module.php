@@ -25,7 +25,7 @@
 // Module general information
 $module_title = "Game manager";
 $module_version = "1.33";
-$db_version = 2;
+$db_version = 3;
 $module_required = TRUE;
 $module_menus = array( array( 'subpage' => 'game_monitor', 'name'=>'Game Monitor', 'group'=>'user' ) );
 $module_access_rights = array('u' => 'allow_updates', 'p' => 'allow_parameter_usage', 'e' => 'allow_extra_params', 'c' => 'allow_custom_fields');
@@ -157,5 +157,14 @@ $install_queries[2] = array(
         }
         return true;
     },
+);
+// db_version 3 - one row per home: the last "Failed to Start" incident that got a ticket.
+$install_queries[3] = array(
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."crash_ticket_marks` (
+        `home_id` int(11) NOT NULL,
+        `incident_key` varchar(32) NOT NULL,
+        `created_at` int(11) NOT NULL,
+        PRIMARY KEY (`home_id`)
+    ) ENGINE=MyISAM DEFAULT CHARSET=latin1;",
 );
 ?>

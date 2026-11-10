@@ -228,6 +228,11 @@ function exec_module() {
 															(isset( $server_xml->console_log ) ? $server_xml->console_log : ""),
 															'panel_restart',
 															$lifecycle_payload);
+			if (isset($restart_result['status']) && $restart_result['status'] === 'invalid_port')
+			{
+				print_failure(htmlentities($restart_result['message']));
+				return;
+			}
 			$remote_retval = isset($restart_result['raw_response']) ? $restart_result['raw_response'] : (!empty($restart_result['success']) ? 1 : 0);
 
 			if ( !empty($restart_result['success']) )

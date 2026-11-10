@@ -23,6 +23,7 @@
 */
 
 require_once(dirname(__DIR__, 2) . '/includes/lifecycle_contract_helpers.php');
+require_once(dirname(__DIR__) . '/server/crash_tickets.php');
 
 function get_query_port($server_xml, $server_port) {
 	if ($server_xml->query_port) {
@@ -103,6 +104,10 @@ function get_agent_server_status($remote, $server_xml, $home_id, $server_ip, $se
 			$agent_status['status'] = 'OFFLINE';
 			$agent_status['last_error'] = '';
 		}
+	}
+	// One ticket per "Failed to Start" incident (see modules/server/crash_tickets.php).
+	if (isset($GLOBALS['db']) && is_object($GLOBALS['db'])) {
+		report_failed_to_start($GLOBALS['db'], $home_id, $agent_status);
 	}
 	return $agent_status;
 }

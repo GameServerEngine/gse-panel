@@ -515,6 +515,15 @@ CREATE TABLE `DB_PREFIXgame_port_offsets` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `DB_PREFIXcrash_ticket_marks` (
+  `home_id` int NOT NULL,
+  `incident_key` varchar(32) NOT NULL,
+  `created_at` int NOT NULL,
+  PRIMARY KEY (`home_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `DB_PREFIXhome_ip_ports` (
   `ip_id` int NOT NULL,
   `port` int NOT NULL,
@@ -740,7 +749,7 @@ INSERT INTO `DB_PREFIXmodules` (`id`, `title`, `folder`, `version`, `db_version`
 (12,'F.A.Q.','faq','1.0',0,1),
 (13,'Fast Download','fast_download','2.1',1,1),
 (14,'ftp','ftp','1.0',1,1),
-(15,'Game manager','gamemanager','1.33',2,1),
+(15,'Game manager','gamemanager','1.33',3,1),
 (16,'LGSL','lgsl_with_img_mod','0.2',0,1),
 (17,'Lite File Manager','litefm','1.0',1,1),
 (18,'Lost Password','lostpwd','1.0',0,1),
