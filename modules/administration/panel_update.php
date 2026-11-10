@@ -27,9 +27,9 @@ defined('CANONICAL_TIMESTAMP_FILE') || define('CANONICAL_TIMESTAMP_FILE', PANEL_
 defined('BILLING_TIMESTAMP_FILE') || define('BILLING_TIMESTAMP_FILE', PANEL_DIR . '/modules/billing/timestamp.txt');
 defined('LAST_UPDATE_FILE') || define('LAST_UPDATE_FILE', ROOT_DIR . '/LAST_UPDATE.txt');
 defined('DEFAULT_REPO_URL') || define('DEFAULT_REPO_URL', 'https://github.com/GameServerEngine/gse-panel.git');
-defined('DEFAULT_BRANCH') || define('DEFAULT_BRANCH', 'unstable');
 defined('DEFAULT_RELEASE_BASE_URL') || define('DEFAULT_RELEASE_BASE_URL', 'https://github.com/GameServerEngine/gse-panel/archive/refs/heads');
-defined('DEFAULT_RELEASE_CHANNEL') || define('DEFAULT_RELEASE_CHANNEL', 'stable');
+// Release ZIP used only when no release was ever selected and no old setting exists.
+defined('DEFAULT_RELEASE_ZIP_URL') || define('DEFAULT_RELEASE_ZIP_URL', DEFAULT_RELEASE_BASE_URL . '/stable.zip');
 defined('DEFAULT_REPO_ROOT') || define('DEFAULT_REPO_ROOT', PANEL_DIR);
 defined('DEFAULT_PANEL_PATH') || define('DEFAULT_PANEL_PATH', PANEL_DIR);
 defined('DEFAULT_PANEL_SOURCE') || define('DEFAULT_PANEL_SOURCE', '.');
@@ -42,6 +42,7 @@ $releaseSource = PANEL_DIR . '/modules/update/release_source.php';
 if (file_exists($releaseSource)) {
 require_once($releaseSource);
 }
+require_once(dirname(__FILE__) . '/../update/update_safety.php');
 
 function update_log($message)
 {
@@ -113,7 +114,9 @@ $base = BACKUP_BASE;
 return $base;
 }
 
-function log_update_to_db($channel, $branch, $status, $message, $backup_path = null, $db_backup_path = null, $file_backup_path = null, $started_at = null, $finished_at = null)
+// The table keeps its old column names. `channel` holds the installed version (64 chars)
+// and `branch` holds the source ZIP URL (cut to 128 chars) so no schema change is needed.
+function log_update_to_db($version, $source_url, $status, $message, $backup_path = null, $db_backup_path = null, $file_backup_path = null, $started_at = null, $finished_at = null)
 {
 global $db;
 if (!isset($db) || !is_object($db)) {
@@ -122,8 +125,8 @@ return;
 if ($started_at === null) {
 $started_at = date('Y-m-d H:i:s');
 }
-$channel = $db->real_escape_string((string)$channel);
-$branch = $branch !== null ? "'" . $db->real_escape_string((string)$branch) . "'" : 'NULL';
+$channel = $db->real_escape_string(substr((string)$version, 0, 64));
+$branch = $source_url !== null ? "'" . $db->real_escape_string(substr((string)$source_url, 0, 128)) . "'" : 'NULL';
 $status = $db->real_escape_string((string)$status);
 $message_esc = $message !== null ? "'" . $db->real_escape_string((string)$message) . "'" : 'NULL';
 $backup_path_esc = $backup_path !== null ? "'" . $db->real_escape_string((string)$backup_path) . "'" : 'NULL';
@@ -212,7 +215,7 @@ function update_badge($installed, $latest)
 	if (release_is_installed($installed, $latest['version'])) {
 		return 'Up to date';
 	}
-	return "<span style='color:#8a6d3b;'><strong>Update available:</strong> " . htmlspecialchars($latest['channel'] . ' ' . $latest['version'], ENT_QUOTES, 'UTF-8') . "</span>";
+	return "<span style='color:#8a6d3b;'><strong>Update available:</strong> " . htmlspecialchars($latest['version'], ENT_QUOTES, 'UTF-8') . "</span>";
 }
 }
 
@@ -225,25 +228,14 @@ function tag_select($name, $rows, $installed = '')
 		return $html . "<option value='' disabled>Releases unavailable (GitHub not reachable)</option></select>";
 	}
 	if (empty($rows)) {
-		return $html . "<option value='' disabled>No releases found on stable, testing or working</option></select>";
+		return $html . "<option value='' disabled>No releases found</option></select>";
 	}
-	$groups = array();
 	foreach ($rows as $r) {
-		$groups[$r['channel']][] = $r;
-	}
-	foreach (array('stable', 'testing', 'working') as $channel) {
-		if (empty($groups[$channel])) {
-			continue;
+		$label = $r['version'] . ' (' . substr((string)$r['created'], 0, 10) . ')';
+		if (release_is_installed($installed, $r['version'])) {
+			$label .= ' - installed';
 		}
-		$html .= "<optgroup label='" . htmlspecialchars($channel, ENT_QUOTES, 'UTF-8') . "'>";
-		foreach ($groups[$channel] as $r) {
-			$label = $channel . ' ' . $r['version'] . ' (' . substr((string)$r['created'], 0, 10) . ')';
-			if (release_is_installed($installed, $r['version'])) {
-				$label .= ' - installed';
-			}
-			$html .= "<option value='" . htmlspecialchars($r['tag'], ENT_QUOTES, 'UTF-8') . "'>" . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . "</option>";
-		}
-		$html .= "</optgroup>";
+		$html .= "<option value='" . htmlspecialchars($r['tag'], ENT_QUOTES, 'UTF-8') . "'>" . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . "</option>";
 	}
 	return $html . "</select>";
 }
@@ -264,11 +256,7 @@ function update_panel($db, array $update_cfg, $restart_nonce, $panel_tag)
 	if (!empty($errors)) {
 		$result = array('success' => false, 'error' => implode(' | ', $errors));
 	} else {
-		$db->setSettings(array(
-			'update_channel' => $update_cfg['channel'],
-			'update_release_zip_url' => $custom_release_zip_url,
-			'update_branch' => $update_cfg['channel'],
-		));
+		$db->setSettings(array('update_release_zip_url' => $custom_release_zip_url));
 		if (!function_exists('do_configured_archive_update')) {
 			$result = array('success' => false, 'error' => 'Configured release ZIP updater helper is unavailable. Deploy the current modules/administration/panel_update.php and reload.');
 		} else {
@@ -469,31 +457,23 @@ return $sha;
 return null;
 }
 
-function release_channel_url($channel)
-{
-$channel = (string)$channel;
-if (!in_array($channel, ['stable', 'unstable'], true)) {
-$channel = DEFAULT_RELEASE_CHANNEL;
-}
-return rtrim(DEFAULT_RELEASE_BASE_URL, '/') . '/' . $channel . '.zip';
-}
-
-function is_valid_release_channel($channel)
-{
-return in_array((string)$channel, ['stable', 'unstable'], true);
-}
-
 function is_valid_release_zip_url($url)
 {
 $url = trim((string)$url);
 return preg_match('/^https?:\/\/[^\s]+\.zip(?:[?#][^\s]*)?$/i', $url) === 1;
 }
 
-function release_custom_url_value(array $cfg)
+// Old installs saved update_channel or update_branch instead of a release ZIP URL.
+// Read them so saved config keeps working, and turn the name into the ZIP URL it used.
+function legacy_release_zip_url(array $settings)
 {
-$url = isset($cfg['release_zip_url']) ? trim((string)$cfg['release_zip_url']) : '';
-$derived = release_channel_url(isset($cfg['channel']) ? (string)$cfg['channel'] : DEFAULT_RELEASE_CHANNEL);
-return ($url !== '' && $url !== $derived) ? $url : '';
+foreach (['update_channel', 'update_branch'] as $key) {
+$name = isset($settings[$key]) ? trim((string)$settings[$key]) : '';
+if ($name !== '' && preg_match('/^[A-Za-z0-9._-]+$/', $name) === 1) {
+return rtrim(DEFAULT_RELEASE_BASE_URL, '/') . '/' . $name . '.zip';
+}
+}
+return DEFAULT_RELEASE_ZIP_URL;
 }
 
 function update_settings()
@@ -507,19 +487,12 @@ if (strpos($repo_url, 'forge.runlevelsystems.com/GSP/Panel.git') !== false
 || $repo_url === 'ssh://git@173.208.136.14/GSP/Panel.git') {
 $repo_url = DEFAULT_REPO_URL;
 }
-$channel = !empty($settings['update_channel']) ? (string)$settings['update_channel'] : '';
-if (!is_valid_release_channel($channel)) {
-$legacy_branch = !empty($settings['update_branch']) ? (string)$settings['update_branch'] : '';
-$channel = is_valid_release_channel($legacy_branch) ? $legacy_branch : DEFAULT_RELEASE_CHANNEL;
-}
 $release_zip_url = !empty($settings['update_release_zip_url']) ? trim((string)$settings['update_release_zip_url']) : '';
 if ($release_zip_url === '') {
-$release_zip_url = release_channel_url($channel);
+$release_zip_url = legacy_release_zip_url($settings);
 }
 return [
 'repo_url' => $repo_url,
-'branch' => !empty($settings['update_branch']) ? (string)$settings['update_branch'] : DEFAULT_BRANCH,
-'channel' => $channel,
 'release_zip_url' => $release_zip_url,
 'repo_root' => $panel_root,
 'panel_path' => $panel_root,
@@ -534,13 +507,7 @@ return [
 function validate_update_settings(array $cfg)
 {
 $errors = [];
-$channel = isset($cfg['channel']) ? (string)$cfg['channel'] : DEFAULT_RELEASE_CHANNEL;
-if (!is_valid_release_channel($channel)) {
-$errors[] = 'Release channel must be stable or unstable.';
-}
-$release_zip_url = isset($cfg['release_zip_url']) && trim((string)$cfg['release_zip_url']) !== ''
-? trim((string)$cfg['release_zip_url'])
-: release_channel_url($channel);
+$release_zip_url = isset($cfg['release_zip_url']) ? trim((string)$cfg['release_zip_url']) : '';
 if (!is_valid_release_zip_url($release_zip_url)) {
 $errors[] = 'Release ZIP URL must be an http(s) .zip URL.';
 }
@@ -580,16 +547,17 @@ $data = json_decode(@file_get_contents(VERSION_JSON), true);
 return is_array($data) ? $data : null;
 }
 
-function write_version_file($version, $branch_or_type)
+function write_version_file($version, $source_type)
 {
 $content = "<?php\n";
 $content .= "// GSP Panel Version - written by the panel update system. Do not edit manually.\n";
 $content .= "define('PANEL_VERSION', " . var_export($version, true) . ");\n";
-$content .= "define('BRANCH', " . var_export($branch_or_type, true) . ");\n";
+$content .= "define('BRANCH', " . var_export($source_type, true) . ");\n";
 $content .= "define('UPDATE_TIME', " . var_export(date('Y-m-d H:i:s'), true) . ");\n";
-@file_put_contents(VERSION_FILE, $content);
+return @file_put_contents(VERSION_FILE, $content) !== false;
 }
 
+// Records what is installed: the version and the ZIP URL it came from.
 function write_version_json($installed_type, $installed_source, $installed_version, $installed_commit = null)
 {
 $data = [
@@ -599,58 +567,47 @@ $data = [
 'installed_commit' => $installed_commit,
 'installed_at' => date('Y-m-d H:i:s'),
 ];
-@file_put_contents(VERSION_JSON, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+return @file_put_contents(VERSION_JSON, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) !== false;
 }
 
-function preflight_check(array $update_cfg = null)
+// $full_dump_check = true takes a real database dump into a temp file. Use it before an update.
+// The page itself passes false so loading the page never dumps the database.
+function preflight_check(array $update_cfg = null, $full_dump_check = false)
 {
 $errors = [];
 $warnings = [];
 $update_cfg = $update_cfg ?: update_settings();
 $cwd = getcwd();
 $cwd_real = $cwd ? (realpath($cwd) ?: $cwd) : '';
-	$root_path = rtrim((string)$update_cfg['repo_root'], '/');
-	$panel_path = rtrim((string)$update_cfg['panel_path'], '/');
-	$backup_base = get_backup_base($update_cfg);
-	$root_real = realpath($root_path) ?: $root_path;
+$root_path = rtrim((string)$update_cfg['repo_root'], '/');
+$panel_path = rtrim((string)$update_cfg['panel_path'], '/');
+$backup_base = get_backup_base($update_cfg);
 $panel_real = realpath($panel_path) ?: $panel_path;
 $layout = [
 'cwd' => $cwd,
-'cwd_real' => $cwd_real,
 'expected_root' => $root_path,
 'expected_panel' => $panel_path,
-'root' => $root_path,
-'root_real' => $root_real,
-'panel_dir' => $panel_path,
 'panel_dir_real' => $panel_real,
-	'backup_dir' => $backup_base,
+'backup_dir' => $backup_base,
 'config_file' => $panel_path . '/includes/config.inc.php',
-'destination_panel' => $panel_path,
 ];
 
-if (!$layout['cwd']) {
+if (!$cwd) {
 $errors[] = 'Unable to read current working directory.';
 } elseif (strpos($cwd_real, $panel_real) !== 0) {
 $warnings[] = 'Current working directory is not under configured Panel path: ' . $panel_real;
 }
 if (!is_dir($root_path)) {
-$errors[] = 'Detected GSP root path is missing.';
+$errors[] = 'Detected GSP root path is missing: ' . $root_path;
 }
 if (!is_dir($panel_path)) {
-$errors[] = 'Panel directory is missing.';
+$errors[] = 'Panel directory is missing: ' . $panel_path;
 }
 if (!file_exists($layout['config_file'])) {
 $errors[] = 'Panel includes/config.inc.php was not found and cannot be preserved.';
 }
-	$backup_ready = ensure_directory($backup_base, 'backup directory');
-	if (!$backup_ready['success']) {
-	$errors[] = $backup_ready['error'];
-	}
-
-	foreach ([$root_path, $panel_path, $backup_base] as $path) {
-if (!is_writable($path)) {
-$errors[] = 'Path is not writable: ' . $path;
-}
+if (empty($errors)) {
+$errors = update_preflight_errors($panel_path, $backup_base, $full_dump_check);
 }
 
 update_log('Preflight layout: ' . json_encode($layout));
@@ -669,9 +626,9 @@ return [
 ];
 }
 
-function load_panel_db_config()
+function load_panel_db_config($panel_dir = PANEL_DIR)
 {
-$config_file = PANEL_DIR . '/includes/config.inc.php';
+$config_file = rtrim($panel_dir, '/') . '/includes/config.inc.php';
 if (!is_readable($config_file)) {
 return null;
 }
@@ -923,14 +880,16 @@ function create_full_backup($update_target_type, $update_target_version, $includ
 'created_at' => date('Y-m-d H:i:s'),
 ];
 
+// The database dump is required. Rollback restores files and database together.
 $db_config = load_panel_db_config();
-if ($db_config !== null) {
+if ($db_config === null) {
+return ['success' => false, 'error' => 'Database settings could not be read, so the database cannot be backed up.'];
+}
 $db_backup = create_database_backup($backup_dir, $db_config);
 if (!$db_backup['success']) {
 return ['success' => false, 'error' => $db_backup['error']];
 }
 $meta['database_backup'] = basename($db_backup['file']);
-}
 
 $panel_backup = create_archive(
 PANEL_DIR,
@@ -981,14 +940,7 @@ $path = ltrim($path, '/');
 return $path;
 }
 
-function copy_file($src, $dst)
-{
-$parent = dirname($dst);
-if (!is_dir($parent)) {
-@mkdir($parent, 0755, true);
-}
-return @copy($src, $dst);
-}
+
 
 function runtime_state_paths()
 {
@@ -1007,7 +959,7 @@ function create_runtime_state_snapshot($panel_dir)
 {
 $snapshot_dir = sys_get_temp_dir() . '/runtime_state_' . getmypid() . '_' . random_token(8);
 if (!@mkdir($snapshot_dir, 0700, true) && !is_dir($snapshot_dir)) {
-return ['success' => false, 'error' => 'Cannot create temporary runtime-state snapshot directory.'];
+return ['success' => false, 'error' => 'Cannot create temporary runtime-state snapshot directory: ' . $snapshot_dir];
 }
 $files = [];
 foreach (runtime_state_paths() as $relative) {
@@ -1015,10 +967,10 @@ $source = rtrim($panel_dir, '/') . '/' . $relative;
 if (!is_file($source)) {
 continue;
 }
-$dest = $snapshot_dir . '/' . $relative;
-if (!copy_file($source, $dest)) {
+$copy = copy_file($source, $snapshot_dir . '/' . $relative);
+if (!$copy['success']) {
 rmdir_recursive($snapshot_dir);
-return ['success' => false, 'error' => 'Cannot preserve runtime file before update: ' . $relative];
+return ['success' => false, 'error' => 'Cannot preserve runtime file before update: ' . $copy['error']];
 }
 $files[] = $relative;
 }
@@ -1036,9 +988,9 @@ $source = rtrim($snapshot['snapshot_dir'], '/') . '/' . $relative;
 if (!is_file($source)) {
 continue;
 }
-$dest = rtrim($panel_dir, '/') . '/' . $relative;
-if (!copy_file($source, $dest)) {
-return ['success' => false, 'error' => 'Cannot restore runtime file after update: ' . $relative, 'restored' => $restored];
+$copy = copy_file($source, rtrim($panel_dir, '/') . '/' . $relative);
+if (!$copy['success']) {
+return ['success' => false, 'error' => 'Cannot restore runtime file after update: ' . $copy['error'], 'restored' => $restored];
 }
 $restored++;
 }
@@ -1087,55 +1039,55 @@ return [
 return ['success' => true, 'run' => $run];
 }
 
-function checkout_update_source(array $update_cfg)
+// Download one ZIP into $zip_file. Returns '' on success, else the error text.
+function download_release_zip($url, $zip_file)
 {
-$channel = isset($update_cfg['channel']) ? (string)$update_cfg['channel'] : DEFAULT_RELEASE_CHANNEL;
-$release_zip_url = !empty($update_cfg['release_zip_url']) ? trim((string)$update_cfg['release_zip_url']) : release_channel_url($channel);
-if (!is_valid_release_channel($channel)) {
-return ['success' => false, 'error' => 'Release channel must be stable or unstable.'];
-}
-if (!is_valid_release_zip_url($release_zip_url)) {
-return ['success' => false, 'error' => 'Release ZIP URL must be an http(s) .zip URL.'];
-}
-$temp_dir = sys_get_temp_dir() . '/panel_release_' . getmypid() . '_' . random_token(8);
-if (!@mkdir($temp_dir, 0700, true) && !is_dir($temp_dir)) {
-return ['success' => false, 'error' => 'Cannot create temporary release extraction directory.'];
-}
-$zip_file = $temp_dir . '/panel-release.zip';
-$extract_dir = $temp_dir . '/extract';
-@mkdir($extract_dir, 0700, true);
-update_log('Downloading Panel release ZIP for channel ' . $channel . ': ' . $release_zip_url);
-$downloaded = false;
 if (function_exists('curl_init')) {
 $fh = @fopen($zip_file, 'wb');
 if ($fh === false) {
-rmdir_recursive($temp_dir);
-return ['success' => false, 'error' => 'Cannot write temporary release ZIP.'];
+return 'Cannot write temporary release ZIP: ' . $zip_file;
 }
-$ch = curl_init($release_zip_url);
+$ch = curl_init($url);
 curl_setopt($ch, CURLOPT_FILE, $fh);
 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 curl_setopt($ch, CURLOPT_FAILONERROR, true);
 curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 20);
 curl_setopt($ch, CURLOPT_TIMEOUT, 300);
-$downloaded = curl_exec($ch) === true;
+$ok = curl_exec($ch) === true;
 $curl_error = curl_error($ch);
 curl_close($ch);
 fclose($fh);
-if (!$downloaded) {
-@unlink($zip_file);
+return $ok ? '' : 'Release ZIP download failed: ' . $curl_error;
+}
+$data = @file_get_contents($url);
+if ($data === false || @file_put_contents($zip_file, $data) === false) {
+return 'Release ZIP download failed.';
+}
+return '';
+}
+
+// Download, extract and validate the selected release into a temp directory.
+// Nothing in the panel is touched. On success the caller must delete temp_dir.
+function stage_release_zip(array $update_cfg)
+{
+$release_zip_url = !empty($update_cfg['release_zip_url']) ? trim((string)$update_cfg['release_zip_url']) : '';
+if (!is_valid_release_zip_url($release_zip_url)) {
+return ['success' => false, 'error' => 'Release ZIP URL must be an http(s) .zip URL.'];
+}
+$temp_dir = sys_get_temp_dir() . '/panel_release_' . getmypid() . '_' . random_token(8);
+$extract_dir = $temp_dir . '/extract';
+if (!@mkdir($extract_dir, 0700, true) && !is_dir($extract_dir)) {
+return ['success' => false, 'error' => 'Cannot create temporary release directory: ' . $temp_dir];
+}
+$zip_file = $temp_dir . '/panel-release.zip';
+update_log('Downloading Panel release ZIP: ' . $release_zip_url);
+$download_error = download_release_zip($release_zip_url, $zip_file);
+if ($download_error === '' && (!is_file($zip_file) || filesize($zip_file) <= 0)) {
+$download_error = 'Downloaded release ZIP is missing or empty.';
+}
+if ($download_error !== '') {
 rmdir_recursive($temp_dir);
-return ['success' => false, 'error' => 'Release ZIP download failed: ' . $curl_error];
-}
-} else {
-$data = @file_get_contents($release_zip_url);
-if ($data !== false) {
-$downloaded = @file_put_contents($zip_file, $data) !== false;
-}
-}
-if (!$downloaded || !is_file($zip_file) || filesize($zip_file) <= 0) {
-rmdir_recursive($temp_dir);
-return ['success' => false, 'error' => 'Downloaded release ZIP is missing or empty.'];
+return ['success' => false, 'error' => $download_error];
 }
 require_once(PANEL_DIR . '/modules/update/unzip.php');
 $extract = extractZip($zip_file, rtrim($extract_dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR, '', '', '');
@@ -1148,8 +1100,23 @@ if (!$payload['success']) {
 rmdir_recursive($temp_dir);
 return $payload;
 }
-update_log('Panel release ZIP extracted. Payload root: ' . $payload['source_root']);
-return ['success' => true, 'temp_dir' => $temp_dir, 'source_root' => $payload['source_root'], 'output' => 'release zip extracted', 'updated_checkout' => false];
+$valid = validate_staged_release($payload['source_root']);
+if (!$valid['success']) {
+rmdir_recursive($temp_dir);
+return $valid;
+}
+foreach ($valid['ignored_sql_files'] as $ignored) {
+update_log('Warning: release migration file is not named NNN_name.sql and will not run: ' . $ignored);
+}
+update_log('Panel release ' . $valid['version'] . ' staged and validated. Payload root: ' . $payload['source_root'] . '. Migrations: ' . count($valid['migrations']));
+return [
+'success' => true,
+'temp_dir' => $temp_dir,
+'source_root' => $payload['source_root'],
+'version' => $valid['version'],
+'migrations' => $valid['migrations'],
+'release_zip_url' => $release_zip_url,
+];
 }
 
 function find_panel_payload_root($extract_dir)
@@ -1184,29 +1151,7 @@ return ['success' => false, 'error' => 'Release ZIP contains multiple Panel payl
 return ['success' => true, 'source_root' => $roots[0]];
 }
 
-function fail_update_with_rollback($error, array $backup, array $update_cfg, array $runtime_snapshot = null, array $checkout = null)
-{
-if ($runtime_snapshot !== null) {
-$restore_runtime = restore_runtime_state_snapshot($runtime_snapshot, $update_cfg['panel_path']);
-if (!$restore_runtime['success']) {
-$error .= ' Runtime-state restore failed: ' . $restore_runtime['error'];
-}
-cleanup_runtime_state_snapshot($runtime_snapshot);
-}
-if ($checkout !== null && !empty($checkout['temp_dir'])) {
-rmdir_recursive($checkout['temp_dir']);
-}
-if (!empty($backup['backup_name']) && isset($GLOBALS['db']) && is_object($GLOBALS['db'])) {
-$rollback = do_revert($backup['backup_name'], false, $update_cfg);
-if ($rollback['success']) {
-$error .= ' Rolled back to backup ' . $backup['backup_name'] . '.';
-} else {
-$error .= ' Automatic rollback failed: ' . $rollback['error'];
-}
-}
-update_log('Configured release ZIP panel update failed: ' . $error);
-return ['success' => false, 'error' => $error, 'backup_dir' => isset($backup['backup_dir']) ? $backup['backup_dir'] : null];
-}
+
 
 function fix_permissions($root_dir)
 {
@@ -1233,78 +1178,77 @@ foreach (glob($cache . '/*.cache') ?: [] as $f) {
 }
 }
 
+// Installs the selected release. Files and database change together or not at all:
+// preflight and staging change nothing; after the backup any failure restores both.
 function do_configured_archive_update(array $update_cfg, $restart_nonce = '')
 {
-global $db;
 $validation = validate_update_settings($update_cfg);
 if (!empty($validation)) {
 return ['success' => false, 'error' => implode(' | ', $validation)];
 }
-$preflight = preflight_check($update_cfg);
-if (!$preflight['success']) {
-return ['success' => false, 'error' => 'Preflight failed: ' . implode(' | ', $preflight['errors'])];
-}
-
 $panel_dest = rtrim((string)$update_cfg['panel_path'], '/');
 if (strpos($panel_dest, '/') !== 0 || strpos($panel_dest, '..') !== false || strpos($panel_dest, "\0") !== false) {
 return ['success' => false, 'error' => 'Panel destination path is invalid.'];
 }
-
-$backup = create_full_backup('panel-update', $update_cfg['channel'], false, $update_cfg);
-if (!$backup['success']) {
-return $backup;
+$preflight = preflight_check($update_cfg, true);
+if (!$preflight['success']) {
+return ['success' => false, 'error' => 'Preflight failed. Nothing was changed. ' . implode(' | ', $preflight['errors'])];
 }
-update_log("Single backup created before panel release update to {$update_cfg['channel']}: {$backup['backup_dir']}");
+$staged = stage_release_zip($update_cfg);
+if (!$staged['success']) {
+return ['success' => false, 'error' => $staged['error'] . ' Nothing was changed.'];
+}
+try {
+return apply_staged_release($staged, $update_cfg);
+} finally {
+rmdir_recursive($staged['temp_dir']);
+}
+}
 
+// Backup, copy, migrate, verify. Rolls back files and database if any step fails.
+function apply_staged_release(array $staged, array $update_cfg)
+{
+global $db;
+$panel_dest = rtrim((string)$update_cfg['panel_path'], '/');
+$panel_source = component_source_path($staged['source_root'], $update_cfg['panel_source_path']);
+if ($panel_source === false || !is_dir($panel_source)) {
+return ['success' => false, 'error' => 'Source Panel folder is invalid or missing: ' . $update_cfg['panel_source_path'] . '. Nothing was changed.'];
+}
+$same_tree = (realpath($panel_source) ?: $panel_source) === (realpath($panel_dest) ?: $panel_dest);
+if (!$same_tree) {
+$target_errors = update_release_target_errors($panel_source, $panel_dest);
+if (!empty($target_errors)) {
+return ['success' => false, 'error' => 'Preflight failed. Nothing was changed. ' . implode(' | ', $target_errors)];
+}
+}
+
+$baseline = update_capture_baseline($db, $panel_dest);
+$backup = create_full_backup('panel-update', $staged['version'], false, $update_cfg);
+if (!$backup['success']) {
+return ['success' => false, 'error' => 'Backup failed. Nothing was changed. ' . $backup['error']];
+}
+update_log('Restore point created before update to ' . $staged['version'] . ': ' . $backup['backup_dir']);
 $runtime_snapshot = create_runtime_state_snapshot($panel_dest);
 if (!$runtime_snapshot['success']) {
-return fail_update_with_rollback($runtime_snapshot['error'], $backup, $update_cfg);
+return ['success' => false, 'error' => $runtime_snapshot['error'] . ' Nothing was changed. Backup: ' . $backup['backup_dir'], 'backup_dir' => $backup['backup_dir']];
 }
 
-$checkout = checkout_update_source($update_cfg);
-if (!$checkout['success']) {
-return fail_update_with_rollback($checkout['error'], $backup, $update_cfg, $runtime_snapshot, $checkout);
-}
-
-$panel_source = component_source_path($checkout['source_root'], $update_cfg['panel_source_path']);
-if ($panel_source === false || !is_dir($panel_source)) {
-return fail_update_with_rollback('Source Panel folder is invalid or missing: ' . $update_cfg['panel_source_path'], $backup, $update_cfg, $runtime_snapshot, $checkout);
-}
-
-if (!is_dir($panel_dest) && !@mkdir($panel_dest, 0755, true) && !is_dir($panel_dest)) {
-return fail_update_with_rollback('Cannot create Panel destination directory: ' . $panel_dest, $backup, $update_cfg, $runtime_snapshot, $checkout);
-}
-$panel_source_real = realpath($panel_source) ?: $panel_source;
-$panel_dest_real = realpath($panel_dest) ?: $panel_dest;
-if ($panel_source_real === $panel_dest_real) {
-$sync = ['success' => true, 'files_copied' => 0, 'skipped' => [], 'copied_files' => []];
-update_log('Configured release update source is already the live Panel root; Panel copy step skipped.');
-} else {
-$sync = component_copy_tree($panel_source, $panel_dest, 'Panel');
-}
-if (!empty($checkout['temp_dir'])) {
-rmdir_recursive($checkout['temp_dir']);
-}
-if (!$sync['success']) {
-return fail_update_with_rollback($sync['error'], $backup, $update_cfg, $runtime_snapshot);
-}
-$runtime_restore = restore_runtime_state_snapshot($runtime_snapshot, $panel_dest);
+$state = ['sync' => null, 'created_files' => []];
+$ops = update_build_ops($staged, $update_cfg, $backup, $baseline, $runtime_snapshot, $same_tree ? null : $panel_source, $state);
+try {
+$transaction = update_run_transaction($ops, $backup['backup_dir']);
+} finally {
 cleanup_runtime_state_snapshot($runtime_snapshot);
-if (!$runtime_restore['success']) {
-return fail_update_with_rollback($runtime_restore['error'], $backup, $update_cfg);
 }
-$migrations = run_pending_migrations();
-if (!$migrations['success']) {
-return fail_update_with_rollback($migrations['error'], $backup, $update_cfg);
-}
-$commit_after = get_git_commit();
-fix_permissions($panel_dest);
 clear_panel_cache($panel_dest);
-write_version_file($update_cfg['channel'], 'release-zip');
-write_version_json('release-zip', $update_cfg['release_zip_url'], $update_cfg['channel'], $commit_after);
-write_last_update_markers($update_cfg['repo_root']);
-$db->setSettings(['panel_version' => $update_cfg['channel'], 'version_type' => 'release-zip']);
+if (!$transaction['success']) {
+return ['success' => false, 'error' => $transaction['error'], 'rolled_back' => $transaction['rolled_back'], 'backup_dir' => $backup['backup_dir']];
+}
 
+// The update is applied and verified. These last steps do not change the result.
+fix_permissions($panel_dest);
+write_last_update_markers($update_cfg['repo_root']);
+$db->setSettings(['panel_version' => $staged['version'], 'version_type' => 'release-zip']);
 if (file_exists($panel_dest . '/modules/modulemanager/module_handling.php')) {
 require_once($panel_dest . '/modules/modulemanager/module_handling.php');
 }
@@ -1314,17 +1258,93 @@ updateAllPanelModules();
 if (function_exists('runPostUpdateOperations')) {
 runPostUpdateOperations();
 }
+update_log('Panel update complete: ' . $staged['version'] . ' from ' . $staged['release_zip_url']);
 
-update_log("Configured release ZIP panel update complete: {$update_cfg['release_zip_url']} {$update_cfg['channel']}");
+$sync = $state['sync'];
 return [
 'success' => true,
+'version' => $staged['version'],
 'files_copied' => $sync['files_copied'],
 'panel_files_copied' => $sync['files_copied'],
 'backup_dir' => $backup['backup_dir'],
 'backup_name' => $backup['backup_name'],
 'preserved' => array_values(array_unique(array_merge($sync['skipped'], (array)$runtime_snapshot['files']))),
-'copied_files' => isset($sync['copied_files']) ? $sync['copied_files'] : [],
-'migrations_applied' => $migrations['run']['applied'],
+'copied_files' => $sync['copied_files'],
+'migrations_applied' => $state['migrations']['applied'],
+];
+}
+
+// The steps of one update, as callables for update_run_transaction().
+// $panel_source is null when the release is already the live tree (nothing to copy).
+function update_build_ops(array $staged, array $update_cfg, array $backup, array $baseline, array $runtime_snapshot, $panel_source, array &$state)
+{
+global $db;
+$panel_dest = rtrim((string)$update_cfg['panel_path'], '/');
+$backup_dir = $backup['backup_dir'];
+$state['migrations'] = ['applied' => []];
+return [
+'copy_files' => function () use ($panel_source, $panel_dest, &$state) {
+if ($panel_source === null) {
+$state['sync'] = ['success' => true, 'files_copied' => 0, 'skipped' => [], 'copied_files' => [], 'created_files' => []];
+return $state['sync'];
+}
+$state['sync'] = component_copy_tree($panel_source, $panel_dest, 'Panel');
+$state['created_files'] = isset($state['sync']['created_files']) ? $state['sync']['created_files'] : [];
+return $state['sync'];
+},
+'restore_runtime' => function () use ($runtime_snapshot, $panel_dest) {
+return restore_runtime_state_snapshot($runtime_snapshot, $panel_dest);
+},
+'run_migrations' => function () use (&$state) {
+$run = run_pending_migrations();
+if ($run['success']) {
+$state['migrations'] = $run['run'];
+}
+return $run;
+},
+'write_version' => function () use ($staged, $update_cfg) {
+if (!write_version_file($staged['version'], 'release-zip')) {
+return ['success' => false, 'error' => 'Cannot write ' . VERSION_FILE];
+}
+$commit = get_git_commit();
+if (!write_version_json('release-zip', $update_cfg['release_zip_url'], $staged['version'], $commit)) {
+return ['success' => false, 'error' => 'Cannot write ' . VERSION_JSON];
+}
+return ['success' => true];
+},
+'verify_update' => function () use ($db, $panel_dest, $staged) {
+return update_verify_new_state($db, $panel_dest, $staged);
+},
+'rollback_files' => function () use ($backup_dir, $panel_dest, &$state) {
+$restore = restore_archive($backup_dir . '/panel-files.tar.gz', $panel_dest);
+if (!$restore['success']) {
+return $restore;
+}
+$removed = update_remove_created_files($panel_dest, $state['created_files']);
+if (!$removed['success']) {
+return $removed;
+}
+if (file_exists($backup_dir . '/version.json.bak')) {
+$copy = copy_file($backup_dir . '/version.json.bak', VERSION_JSON);
+if (!$copy['success']) {
+return $copy;
+}
+}
+return ['success' => true];
+},
+'rollback_database' => function () use ($backup_dir, $db, $baseline) {
+if (!file_exists($backup_dir . '/database.sql')) {
+return ['success' => false, 'error' => 'Database dump is missing: ' . $backup_dir . '/database.sql'];
+}
+$restore = restore_database_from_backup($backup_dir);
+if (!$restore['success']) {
+return $restore;
+}
+return update_drop_new_tables($db, $baseline);
+},
+'verify_rollback' => function () use ($db, $panel_dest, $baseline) {
+return update_verify_restored_state($db, $panel_dest, $baseline);
+},
 ];
 }
 
@@ -1347,11 +1367,14 @@ return false;
 return $real;
 }
 
+// Copies the release tree into the panel. Stops at the first failure and says which path failed.
+// created_files lists the files that did not exist before, so a rollback can remove them.
 function component_copy_tree($src_root, $dst_root, $component_label)
 {
 $copied = 0;
 $skipped = [];
 $copied_files = [];
+$created_files = [];
 if (!is_dir($src_root)) {
 return ['success' => false, 'error' => 'Source component path not found: ' . $src_root];
 }
@@ -1362,67 +1385,33 @@ $iter = new RecursiveIteratorIterator(
 new RecursiveDirectoryIterator($src_root, RecursiveDirectoryIterator::SKIP_DOTS),
 RecursiveIteratorIterator::SELF_FIRST
 );
-$protected = [
-'.git/',
-'.github/',
-'.devplus/',
-'.vscode/',
-'includes/config.inc.php',
-'config.inc.php',
-'Cfg/',
-'ServerFiles/',
-'Schedule/',
-'logs/',
-'log/',
-'backups/',
-'backup/',
-'cache/',
-'tmp/',
-'temp/',
-'uploads/',
-'upload/',
-'home/',
-'homes/',
-'servers/',
-'game_servers/',
-'steamcmd/',
-'startups/',
-'node_modules/',
-'vendor/',
-];
 foreach ($iter as $item) {
 $rel = normalize_rel(substr($item->getPathname(), strlen(rtrim($src_root, '/')) + 1));
-$base_name = basename($rel);
-if (preg_match('/\.log$/i', $base_name) || preg_match('/\.sql\.(gz|bz2|xz)$/i', $base_name)) {
-$skipped[] = $component_label . '/' . $rel;
-continue;
-}
-$is_protected = false;
-foreach ($protected as $prefix) {
-if ($rel === rtrim($prefix, '/') || strpos($rel, $prefix) === 0) {
-$is_protected = true;
-break;
-}
-}
-if ($is_protected) {
+if (update_should_skip($rel)) {
 $skipped[] = $component_label . '/' . $rel;
 continue;
 }
 $dst = rtrim($dst_root, '/') . '/' . $rel;
 if ($item->isDir()) {
-if (!is_dir($dst)) {
-@mkdir($dst, 0755, true);
+if (!is_dir($dst) && !@mkdir($dst, 0755, true) && !is_dir($dst)) {
+return ['success' => false, 'error' => 'Cannot create directory ' . $dst, 'created_files' => $created_files];
 }
 continue;
 }
-if (copy_file($item->getPathname(), $dst)) {
+$existed = file_exists($dst);
+$copy = copy_file($item->getPathname(), $dst);
+if (!$copy['success']) {
+return ['success' => false, 'error' => $copy['error'], 'created_files' => $created_files];
+}
+if (!$existed) {
+$created_files[] = $rel;
+}
 $copied++;
 if (count($copied_files) < 200) {
 $copied_files[] = $component_label . '/' . $rel;
 }
 }
-}
-return ['success' => true, 'files_copied' => $copied, 'skipped' => array_values(array_unique($skipped)), 'copied_files' => $copied_files];
+return ['success' => true, 'files_copied' => $copied, 'skipped' => array_values(array_unique($skipped)), 'copied_files' => $copied_files, 'created_files' => $created_files];
 }
 
 function run_admin_post_update_command($command, $cwd)
@@ -1494,7 +1483,7 @@ return ['success' => false, 'error' => 'Archive not found: ' . $archive];
 }
 $out = [];
 $ret = 0;
-exec('tar -xzf ' . escapeshellarg($archive) . ' -C ' . escapeshellarg($target) . ' 2>&1', $out, $ret);
+exec(restore_archive_command($archive, $target), $out, $ret);
 if ($ret !== 0) {
 return ['success' => false, 'error' => 'tar extract failed: ' . implode(' | ', $out)];
 }
@@ -1577,7 +1566,11 @@ $db->setSettings([
 	}
 $db_restore = restore_database_from_backup($backup_dir);
 if (!$db_restore['success']) {
-update_log('Revert warning: ' . $db_restore['error']);
+update_log('Revert failed at the database restore. Files were already restored. Backup kept at ' . $backup_dir . ': ' . $db_restore['error']);
+if (!$had_maintenance) {
+$db->setSettings(['maintenance_mode' => '0']);
+}
+return ['success' => false, 'error' => 'Files were restored but the database restore failed: ' . $db_restore['error'] . ' Backup is kept at ' . $backup_dir . '.'];
 }
 
 if ($restore_apache && (is_dir($backup_dir . '/apache-configs') || is_dir($backup_dir . '/apache-sites-available'))) {
@@ -2034,7 +2027,7 @@ print_failure('Invalid security token. Please reload and try again.');
 	try {
 
 if ($action === 'preflight') {
-$preflight_result = preflight_check();
+$preflight_result = preflight_check(null, true);
 if ($preflight_result['success']) {
 print_success('Preflight check passed.');
 } else {
@@ -2079,24 +2072,16 @@ print_failure('Backup failed: ' . htmlspecialchars($result['error']));
 }
 } elseif ($action === 'save_settings') {
 $new_cfg = update_settings();
-$new_cfg['channel'] = isset($_POST['update_channel']) ? trim((string)$_POST['update_channel']) : DEFAULT_RELEASE_CHANNEL;
-$custom_release_zip_url = isset($_POST['update_custom_release_zip_url']) ? trim((string)$_POST['update_custom_release_zip_url']) : '';
-$new_cfg['release_zip_url'] = $custom_release_zip_url;
-if ($new_cfg['release_zip_url'] === '') {
-$new_cfg['release_zip_url'] = release_channel_url($new_cfg['channel']);
+$release_zip_url = isset($_POST['update_custom_release_zip_url']) ? trim((string)$_POST['update_custom_release_zip_url']) : '';
+if ($release_zip_url !== '') {
+$new_cfg['release_zip_url'] = $release_zip_url;
 }
 $errors = validate_update_settings($new_cfg);
 if (!empty($errors)) {
 print_failure('Update settings were not saved: ' . htmlspecialchars(implode(' | ', $errors)));
 } else {
-$db->setSettings([
-'update_channel' => $new_cfg['channel'],
-'update_release_zip_url' => $custom_release_zip_url,
-'update_branch' => $new_cfg['channel'],
-]);
-$settings['update_channel'] = $new_cfg['channel'];
-$settings['update_release_zip_url'] = $custom_release_zip_url;
-$settings['update_branch'] = $new_cfg['channel'];
+$db->setSettings(['update_release_zip_url' => $release_zip_url]);
+$settings['update_release_zip_url'] = $release_zip_url;
 $update_cfg = update_settings();
 print_success('Update settings saved.');
 }
@@ -2107,7 +2092,7 @@ foreach (release_components() as $component) {
 $cfg = [
 'component' => $component,
 'repo_url' => isset($_POST['release_' . $component . '_repo_url']) ? trim((string)$_POST['release_' . $component . '_repo_url']) : '',
-'channel' => isset($_POST['release_' . $component . '_channel']) ? trim((string)$_POST['release_' . $component . '_channel']) : 'stable',
+'channel' => release_source_settings($component)['channel'],
 'token_file' => isset($_POST['release_' . $component . '_token_file']) ? trim((string)$_POST['release_' . $component . '_token_file']) : '',
 ];
 $errors = validate_release_source_settings($cfg);
@@ -2116,7 +2101,6 @@ $all_errors = array_merge($all_errors, $errors);
 continue;
 }
 $to_save['release_' . $component . '_repo_url'] = $cfg['repo_url'];
-$to_save['release_' . $component . '_channel'] = $cfg['channel'];
 $to_save['release_' . $component . '_token_file'] = $cfg['token_file'];
 }
 if (!empty($all_errors)) {
@@ -2163,11 +2147,11 @@ print_failure('Revert failed: ' . htmlspecialchars($result['error']));
 	}
 
 	$finished_at = date('Y-m-d H:i:s');
-	log_update_to_db('panel-update', null, 'info', 'Admin action: ' . $action, null, null, null, $started_at, $finished_at);
+	log_update_to_db(get_current_version(), $update_cfg['release_zip_url'], 'info', 'Admin action: ' . $action, null, null, null, $started_at, $finished_at);
 	} catch (Throwable $e) {
 	$finished_at = date('Y-m-d H:i:s');
 	update_log('Update action failure [' . $action . ']: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
-	log_update_to_db('panel-update', null, 'error', 'Admin action failed: ' . $action . ' | ' . $e->getMessage(), null, null, null, $started_at, $finished_at);
+	log_update_to_db(get_current_version(), $update_cfg['release_zip_url'], 'error', 'Admin action failed: ' . $action . ' | ' . $e->getMessage(), null, null, null, $started_at, $finished_at);
 	print_failure('Update action failed: ' . htmlspecialchars($e->getMessage()));
 	}
 	}
@@ -2229,7 +2213,7 @@ foreach (release_components() as $component) {
 	$repo_value = ($rcfg['repo_url'] !== '') ? $rcfg['repo_url'] : default_repo_url($component);
 	echo "<tr><td><strong>" . htmlspecialchars(release_component_label($component)) . "</strong></td>";
 	echo "<td><input type='text' name='release_{$component}_repo_url' value='" . htmlspecialchars($repo_value, ENT_QUOTES, 'UTF-8') . "' size='55'></td>";
-	echo "<input type='hidden' name='release_{$component}_channel' value='stable'></td></tr>\n";
+	echo "</tr>\n";
 }
 echo "</table>\n";
 echo "<p><button type='submit'>Save sources</button></p>\n";

@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-DEFAULT_REPO_URL="https://git.runlevelsystems.com/GSE/Panel.git"
-DEFAULT_BRANCH="unstable"
-DEFAULT_RELEASE_BASE_URL="https://git.runlevelsystems.com/GSE/Panel/archive"
-DEFAULT_RELEASE_CHANNEL="stable"
+# The installer installs one release ZIP. There are no channels: pass --release-zip-url
+# to choose the release, or accept this default.
+DEFAULT_RELEASE_ZIP_URL="https://github.com/GameServerEngine/gse-panel/archive/refs/heads/stable.zip"
 DEFAULT_WEB_GROUP="www-data"
 SCRIPT_PANEL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEFAULT_INSTALL_PATH="$SCRIPT_PANEL_ROOT"
@@ -28,13 +27,10 @@ WANT_HTTPS=0
 INSTALL_PATH_FOR_REQUIREMENTS=""
 DOCROOT_OVERRIDE=""
 INSTALL_SOURCE="${GSE_PANEL_SOURCE:-archive}"
-RELEASE_CHANNEL="${GSE_PANEL_RELEASE_CHANNEL:-$DEFAULT_RELEASE_CHANNEL}"
 RELEASE_ZIP_URL="${GSE_PANEL_RELEASE_ZIP_URL:-}"
 REPO_URL_OVERRIDE="${GSE_PANEL_REPO_URL:-}"
 BRANCH_OVERRIDE="${GSE_PANEL_REPO_BRANCH:-}"
-CHANNEL_OVERRIDE_SET=0
 RELEASE_URL_OVERRIDE_SET=0
-[[ -n "${GSE_PANEL_RELEASE_CHANNEL:-}" ]] && CHANNEL_OVERRIDE_SET=1
 [[ -n "${GSE_PANEL_RELEASE_ZIP_URL:-}" ]] && RELEASE_URL_OVERRIDE_SET=1
 CLEANUP_PATHS=()
 
@@ -50,11 +46,11 @@ usage() {
   cat <<'USAGE'
 Usage:
   sudo bash scripts/install-panel.sh [--dry-run]
-  sudo bash scripts/install-panel.sh [--channel stable|unstable] [--release-zip-url URL]
+  sudo bash scripts/install-panel.sh [--release-zip-url URL]
   sudo bash scripts/install-panel.sh --source git --repo-url URL --branch BRANCH
   sudo bash scripts/install-panel.sh --repair-permissions [--path PATH] [--owner USER|www-data] [--group www-data]
   sudo bash scripts/install-panel.sh [--path PATH] [--docroot PATH]
-  bash scripts/install-panel.sh --print-release-zip-url [stable|unstable] [CUSTOM_URL]
+  bash scripts/install-panel.sh --print-release-zip-url [URL]
   bash scripts/install-panel.sh --test-archive-copy URL TARGET
 
 This installer targets Debian/Ubuntu first. It installs OS prerequisites,
@@ -62,9 +58,8 @@ downloads and extracts the selected Panel release ZIP, configures permissions,
 and prints the browser installer URL. Database, admin, vhost, SSL, and install
 options are completed in the web installer.
 
-Normal installs use release archives:
-  stable   https://git.runlevelsystems.com/GSE/Panel/archive/stable.zip
-  unstable https://git.runlevelsystems.com/GSE/Panel/archive/unstable.zip
+Normal installs use one release ZIP. Default:
+  https://github.com/GameServerEngine/gse-panel/archive/refs/heads/stable.zip
 
 Git source mode is developer-only and must be requested with --source git.
 For an existing installation, use --path PATH; use --docroot PATH when the web document root is non-standard.
@@ -100,32 +95,6 @@ prompt() {
     read -r -p "$label: " value
     printf '%s' "$value"
   fi
-}
-
-prompt_release_source() {
-  local default="$1"
-  local value
-  while true; do
-    value="$(prompt "Release source/channel (stable/unstable/custom)" "$default")"
-    case "$value" in
-      stable|unstable|custom) printf '%s' "$value"; return 0 ;;
-      *) log "Choose stable, unstable, or custom." ;;
-    esac
-  done
-}
-
-validate_release_channel() {
-  local channel="$1"
-  case "$channel" in
-    stable|unstable) return 0 ;;
-    *) die "Release channel must be stable or unstable." ;;
-  esac
-}
-
-release_zip_url_for_channel() {
-  local channel="$1"
-  validate_release_channel "$channel"
-  printf '%s/%s.zip' "$DEFAULT_RELEASE_BASE_URL" "$channel"
 }
 
 validate_release_zip_url() {
@@ -344,12 +313,16 @@ find_panel_payload_root() {
   printf '%s' "${roots[0]}"
 }
 
+# The installer runs as root. Never leave root-owned files behind:
+# rsync does not copy owner or group, and the tree is handed to the web user afterwards.
 copy_panel_payload() {
   local payload_root="$1"
   local install_path="$2"
+  local owner="${3:-}"
+  local group="${4:-}"
 
   run mkdir -p "$install_path"
-  run rsync -a \
+  run rsync -a --no-owner --no-group \
     --exclude='.git/' \
     --exclude='.github/' \
     --exclude='.devplus/' \
@@ -373,11 +346,16 @@ copy_panel_payload() {
     "$payload_root"/ "$install_path"/
 
   run mkdir -p "$install_path/upload" "$install_path/cache" "$install_path/log" "$install_path/temp"
+  if [[ -n "$owner" ]]; then
+    run chown -R "$owner:$group" "$install_path" || die "Cannot give $install_path to $owner:$group."
+  fi
 }
 
 install_release_archive() {
   local release_url="$1"
   local install_path="$2"
+  local owner="${3:-}"
+  local group="${4:-}"
   local work_dir archive_file staging_dir payload_root
 
   validate_release_zip_url "$release_url"
@@ -398,7 +376,11 @@ install_release_archive() {
   curl -fL --retry 3 --connect-timeout 20 --output "$archive_file" "$release_url"
   [[ -s "$archive_file" ]] || die "Downloaded release ZIP is missing or empty."
 
-  unzip -q "$archive_file" -d "$staging_dir"
+  unzip -q "$archive_file" -d "$staging_dir" || die "Cannot unzip the release ZIP."
+  # The extracted tree belongs to the web user, not root.
+  if [[ -n "$owner" ]]; then
+    chown -R "$owner:$group" "$staging_dir" || die "Cannot give the extracted release to $owner:$group."
+  fi
   payload_root="$(find_panel_payload_root "$staging_dir")" || {
     case "$?" in
       1) die "Release ZIP does not contain a valid Panel payload root." ;;
@@ -408,7 +390,7 @@ install_release_archive() {
   }
 
   log "Copying Panel files from archive payload: $payload_root"
-  copy_panel_payload "$payload_root" "$install_path"
+  copy_panel_payload "$payload_root" "$install_path" "$owner" "$group"
   log "Panel release archive copied to $install_path. Existing config and runtime directories were preserved."
 }
 
@@ -435,22 +417,30 @@ clone_or_update_repo() {
   REPO_BRANCH="$branch"
 }
 
+# Required step. If it does not complete, the install fails: a half-owned tree
+# makes the later web updates fail.
 repair_permissions() {
   local install_path="$1"
   local owner="$2"
   local group="$3"
+  local stray
   id "$owner" >/dev/null 2>&1 || die "Owner user does not exist: $owner"
   getent group "$group" >/dev/null 2>&1 || die "Web group does not exist: $group"
 
-  run usermod -aG "$group" "$owner"
-  run php "$install_path/tools/install_panel_cli.php" --repair-permissions --base "$install_path" --owner "$owner" --group "$group"
+  run usermod -aG "$group" "$owner" || die "Cannot add $owner to group $group."
+  run php "$install_path/tools/install_panel_cli.php" --repair-permissions --base "$install_path" --owner "$owner" --group "$group" \
+    || die "Permission repair did not complete. Run: sudo bash scripts/install-panel.sh --repair-permissions --path '$install_path' --owner '$owner' --group '$group'"
+
+  if [[ "$DRY_RUN" != "1" ]]; then
+    stray="$(find "$install_path" \( ! -user "$owner" -o ! -group "$group" \) -print -quit)"
+    [[ -z "$stray" ]] || die "Permission repair left $stray with the wrong owner or group. Run: sudo bash scripts/install-panel.sh --repair-permissions --path '$install_path' --owner '$owner' --group '$group'"
+  fi
 }
 
 OWNER_OVERRIDE=""
 GROUP_OVERRIDE="$DEFAULT_WEB_GROUP"
 PATH_OVERRIDE=""
 PRINT_RELEASE_ZIP_URL=0
-PRINT_RELEASE_CHANNEL=""
 PRINT_RELEASE_CUSTOM_URL=""
 TEST_ARCHIVE_COPY=0
 TEST_ARCHIVE_URL=""
@@ -465,7 +455,7 @@ while [[ $# -gt 0 ]]; do
     --install-db-server) INSTALL_DB_SERVER=1; shift ;;
     --https) WANT_HTTPS=1; shift ;;
     --source) INSTALL_SOURCE="${2:-}"; shift 2 ;;
-    --channel) RELEASE_CHANNEL="${2:-}"; CHANNEL_OVERRIDE_SET=1; shift 2 ;;
+    --channel) die "--channel was removed. Use --release-zip-url URL to choose the release." ;;
     --release-zip-url) RELEASE_ZIP_URL="${2:-}"; RELEASE_URL_OVERRIDE_SET=1; shift 2 ;;
     --repo-url) REPO_URL_OVERRIDE="${2:-}"; shift 2 ;;
     --branch) BRANCH_OVERRIDE="${2:-}"; shift 2 ;;
@@ -475,10 +465,8 @@ while [[ $# -gt 0 ]]; do
     --group) GROUP_OVERRIDE="${2:-}"; shift 2 ;;
     --print-release-zip-url)
       PRINT_RELEASE_ZIP_URL=1
-      PRINT_RELEASE_CHANNEL="${2:-$RELEASE_CHANNEL}"
-      PRINT_RELEASE_CUSTOM_URL="${3:-}"
+      PRINT_RELEASE_CUSTOM_URL="${2:-}"
       shift
-      [[ $# -gt 0 && "$1" != --* ]] && shift
       [[ $# -gt 0 && "$1" != --* ]] && shift
       ;;
     --test-archive-copy)
@@ -500,13 +488,9 @@ case "$INSTALL_SOURCE" in
 esac
 
 if [[ "$PRINT_RELEASE_ZIP_URL" == "1" ]]; then
-  if [[ -n "$PRINT_RELEASE_CUSTOM_URL" ]]; then
-    validate_release_zip_url "$PRINT_RELEASE_CUSTOM_URL"
-    printf '%s\n' "$PRINT_RELEASE_CUSTOM_URL"
-  else
-    release_zip_url_for_channel "$PRINT_RELEASE_CHANNEL"
-    printf '\n'
-  fi
+  PRINT_RELEASE_CUSTOM_URL="${PRINT_RELEASE_CUSTOM_URL:-$DEFAULT_RELEASE_ZIP_URL}"
+  validate_release_zip_url "$PRINT_RELEASE_CUSTOM_URL"
+  printf '%s\n' "$PRINT_RELEASE_CUSTOM_URL"
   exit 0
 fi
 
@@ -549,7 +533,6 @@ fi
 install_path="${PATH_OVERRIDE:-}"
 repo_url="${REPO_URL_OVERRIDE:-}"
 branch="${BRANCH_OVERRIDE:-}"
-release_channel="$RELEASE_CHANNEL"
 release_zip_url="$RELEASE_ZIP_URL"
 release_label=""
 
@@ -559,45 +542,21 @@ if [[ "$INSTALL_SOURCE" == "git" ]]; then
   [[ -n "$branch" ]] || die "--source git requires --branch."
   release_label="git ${branch}"
 else
-  if [[ -n "$branch" ]]; then
-    validate_release_channel "$branch"
-    release_channel="$branch"
-    CHANNEL_OVERRIDE_SET=1
-    log "Compatibility: --branch maps to release channel '$release_channel' for archive installs."
-  fi
+  [[ -z "$branch" ]] || die "--branch is only for --source git. Use --release-zip-url URL to choose the release."
   if [[ -n "$repo_url" ]]; then
     if [[ "$repo_url" =~ \.zip([?#].*)?$ ]]; then
       release_zip_url="$repo_url"
       RELEASE_URL_OVERRIDE_SET=1
-      log "Compatibility: --repo-url was treated as a custom release ZIP URL."
+      log "Compatibility: --repo-url was treated as a release ZIP URL."
     else
       die "--repo-url is a Git source. Use --source git for developer Git installs, or --release-zip-url for archive installs."
     fi
   fi
-  validate_release_channel "$release_channel"
-  derived_release_zip_url="$(release_zip_url_for_channel "$release_channel")"
   if [[ "$RELEASE_URL_OVERRIDE_SET" != "1" ]]; then
-    if [[ "$CHANNEL_OVERRIDE_SET" != "1" ]]; then
-      release_source="$(prompt_release_source "$release_channel")"
-      if [[ "$release_source" == "custom" ]]; then
-        release_zip_url="$(prompt "Release ZIP URL" "${release_zip_url:-}")"
-        release_label="custom ZIP"
-      else
-        release_channel="$release_source"
-        release_zip_url="$(release_zip_url_for_channel "$release_channel")"
-        release_label="$release_channel"
-      fi
-    else
-      release_zip_url="$(release_zip_url_for_channel "$release_channel")"
-      release_label="$release_channel"
-    fi
-  else
-    release_zip_url="${release_zip_url:-$derived_release_zip_url}"
-    release_label="custom ZIP"
+    release_zip_url="$(prompt "Release ZIP URL" "$DEFAULT_RELEASE_ZIP_URL")"
   fi
   validate_release_zip_url "$release_zip_url"
-  repo_url="$release_zip_url"
-  branch="$release_channel"
+  release_label="$release_zip_url"
 fi
 
 if [[ -z "$install_path" ]]; then
@@ -609,9 +568,7 @@ enable_apache_modules
 if [[ "$INSTALL_SOURCE" == "git" ]]; then
   clone_or_update_repo "$repo_url" "$branch" "$install_path"
 else
-  install_release_archive "$release_zip_url" "$install_path"
-  REPO_URL="$release_zip_url"
-  REPO_BRANCH="$release_channel"
+  install_release_archive "$release_zip_url" "$install_path" "$INSTALLING_USER" "$WEB_GROUP"
 fi
 
 repair_permissions "$install_path" "$INSTALLING_USER" "$WEB_GROUP"

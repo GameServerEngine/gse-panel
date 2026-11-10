@@ -15,10 +15,10 @@ $cfg = update_settings();
 $panelRoot = realpath(dirname(__DIR__) . '/../..');
 update_smoke_assert(function_exists('do_configured_git_update'), 'legacy configured updater alias is top-level');
 update_smoke_assert(function_exists('do_configured_archive_update'), 'configured release ZIP updater helper is top-level');
-update_smoke_assert(function_exists('checkout_update_source'), 'release ZIP source helper is top-level');
+update_smoke_assert(function_exists('stage_release_zip'), 'release ZIP staging helper is top-level');
 update_smoke_assert(function_exists('disable_ssl_vhost'), 'SSL vhost disable helper is top-level');
-update_smoke_assert($cfg['channel'] === 'stable', 'default release channel is stable');
-update_smoke_assert($cfg['release_zip_url'] === 'https://github.com/GameServerEngine/gse-panel/archive/refs/heads/stable.zip', 'default release ZIP URL is stable archive');
+update_smoke_assert(!array_key_exists('channel', $cfg), 'update settings have no channel');
+update_smoke_assert($cfg['release_zip_url'] === 'https://github.com/GameServerEngine/gse-panel/archive/refs/heads/stable.zip', 'default release ZIP URL is the default archive');
 update_smoke_assert($cfg['repo_root'] === $panelRoot, 'repository root is derived from the running Panel');
 update_smoke_assert($cfg['panel_path'] === $panelRoot, 'Panel path is derived from the running Panel');
 update_smoke_assert(!array_key_exists('backup_retention', $cfg), 'backup retention setting was removed; one restore point is always kept');
@@ -36,18 +36,16 @@ update_smoke_assert($derived['panel_path'] === $panelRoot, 'stale Panel path set
 update_smoke_assert($derived['panel_source_path'] === '.', 'stale source folder setting is ignored');
 update_smoke_assert($derived['backup_before_update'] === '1', 'backup before update is mandatory');
 
-$bad = $cfg;
-$bad['channel'] = 'testing';
-update_smoke_assert(!empty(validate_update_settings($bad)), 'invalid release channel is rejected');
-
 $badUrl = $cfg;
 $badUrl['release_zip_url'] = 'https://git.runlevelsystems.com/GSE/Panel.git';
 update_smoke_assert(!empty(validate_update_settings($badUrl)), 'non-zip release URL is rejected');
 
-$unstable = $cfg;
-$unstable['channel'] = 'unstable';
-$unstable['release_zip_url'] = release_channel_url('unstable');
-update_smoke_assert(empty(validate_update_settings($unstable)), 'unstable release settings validate');
+$settings['update_branch'] = 'unstable';
+$legacy = update_settings();
+update_smoke_assert($legacy['release_zip_url'] === 'https://github.com/GameServerEngine/gse-panel/archive/refs/heads/unstable.zip', 'old update_branch setting still maps to a release ZIP URL');
+$settings['update_release_zip_url'] = 'https://example.com/panel-2.5.5.zip';
+update_smoke_assert(update_settings()['release_zip_url'] === 'https://example.com/panel-2.5.5.zip', 'saved release ZIP URL wins over old settings');
+unset($settings['update_branch'], $settings['update_release_zip_url']);
 
 update_smoke_assert(is_safe_backup_name('panel-update_2026-07-10_12-34-56'), 'named backup is accepted');
 update_smoke_assert(is_safe_backup_name('2026-07-10_12-34-56'), 'legacy timestamp backup is accepted');
