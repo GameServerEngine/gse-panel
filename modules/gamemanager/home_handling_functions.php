@@ -410,13 +410,36 @@ function get_start_cmd($remote,$server_xml,$home_info,$mod_id,$ip,$port,$db)
 	return $start_cmd;
 }
 
-// This function is used to batch stop/restart servers in background.
+// Keeps the reason the last exec_operation() call failed.
+// Call with a text to set it, or with no argument to read it.
+function exec_operation_error( $set = NULL )
+{
+	static $reason = '';
+	if ( $set !== NULL )
+		$reason = (string)$set;
+	return $reason;
+}
+
+// Sets the failure reason and returns FALSE, so callers can write: return exec_operation_fail(...).
+function exec_operation_fail( $reason )
+{
+	exec_operation_error($reason);
+	return FALSE;
+}
+
+// True when the home has saved start settings (last_param), needed to build a start command.
+function home_has_saved_start_settings( $home_info )
+{
+	return isset($home_info['last_param']) && trim((string)$home_info['last_param']) != "";
+}
+
+// This function is used to batch start/stop/restart servers in background.
 function exec_operation( $action, $home_id, $mod_id, $ip, $port, $override = false )
 {
     if(!is_numeric($port))
-		return FALSE;
+		return exec_operation_fail("Invalid port.");
 	if(!preg_match("/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/",$ip))
-		return FALSE;
+		return exec_operation_fail("Invalid IP address.");
 
 	global $db;
 
@@ -431,7 +454,10 @@ function exec_operation( $action, $home_id, $mod_id, $ip, $port, $override = fal
 		$home_info = $db->getUserGameHome($_SESSION['user_id'],$home_id);
 
     if( $home_info === FALSE )
-        return FALSE;
+        return exec_operation_fail("Server not found or access denied.");
+
+	if ( $action == "start" && !home_has_saved_start_settings($home_info) )
+		return exec_operation_fail(get_lang('no_saved_start_settings'));
 
     $server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], os_for_install_row($home_info));
 

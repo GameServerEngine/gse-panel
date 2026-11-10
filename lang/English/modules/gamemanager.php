@@ -207,3 +207,18 @@ define('LANG_sec', "Seconds");
 define('LANG_unknown_rsync_mirror', "You attempted to start an update from a mirror which doesn't exist.");
 define('LANG_custom_fields', "Server Settings");
 
+define('LANG_no_saved_start_settings', "No saved start settings. Open the server once to set them up.");
+define('LANG_group_start_selected', "Start selected");
+define('LANG_group_stop_selected', "Stop selected");
+define('LANG_group_restart_selected', "Restart selected");
+define('LANG_group_confirm_stop', "Stop %d selected server(s)?");
+define('LANG_group_confirm_restart', "Restart %d selected server(s)?");
+define('LANG_group_select_none', "No servers were selected, or the action was not valid.");
+define('LANG_group_select_all', "Select all servers");
+define('LANG_group_select_server', "Select this server");
+define('LANG_group_results_start', "Start results");
+define('LANG_group_results_stop', "Stop results");
+define('LANG_group_results_restart', "Restart results");
+define('LANG_group_succeeded', "succeeded");
+define('LANG_group_failed', "failed");
+define('LANG_group_operation_failed', "The operation failed. See the panel log for details.");

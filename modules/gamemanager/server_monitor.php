@@ -24,6 +24,7 @@
  */
 
 require_once('modules/gamemanager/home_handling_functions.php');
+require_once('modules/gamemanager/group_operations.php');
 require_once("modules/config_games/server_config_parser.php");
 
 require_once("includes/refreshed.php");
@@ -248,14 +249,11 @@ $home_info = $db->getGameHomeWithoutMods($home_id);
 			<input type="submit" value="<?php echo get_lang('search'); ?>" />
 		</form>
 	<?php
-	foreach ((array)$_POST as $key => $value)
-	{
-		if( preg_match( "/^action/", $key ) )
-		{
-			list($action,$home_id,$mod_id,$ip,$port) = explode("-", $value);
-			exec_operation( $action, $home_id, $mod_id, $ip, $port );
-		}
-	}
+	$home_names = array();
+	foreach ($server_homes as $named_home)
+		$home_names[$named_home['home_id']] = $named_home['home_name'];
+	echo group_handle_row_post($_POST, $home_names);
+	echo group_handle_post($_POST, $isAdmin, $home_names);
 
 	if ( empty( $_GET['home_id-mod_id-ip-port'] ) )
 		unset( $_GET['home_id-mod_id-ip-port'] );
@@ -299,11 +297,12 @@ $home_info = $db->getGameHomeWithoutMods($home_id);
 		echo "<p class='serverIdToggle' showtext='" . get_lang('show_server_id') . "' hidetext='" . get_lang('hide_server_id') . "'>" . get_lang('show_server_id') . "</p>";
 	}
 
+$group_controls = $isAdmin && !$single_server_monitor;
 echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]'>".
 
 		 "<thead>".
 		 "<tr>".
-		 "\t<th style='width:16px;background-position: center;'></th>".
+		 "\t<th style='width:16px;background-position: center;'>" . ($group_controls ? "<input type='checkbox' id='group_select_all' title='" . htmlentities(get_lang('group_select_all')) . "' />" : "") . "</th>".
 		 "\t<th style='width:16px;background-position: center;'></th>".
 		 "\t<th class=\"hide serverId\">" . get_lang("server_id") . "</th>".
 		 "\t<th>" . get_lang("server_name") . "</th>".
@@ -558,7 +557,7 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 					$status = $agent_state === "UNKNOWN" ? "unknown" : "offline";
 					$address .= "<span class='note'>".($agent_state === "UNKNOWN" ? "UNKNOWN" : "STOPPED")."</span>";
 					if ($reason !== '' && in_array($agent_state, array('CRASHED', 'FAILED'), true)) $address .= " <span class='failure'>".htmlentities($reason)."</span>";
-					if ($server_home['last_param'] != "" and isset($server_home['ip']) and isset($server_home['mod_id']))
+					if (isset($server_home['ip']) and isset($server_home['mod_id']))
 					{
 						if(!$single_server_monitor)
 						{
@@ -609,7 +608,7 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 				$status_color = ($status === 'starting' || $update_in_progress) ? '#d29922' : ($status === 'online' ? '#2da44e' : ($status === 'unknown' ? '#8b949e' : '#d1242f'));
 				$status_title = $update_in_progress ? 'Updating' : ($status === 'starting' ? 'Starting' : ($status === 'unknown' ? 'Unknown' : ($status === 'offline' ? 'Stopped' : ucfirst($status))));
 				$status_icon = "<span title='" . htmlentities($status_title) . "' style='display:inline-block;width:14px;height:14px;border-radius:50%;background:" . $status_color . ";border:1px solid rgba(255,255,255,.35);vertical-align:middle;'></span>";
-				$first .= "<td class='collapsible' data-status='$status' data-pos='$pos'><span class='hidden'>$order</span>" . $status_icon . "</td>";
+				$first .= "<td class='collapsible' data-status='$status' data-pos='$pos'><span class='hidden'>$order</span>" . ($group_controls ? group_row_checkbox($server_home) : "") . $status_icon . "</td>";
 				$first .= "<td class='collapsible'>" . "<span class='hidden'>$mod</span><img src='$icon_path' />" . "</td>";
 				$first .= "<td class='collapsible serverId hide'>" . $server_home["home_id"] . "</td>";
 				$ftp_info = "";
@@ -654,6 +653,7 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 				 if($isAdmin and !$single_server_monitor){
 					 echo "<label>". get_lang("execute_selected_server_operations") ."</label>";
 					 echo "<input id='execute_operations' type='submit' value='". get_lang("execute_operations") ."' >\n";
+					 echo group_footer_buttons();
 				 }
 				echo "</div>
 			  </td>

@@ -90,6 +90,30 @@ $(document).ready(function(){
 		}
 	});
 
+	// Select all checkbox in the header. Do not sort the table when it is clicked.
+	$('#group_select_all').click(function(e){
+		e.stopPropagation();
+		$('input.group-select').prop('checked', this.checked);
+	});
+
+	// Group buttons: confirm Stop and Restart with the number of servers, then post normally
+	// so the result list is shown on the reloaded page.
+	$('input.group-action').click(function(){
+		var selected = $('input.group-select:checked');
+		var confirmText = $(this).attr('data-confirm');
+		if(selected.length == 0)
+			return;
+		if(confirmText && !window.confirm(confirmText.replace('%d', selected.length)))
+			return;
+		var form = $('<form method="post" action="home.php?m=gamemanager&p=game_monitor"></form>');
+		form.append($('<input type="hidden" name="group_action">').val($(this).attr('data-action')));
+		selected.each(function(){
+			form.append($('<input type="hidden" name="group_select[]">').val($(this).val()));
+		});
+		$('body').append(form);
+		form.submit();
+	});
+
 	$('.size').click(function(){
 		var id = $(this).attr('data-home_id');
 		$.post( "home.php?m=user_games&type=cleared&p=get_size&home_id="+id, function( data ) {
@@ -97,24 +121,14 @@ $(document).ready(function(){
 		});
 	});
 
+	// Post normally (not ajax) so the result list from the server is shown on the page.
 	$('#execute_operations').click(function(){
-		var addpost = {};
-		$('input[type=radio]:checked').each(function( ){
-			var name = $(this).attr('name');
-			var value = $(this).val();
-			addpost[ name ] = value;
+		var form = $('<form method="post" action="home.php?m=gamemanager&p=game_monitor"></form>');
+		$('input[type=radio]:checked').each(function(){
+			form.append($('<input type="hidden">').attr('name', $(this).attr('name')).val($(this).val()));
 		});
-
-		$('.right.bloc').html('<img src="images/loading.gif" />');
-
-		$.ajax({
-		type: "POST",
-		url: "home.php?m=gamemanager&p=game_monitor",
-		data: addpost,
-		complete: function(){
-			document.location.reload();
-		}
-		});
+		$('body').append(form);
+		form.submit();
 	});
 
 	$('img#action-stop').click(function(){
