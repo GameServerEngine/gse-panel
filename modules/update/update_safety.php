@@ -171,6 +171,26 @@ function update_runtime_file_paths($panel_dir)
 	return $paths;
 }
 
+// Create the backup directory when its parent is writable. Otherwise say so: the repair command creates it.
+// Returns '' when the directory exists and is writable, else the reason.
+function update_ensure_backup_base($backup_base)
+{
+	$backup_base = rtrim((string)$backup_base, '/');
+	if (!is_dir($backup_base)) {
+		$parent = dirname($backup_base);
+		if (!is_dir($parent) || !is_writable($parent)) {
+			return 'Backup directory does not exist and cannot be created (' . $parent . ' is not writable): ' . $backup_base . '.';
+		}
+		if (!@mkdir($backup_base, 0750) && !is_dir($backup_base)) {
+			return 'Cannot create backup directory: ' . $backup_base . '.';
+		}
+	}
+	if (!is_writable($backup_base)) {
+		return 'Backup directory is not writable: ' . $backup_base . '.';
+	}
+	return '';
+}
+
 /**
  * Preflight. Returns a list of error strings, empty when everything passes.
  * It only creates and deletes small temp files. It never touches panel files.
@@ -180,6 +200,11 @@ function update_preflight_errors($panel_dir, $backup_base, $full_dump_check)
 	$panel_dir = rtrim($panel_dir, '/');
 	$hint = ' Fix: ' . update_repair_hint($panel_dir);
 	$errors = [];
+
+	$backup_problem = update_ensure_backup_base($backup_base);
+	if ($backup_problem !== '') {
+		$errors[] = $backup_problem . $hint;
+	}
 
 	$directories = [$panel_dir, $panel_dir . '/includes', $backup_base, sys_get_temp_dir(), dirname(UPDATE_LOG)];
 	foreach ($directories as $dir) {
@@ -349,6 +374,64 @@ function update_table_list($db)
 	return $tables;
 }
 
+// Hash of every release file in the panel tree: relative path => sha1.
+// It skips what the update never replaces (update_should_skip) and what the backup archive leaves out.
+// The runtime files (config and local settings) are protected from the copy but are restored, so they are always added.
+function update_file_manifest($panel_dir)
+{
+	$panel_dir = rtrim($panel_dir, '/');
+	$manifest = [];
+	if (!is_dir($panel_dir)) {
+		return $manifest;
+	}
+	$not_archived = ['backups', 'logs', 'cache', 'tmp', 'node_modules', 'vendor', '.git'];
+	$iter = new RecursiveIteratorIterator(
+		new RecursiveDirectoryIterator($panel_dir, RecursiveDirectoryIterator::SKIP_DOTS),
+		RecursiveIteratorIterator::LEAVES_ONLY
+	);
+	foreach ($iter as $item) {
+		if (!$item->isFile()) {
+			continue;
+		}
+		$rel = str_replace('\\', '/', substr($item->getPathname(), strlen($panel_dir) + 1));
+		$top = explode('/', $rel)[0];
+		if (in_array($top, $not_archived, true) || update_should_skip($rel)) {
+			continue;
+		}
+		$manifest[$rel] = sha1_file($item->getPathname());
+	}
+	foreach (runtime_state_paths() as $rel) {
+		if (is_file($panel_dir . '/' . $rel)) {
+			$manifest[$rel] = sha1_file($panel_dir . '/' . $rel);
+		}
+	}
+	ksort($manifest);
+	return $manifest;
+}
+
+// Names the first files that differ between two manifests. Empty string when they match.
+function update_manifest_difference(array $expected, array $actual)
+{
+	$problems = [];
+	foreach ($expected as $rel => $hash) {
+		if (!isset($actual[$rel])) {
+			$problems[] = 'missing: ' . $rel;
+		} elseif ($actual[$rel] !== $hash) {
+			$problems[] = 'changed: ' . $rel;
+		}
+	}
+	foreach ($actual as $rel => $hash) {
+		if (!isset($expected[$rel])) {
+			$problems[] = 'extra: ' . $rel;
+		}
+	}
+	if (empty($problems)) {
+		return '';
+	}
+	$shown = implode(', ', array_slice($problems, 0, 10));
+	return $shown . (count($problems) > 10 ? ' (and ' . (count($problems) - 10) . ' more)' : '');
+}
+
 // The state the update starts from. Rollback has to bring the panel back to exactly this.
 function update_capture_baseline($db, $panel_dir)
 {
@@ -358,6 +441,7 @@ function update_capture_baseline($db, $panel_dir)
 		'version_file' => update_read_version_file($panel_dir),
 		'applied_migrations' => $applied,
 		'tables' => update_table_list($db),
+		'file_manifest' => update_file_manifest($panel_dir),
 	];
 }
 
@@ -388,7 +472,7 @@ function update_remove_created_files($panel_dir, array $created_relative)
 	return ['success' => true];
 }
 
-// After a rollback: VERSION and schema_migrations must match the state the update began from.
+// After a rollback: VERSION, schema_migrations, and every panel file (runtime files included) must match the state the update began from.
 function update_verify_restored_state($db, $panel_dir, array $baseline)
 {
 	$version = update_read_version_file($panel_dir);
@@ -399,6 +483,10 @@ function update_verify_restored_state($db, $panel_dir, array $baseline)
 	sort($applied);
 	if ($applied !== $baseline['applied_migrations']) {
 		return ['success' => false, 'error' => 'schema_migrations does not match the pre-update state after rollback.'];
+	}
+	$difference = update_manifest_difference($baseline['file_manifest'], update_file_manifest($panel_dir));
+	if ($difference !== '') {
+		return ['success' => false, 'error' => 'Panel files differ from the pre-update snapshot after rollback: ' . $difference . '.'];
 	}
 	return ['success' => true];
 }

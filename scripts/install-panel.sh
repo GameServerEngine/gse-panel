@@ -5,6 +5,9 @@ set -Eeuo pipefail
 # to choose the release, or accept this default.
 DEFAULT_RELEASE_ZIP_URL="https://github.com/GameServerEngine/gse-panel/archive/refs/heads/stable.zip"
 DEFAULT_WEB_GROUP="www-data"
+# The web server user runs the panel update. It must own the backup directory.
+DEFAULT_WEB_USER="www-data"
+BACKUP_DIR="/var/lib/gse-panel/backups"
 SCRIPT_PANEL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEFAULT_INSTALL_PATH="$SCRIPT_PANEL_ROOT"
 DRY_RUN=0
@@ -417,6 +420,15 @@ clone_or_update_repo() {
   REPO_BRANCH="$branch"
 }
 
+# The panel update writes its restore points here. Owner is the web user, mode 0750.
+create_backup_directory() {
+  local group="$1"
+  id "$DEFAULT_WEB_USER" >/dev/null 2>&1 || die "Web user does not exist: $DEFAULT_WEB_USER"
+  run mkdir -p "$BACKUP_DIR" || die "Cannot create $BACKUP_DIR"
+  run chown "$DEFAULT_WEB_USER:$group" "$BACKUP_DIR" || die "Cannot set owner of $BACKUP_DIR"
+  run chmod 0750 "$BACKUP_DIR" || die "Cannot set mode of $BACKUP_DIR"
+}
+
 # Required step. If it does not complete, the install fails: a half-owned tree
 # makes the later web updates fail.
 repair_permissions() {
@@ -430,6 +442,8 @@ repair_permissions() {
   run usermod -aG "$group" "$owner" || die "Cannot add $owner to group $group."
   run php "$install_path/tools/install_panel_cli.php" --repair-permissions --base "$install_path" --owner "$owner" --group "$group" \
     || die "Permission repair did not complete. Run: sudo bash scripts/install-panel.sh --repair-permissions --path '$install_path' --owner '$owner' --group '$group'"
+
+  create_backup_directory "$group"
 
   if [[ "$DRY_RUN" != "1" ]]; then
     stray="$(find "$install_path" \( ! -user "$owner" -o ! -group "$group" \) -print -quit)"

@@ -57,7 +57,7 @@ $panel = $work . '/panel_ok';
 make_panel($panel);
 $ok = preflight_check(make_cfg($panel), false);
 safety_assert($ok['success'], 'preflight passes on a writable panel (' . implode(' | ', $ok['errors']) . ')');
-safety_assert(!file_exists(BACKUP_BASE), 'passing preflight does not create the backup directory');
+safety_assert(is_dir(BACKUP_BASE) && count(glob(BACKUP_BASE . '/*')) === 0, 'passing preflight creates the empty backup directory and no backup');
 
 if (safety_is_root()) {
 	echo "SKIP: running as root, a file cannot be made non-writable; preflight failure test not run\n";
@@ -72,7 +72,7 @@ if (safety_is_root()) {
 	safety_assert(strpos($text, $panel . '/includes/config.inc.php') !== false, 'preflight error names the path');
 	safety_assert(strpos($text, '--repair-permissions --path ' . $panel) !== false && strpos($text, '--group www-data') !== false, 'preflight error gives the repair-permissions fix');
 	safety_assert(tree_state($panel) === $before, 'failed preflight changed no file in the panel');
-	safety_assert(!file_exists(BACKUP_BASE), 'failed preflight did not create a backup');
+	safety_assert(count(glob(BACKUP_BASE . '/*')) === 0, 'failed preflight did not create a backup');
 	chmod($panel . '/includes/config.inc.php', 0644);
 }
 safety_assert(update_check_free_space($work, PHP_INT_MAX) !== '', 'preflight reports too little free disk space');
@@ -206,13 +206,49 @@ $panel = $work . '/panel_verify';
 make_panel($panel);
 $vdb = new VerifyDb();
 $vdb->applied = array('0001_ok');
-$baseline = array('version_file' => '2.5.4', 'applied_migrations' => array('0001_ok'), 'tables' => array());
+$baseline = array('version_file' => '2.5.4', 'applied_migrations' => array('0001_ok'), 'tables' => array(), 'file_manifest' => update_file_manifest($panel));
 safety_assert(update_verify_restored_state($vdb, $panel, $baseline)['success'], 'verification passes when VERSION and schema_migrations match the start');
 file_put_contents($panel . '/VERSION', "2.5.5\n");
 safety_assert(!update_verify_restored_state($vdb, $panel, $baseline)['success'], 'verification fails when VERSION is not the restored version');
 file_put_contents($panel . '/VERSION', "2.5.4\n");
 $vdb->applied = array('0001_ok', '0002_new');
 safety_assert(!update_verify_restored_state($vdb, $panel, $baseline)['success'], 'verification fails when schema_migrations still has a new migration');
+
+// verification compares runtime files and the panel tree, and names the file that differs
+$vdb->applied = array('0001_ok');
+mkdir($panel . '/modules/demo', 0777, true);
+file_put_contents($panel . '/modules/demo/a.php', "<?php // a\n");
+$baseline['file_manifest'] = update_file_manifest($panel);
+safety_assert(update_verify_restored_state($vdb, $panel, $baseline)['success'], 'verification passes when every file matches the snapshot');
+file_put_contents($panel . '/includes/config.inc.php', "<?php // changed\n");
+$result = update_verify_restored_state($vdb, $panel, $baseline);
+safety_assert(!$result['success'] && strpos($result['error'], 'changed: includes/config.inc.php') !== false, 'verification fails and names a changed runtime file');
+file_put_contents($panel . '/includes/config.inc.php', "<?php\n\$db_user = 'u';\n\$db_name = 'n';\n");
+file_put_contents($panel . '/modules/demo/a.php', "<?php // edited\n");
+$result = update_verify_restored_state($vdb, $panel, $baseline);
+safety_assert(!$result['success'] && strpos($result['error'], 'changed: modules/demo/a.php') !== false, 'verification fails and names a changed panel file');
+file_put_contents($panel . '/modules/demo/a.php', "<?php // a\n");
+file_put_contents($panel . '/modules/demo/new.php', 'x');
+$result = update_verify_restored_state($vdb, $panel, $baseline);
+safety_assert(!$result['success'] && strpos($result['error'], 'extra: modules/demo/new.php') !== false, 'verification names a file the failed update left behind');
+unlink($panel . '/modules/demo/new.php');
+unlink($panel . '/modules/demo/a.php');
+$result = update_verify_restored_state($vdb, $panel, $baseline);
+safety_assert(!$result['success'] && strpos($result['error'], 'missing: modules/demo/a.php') !== false, 'verification names a file that was not restored');
+
+// ---- 5b. backup directory: created when the parent is writable, refused with the repair command otherwise
+$parent = $work . '/backup_parent';
+mkdir($parent, 0777, true);
+safety_assert(update_ensure_backup_base($parent . '/backups') === '' && is_dir($parent . '/backups'), 'backup directory is created when its parent is writable');
+if (!safety_is_root()) {
+	$panel = $work . '/panel_nobackup';
+	make_panel($panel);
+	mkdir($work . '/ro_parent', 0555);
+	$errors = update_preflight_errors($panel, $work . '/ro_parent/backups', false);
+	$text = implode(' | ', $errors);
+	safety_assert(strpos($text, 'Backup directory does not exist') !== false && strpos($text, '--repair-permissions') !== false, 'preflight refuses a missing backup directory and gives the repair command');
+	chmod($work . '/ro_parent', 0755);
+}
 
 // ---- 6. staging validation
 $stage = $work . '/stage';
@@ -243,6 +279,7 @@ safety_assert(strpos($html, 'optgroup') === false && strpos($html, '>stable ') =
 safety_assert(strpos($html, "value='testing-2.5.5'") !== false && strpos($html, '2.5.4 (2026-11-01) - installed') !== false, 'release list still offers every release and marks the installed one');
 $installer = file_get_contents(dirname(__DIR__, 3) . '/scripts/install-panel.sh');
 safety_assert(strpos($installer, 'release_zip_url_for_channel') === false && strpos($installer, 'DEFAULT_RELEASE_CHANNEL') === false, 'installer has no channel mapping');
+safety_assert(strpos($installer, 'create_backup_directory "$group"') !== false && strpos($installer, 'chown "$DEFAULT_WEB_USER:$group" "$BACKUP_DIR"') !== false, 'installer repair creates the backup directory owned by the web user');
 safety_assert(strpos($installer, '--no-owner --no-group') !== false, 'installer rsync does not copy owners');
 
 exec('rm -rf ' . escapeshellarg($work));
