@@ -233,14 +233,11 @@ class View {
 		if (file_exists($vfile)) {
 			$vdata = json_decode(file_get_contents($vfile), true);
 			if (is_array($vdata)) {
-				$_vtype   = $vdata['installed_type']   ?? 'unknown';
 				$_vsource = $vdata['installed_source'] ?? '';
+				$_vversion = $vdata['installed_version'] ?? '';
 				$_vcommit = $vdata['installed_commit'] ?? '';
-				if ($_vtype === 'cutting-edge')    $type_label = 'Cutting Edge';
-				elseif ($_vtype === 'development') $type_label = 'Development';
-				elseif ($_vtype === 'release')     $type_label = 'Release';
-				else                               $type_label = 'Unknown';
-				$_vdesc = 'GSP Panel: ' . $type_label;
+				require_once dirname(__FILE__) . '/../modules/update/release_source.php';
+				$_vdesc = 'GSP Panel: ' . htmlspecialchars(release_installed_label($_vversion, $_vsource));
 				if ($_vsource) $_vdesc .= ' - ' . htmlspecialchars($_vsource);
 				if ($_vcommit) $_vdesc .= ' - commit ' . htmlspecialchars(substr($_vcommit, 0, 7));
 			} else {
