@@ -81,11 +81,34 @@ function release_installed_label($version, $source)
 		foreach (array('testing', 'working') as $kind) {
 			// A bare name counts only as the file name (legacy heads/testing.zip).
 			if (($i === $last && $segment === $kind) || strpos($segment, $kind . '-') === 0) {
-				return $kind . ' ' . $version;
+				return release_kind_label($kind) . ' ' . $version;
 			}
 		}
 	}
-	return 'stable ' . $version;
+	return release_kind_label('stable') . ' ' . $version;
+}
+
+/**
+ * Display words for a release kind: stable -> Stable, testing -> Testing,
+ * working (the rolling working build) -> Testing Latest. Stored values and URLs keep the old names.
+ */
+function release_kind_label($kind)
+{
+	$labels = array('stable' => 'Stable', 'testing' => 'Testing', 'working' => 'Testing Latest');
+	$kind = strtolower((string)$kind);
+	return isset($labels[$kind]) ? $labels[$kind] : 'Stable';
+}
+
+/**
+ * Dropdown option text for a release row: "Testing Latest 2.5.9 (2026-11-10)".
+ */
+function release_option_label(array $row)
+{
+	$kind = (string)($row['channel'] ?? '');
+	if ($kind === '' && isset($row['tag'])) {
+		$kind = (strpos((string)$row['tag'], 'working-') === 0) ? 'working' : ((strpos((string)$row['tag'], 'testing-') === 0) ? 'testing' : 'stable');
+	}
+	return release_kind_label($kind) . ' ' . $row['version'] . ' (' . substr((string)($row['created'] ?? ''), 0, 10) . ')';
 }
 
 function release_source_settings($component)

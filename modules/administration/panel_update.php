@@ -215,7 +215,7 @@ function update_badge($installed, $latest)
 	if (release_is_installed($installed, $latest['version'])) {
 		return 'Up to date';
 	}
-	return "<span style='color:#8a6d3b;'><strong>Update available:</strong> " . htmlspecialchars($latest['version'], ENT_QUOTES, 'UTF-8') . "</span>";
+	return "<span style='color:#8a6d3b;'><strong>Update available:</strong> " . htmlspecialchars(release_kind_label($latest['channel'] ?? '') . ' ' . $latest['version'], ENT_QUOTES, 'UTF-8') . "</span>";
 }
 }
 
@@ -231,7 +231,7 @@ function tag_select($name, $rows, $installed = '')
 		return $html . "<option value='' disabled>No releases found</option></select>";
 	}
 	foreach ($rows as $r) {
-		$label = $r['version'] . ' (' . substr((string)$r['created'], 0, 10) . ')';
+		$label = release_option_label($r);
 		if (release_is_installed($installed, $r['version'])) {
 			$label .= ' - installed';
 		}

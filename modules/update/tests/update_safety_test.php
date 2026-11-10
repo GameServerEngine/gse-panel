@@ -275,8 +275,8 @@ $rows = array(
 	array('tag' => 'testing-2.5.5', 'channel' => 'testing', 'version' => '2.5.5', 'created' => '2026-11-09'),
 );
 $html = tag_select('row_tag[panel]', $rows, '2.5.4');
-safety_assert(strpos($html, 'optgroup') === false && strpos($html, '>stable ') === false && strpos($html, '>testing ') === false, 'release list shows versions only, with no channel groups or labels');
-safety_assert(strpos($html, "value='testing-2.5.5'") !== false && strpos($html, '2.5.4 (2026-11-01) - installed') !== false, 'release list still offers every release and marks the installed one');
+safety_assert(strpos($html, 'optgroup') === false && strpos($html, '>Stable 2.5.4 (2026-11-01)') !== false && strpos($html, '>Testing 2.5.5 (2026-11-09)') !== false, 'release list has no channel groups and labels each release Stable/Testing');
+safety_assert(strpos($html, "value='testing-2.5.5'") !== false && strpos($html, 'Stable 2.5.4 (2026-11-01) - installed') !== false, 'release list still offers every release and marks the installed one');
 $installer = file_get_contents(dirname(__DIR__, 3) . '/scripts/install-panel.sh');
 safety_assert(strpos($installer, 'release_zip_url_for_channel') === false && strpos($installer, 'DEFAULT_RELEASE_CHANNEL') === false, 'installer has no channel mapping');
 safety_assert(strpos($installer, 'create_backup_directory "$group"') !== false && strpos($installer, 'chown "$DEFAULT_WEB_USER:$group" "$BACKUP_DIR"') !== false, 'installer repair creates the backup directory owned by the web user');
