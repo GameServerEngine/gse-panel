@@ -1153,13 +1153,20 @@ return ['success' => true, 'source_root' => $roots[0]];
 
 
 
+// Only chmod, never chown. It does nothing when owner or write access is wrong, so it cannot hide a wrong owner.
 function fix_permissions($root_dir)
 {
+$errors = update_ownership_errors($root_dir);
+if (!empty($errors)) {
+update_log('fix_permissions skipped: ' . $errors[0]);
+return false;
+}
 @system(
 'find ' . escapeshellarg($root_dir)
 . ' -maxdepth 12 \( -name "*.php" -exec chmod 644 {} + \)'
 . ' -o \( -type d -exec chmod 755 {} + \) 2>/dev/null'
 );
+return true;
 }
 
 function clear_panel_cache($panel_dir)
@@ -1314,6 +1321,10 @@ return ['success' => true];
 },
 'verify_update' => function () use ($db, $panel_dest, $staged) {
 return update_verify_new_state($db, $panel_dest, $staged);
+},
+'verify_ownership' => function () use ($panel_dest) {
+$errors = update_ownership_errors($panel_dest);
+return empty($errors) ? ['success' => true] : ['success' => false, 'error' => implode(' ', $errors)];
 },
 'rollback_files' => function () use ($backup_dir, $panel_dest, &$state) {
 $restore = restore_archive($backup_dir . '/panel-files.tar.gz', $panel_dest);

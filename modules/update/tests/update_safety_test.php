@@ -7,6 +7,8 @@ $work = sys_get_temp_dir() . '/update_safety_test_' . getmypid();
 mkdir($work . '/logs', 0777, true);
 define('BACKUP_BASE', $work . '/backup-base');
 define('UPDATE_LOG', $work . '/logs/update_trace.log');
+// The temp panel is owned by whoever runs the test, so that user is the expected owner here.
+define('UPDATE_WEB_USER', function_exists('posix_getpwuid') ? posix_getpwuid(posix_geteuid())['name'] : 'www-data');
 $settings = array();
 require_once(dirname(__DIR__, 2) . '/administration/panel_update.php');
 

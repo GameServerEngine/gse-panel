@@ -43,6 +43,98 @@ function update_should_skip($rel)
 	return false;
 }
 
+// ---------------------------------------------------------------- ownership
+// The update never changes ownership. It only checks, and tells the admin what to run.
+
+// The user that must own the panel files. A site can define UPDATE_WEB_USER to change it.
+function update_expected_owner()
+{
+	return defined('UPDATE_WEB_USER') ? UPDATE_WEB_USER : 'www-data';
+}
+
+// Owner name of a path, or '' when unknown.
+function update_path_owner($path)
+{
+	$uid = @fileowner($path);
+	if ($uid === false) {
+		return '';
+	}
+	if (function_exists('posix_getpwuid')) {
+		$info = posix_getpwuid($uid);
+		if (is_array($info)) {
+			return $info['name'];
+		}
+	}
+	return (string)$uid;
+}
+
+// Every existing panel path the update could replace, as absolute paths. Skipped paths are left out.
+function update_owned_paths($panel_dir)
+{
+	$panel_dir = rtrim($panel_dir, '/');
+	$paths = [$panel_dir];
+	if (!is_dir($panel_dir)) {
+		return $paths;
+	}
+	$iter = new RecursiveIteratorIterator(
+		new RecursiveCallbackFilterIterator(
+			new RecursiveDirectoryIterator($panel_dir, RecursiveDirectoryIterator::SKIP_DOTS),
+			function ($current) use ($panel_dir) {
+				$rel = substr($current->getPathname(), strlen($panel_dir) + 1);
+				return !update_should_skip($rel);
+			}
+		),
+		RecursiveIteratorIterator::SELF_FIRST
+	);
+	foreach ($iter as $item) {
+		$paths[] = $item->getPathname();
+	}
+	return $paths;
+}
+
+/**
+ * Check owner and write access of every panel path the update touches.
+ * $owner_lookup is an optional callable (path) => owner name, so tests need no chown.
+ * Returns a list of error strings, empty when everything passes. Changes nothing.
+ */
+function update_ownership_errors($panel_dir, $expected_owner = null, $owner_lookup = null)
+{
+	$expected_owner = $expected_owner === null ? update_expected_owner() : $expected_owner;
+	$owner_lookup = $owner_lookup === null ? 'update_path_owner' : $owner_lookup;
+	$wrong_owner = [];
+	$not_writable = [];
+	$owners_seen = [];
+	foreach (update_owned_paths($panel_dir) as $path) {
+		$owner = (string)call_user_func($owner_lookup, $path);
+		if ($owner !== $expected_owner) {
+			$wrong_owner[] = $path;
+			$owners_seen[$owner === '' ? 'unknown' : $owner] = true;
+		} elseif (!is_writable($path)) {
+			$not_writable[] = $path;
+		}
+	}
+	if (empty($wrong_owner) && empty($not_writable)) {
+		return [];
+	}
+	$problems = [];
+	if (!empty($wrong_owner)) {
+		$problems[] = count($wrong_owner) . ' paths not owned by ' . $expected_owner
+			. ' (owner ' . implode(', ', array_keys($owners_seen)) . ')';
+	}
+	if (!empty($not_writable)) {
+		$problems[] = count($not_writable) . ' paths not writable by ' . $expected_owner;
+	}
+	$failed = array_merge($wrong_owner, $not_writable);
+	$listed = array_slice($failed, 0, 20);
+	$message = 'No write access: ' . implode('; ', $problems) . '. Paths: ' . implode(', ', $listed);
+	if (count($failed) > 20) {
+		$message .= ' and ' . (count($failed) - 20) . ' more';
+	}
+	$message .= '. Suggested fix, not run by the updater: sudo chown -R ' . $expected_owner . ':' . $expected_owner
+		. ' ' . escapeshellarg(rtrim($panel_dir, '/'));
+	return [$message];
+}
+
 // ---------------------------------------------------------------- preflight
 
 // The command an admin runs to give the web user write access again.
@@ -199,7 +291,10 @@ function update_preflight_errors($panel_dir, $backup_base, $full_dump_check)
 {
 	$panel_dir = rtrim($panel_dir, '/');
 	$hint = ' Fix: ' . update_repair_hint($panel_dir);
-	$errors = [];
+	$errors = update_ownership_errors($panel_dir);
+	if (!empty($errors)) {
+		return $errors;
+	}
 
 	$backup_problem = update_ensure_backup_base($backup_base);
 	if ($backup_problem !== '') {
@@ -509,14 +604,17 @@ function update_verify_new_state($db, $panel_dir, array $staged)
 
 /**
  * Run the update as one unit. $ops are callables returning ['success' => bool, 'error' => string]:
- *   copy_files, restore_runtime, run_migrations, write_version, verify_update   (forward steps, in order)
+ *   copy_files, restore_runtime, verify_ownership (optional), run_migrations, write_version, verify_update   (forward steps, in order)
  *   rollback_files, rollback_database, verify_rollback                           (used only after a failure)
  * On a forward failure BOTH rollback_files and rollback_database run, then verify_rollback.
  * The result says whether the rollback worked: rolled_back = true only after verify_rollback passes.
  */
 function update_run_transaction(array $ops, $backup_dir)
 {
-	foreach (['copy_files', 'restore_runtime', 'run_migrations', 'write_version', 'verify_update'] as $step) {
+	foreach (['copy_files', 'restore_runtime', 'verify_ownership', 'run_migrations', 'write_version', 'verify_update'] as $step) {
+		if ($step === 'verify_ownership' && !isset($ops[$step])) {
+			continue;
+		}
 		$result = $ops[$step]();
 		if (!$result['success']) {
 			return update_rollback_all($ops, $step, $result['error'], $backup_dir);
