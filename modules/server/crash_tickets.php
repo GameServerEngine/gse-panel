@@ -96,3 +96,69 @@ function open_crash_ticket($db, array $incident, $log_tail = '')
     }
     return array('action' => 'opened', 'tid' => (int)$result['tid']);
 }
+
+/** Reason text the agent sends for a server that failed to start. */
+function failed_to_start_reason(array $agent_status)
+{
+    return trim((string)($agent_status['reason'] ?? ($agent_status['last_error'] ?? '')));
+}
+
+/** True when the agent reports FAILED with a reason that starts with "Failed to Start". */
+function is_failed_to_start(array $agent_status)
+{
+    if (strtoupper((string)($agent_status['status'] ?? '')) !== 'FAILED') {
+        return false;
+    }
+    return strpos(failed_to_start_reason($agent_status), 'Failed to Start') === 0;
+}
+
+/**
+ * Open one ticket per "Failed to Start" incident.
+ *
+ * The last incident seen for each home is kept in DB_PREFIXcrash_ticket_marks. If the
+ * reason, exit code and report path are unchanged, nothing is opened again. When the
+ * server is ONLINE the mark is cleared, so a later failure counts as a new incident.
+ */
+function report_failed_to_start($db, $home_id, array $agent_status)
+{
+    $home_id = (int)$home_id;
+    if ($home_id <= 0) {
+        return array('action' => 'skipped');
+    }
+    if (strtoupper((string)($agent_status['status'] ?? '')) === 'ONLINE') {
+        $db->query('DELETE FROM DB_PREFIXcrash_ticket_marks WHERE home_id = ' . $home_id);
+        return array('action' => 'skipped');
+    }
+    if (!is_failed_to_start($agent_status)) {
+        return array('action' => 'skipped');
+    }
+
+    $reason = failed_to_start_reason($agent_status);
+    $exit_code = (string)($agent_status['exit_code'] ?? '');
+    $report_path = (string)($agent_status['report_path'] ?? '');
+    $incident_key = md5($reason . '|' . $exit_code . '|' . $report_path);
+
+    $rows = $db->resultQuery('SELECT incident_key FROM DB_PREFIXcrash_ticket_marks WHERE home_id = ' . $home_id . ' LIMIT 1');
+    if (is_array($rows) && isset($rows[0]['incident_key']) && $rows[0]['incident_key'] === $incident_key) {
+        return array('action' => 'skipped');
+    }
+
+    $names = $db->resultQuery('SELECT home_name FROM DB_PREFIXserver_homes WHERE home_id = ' . $home_id . ' LIMIT 1');
+    $label = (is_array($names) && isset($names[0]['home_name'])) ? $names[0]['home_name'] : ('home ' . $home_id);
+
+    $result = open_crash_ticket($db, array(
+        'home_id' => $home_id,
+        'server_label' => $label,
+        'detected_at' => (int)($agent_status['detected_at'] ?? time()),
+        'reason' => $reason,
+        'exit_code' => $exit_code,
+        'report_path' => $report_path,
+    ));
+    if ($result['action'] === 'skipped') {
+        return $result;  // no mark, so the next check tries again
+    }
+
+    $db->query('REPLACE INTO DB_PREFIXcrash_ticket_marks (home_id, incident_key, created_at) VALUES ('
+        . $home_id . ", '" . $db->realEscapeSingle($incident_key) . "', " . time() . ')');
+    return $result;
+}

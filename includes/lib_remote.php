@@ -117,6 +117,20 @@ class RemoteLibrary
 		return (string)$payload;
 	}
 
+	/// Start and restart must send the game's configured port. Returns an error
+	/// result array when the port is empty, not a number, or 0; returns null when it is fine.
+	private function missing_game_port_result($server_port)
+	{
+		if (is_numeric($server_port) && (int)$server_port > 0 && (int)$server_port <= 65535) {
+			return null;
+		}
+		return array(
+			'success' => 0,
+			'status' => 'invalid_port',
+			'message' => 'No game port is configured for this server, so it was not sent to the agent.',
+		);
+	}
+
 	private function normalize_lifecycle_result($response, $operation)
 	{
 		if ($response === NULL) {
@@ -657,6 +671,10 @@ class RemoteLibrary
 	public function universal_start_result($home_id, $game_home, $game_binary, $run_dir, $startup_cmd,
 		$server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key, $console_log = "", $lifecycle_payload = null)
 	{
+		$port_error = $this->missing_game_port_result($server_port);
+		if ($port_error !== null) {
+			return $port_error;
+		}
 		$params_array = $this->encrypt_params($home_id, $game_home, $game_binary,
 			$run_dir, $startup_cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key, $console_log);
 		if ($lifecycle_payload !== null) {
@@ -842,6 +860,10 @@ class RemoteLibrary
 			$control_protocol,$control_password,$control_type,
 			$home_path,$server_exe,$run_dir,$cmd,$cpu,$nice,$preStart, $envVars, $game_key, $console_log = "", $restart_reason = "", $lifecycle_payload = null)
 	{
+		$port_error = $this->missing_game_port_result($server_port);
+		if ($port_error !== null) {
+			return $port_error;
+		}
 		$params_array = $this->encrypt_params($home_id,$server_ip,$server_port,
 			$control_protocol,$control_password,$control_type,
 			$home_path,$server_exe,$run_dir,$cmd,$cpu,$nice,$preStart,$envVars, $game_key, $console_log, $restart_reason);
