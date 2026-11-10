@@ -41,3 +41,10 @@ agent_helpers_assert(agent_component_from_os('Ubuntu 24.04') === 'linux_agent', 
 agent_helpers_assert(agent_component_from_os('') === 'linux_agent', 'unknown/empty OS defaults to linux_agent');
 
 echo "All agent helpers tests passed.\n";
+
+// --- agent_row_server_id / agent_refresh_snapshot: a row without remote_server_id must not warn ---
+agent_helpers_assert(agent_row_server_id(array('remote_server_id' => '12')) === 12, 'row_server_id reads the id when the key exists');
+agent_helpers_assert(agent_row_server_id(array('agent_ip' => '1.2.3.4')) === 0, 'row_server_id returns 0 when the key is missing');
+agent_helpers_assert(agent_row_server_id(null) === 0, 'row_server_id returns 0 for a non-array row');
+$missing_id = agent_refresh_snapshot(new stdClass(), array('agent_ip' => '1.2.3.4', 'agent_port' => 12679));
+agent_helpers_assert(empty($missing_id['success']) && !empty($missing_id['error']), 'refresh_snapshot returns an error (no warning) when remote_server_id is missing');

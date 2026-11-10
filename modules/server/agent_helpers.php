@@ -210,8 +210,21 @@ function agent_resource_badges($snapshot)
 	return empty($badges) ? agent_badge('resources ok', 'ok') : implode(' ', $badges);
 }
 
+// Returns the remote server id from a row, or 0 when the row has no usable id.
+function agent_row_server_id($server_row)
+{
+	if (!is_array($server_row) || !isset($server_row['remote_server_id'])) {
+		return 0;
+	}
+	return (int)$server_row['remote_server_id'];
+}
+
 function agent_refresh_snapshot($db, $server_row)
 {
+	// The id is required to store the snapshot. Do not guess one.
+	if (agent_row_server_id($server_row) <= 0) {
+		return array('success' => false, 'error' => 'Cannot refresh agent snapshot: server row has no remote_server_id.');
+	}
 	agent_ensure_snapshot_table($db);
 	$remote = agent_build_remote($server_row);
 	$snapshot = $remote->agent_resource_snapshot();

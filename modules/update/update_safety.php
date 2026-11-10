@@ -15,6 +15,9 @@
  * can call it without a real database or web server.
  */
 
+require_once(dirname(__DIR__, 2) . '/includes/panel_permissions.php');
+require_once(dirname(__FILE__) . '/update_manifest.php');
+
 // Directories that are never part of a panel release (same list used by the copy and the preflight).
 function update_protected_prefixes()
 {
@@ -25,6 +28,8 @@ function update_protected_prefixes()
 		'logs/', 'log/', 'backups/', 'backup/', 'cache/', 'tmp/', 'temp/',
 		'uploads/', 'upload/', 'home/', 'homes/', 'servers/', 'game_servers/',
 		'steamcmd/', 'startups/', 'node_modules/', 'vendor/',
+		// The update's own records. They are not in any release ZIP and are never overwritten.
+		'update_manifest.json', 'update_exclusions.txt',
 	];
 }
 
@@ -41,6 +46,59 @@ function update_should_skip($rel)
 		}
 	}
 	return false;
+}
+
+// ---------------------------------------------------------------- ownership
+// Before the files are copied the updater repairs owner, group and modes of the panel tree.
+// The definition lives in includes/panel_permissions.php, the same code install-panel.sh --repair-permissions runs.
+// It only ever touches paths inside the panel root.
+
+// The user and group that must own the panel files. A site can define UPDATE_WEB_USER to change the user.
+function update_expected_owner()
+{
+	return defined('UPDATE_WEB_USER') ? UPDATE_WEB_USER : 'www-data';
+}
+
+function update_expected_group()
+{
+	return defined('UPDATE_WEB_GROUP') ? UPDATE_WEB_GROUP : 'www-data';
+}
+
+// True for paths the repair leaves alone: the protected folders. The config and the update's own files are repaired.
+function update_repair_skip($rel)
+{
+	$repaired = array_merge(perm_secret_files(), um_own_files());
+	return update_should_skip($rel) && !in_array($rel, $repaired, true);
+}
+
+/**
+ * Repair owner, group and modes of the panel tree and log every path that changed.
+ * $label says when it ran ("before the copy" / "after the copy"). $ops is for tests.
+ * Returns success, changed (paths), failed (paths with the reason), message.
+ */
+function update_repair_panel_tree($panel_dir, $label, $ops = null)
+{
+	$panel_dir = rtrim($panel_dir, '/');
+	$owner = update_expected_owner();
+	$group = update_expected_group();
+	$result = perm_repair_tree($panel_dir, $owner, $group, $ops, 'update_repair_skip');
+	foreach ($result['changed'] as $line) {
+		update_log('Permission repair ' . $label . ': ' . $line);
+	}
+	foreach ($result['failed'] as $line) {
+		update_log('Permission repair ' . $label . ' FAILED: ' . $line);
+	}
+	if (empty($result['failed'])) {
+		return array('success' => true, 'changed' => $result['changed'], 'failed' => array(), 'message' => '');
+	}
+	$listed = array_slice($result['failed'], 0, 20);
+	$message = 'Permission repair ' . $label . ' could not fix ' . count($result['failed']) . ' paths: ' . implode('; ', $listed);
+	if (count($result['failed']) > 20) {
+		$message .= ' and ' . (count($result['failed']) - 20) . ' more';
+	}
+	$message .= '. Likely causes: the file is immutable, the disk is read-only, or the updater is not allowed to change that owner.'
+		. ' Fix: ' . update_repair_hint($panel_dir);
+	return array('success' => false, 'changed' => $result['changed'], 'failed' => $result['failed'], 'message' => $message);
 }
 
 // ---------------------------------------------------------------- preflight
@@ -102,21 +160,15 @@ function update_check_free_space($path, $needed_bytes)
 	return '';
 }
 
-// Size of the panel tree in bytes, ignoring directories the backup leaves out.
+// Size of the panel tree in bytes. The backup copies all of it.
 function update_tree_size($dir)
 {
 	$total = 0;
 	if (!is_dir($dir)) {
 		return 0;
 	}
-	$skip = ['backups', 'logs', 'cache', 'tmp', 'node_modules', 'vendor', '.git'];
 	$iter = new RecursiveIteratorIterator(
-		new RecursiveCallbackFilterIterator(
-			new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
-			function ($current) use ($skip) {
-				return !($current->isDir() && in_array($current->getFilename(), $skip, true));
-			}
-		)
+		new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS)
 	);
 	foreach ($iter as $item) {
 		if ($item->isFile()) {
@@ -126,7 +178,7 @@ function update_tree_size($dir)
 	return $total;
 }
 
-// Free space the update needs: the backup archive, the staged release, plus a margin for the dump.
+// Free space the update needs: the backup copy, the staged release, plus a margin for the dump.
 function update_required_free_bytes($panel_dir)
 {
 	return (int)(update_tree_size($panel_dir) * 1.2) + 100 * 1048576;
@@ -135,7 +187,7 @@ function update_required_free_bytes($panel_dir)
 // Database dump check. $full takes a real dump into the temp directory and deletes it.
 function update_check_database_dump($panel_dir, $full)
 {
-	foreach (['mysqldump', 'mysql', 'tar'] as $tool) {
+	foreach (['mysqldump', 'mysql', 'cp'] as $tool) {
 		$found = [];
 		$ret = 0;
 		exec('command -v ' . escapeshellarg($tool) . ' 2>/dev/null', $found, $ret);
@@ -171,6 +223,26 @@ function update_runtime_file_paths($panel_dir)
 	return $paths;
 }
 
+// Create the backup directory when its parent is writable. Otherwise say so: the repair command creates it.
+// Returns '' when the directory exists and is writable, else the reason.
+function update_ensure_backup_base($backup_base)
+{
+	$backup_base = rtrim((string)$backup_base, '/');
+	if (!is_dir($backup_base)) {
+		$parent = dirname($backup_base);
+		if (!is_dir($parent) || !is_writable($parent)) {
+			return 'Backup directory does not exist and cannot be created (' . $parent . ' is not writable): ' . $backup_base . '.';
+		}
+		if (!@mkdir($backup_base, 0750) && !is_dir($backup_base)) {
+			return 'Cannot create backup directory: ' . $backup_base . '.';
+		}
+	}
+	if (!is_writable($backup_base)) {
+		return 'Backup directory is not writable: ' . $backup_base . '.';
+	}
+	return '';
+}
+
 /**
  * Preflight. Returns a list of error strings, empty when everything passes.
  * It only creates and deletes small temp files. It never touches panel files.
@@ -179,7 +251,12 @@ function update_preflight_errors($panel_dir, $backup_base, $full_dump_check)
 {
 	$panel_dir = rtrim($panel_dir, '/');
 	$hint = ' Fix: ' . update_repair_hint($panel_dir);
-	$errors = [];
+	$errors = array();
+
+	$backup_problem = update_ensure_backup_base($backup_base);
+	if ($backup_problem !== '') {
+		$errors[] = $backup_problem . $hint;
+	}
 
 	$directories = [$panel_dir, $panel_dir . '/includes', $backup_base, sys_get_temp_dir(), dirname(UPDATE_LOG)];
 	foreach ($directories as $dir) {
@@ -319,15 +396,83 @@ function copy_file($src, $dst)
 	return ['success' => true, 'path' => $dst];
 }
 
-// ------------------------------------------------------------------ restore
+// ------------------------------------------------------------------ backup copy
+// The backup is a plain folder copy made with cp -a. No archive, so any file can be copied back by hand.
+// Ownership is not copied: the copy belongs to whoever runs the update.
 
-// Extract a backup. Ownership-blind: files get the owner of the user running this,
-// permissions follow the umask, and modification times are set to now.
-function restore_archive_command($archive, $target)
+// Never copy these into a backup: the backup area itself (copying it into itself would never end).
+function update_backup_excluded_roots($backup_base)
 {
-	return 'tar -xzf ' . escapeshellarg($archive)
-		. ' -C ' . escapeshellarg($target)
-		. ' --no-same-owner --no-same-permissions --touch 2>&1';
+	return array(rtrim((string)$backup_base, '/'), '/var/lib/gse-panel');
+}
+
+function update_backup_run_cp($from, $to)
+{
+	$out = array();
+	$ret = 0;
+	exec('cp -a --no-preserve=ownership -- ' . escapeshellarg($from) . ' ' . escapeshellarg($to) . ' 2>&1', $out, $ret);
+	return $ret === 0 ? '' : 'cp failed for ' . $from . ': ' . implode(' | ', $out);
+}
+
+/**
+ * Copy the panel folder into $dest_dir (created here). Each top-level entry is copied with cp -a.
+ * Anything at or under an excluded root is left out. Returns success and error.
+ */
+function update_backup_copy($panel_dir, $dest_dir, array $excluded_roots)
+{
+	$panel_dir = rtrim($panel_dir, '/');
+	if (!is_dir($panel_dir)) {
+		return array('success' => false, 'error' => 'Panel folder is missing: ' . $panel_dir);
+	}
+	if (!is_dir($dest_dir) && !@mkdir($dest_dir, 0750, true)) {
+		return array('success' => false, 'error' => 'Cannot create backup folder: ' . $dest_dir);
+	}
+	$roots = array();
+	foreach ($excluded_roots as $root) {
+		$real = realpath($root);
+		$roots[] = rtrim($real === false ? $root : $real, '/');
+	}
+	foreach (scandir($panel_dir) as $name) {
+		if ($name === '.' || $name === '..') {
+			continue;
+		}
+		$path = $panel_dir . '/' . $name;
+		$real = realpath($path);
+		$real = $real === false ? $path : $real;
+		$skip = false;
+		foreach ($roots as $root) {
+			if ($real === $root || strpos($real, $root . '/') === 0) {
+				$skip = true;
+			} elseif (strpos($root, $real . '/') === 0) {
+				return array('success' => false, 'error' => 'The backup folder ' . $root . ' is inside ' . $path . '. Choose a backup folder outside the panel.');
+			}
+		}
+		if ($skip) {
+			continue;
+		}
+		$error = update_backup_run_cp($path, $dest_dir . '/');
+		if ($error !== '') {
+			return array('success' => false, 'error' => $error);
+		}
+	}
+	return array('success' => true, 'error' => '');
+}
+
+// Restore: copy everything in the backup folder back over the panel with cp -a. Returns success and error.
+function update_backup_restore($copy_dir, $panel_dir)
+{
+	if (!is_dir($copy_dir)) {
+		return array('success' => false, 'error' => 'Backup folder not found: ' . $copy_dir);
+	}
+	$error = update_backup_run_cp(rtrim($copy_dir, '/') . '/.', rtrim($panel_dir, '/') . '/');
+	return $error === '' ? array('success' => true) : array('success' => false, 'error' => $error);
+}
+
+// Name of a backup folder: <timestamp>-<from_version>, for example 2026-11-10_04-12-33-2.5.10.
+function update_backup_folder_name($timestamp, $from_version)
+{
+	$version = preg_replace('/[^A-Za-z0-9._+-]+/', '-', (string)$from_version);
+	return $timestamp . '-' . ($version === '' ? 'unknown' : $version);
 }
 
 function update_read_version_file($panel_dir)
@@ -349,6 +494,64 @@ function update_table_list($db)
 	return $tables;
 }
 
+// Hash of every release file in the panel tree: relative path => sha1.
+// It skips what the update never replaces (update_should_skip) and what the backup leaves out.
+// The runtime files (config and local settings) are protected from the copy but are restored, so they are always added.
+function update_file_manifest($panel_dir)
+{
+	$panel_dir = rtrim($panel_dir, '/');
+	$manifest = [];
+	if (!is_dir($panel_dir)) {
+		return $manifest;
+	}
+	$not_archived = ['backups', 'logs', 'cache', 'tmp', 'node_modules', 'vendor', '.git'];
+	$iter = new RecursiveIteratorIterator(
+		new RecursiveDirectoryIterator($panel_dir, RecursiveDirectoryIterator::SKIP_DOTS),
+		RecursiveIteratorIterator::LEAVES_ONLY
+	);
+	foreach ($iter as $item) {
+		if (!$item->isFile()) {
+			continue;
+		}
+		$rel = str_replace('\\', '/', substr($item->getPathname(), strlen($panel_dir) + 1));
+		$top = explode('/', $rel)[0];
+		if (in_array($top, $not_archived, true) || update_should_skip($rel)) {
+			continue;
+		}
+		$manifest[$rel] = sha1_file($item->getPathname());
+	}
+	foreach (runtime_state_paths() as $rel) {
+		if (is_file($panel_dir . '/' . $rel)) {
+			$manifest[$rel] = sha1_file($panel_dir . '/' . $rel);
+		}
+	}
+	ksort($manifest);
+	return $manifest;
+}
+
+// Names the first files that differ between two manifests. Empty string when they match.
+function update_manifest_difference(array $expected, array $actual)
+{
+	$problems = [];
+	foreach ($expected as $rel => $hash) {
+		if (!isset($actual[$rel])) {
+			$problems[] = 'missing: ' . $rel;
+		} elseif ($actual[$rel] !== $hash) {
+			$problems[] = 'changed: ' . $rel;
+		}
+	}
+	foreach ($actual as $rel => $hash) {
+		if (!isset($expected[$rel])) {
+			$problems[] = 'extra: ' . $rel;
+		}
+	}
+	if (empty($problems)) {
+		return '';
+	}
+	$shown = implode(', ', array_slice($problems, 0, 10));
+	return $shown . (count($problems) > 10 ? ' (and ' . (count($problems) - 10) . ' more)' : '');
+}
+
 // The state the update starts from. Rollback has to bring the panel back to exactly this.
 function update_capture_baseline($db, $panel_dir)
 {
@@ -358,6 +561,7 @@ function update_capture_baseline($db, $panel_dir)
 		'version_file' => update_read_version_file($panel_dir),
 		'applied_migrations' => $applied,
 		'tables' => update_table_list($db),
+		'file_manifest' => update_file_manifest($panel_dir),
 	];
 }
 
@@ -388,7 +592,7 @@ function update_remove_created_files($panel_dir, array $created_relative)
 	return ['success' => true];
 }
 
-// After a rollback: VERSION and schema_migrations must match the state the update began from.
+// After a rollback: VERSION, schema_migrations, and every panel file (runtime files included) must match the state the update began from.
 function update_verify_restored_state($db, $panel_dir, array $baseline)
 {
 	$version = update_read_version_file($panel_dir);
@@ -399,6 +603,10 @@ function update_verify_restored_state($db, $panel_dir, array $baseline)
 	sort($applied);
 	if ($applied !== $baseline['applied_migrations']) {
 		return ['success' => false, 'error' => 'schema_migrations does not match the pre-update state after rollback.'];
+	}
+	$difference = update_manifest_difference($baseline['file_manifest'], update_file_manifest($panel_dir));
+	if ($difference !== '') {
+		return ['success' => false, 'error' => 'Panel files differ from the pre-update snapshot after rollback: ' . $difference . '.'];
 	}
 	return ['success' => true];
 }
@@ -421,14 +629,17 @@ function update_verify_new_state($db, $panel_dir, array $staged)
 
 /**
  * Run the update as one unit. $ops are callables returning ['success' => bool, 'error' => string]:
- *   copy_files, restore_runtime, run_migrations, write_version, verify_update   (forward steps, in order)
+ *   copy_files, restore_runtime, verify_ownership (optional), run_migrations, write_version, verify_update   (forward steps, in order)
  *   rollback_files, rollback_database, verify_rollback                           (used only after a failure)
  * On a forward failure BOTH rollback_files and rollback_database run, then verify_rollback.
  * The result says whether the rollback worked: rolled_back = true only after verify_rollback passes.
  */
 function update_run_transaction(array $ops, $backup_dir)
 {
-	foreach (['copy_files', 'restore_runtime', 'run_migrations', 'write_version', 'verify_update'] as $step) {
+	foreach (['copy_files', 'restore_runtime', 'verify_ownership', 'run_migrations', 'write_version', 'verify_update'] as $step) {
+		if ($step === 'verify_ownership' && !isset($ops[$step])) {
+			continue;
+		}
 		$result = $ops[$step]();
 		if (!$result['success']) {
 			return update_rollback_all($ops, $step, $result['error'], $backup_dir);

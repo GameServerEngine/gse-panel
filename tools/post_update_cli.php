@@ -142,11 +142,16 @@ if (function_exists('lang')) {
 
 ob_start();
 try {
-    runPostUpdateOperations();
+    $post_update = runPostUpdateOperations();
     $legacy_output = trim(strip_tags(ob_get_clean()));
 } catch (Throwable $e) {
     ob_end_clean();
     fwrite(STDERR, "Post-update operations failed: " . $e->getMessage() . "\n");
+    exit(1);
+}
+
+if (!$post_update['success']) {
+    fwrite(STDERR, "Post-update operations failed: " . $post_update['error'] . "\n");
     exit(1);
 }
 

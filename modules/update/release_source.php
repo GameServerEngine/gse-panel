@@ -55,6 +55,62 @@ function default_repo_url($component)
 }
 }
 
+/**
+ * Label for the installed version, built from what was actually installed.
+ * $source is the release name or the ZIP URL stored in version.json.
+ * testing-* and working-* releases show their kind; anything else is stable.
+ * Old saved values (no source, or a legacy .../heads/stable.zip URL) stay readable.
+ */
+function release_installed_label($version, $source)
+{
+	$version = trim((string)$version);
+	if ($version === '' || $version === 'unknown') {
+		$version = 'unknown';
+	}
+	$source = strtolower(trim((string)$source));
+	if ($source === '') {
+		return $version;
+	}
+	// The tag sits in one path segment, e.g. .../download/testing-latest/x.zip or .../tags/working-2.5.8.zip.
+	// Host and repo name are not checked, so a repo called "testing" is not mistaken for a release.
+	$path = (string)parse_url($source, PHP_URL_PATH);
+	$segments = explode('/', $path);
+	$last = count($segments) - 1;
+	foreach ($segments as $i => $segment) {
+		$segment = preg_replace('/\.zip$/', '', $segment);
+		foreach (array('testing', 'working') as $kind) {
+			// A bare name counts only as the file name (legacy heads/testing.zip).
+			if (($i === $last && $segment === $kind) || strpos($segment, $kind . '-') === 0) {
+				return release_kind_label($kind) . ' ' . $version;
+			}
+		}
+	}
+	return release_kind_label('stable') . ' ' . $version;
+}
+
+/**
+ * Display words for a release kind: stable -> Stable, testing -> Testing,
+ * working (the rolling working build) -> Testing Latest. Stored values and URLs keep the old names.
+ */
+function release_kind_label($kind)
+{
+	$labels = array('stable' => 'Stable', 'testing' => 'Testing', 'working' => 'Testing Latest');
+	$kind = strtolower((string)$kind);
+	return isset($labels[$kind]) ? $labels[$kind] : 'Stable';
+}
+
+/**
+ * Dropdown option text for a release row: "Testing Latest 2.5.9 (2026-11-10)".
+ */
+function release_option_label(array $row)
+{
+	$kind = (string)($row['channel'] ?? '');
+	if ($kind === '' && isset($row['tag'])) {
+		$kind = (strpos((string)$row['tag'], 'working-') === 0) ? 'working' : ((strpos((string)$row['tag'], 'testing-') === 0) ? 'testing' : 'stable');
+	}
+	return release_kind_label($kind) . ' ' . $row['version'] . ' (' . substr((string)($row['created'] ?? ''), 0, 10) . ')';
+}
+
 function release_source_settings($component)
 {
 	global $settings;

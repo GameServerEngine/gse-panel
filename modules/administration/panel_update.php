@@ -215,7 +215,7 @@ function update_badge($installed, $latest)
 	if (release_is_installed($installed, $latest['version'])) {
 		return 'Up to date';
 	}
-	return "<span style='color:#8a6d3b;'><strong>Update available:</strong> " . htmlspecialchars($latest['version'], ENT_QUOTES, 'UTF-8') . "</span>";
+	return "<span style='color:#8a6d3b;'><strong>Update available:</strong> " . htmlspecialchars(release_kind_label($latest['channel'] ?? '') . ' ' . $latest['version'], ENT_QUOTES, 'UTF-8') . "</span>";
 }
 }
 
@@ -231,7 +231,7 @@ function tag_select($name, $rows, $installed = '')
 		return $html . "<option value='' disabled>No releases found</option></select>";
 	}
 	foreach ($rows as $r) {
-		$label = $r['version'] . ' (' . substr((string)$r['created'], 0, 10) . ')';
+		$label = release_option_label($r);
 		if (release_is_installed($installed, $r['version'])) {
 			$label .= ' - installed';
 		}
@@ -705,39 +705,6 @@ return ['success' => false, 'error' => 'Database dump file missing or empty.'];
 return ['success' => true, 'file' => $sql_file];
 }
 
-function create_archive($source_dir, $archive_file, array $excludes = [])
-{
-$check = [];
-$ret = 0;
-exec('command -v tar 2>/dev/null', $check, $ret);
-if ($ret !== 0 || empty($check[0])) {
-return ['success' => false, 'error' => 'tar is not available.'];
-}
-if (!is_dir($source_dir)) {
-return ['success' => false, 'error' => 'Source directory missing: ' . $source_dir];
-}
-$exclude_args = '';
-foreach ($excludes as $exclude) {
-$exclude_args .= ' --exclude=' . escapeshellarg($exclude);
-}
-$cmd = 'tar -czf ' . escapeshellarg($archive_file)
-. $exclude_args
-. ' -C ' . escapeshellarg($source_dir)
-. ' . 2>&1';
-$out = [];
-$ret = 0;
-exec($cmd, $out, $ret);
-if ($ret !== 0) {
-@unlink($archive_file);
-return ['success' => false, 'error' => 'tar failed: ' . implode(' | ', $out)];
-}
-if (!file_exists($archive_file) || filesize($archive_file) < 100) {
-@unlink($archive_file);
-return ['success' => false, 'error' => 'Archive missing or empty: ' . $archive_file];
-}
-return ['success' => true, 'file' => $archive_file];
-}
-
 function backup_apache_configs($backup_dir)
 {
 $available_source = '/etc/apache2/sites-available';
@@ -797,6 +764,9 @@ function get_managed_backup_entries($backup_base = null)
 		if (preg_match('/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})$/', $entry, $m)) {
 			$type = 'full';
 			$stamp = $m[1];
+		} elseif (preg_match('/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})-\d+\.\d+\.\d+[A-Za-z0-9._+-]*$/', $entry, $m)) {
+			$type = 'update';
+			$stamp = $m[1];
 		} elseif (preg_match('/^([A-Za-z0-9._-]+)_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})$/', $entry, $m)) {
 			$type = $m[1];
 			$stamp = $m[2];
@@ -844,7 +814,7 @@ function prune_old_backups($max_backups = 5, $backup_base = null)
 	foreach ($to_delete as $entry) {
 		rmdir_recursive($entry['path']);
 		$deleted[] = $entry['name'];
-		update_log('Pruned old backup: ' . $entry['path']);
+		update_log('Deleted old backup folder: ' . $entry['path']);
 	}
 	return array('success' => true, 'deleted' => $deleted);
 }
@@ -852,12 +822,8 @@ function prune_old_backups($max_backups = 5, $backup_base = null)
 function create_full_backup($update_target_type, $update_target_version, $include_apache = false, array $update_cfg = null)
 {
 	$ts = date('Y-m-d_H-i-s');
-	$name_prefix = preg_replace('/[^A-Za-z0-9._-]+/', '-', strtolower((string)$update_target_type));
-	$name_prefix = trim((string)$name_prefix, '-');
-	if ($name_prefix === '') {
-		$name_prefix = 'panel-backup';
-	}
-	$backup_name = $name_prefix . '_' . $ts;
+	// <timestamp>-<from_version>, for example 2026-11-10_04-12-33-2.5.10
+	$backup_name = update_backup_folder_name($ts, get_current_version());
 	$backup_base = get_backup_base($update_cfg);
 	$backup_base_ready = ensure_directory($backup_base, 'backup base directory');
 	if (!$backup_base_ready['success']) {
@@ -891,15 +857,12 @@ return ['success' => false, 'error' => $db_backup['error']];
 }
 $meta['database_backup'] = basename($db_backup['file']);
 
-$panel_backup = create_archive(
-PANEL_DIR,
-$backup_dir . '/panel-files.tar.gz',
-['./backups', './logs', './cache', './tmp', './node_modules', './vendor']
-);
+// A plain copy of the panel folder in <backup>/panel/. Copy any file back by hand if you need it.
+$panel_backup = update_backup_copy(PANEL_DIR, $backup_dir . '/panel', update_backup_excluded_roots($backup_base));
 if (!$panel_backup['success']) {
 return ['success' => false, 'error' => $panel_backup['error']];
 }
-$meta['panel_archive'] = basename($panel_backup['file']);
+$meta['panel_copy'] = 'panel';
 
 if (file_exists(VERSION_JSON)) {
 @copy(VERSION_JSON, $backup_dir . '/version.json.bak');
@@ -916,12 +879,9 @@ $meta['apache_backup_error'] = $apache_backup['error'];
 	}
 
 	@file_put_contents($backup_dir . '/backup.json', json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-	// Exactly one restore point: now that the new backup is complete, remove every
-	// older one. The old backup is never deleted before the new one finishes.
-	$prune = prune_old_backups(1, $backup_base);
-	if (!empty($prune['deleted'])) {
-		update_log('Replaced previous restore point in ' . $backup_base . ': ' . implode(', ', $prune['deleted']));
-	}
+	// Keep the newest earlier backup plus the one just made. Older ones are deleted (and logged),
+	// and only after the new backup is complete.
+	prune_old_backups(2, $backup_base);
 	update_log('Restore point created: ' . $backup_dir);
 
 	return [
@@ -1153,15 +1113,7 @@ return ['success' => true, 'source_root' => $roots[0]];
 
 
 
-function fix_permissions($root_dir)
-{
-@system(
-'find ' . escapeshellarg($root_dir)
-. ' -maxdepth 12 \( -name "*.php" -exec chmod 644 {} + \)'
-. ' -o \( -type d -exec chmod 755 {} + \) 2>/dev/null'
-);
-}
-
+// Only chmod, never chown. It does nothing when owner or write access is wrong, so it cannot hide a wrong owner.
 function clear_panel_cache($panel_dir)
 {
 foreach (['cache', 'temp'] as $dir) {
@@ -1189,6 +1141,14 @@ return ['success' => false, 'error' => implode(' | ', $validation)];
 $panel_dest = rtrim((string)$update_cfg['panel_path'], '/');
 if (strpos($panel_dest, '/') !== 0 || strpos($panel_dest, '..') !== false || strpos($panel_dest, "\0") !== false) {
 return ['success' => false, 'error' => 'Panel destination path is invalid.'];
+}
+// Repair owner, group and modes first. If something cannot be repaired, stop before anything is copied.
+$repair = update_repair_panel_tree($panel_dest, 'before the copy');
+if (!$repair['success']) {
+return ['success' => false, 'error' => $repair['message'] . ' No files were copied.'];
+}
+if (!empty($repair['changed'])) {
+update_log('Permission repair before the copy fixed ' . count($repair['changed']) . ' paths.');
 }
 $preflight = preflight_check($update_cfg, true);
 if (!$preflight['success']) {
@@ -1222,6 +1182,10 @@ return ['success' => false, 'error' => 'Preflight failed. Nothing was changed. '
 }
 }
 
+$plan = update_install_plan($panel_dest);
+if ($plan['error'] !== '') {
+return ['success' => false, 'error' => $plan['error'] . ' Nothing was changed.'];
+}
 $baseline = update_capture_baseline($db, $panel_dest);
 $backup = create_full_backup('panel-update', $staged['version'], false, $update_cfg);
 if (!$backup['success']) {
@@ -1234,7 +1198,7 @@ return ['success' => false, 'error' => $runtime_snapshot['error'] . ' Nothing wa
 }
 
 $state = ['sync' => null, 'created_files' => []];
-$ops = update_build_ops($staged, $update_cfg, $backup, $baseline, $runtime_snapshot, $same_tree ? null : $panel_source, $state);
+$ops = update_build_ops($staged, $update_cfg, $backup, $baseline, $runtime_snapshot, $same_tree ? null : $panel_source, $state, $plan);
 try {
 $transaction = update_run_transaction($ops, $backup['backup_dir']);
 } finally {
@@ -1246,7 +1210,7 @@ return ['success' => false, 'error' => $transaction['error'], 'rolled_back' => $
 }
 
 // The update is applied and verified. These last steps do not change the result.
-fix_permissions($panel_dest);
+$sync_installed = isset($state['sync']['installed_files']) ? $state['sync']['installed_files'] : [];
 write_last_update_markers($update_cfg['repo_root']);
 $db->setSettings(['panel_version' => $staged['version'], 'version_type' => 'release-zip']);
 if (file_exists($panel_dest . '/modules/modulemanager/module_handling.php')) {
@@ -1257,6 +1221,10 @@ updateAllPanelModules();
 }
 if (function_exists('runPostUpdateOperations')) {
 runPostUpdateOperations();
+}
+$manifest_error = um_record_install($panel_dest, $sync_installed, $staged['version']);
+if ($manifest_error !== '') {
+update_log('Update manifest not written: ' . $manifest_error);
 }
 update_log('Panel update complete: ' . $staged['version'] . ' from ' . $staged['release_zip_url']);
 
@@ -1274,21 +1242,158 @@ return [
 ];
 }
 
+// ------------------------------------------------- edited files and exclusions (Update page)
+
+function update_post_list($name)
+{
+	return (isset($_POST[$name]) && is_array($_POST[$name])) ? array_map('strval', $_POST[$name]) : array();
+}
+
+function update_hidden_row_fields(array $checked, array $row_tags)
+{
+	$html = '';
+	foreach ($checked as $row) {
+		$html .= "<input type='hidden' name='row_check[]' value='" . htmlspecialchars($row, ENT_QUOTES, 'UTF-8') . "'>\n";
+	}
+	foreach ($row_tags as $key => $tag) {
+		$html .= "<input type='hidden' name='row_tag[" . htmlspecialchars((string)$key, ENT_QUOTES, 'UTF-8') . "]' value='" . htmlspecialchars((string)$tag, ENT_QUOTES, 'UTF-8') . "'>\n";
+	}
+	return $html;
+}
+
+// The review shown BEFORE the install starts. Every box is checked: the default is keep my version.
+function render_edited_review_form(array $edited, array $decisions, $csrf_token, array $checked, array $row_tags)
+{
+	echo "<h3>Files you edited</h3>\n";
+	echo "<p>These files were changed after the last update installed them. Nothing is installed until you press <strong>Install update</strong>. "
+		. "Leave a box checked to keep your version. Uncheck it to let the update overwrite the file. Checking a folder keeps every edited file under it.</p>\n";
+	echo "<form method='POST' id='form_edited_review'>\n";
+	echo "<input type='hidden' name='update_action' value='update_selected'>\n";
+	echo "<input type='hidden' name='update_csrf' value='" . htmlspecialchars($csrf_token) . "'>\n";
+	echo "<input type='hidden' name='edited_review_submitted' value='1'>\n";
+	echo update_hidden_row_fields($checked, $row_tags);
+	echo "<table class='center'>\n<tr><th>Keep</th><th>Path</th></tr>\n";
+	foreach (um_group_by_folder($edited) as $folder => $files) {
+		$folder_kept = empty($decisions) || (isset($decisions[$folder]) && $decisions[$folder] === 'keep');
+		echo "<tr><td><input type='checkbox' name='keep_folder[]' value='" . htmlspecialchars($folder, ENT_QUOTES, 'UTF-8') . "'" . ($folder_kept ? ' checked' : '') . "></td>";
+		echo "<td><strong>keep whole folder</strong> <code>" . htmlspecialchars($folder) . "</code></td></tr>\n";
+		foreach ($files as $rel) {
+			$kept = um_keep_decision($rel, $decisions);
+			echo "<tr><td><input type='checkbox' name='keep_file[]' value='" . htmlspecialchars($rel, ENT_QUOTES, 'UTF-8') . "'" . ($kept ? ' checked' : '') . "></td>";
+			echo "<td>keep my version <code>" . htmlspecialchars($rel) . "</code></td></tr>\n";
+		}
+	}
+	echo "</table>\n<p><button type='submit'>Install update</button></p>\n</form>\n";
+}
+
+/**
+ * Step before the install: ask about edited files. Returns true when the install may go on.
+ * With edited files and no submitted choices it shows the review and returns false.
+ */
+function update_edited_review_passed(array $update_cfg, $csrf_token, array $checked, array $row_tags)
+{
+	$panel_dir = rtrim((string)$update_cfg['panel_path'], '/');
+	$plan = update_install_plan($panel_dir);
+	if ($plan['error'] !== '') {
+		print_failure('Update not started: ' . htmlspecialchars($plan['error']));
+		return false;
+	}
+	if (empty($plan['edited'])) {
+		return true;
+	}
+	$loaded = um_manifest_load($panel_dir);
+	if (empty($_POST['edited_review_submitted'])) {
+		render_edited_review_form($plan['edited'], $loaded['manifest']['edited_decisions'], $csrf_token, $checked, $row_tags);
+		return false;
+	}
+	$manifest = um_sync_exclusions($panel_dir, $loaded['manifest']);
+	$manifest = um_store_decisions($manifest, $plan['edited'], update_post_list('keep_file'), update_post_list('keep_folder'));
+	$error = um_manifest_save($panel_dir, $manifest);
+	if ($error !== '') {
+		print_failure('Your choices could not be saved, so the update did not start: ' . htmlspecialchars($error));
+		return false;
+	}
+	return true;
+}
+
+// Exclusions section: files edited since the last install, and what is already excluded. Nothing else is offered.
+function render_exclusions_section($panel_dir, $csrf_token)
+{
+	$loaded = um_manifest_load($panel_dir);
+	echo "<h3>Exclusions</h3>\n";
+	if ($loaded['error'] !== '') {
+		echo "<p style='color:#a94442;'>" . htmlspecialchars($loaded['error']) . "</p>\n";
+		return;
+	}
+	$manifest = um_sync_exclusions($panel_dir, $loaded['manifest']);
+	$rows = um_exclusion_candidates($panel_dir, $manifest, $manifest['exclusions']);
+	echo "<p>Files and folders the update never overwrites or deletes. The update log names each skipped path. "
+		. "You can also edit <code>update_exclusions.txt</code> in the panel folder by hand: one path per line, a trailing / marks a folder.</p>\n";
+	if (empty($rows)) {
+		echo "<p>No file has been edited since the last install and nothing is excluded.</p>\n";
+		return;
+	}
+	echo "<form method='POST'>\n";
+	echo "<input type='hidden' name='update_action' value='save_exclusions'>\n";
+	echo "<input type='hidden' name='update_csrf' value='" . htmlspecialchars($csrf_token) . "'>\n";
+	echo "<table class='center'>\n<tr><th>Keep excluded</th><th>Path</th></tr>\n";
+	foreach ($rows as $path => $excluded) {
+		$safe = htmlspecialchars($path, ENT_QUOTES, 'UTF-8');
+		echo "<tr><td><input type='hidden' name='excl_offered[]' value='" . $safe . "'>";
+		echo "<input type='checkbox' name='excl_keep[]' value='" . $safe . "'" . ($excluded ? ' checked' : '') . "></td>";
+		echo "<td><code>" . htmlspecialchars($path) . "</code></td></tr>\n";
+	}
+	echo "</table>\n<p><button type='submit'>Save exclusions</button></p>\n</form>\n";
+}
+
+// Save the Exclusions section. Only paths that were offered are accepted. Returns '' or the reason.
+function save_exclusions_from_post($panel_dir)
+{
+	$loaded = um_manifest_load($panel_dir);
+	if ($loaded['error'] !== '') {
+		return $loaded['error'];
+	}
+	$manifest = um_sync_exclusions($panel_dir, $loaded['manifest']);
+	$offered = array_keys(um_exclusion_candidates($panel_dir, $manifest, $manifest['exclusions']));
+	$keep = array_values(array_intersect(update_post_list('excl_keep'), $offered));
+	return um_save_exclusions($panel_dir, $keep);
+}
+
+// What the update must leave alone: excluded paths and edited files the user chose to keep.
+// Reads update_exclusions.txt (every run), the manifest and the stored decisions. A person who never
+// opens the Update page gets the default: edited files are kept.
+// Returns error ('' when fine), skip (callable relative path => reason), exclusions, edited.
+function update_install_plan($panel_dir)
+{
+	$loaded = um_manifest_load($panel_dir);
+	if ($loaded['error'] !== '') {
+		return ['error' => $loaded['error'], 'skip' => null, 'exclusions' => [], 'edited' => []];
+	}
+	$manifest = um_sync_exclusions($panel_dir, $loaded['manifest']);
+	$exclusions = $manifest['exclusions'];
+	$edited = um_find_edited($panel_dir, $manifest, $exclusions);
+	$decisions = $manifest['edited_decisions'];
+	$skip = function ($rel) use ($exclusions, $edited, $decisions) {
+		return um_skip_reason($rel, $exclusions, $edited, $decisions);
+	};
+	return ['error' => '', 'skip' => $skip, 'exclusions' => $exclusions, 'edited' => $edited];
+}
+
 // The steps of one update, as callables for update_run_transaction().
 // $panel_source is null when the release is already the live tree (nothing to copy).
-function update_build_ops(array $staged, array $update_cfg, array $backup, array $baseline, array $runtime_snapshot, $panel_source, array &$state)
+function update_build_ops(array $staged, array $update_cfg, array $backup, array $baseline, array $runtime_snapshot, $panel_source, array &$state, array $plan)
 {
 global $db;
 $panel_dest = rtrim((string)$update_cfg['panel_path'], '/');
 $backup_dir = $backup['backup_dir'];
 $state['migrations'] = ['applied' => []];
 return [
-'copy_files' => function () use ($panel_source, $panel_dest, &$state) {
+'copy_files' => function () use ($panel_source, $panel_dest, &$state, $plan) {
 if ($panel_source === null) {
-$state['sync'] = ['success' => true, 'files_copied' => 0, 'skipped' => [], 'copied_files' => [], 'created_files' => []];
+$state['sync'] = ['success' => true, 'files_copied' => 0, 'skipped' => [], 'copied_files' => [], 'created_files' => [], 'installed_files' => []];
 return $state['sync'];
 }
-$state['sync'] = component_copy_tree($panel_source, $panel_dest, 'Panel');
+$state['sync'] = component_copy_tree($panel_source, $panel_dest, 'Panel', $plan['skip']);
 $state['created_files'] = isset($state['sync']['created_files']) ? $state['sync']['created_files'] : [];
 return $state['sync'];
 },
@@ -1315,8 +1420,13 @@ return ['success' => true];
 'verify_update' => function () use ($db, $panel_dest, $staged) {
 return update_verify_new_state($db, $panel_dest, $staged);
 },
+'verify_ownership' => function () use ($panel_dest) {
+// The same repair as before the copy, run again. It logs every path it had to change.
+$repair = update_repair_panel_tree($panel_dest, 'after the copy');
+return $repair['success'] ? ['success' => true] : ['success' => false, 'error' => $repair['message']];
+},
 'rollback_files' => function () use ($backup_dir, $panel_dest, &$state) {
-$restore = restore_archive($backup_dir . '/panel-files.tar.gz', $panel_dest);
+$restore = update_backup_restore($backup_dir . '/panel', $panel_dest);
 if (!$restore['success']) {
 return $restore;
 }
@@ -1369,12 +1479,15 @@ return $real;
 
 // Copies the release tree into the panel. Stops at the first failure and says which path failed.
 // created_files lists the files that did not exist before, so a rollback can remove them.
-function component_copy_tree($src_root, $dst_root, $component_label)
+// $skip_reason is an optional callable (relative path) => reason or ''. A path with a reason is not written, and the log names it.
+// installed_files lists every file written, so the manifest can record it.
+function component_copy_tree($src_root, $dst_root, $component_label, $skip_reason = null)
 {
 $copied = 0;
 $skipped = [];
 $copied_files = [];
 $created_files = [];
+$installed_files = [];
 if (!is_dir($src_root)) {
 return ['success' => false, 'error' => 'Source component path not found: ' . $src_root];
 }
@@ -1389,6 +1502,14 @@ foreach ($iter as $item) {
 $rel = normalize_rel(substr($item->getPathname(), strlen(rtrim($src_root, '/')) + 1));
 if (update_should_skip($rel)) {
 $skipped[] = $component_label . '/' . $rel;
+continue;
+}
+$reason = $skip_reason === null ? '' : call_user_func($skip_reason, $rel);
+if ($reason !== '') {
+$skipped[] = $component_label . '/' . $rel;
+if (!$item->isDir()) {
+update_log('Update skipped ' . $rel . ' (' . $reason . ')');
+}
 continue;
 }
 $dst = rtrim($dst_root, '/') . '/' . $rel;
@@ -1407,11 +1528,12 @@ if (!$existed) {
 $created_files[] = $rel;
 }
 $copied++;
+$installed_files[] = $rel;
 if (count($copied_files) < 200) {
 $copied_files[] = $component_label . '/' . $rel;
 }
 }
-return ['success' => true, 'files_copied' => $copied, 'skipped' => array_values(array_unique($skipped)), 'copied_files' => $copied_files, 'created_files' => $created_files];
+return ['success' => true, 'files_copied' => $copied, 'skipped' => array_values(array_unique($skipped)), 'copied_files' => $copied_files, 'created_files' => $created_files, 'installed_files' => $installed_files];
 }
 
 function run_admin_post_update_command($command, $cwd)
@@ -1465,29 +1587,15 @@ return $backups;
 
 function is_safe_backup_name($name)
 {
-return preg_match('/^(?:[A-Za-z0-9._-]+_)?\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}$/', (string)$name) === 1;
+return preg_match('/^(?:[A-Za-z0-9._-]+_)?\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}(?:-\d+\.\d+\.\d+[A-Za-z0-9._+-]*)?$/', (string)$name) === 1;
 }
 
 function backup_timestamp_from_name($name)
 {
-if (preg_match('/(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})$/', (string)$name, $m)) {
+if (preg_match('/(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/', (string)$name, $m)) {
 return $m[1];
 }
 return (string)$name;
-}
-
-function restore_archive($archive, $target)
-{
-if (!file_exists($archive)) {
-return ['success' => false, 'error' => 'Archive not found: ' . $archive];
-}
-$out = [];
-$ret = 0;
-exec(restore_archive_command($archive, $target), $out, $ret);
-if ($ret !== 0) {
-return ['success' => false, 'error' => 'tar extract failed: ' . implode(' | ', $out)];
-}
-return ['success' => true];
 }
 
 function restore_database_from_backup($backup_dir)
@@ -1554,7 +1662,7 @@ $db->setSettings([
 ]);
 }
 
-	$panel_restore = restore_archive($backup_dir . '/panel-files.tar.gz', PANEL_DIR);
+	$panel_restore = update_backup_restore($backup_dir . '/panel', PANEL_DIR);
 	if (!$panel_restore['success']) {
 	if (!$had_maintenance) {
 	$db->setSettings(['maintenance_mode' => '0']);
@@ -1581,7 +1689,7 @@ update_log('Revert apache restore warning: ' . $apache_restore['error']);
 }
 }
 
-fix_permissions(ROOT_DIR);
+update_repair_panel_tree(PANEL_DIR, 'after revert');
 clear_panel_cache(PANEL_DIR);
 if (!$had_maintenance) {
 $db->setSettings(['maintenance_mode' => '0']);
@@ -2118,8 +2226,12 @@ $row_tags = (isset($_POST['row_tag']) && is_array($_POST['row_tag'])) ? $_POST['
 if (empty($checked)) {
 echo "<p class='failure'>No rows selected. Tick the Panel or one or more agents first.</p>\n";
 } else {
+$may_install = true;
 if (in_array('panel', $checked, true)) {
+$may_install = update_edited_review_passed($update_cfg, $csrf_token, $checked, $row_tags);
+if ($may_install) {
 update_panel($db, $update_cfg, $restart_nonce, isset($row_tags['panel']) ? (string)$row_tags['panel'] : '');
+}
 }
 $agent_ids = array();
 foreach ($checked as $c) {
@@ -2127,9 +2239,16 @@ if ($c !== 'panel') {
 $agent_ids[] = $c;
 }
 }
-if (!empty($agent_ids)) {
+if (!empty($agent_ids) && $may_install) {
 update_agents($db, $agent_ids, $row_tags);
 }
+}
+} elseif ($action === 'save_exclusions') {
+$error = save_exclusions_from_post(rtrim((string)$update_cfg['panel_path'], '/'));
+if ($error === '') {
+print_success('Exclusions saved to update_exclusions.txt and update_manifest.json.');
+} else {
+print_failure('Exclusions were not saved: ' . htmlspecialchars($error));
 }
 } elseif ($action === 'revert') {
 $backup_ts = isset($_POST['revert_backup']) ? trim($_POST['revert_backup']) : '';
@@ -2339,6 +2458,7 @@ echo "<input type='hidden' name='update_csrf' value='" . htmlspecialchars($csrf_
 echo "<button type='submit' onclick='return confirm(\"Backup Apache configs, run configtest, and apply path fixes?\");'>Fix Apache Paths</button>\n";
 echo "</form>\n";
 echo "</details>\n";
+render_exclusions_section(rtrim((string)$update_cfg['panel_path'], '/'), $csrf_token);
 echo "</td></tr></table>\n";
 
 if ($auto_restart_payload) {

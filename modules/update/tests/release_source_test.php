@@ -93,3 +93,20 @@ relsrc_assert($missing_file['success'] === false, 'missing file to verify is rej
 @unlink($tmp);
 
 echo "All release source tests passed.\n";
+
+// --- release_installed_label: label comes from the installed release, not a channel setting ---
+$gh = 'https://github.com/GameServerEngine/gse-panel';
+relsrc_assert(release_installed_label('2.5.7', $gh . '/releases/download/testing-latest/gse-panel.zip') === 'Testing 2.5.7', 'testing-* release download shows testing');
+relsrc_assert(release_installed_label('2.5.8', $gh . '/archive/refs/tags/testing-2.5.8.zip') === 'Testing 2.5.8', 'testing-* tag archive shows testing');
+relsrc_assert(release_installed_label('2.5.8', $gh . '/archive/refs/tags/working-2.5.8.zip') === 'Testing Latest 2.5.8', 'working-* tag archive shows working');
+relsrc_assert(release_installed_label('2.5.8', $gh . '/releases/download/working-latest/p.zip') === 'Testing Latest 2.5.8', 'working-latest download shows working');
+relsrc_assert(release_installed_label('2.5.0', $gh . '/archive/refs/tags/stable-2.5.0.zip') === 'Stable 2.5.0', 'stable-* release shows stable');
+relsrc_assert(release_installed_label('2.4.0', $gh . '/archive/refs/heads/stable.zip') === 'Stable 2.4.0', 'legacy stable.zip source stays readable as stable');
+relsrc_assert(release_installed_label('2.4.0', $gh . '/archive/refs/heads/testing.zip') === 'Testing 2.4.0', 'legacy testing.zip source stays readable as testing');
+relsrc_assert(release_installed_label('2.5.0', 'https://github.com/acme/testing/archive/refs/tags/stable-2.5.0.zip') === 'Stable 2.5.0', 'a repo named testing is not read as a testing release');
+relsrc_assert(release_installed_label('2.5.0', '') === '2.5.0', 'no stored source shows the bare version');
+relsrc_assert(release_installed_label('', '') === 'unknown', 'no version shows unknown');
+relsrc_assert(release_option_label(array('tag' => 'stable-2.5.0', 'channel' => 'stable', 'version' => '2.5.0', 'created' => '2026-11-01T10:00:00Z')) === 'Stable 2.5.0 (2026-11-01)', 'stable option text');
+relsrc_assert(release_option_label(array('tag' => 'testing-2.5.9', 'channel' => 'testing', 'version' => '2.5.9', 'created' => '2026-11-10')) === 'Testing 2.5.9 (2026-11-10)', 'testing option text');
+relsrc_assert(release_option_label(array('tag' => 'working-latest', 'channel' => 'working', 'version' => '2.5.9', 'created' => '2026-11-10')) === 'Testing Latest 2.5.9 (2026-11-10)', 'working option text');
+relsrc_assert(release_option_label(array('tag' => 'working-2.5.9', 'version' => '2.5.9', 'created' => '2026-11-10')) === 'Testing Latest 2.5.9 (2026-11-10)', 'option text falls back to the tag prefix');

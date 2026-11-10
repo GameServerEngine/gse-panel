@@ -427,7 +427,14 @@ function removeOldPanelFiles(){ // Should run post panel update to remove old fi
 	}
 }
 
+// Runs after the panel files are updated. Works from the web (session) and from the CLI.
+// Returns array('success' => bool, 'error' => string). It never fatals when the database is missing.
 function runPostUpdateOperations(){
+	global $db;
+	if(!isset($db) || !is_object($db)){
+		return array('success' => false, 'error' => 'No database connection ($db is not set). Post-update operations were not run.');
+	}
+
 	if(file_exists('modules/cron/shared_cron_functions.php')){
 		// Update cronjobs to use the new token based API
 		require_once('modules/cron/shared_cron_functions.php');
@@ -444,9 +451,12 @@ function runPostUpdateOperations(){
 		removeOldPanelFiles();
 	}
 
-	if(!array_key_exists("users_api_key", (array)$_SESSION)){
-		$_SESSION['users_api_key'] = $db->getApiToken($_SESSION['user_id']);
+	// The API key is only stored for a logged in web user. The CLI has no session.
+	$session = isset($_SESSION) ? (array)$_SESSION : array();
+	if(!array_key_exists("users_api_key", $session) && isset($session['user_id'])){
+		$_SESSION['users_api_key'] = $db->getApiToken($session['user_id']);
 	}
+	return array('success' => true, 'error' => '');
 }
 
 function getGitHubURL($gitHubUsername, $repo){
