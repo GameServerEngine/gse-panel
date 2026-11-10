@@ -88,6 +88,8 @@ mkdir($dest);
 $restore = update_backup_restore($src, $dest);
 safety_assert($restore['success'] && file_get_contents($dest . '/a.txt') === 'hello', 'update_backup_restore copies the backup folder back');
 safety_assert(!update_backup_restore($work . '/no_such_backup', $dest)['success'], 'restore from a missing backup folder fails');
+// Replaces the old tar --no-same-owner check: the restore copy must never copy owners (it runs as the web user, or root).
+safety_assert(strpos(file_get_contents(dirname(__DIR__) . '/update_safety.php'), 'cp -a --no-preserve=ownership') !== false, 'restore copy does not preserve owners (cp --no-preserve=ownership)');
 
 // ---- 3. copy_file reports the failing path; the tree copy stops
 $copy = copy_file($work . '/does-not-exist', $work . '/copy_out/x');

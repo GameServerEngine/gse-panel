@@ -35,3 +35,4 @@
 | issue | First update on a panel with no update_manifest.json has no baseline, so edits made before that update cannot be detected and are overwritten. Decide whether to seed the manifest from the release the panel was installed from. | open | Claude | |
 | issue | Backup folders made before 2.6.0 hold panel-files.tar.gz. Rollback of those from the Update page now fails (restore needs the panel/ folder); copy files back by hand or extract the archive. | open | Claude | |
 | need | Admin bug report module (left for a later task). | open | Claude | |
+| issue | update_safety_test.php lost 3 net checks in 2.6.0 (tar restore flags and mtime checks, replaced by copy restore). Added back an owner-preserve guard for the cp restore. cp -a now keeps modification times on purpose. | done | Claude | |
