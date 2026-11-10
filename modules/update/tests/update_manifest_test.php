@@ -140,19 +140,18 @@ $made = update_backup_copy($inside, $work . '/x-copy', array($inside . '/backup-
 mf_assert($made['success'] === false && strpos($made['error'], 'is inside') !== false, 'a backup folder inside a top-level entry stops the copy with a clear message');
 mf_assert(in_array('/var/lib/gse-panel', update_backup_excluded_roots($backups), true), '/var/lib/gse-panel is always excluded from the copy');
 
-// ---- 7. retention: the newest earlier backup plus the one just made
+// ---- 7. retention: only the newest backup is kept (more in rollback_retention_test.php)
 $base = $work . '/retention';
 mkdir($base);
 foreach (array('2026-11-01_10-00-00-2.5.7', '2026-11-03_10-00-00-2.5.8', '2026-11-05_10-00-00-2.5.9', '2026-11-10_04-12-33-2.5.10') as $dir) {
 	mf_put($base . '/' . $dir . '/panel/VERSION', $dir);
 }
 mkdir($base . '/not-a-backup');
-$prune = prune_old_backups(2, $base);
+$deleted = update_keep_only_backup($base, '2026-11-10_04-12-33-2.5.10');
 $left = array_values(array_diff(scandir($base), array('.', '..')));
 sort($left);
-mf_assert($left === array('2026-11-05_10-00-00-2.5.9', '2026-11-10_04-12-33-2.5.10', 'not-a-backup'), 'only the newest earlier backup and the new one are kept');
-mf_assert(count($prune['deleted']) === 2, 'two older backups were deleted');
-mf_assert(strpos(file_get_contents(UPDATE_LOG), 'Deleted old backup folder: ' . $base . '/2026-11-01_10-00-00-2.5.7') !== false, 'each delete is written to the update log');
+mf_assert($left === array('2026-11-10_04-12-33-2.5.10', 'not-a-backup'), 'only the new backup is kept');
+mf_assert(count($deleted) === 3, 'three older backups were deleted');
 mf_assert(is_safe_backup_name('2026-11-10_04-12-33-2.5.10') && !is_safe_backup_name('../2026-11-10_04-12-33-2.5.10'), 'new backup folder names are accepted, unsafe ones are not');
 
 // ---- 8. the update never overwrites its own records

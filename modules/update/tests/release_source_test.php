@@ -104,8 +104,12 @@ relsrc_assert(release_installed_label('2.5.0', $gh . '/archive/refs/tags/stable-
 relsrc_assert(release_installed_label('2.4.0', $gh . '/archive/refs/heads/stable.zip') === 'Stable 2.4.0', 'legacy stable.zip source stays readable as stable');
 relsrc_assert(release_installed_label('2.4.0', $gh . '/archive/refs/heads/testing.zip') === 'Testing 2.4.0', 'legacy testing.zip source stays readable as testing');
 relsrc_assert(release_installed_label('2.5.0', 'https://github.com/acme/testing/archive/refs/tags/stable-2.5.0.zip') === 'Stable 2.5.0', 'a repo named testing is not read as a testing release');
-relsrc_assert(release_installed_label('2.5.0', '') === '2.5.0', 'no stored source shows the bare version');
-relsrc_assert(release_installed_label('', '') === 'unknown', 'no version shows unknown');
+relsrc_assert(release_installed_label('2.5.0', '') === 'Unknown tag 2.5.0', 'no tag in the record shows Unknown tag, not stable');
+relsrc_assert(release_installed_label('2.5.0', $gh . '/archive/refs/tags/v2.5.0.zip') === 'Unknown tag 2.5.0', 'an unrecognised tag shows Unknown tag');
+relsrc_assert(release_installed_label('2.7.1', $gh . '/releases/download/working-latest/p.zip') === 'Testing Latest 2.7.1', 'current version line example: Testing Latest 2.7.1');
+relsrc_assert(release_rollback_button_label('2.6.1', 'Stable') === 'Roll back to 2.6.1 (Stable)', 'rollback button text');
+relsrc_assert(release_rollback_button_label('2.6.1', '') === 'Roll back to 2.6.1 (Unknown tag)', 'rollback button text with no tag');
+relsrc_assert(release_installed_label('', '') === 'Unknown tag unknown', 'no version and no tag');
 relsrc_assert(release_option_label(array('tag' => 'stable-2.5.0', 'channel' => 'stable', 'version' => '2.5.0', 'created' => '2026-11-01T10:00:00Z')) === 'Stable 2.5.0 (2026-11-01)', 'stable option text');
 relsrc_assert(release_option_label(array('tag' => 'testing-2.5.9', 'channel' => 'testing', 'version' => '2.5.9', 'created' => '2026-11-10')) === 'Testing 2.5.9 (2026-11-10)', 'testing option text');
 relsrc_assert(release_option_label(array('tag' => 'working-latest', 'channel' => 'working', 'version' => '2.5.9', 'created' => '2026-11-10')) === 'Testing Latest 2.5.9 (2026-11-10)', 'working option text');

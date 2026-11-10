@@ -673,3 +673,95 @@ function update_rollback_all(array $ops, $failed_step, $error, $backup_dir)
 	update_log($message);
 	return ['success' => false, 'rolled_back' => true, 'failed_step' => $failed_step, 'error' => $message];
 }
+
+// ------------------------------------------------------------------ one rollback copy
+// The update keeps exactly one backup: the copy made just before the last update.
+
+// A backup is complete when its panel copy has files, the database dump is not empty, and backup.json exists.
+function update_backup_verify($backup_dir)
+{
+	$panel = rtrim($backup_dir, '/') . '/panel';
+	if (!is_dir($panel) || count((array)scandir($panel)) <= 2) {
+		return array('success' => false, 'error' => 'Backup check failed: no panel copy in ' . $panel . '.');
+	}
+	$dump = rtrim($backup_dir, '/') . '/database.sql';
+	if (!is_file($dump) || filesize($dump) === 0) {
+		return array('success' => false, 'error' => 'Backup check failed: database dump is missing or empty in ' . $backup_dir . '.');
+	}
+	if (!is_file(rtrim($backup_dir, '/') . '/backup.json')) {
+		return array('success' => false, 'error' => 'Backup check failed: backup.json is missing in ' . $backup_dir . '.');
+	}
+	return array('success' => true);
+}
+
+// Delete a folder and everything in it. Plain steps: files first, then folders, deepest first.
+function update_remove_tree($dir)
+{
+	if (!is_dir($dir) || is_link($dir)) {
+		return;
+	}
+	$items = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
+	foreach ($items as $item) {
+		if ($item->isDir() && !$item->isLink()) {
+			@rmdir($item->getPathname());
+		} else {
+			@unlink($item->getPathname());
+		}
+	}
+	@rmdir($dir);
+}
+
+// Backup folders are named <timestamp> or <timestamp>-<version>. Nothing else in the backup area is touched.
+function update_backup_folder_names($backup_base)
+{
+	$names = array();
+	foreach ((array)@scandir($backup_base) as $entry) {
+		if (preg_match('/^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}(-.*)?$/', $entry) && is_dir($backup_base . '/' . $entry)) {
+			$names[] = $entry;
+		}
+	}
+	rsort($names);
+	return $names;
+}
+
+// Delete every backup except $keep_name. Call it only after update_backup_verify() passed for $keep_name.
+function update_keep_only_backup($backup_base, $keep_name)
+{
+	$backup_base = rtrim($backup_base, '/');
+	if (!is_dir($backup_base . '/' . $keep_name)) {
+		return array();
+	}
+	$deleted = array();
+	foreach (update_backup_folder_names($backup_base) as $name) {
+		if ($name !== $keep_name) {
+			update_remove_tree($backup_base . '/' . $name);
+			$deleted[] = $name;
+		}
+	}
+	return $deleted;
+}
+
+// The one rollback record: the newest backup folder, with its backup.json. Null when there is none.
+function update_rollback_record($backup_base)
+{
+	$backup_base = rtrim($backup_base, '/');
+	$names = update_backup_folder_names($backup_base);
+	if (empty($names)) {
+		return null;
+	}
+	$meta = array();
+	$file = $backup_base . '/' . $names[0] . '/backup.json';
+	if (is_file($file)) {
+		$meta = json_decode((string)@file_get_contents($file), true);
+	}
+	return array('name' => $names[0], 'path' => $backup_base . '/' . $names[0], 'meta' => is_array($meta) ? $meta : array());
+}
+
+// Text under the rollback button. The path comes from the record, not from a fixed string.
+function update_rollback_notice($record)
+{
+	if (!is_array($record)) {
+		return 'No rollback copy yet.';
+	}
+	return 'Rollback copy is stored in ' . $record['path'] . '. To restore a single file, copy it from that folder back into the panel folder.';
+}

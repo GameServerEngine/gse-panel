@@ -230,6 +230,7 @@ function tag_select($name, $rows, $installed = '')
 	if (empty($rows)) {
 		return $html . "<option value='' disabled>No releases found</option></select>";
 	}
+	// Rows arrive sorted by tag (Stable, Testing, Testing Latest), newest first inside each tag.
 	foreach ($rows as $r) {
 		$label = release_option_label($r);
 		if (release_is_installed($installed, $r['version'])) {
@@ -744,79 +745,11 @@ $count++;
 return ['success' => true, 'path' => $dest, 'count' => $count];
 }
 
-function get_managed_backup_entries($backup_base = null)
+// The ZIP URL or release name stored in version.json by the last update. Empty when there is no record.
+function update_installed_source()
 {
-	$backup_base = $backup_base ? rtrim((string)$backup_base, '/') : get_backup_base();
-	$entries = array();
-	if (!is_dir($backup_base)) {
-		return $entries;
-	}
-	foreach ((array)scandir($backup_base) as $entry) {
-		if ($entry === '.' || $entry === '..') {
-			continue;
-		}
-		$dir = $backup_base . '/' . $entry;
-		if (!is_dir($dir)) {
-			continue;
-		}
-		$type = null;
-		$stamp = null;
-		if (preg_match('/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})$/', $entry, $m)) {
-			$type = 'full';
-			$stamp = $m[1];
-		} elseif (preg_match('/^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})-\d+\.\d+\.\d+[A-Za-z0-9._+-]*$/', $entry, $m)) {
-			$type = 'update';
-			$stamp = $m[1];
-		} elseif (preg_match('/^([A-Za-z0-9._-]+)_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})$/', $entry, $m)) {
-			$type = $m[1];
-			$stamp = $m[2];
-		} elseif (preg_match('/^component_[A-Za-z0-9._-]+_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})$/', $entry, $m)) {
-			$type = 'component';
-			$stamp = $m[1];
-		} else {
-			continue;
-		}
-		$meta_file = $dir . '/backup.json';
-		$meta = array();
-		if (is_file($meta_file)) {
-			$meta = json_decode((string)@file_get_contents($meta_file), true) ?: array();
-		}
-		$sort_time = strtotime(str_replace('_', ' ', $stamp));
-		if ($sort_time === false) {
-			$sort_time = @filemtime($dir) ?: 0;
-		}
-		$entries[] = array(
-			'name' => $entry,
-			'path' => $dir,
-			'type' => $type,
-			'ts' => $stamp,
-			'sort_time' => $sort_time,
-			'meta' => $meta,
-		);
-	}
-	usort($entries, function ($a, $b) {
-		if ($a['sort_time'] === $b['sort_time']) {
-			return strcmp($b['name'], $a['name']);
-		}
-		return ($a['sort_time'] < $b['sort_time']) ? 1 : -1;
-	});
-	return $entries;
-}
-
-function prune_old_backups($max_backups = 5, $backup_base = null)
-{
-	$entries = get_managed_backup_entries($backup_base);
-	if (count($entries) <= $max_backups) {
-		return array('success' => true, 'deleted' => array());
-	}
-	$to_delete = array_slice($entries, $max_backups);
-	$deleted = array();
-	foreach ($to_delete as $entry) {
-		rmdir_recursive($entry['path']);
-		$deleted[] = $entry['name'];
-		update_log('Deleted old backup folder: ' . $entry['path']);
-	}
-	return array('success' => true, 'deleted' => $deleted);
+	$record = read_version_json();
+	return is_array($record) ? (string)($record['installed_source'] ?? '') : '';
 }
 
 function create_full_backup($update_target_type, $update_target_version, $include_apache = false, array $update_cfg = null)
@@ -843,6 +776,8 @@ function create_full_backup($update_target_type, $update_target_version, $includ
 'panel_root' => PANEL_DIR,
 'update_target_type' => $update_target_type,
 'update_target_version' => $update_target_version,
+'from_version' => get_current_version(),
+'from_tag' => release_installed_tag_label(update_installed_source()),
 'created_at' => date('Y-m-d H:i:s'),
 ];
 
@@ -879,9 +814,14 @@ $meta['apache_backup_error'] = $apache_backup['error'];
 	}
 
 	@file_put_contents($backup_dir . '/backup.json', json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-	// Keep the newest earlier backup plus the one just made. Older ones are deleted (and logged),
-	// and only after the new backup is complete.
-	prune_old_backups(2, $backup_base);
+	// Keep exactly one backup: this one. The old one is deleted only after this one is checked.
+	$verified = update_backup_verify($backup_dir);
+	if (!$verified['success']) {
+		return array('success' => false, 'error' => $verified['error']);
+	}
+	foreach (update_keep_only_backup($backup_base, $backup_name) as $old_name) {
+		update_log('Deleted old backup folder: ' . $backup_base . '/' . $old_name);
+	}
 	update_log('Restore point created: ' . $backup_dir);
 
 	return [
@@ -1551,40 +1491,6 @@ exec('cd ' . escapeshellarg($cwd) . ' && ' . $command . ' 2>&1', $out, $ret);
 return ['success' => $ret === 0, 'exit_code' => $ret, 'output' => implode("\n", $out), 'error' => $ret === 0 ? '' : implode("\n", $out)];
 }
 
-function get_available_backups($backup_base = null)
-{
-	$backups = [];
-	$backup_base = $backup_base ? rtrim((string)$backup_base, '/') : get_backup_base();
-	if (!is_dir($backup_base)) {
-	return $backups;
-	}
-	foreach ((array)scandir($backup_base) as $entry) {
-if ($entry === '.' || $entry === '..') {
-continue;
-}
-	$dir = $backup_base . '/' . $entry;
-if (!is_dir($dir)) {
-continue;
-}
-if (!is_safe_backup_name($entry)) {
-continue;
-}
-$meta_file = $dir . '/backup.json';
-$meta = [];
-if (file_exists($meta_file)) {
-$meta = json_decode(@file_get_contents($meta_file), true) ?: [];
-}
-$backups[] = ['name' => $entry, 'ts' => backup_timestamp_from_name($entry), 'meta' => $meta];
-}
-usort($backups, function ($a, $b) {
-if ($a['ts'] === $b['ts']) {
-return strcmp($b['name'], $a['name']);
-}
-return strcmp($b['ts'], $a['ts']);
-});
-return $backups;
-}
-
 function is_safe_backup_name($name)
 {
 return preg_match('/^(?:[A-Za-z0-9._-]+_)?\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}(?:-\d+\.\d+\.\d+[A-Za-z0-9._+-]*)?$/', (string)$name) === 1;
@@ -2171,13 +2077,6 @@ print_success(htmlspecialchars(isset($disable['message']) ? $disable['message'] 
 } else {
 print_failure('Disable SSL vhost failed: ' . htmlspecialchars($disable['error']));
 }
-} elseif ($action === 'backup_only') {
-	$result = create_full_backup('backup-only', 'manual', false, $update_cfg);
-if ($result['success']) {
-print_success('Backup created: <code>' . htmlspecialchars($result['backup_dir']) . '</code>');
-} else {
-print_failure('Backup failed: ' . htmlspecialchars($result['error']));
-}
 } elseif ($action === 'save_settings') {
 $new_cfg = update_settings();
 $release_zip_url = isset($_POST['update_custom_release_zip_url']) ? trim((string)$_POST['update_custom_release_zip_url']) : '';
@@ -2253,8 +2152,9 @@ print_failure('Exclusions were not saved: ' . htmlspecialchars($error));
 } elseif ($action === 'revert') {
 $backup_ts = isset($_POST['revert_backup']) ? trim($_POST['revert_backup']) : '';
 $restore_apache = !empty($_POST['restore_apache']);
-if (!is_safe_backup_name($backup_ts)) {
-print_failure('Invalid backup selected.');
+$rollback_record = update_rollback_record(get_backup_base($update_cfg));
+if (!is_safe_backup_name($backup_ts) || !is_array($rollback_record) || $rollback_record['name'] !== $backup_ts) {
+print_failure('Invalid backup selected. Only the latest rollback copy can be restored.');
 } else {
 	$result = do_revert($backup_ts, $restore_apache, $update_cfg);
 if ($result['success']) {
@@ -2285,8 +2185,6 @@ $last_layout = isset($_SESSION['last_update_layout']) && is_array($_SESSION['las
 	$vinfo = read_version_json();
 	$latest_release = 'N/A';
 	$backup_base = get_backup_base($update_cfg);
-	$managed_backups = get_managed_backup_entries($backup_base);
-	$backups = get_available_backups($backup_base);
 	$migration_overview = get_migration_overview();
 if ($apache_scan_result === null) {
 $apache_scan_result = scan_apache_configs();
@@ -2350,7 +2248,7 @@ echo "<table class='center'>\n";
 echo "<tr><th><input type='checkbox' title='Select all' onclick='toggleAllRows(this)'></th><th>Component</th><th>Current version</th><th>Install version</th><th>Update</th></tr>\n";
 echo "<tr><td><input type='checkbox' name='row_check[]' value='panel'></td>";
 echo "<td><strong>Panel</strong></td>";
-echo "<td>" . htmlspecialchars($panel_known ? $panel_version : 'unknown') . "</td>";
+echo "<td>" . htmlspecialchars(release_installed_label($panel_known ? $panel_version : '', update_installed_source())) . "</td>";
 echo "<td>" . tag_select('row_tag[panel]', $panel_tags, $panel_known ? $panel_version : '') . "</td>";
 echo "<td>" . update_badge($panel_known ? $panel_version : '', $panel_latest) . "</td></tr>\n";
 
@@ -2390,32 +2288,18 @@ echo "<p><button type='submit' onclick=\"return confirmSelectedRows();\">Update 
 echo "</form>\n";
 
 
-echo "<h3>Backup</h3>\n";
-echo "<form method='POST'>\n";
-echo "<input type='hidden' name='update_action' value='backup_only'>\n";
-echo "<input type='hidden' name='update_csrf' value='" . htmlspecialchars($csrf_token) . "'>\n";
-echo "<button type='submit'>Create Backup</button>\n";
-echo "</form>\n";
-
-if (!empty($backups)) {
 echo "<h3>Rollback</h3>\n";
+$rollback = update_rollback_record($backup_base);
+if (is_array($rollback)) {
+$button = release_rollback_button_label($rollback['meta']['from_version'] ?? '', $rollback['meta']['from_tag'] ?? '');
 echo "<form method='POST'>\n";
 echo "<input type='hidden' name='update_action' value='revert'>\n";
 echo "<input type='hidden' name='update_csrf' value='" . htmlspecialchars($csrf_token) . "'>\n";
-echo "<select name='revert_backup'>\n";
-foreach ($backups as $bk) {
-$backup_name = isset($bk['name']) ? $bk['name'] : $bk['ts'];
-$label = htmlspecialchars($backup_name);
-if (!empty($bk['meta']['update_target_type']) && !empty($bk['meta']['update_target_version'])) {
-$label .= ' (before ' . htmlspecialchars($bk['meta']['update_target_type']) . ': ' . htmlspecialchars($bk['meta']['update_target_version']) . ')';
-}
-echo "<option value='" . htmlspecialchars($backup_name) . "'>{$label}</option>\n";
-}
-echo "</select> ";
-echo "<label><input type='checkbox' name='restore_apache' value='1'> restore Apache configs if backup contains them</label> ";
-echo "<button type='submit' onclick='return confirm(\"Restore Panel, version.json, and database from selected backup?\");'>Rollback</button>\n";
+echo "<input type='hidden' name='revert_backup' value='" . htmlspecialchars($rollback['name']) . "'>\n";
+echo "<button type='submit' onclick='return confirm(\"Restore Panel, version.json, and database from the rollback copy?\");'>" . htmlspecialchars($button) . "</button>\n";
 echo "</form>\n";
 }
+echo "<p>" . htmlspecialchars(update_rollback_notice($rollback)) . "</p>\n";
 
 echo "<details style='margin-top:18px;'>\n";
 echo "<summary><strong>Advanced Diagnostics</strong></summary>\n";

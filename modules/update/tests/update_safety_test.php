@@ -274,6 +274,15 @@ $rows = array(
 $html = tag_select('row_tag[panel]', $rows, '2.5.4');
 safety_assert(strpos($html, 'optgroup') === false && strpos($html, '>Stable 2.5.4 (2026-11-01)') !== false && strpos($html, '>Testing 2.5.5 (2026-11-09)') !== false, 'release list has no channel groups and labels each release Stable/Testing');
 safety_assert(strpos($html, "value='testing-2.5.5'") !== false && strpos($html, 'Stable 2.5.4 (2026-11-01) - installed') !== false, 'release list still offers every release and marks the installed one');
+$all_rows = array(
+	array('tag' => 'stable-2.6.1', 'channel' => 'stable', 'version' => '2.6.1', 'created' => '2026-11-05'),
+	array('tag' => 'testing-2.7.0', 'channel' => 'testing', 'version' => '2.7.0', 'created' => '2026-11-09'),
+	array('tag' => 'working-latest', 'channel' => 'working', 'version' => '2.7.1', 'created' => '2026-11-10'),
+);
+$html = tag_select('row_tag[panel]', $all_rows, '');
+safety_assert(strpos($html, "<option value=''>Choose a release</option>") !== false && strpos($html, 'selected') === false, 'dropdown has no default release: the first option is "Choose a release"');
+safety_assert(strpos($html, "value='working-latest'>Testing Latest 2.7.1 (2026-11-10)") !== false && strpos($html, "value='stable-2.6.1'>Stable 2.6.1 (2026-11-05)") !== false, 'every option shows its tag, stored values unchanged');
+safety_assert(strpos($html, 'Stable 2.6.1') < strpos($html, 'Testing 2.7.0') && strpos($html, 'Testing 2.7.0') < strpos($html, 'Testing Latest 2.7.1'), 'options are ordered Stable, Testing, Testing Latest');
 $installer = file_get_contents(dirname(__DIR__, 3) . '/scripts/install-panel.sh');
 safety_assert(strpos($installer, 'release_zip_url_for_channel') === false && strpos($installer, 'DEFAULT_RELEASE_CHANNEL') === false, 'installer has no channel mapping');
 safety_assert(strpos($installer, 'create_backup_directory "$group"') !== false && strpos($installer, 'chown "$DEFAULT_WEB_USER:$group" "$BACKUP_DIR"') !== false, 'installer repair creates the backup directory owned by the web user');

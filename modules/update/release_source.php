@@ -56,20 +56,16 @@ function default_repo_url($component)
 }
 
 /**
- * Label for the installed version, built from what was actually installed.
+ * Release kind (stable, testing or working) found in the installed-release record.
  * $source is the release name or the ZIP URL stored in version.json.
- * testing-* and working-* releases show their kind; anything else is stable.
- * Old saved values (no source, or a legacy .../heads/stable.zip URL) stay readable.
+ * Returns '' when the record names no tag, so the caller can say "Unknown tag".
+ * Old saved values (a legacy .../heads/stable.zip URL) stay readable.
  */
-function release_installed_label($version, $source)
+function release_installed_kind($source)
 {
-	$version = trim((string)$version);
-	if ($version === '' || $version === 'unknown') {
-		$version = 'unknown';
-	}
 	$source = strtolower(trim((string)$source));
 	if ($source === '') {
-		return $version;
+		return '';
 	}
 	// The tag sits in one path segment, e.g. .../download/testing-latest/x.zip or .../tags/working-2.5.8.zip.
 	// Host and repo name are not checked, so a repo called "testing" is not mistaken for a release.
@@ -78,14 +74,36 @@ function release_installed_label($version, $source)
 	$last = count($segments) - 1;
 	foreach ($segments as $i => $segment) {
 		$segment = preg_replace('/\.zip$/', '', $segment);
-		foreach (array('testing', 'working') as $kind) {
+		foreach (array('testing', 'working', 'stable') as $kind) {
 			// A bare name counts only as the file name (legacy heads/testing.zip).
 			if (($i === $last && $segment === $kind) || strpos($segment, $kind . '-') === 0) {
-				return release_kind_label($kind) . ' ' . $version;
+				return $kind;
 			}
 		}
 	}
-	return release_kind_label('stable') . ' ' . $version;
+	return '';
+}
+
+/**
+ * Tag word for the installed release: "Stable", "Testing", "Testing Latest", or "Unknown tag".
+ */
+function release_installed_tag_label($source)
+{
+	$kind = release_installed_kind($source);
+	return $kind === '' ? 'Unknown tag' : release_kind_label($kind);
+}
+
+/**
+ * Current version line, built from the installed-release record: "Testing Latest 2.7.1".
+ * With no tag in the record it reads "Unknown tag 2.7.1", never "Stable".
+ */
+function release_installed_label($version, $source)
+{
+	$version = trim((string)$version);
+	if ($version === '') {
+		$version = 'unknown';
+	}
+	return release_installed_tag_label($source) . ' ' . $version;
 }
 
 /**
@@ -109,6 +127,17 @@ function release_option_label(array $row)
 		$kind = (strpos((string)$row['tag'], 'working-') === 0) ? 'working' : ((strpos((string)$row['tag'], 'testing-') === 0) ? 'testing' : 'stable');
 	}
 	return release_kind_label($kind) . ' ' . $row['version'] . ' (' . substr((string)($row['created'] ?? ''), 0, 10) . ')';
+}
+
+/**
+ * The one rollback button text: "Roll back to 2.6.1 (Stable)".
+ * $tag_label is the tag word of the release that was installed before the update.
+ */
+function release_rollback_button_label($version, $tag_label)
+{
+	$version = trim((string)$version);
+	$tag_label = trim((string)$tag_label);
+	return 'Roll back to ' . ($version === '' ? 'unknown' : $version) . ' (' . ($tag_label === '' ? 'Unknown tag' : $tag_label) . ')';
 }
 
 function release_source_settings($component)
