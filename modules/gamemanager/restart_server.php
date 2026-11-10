@@ -110,7 +110,7 @@ function exec_module() {
 
 			$home_log = getLastLines($home_log, 40);
 
-			if ($log_retval > 0)
+			if (is_numeric($log_retval) && $log_retval > 0)
 			{
 				if ( $log_retval == 2 )
 					print_failure(get_lang('server_not_running_log_found'));

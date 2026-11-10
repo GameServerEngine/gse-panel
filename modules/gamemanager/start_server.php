@@ -168,11 +168,11 @@ function exec_module()
 	$home_log = getLastLines($home_log, 40);
 
 	// Replace hardcoded log output with AJAX container
-	if ($log_retval > 0)
+	if (is_numeric($log_retval) && $log_retval > 0)
 	{
 		echo "<div id='server-log-output'><pre style='background:black;color:white;'>".htmlspecialchars($home_log)."</pre></div>";
 	} else {
-		echo "<div id='server-log-output'><pre style='background:black;color:white;'>Unable to get log: $log_retval</pre></div>";
+		echo "<div id='server-log-output'><pre style='background:black;color:white;'>Unable to get log: ".htmlspecialchars((string)$log_retval)."</pre></div>";
 	}
 	// Add AJAX refresh script
 	?>

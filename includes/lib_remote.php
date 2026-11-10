@@ -48,6 +48,18 @@ define("SCREEN_TYPE_UPDATE","UPDATE");
 
 define("AGENT_ERROR_NOT_EXECUTABLE",-13);
 
+// An XML-RPC fault (the agent's Perl code died) decodes to an array with faultCode and faultString.
+function remote_reply_is_fault($response)
+{
+	return is_array($response) && isset($response['faultString']);
+}
+
+function remote_reply_fault_text($response)
+{
+	$text = is_scalar($response['faultString']) ? (string)$response['faultString'] : 'unknown fault';
+	return 'Agent error: ' . trim($text);
+}
+
 class RemoteLibrary
 {
 	private $port;
@@ -70,7 +82,34 @@ class RemoteLibrary
 	{
 	}
 
-	private function sendRequest($request)
+	// Text of the last agent fault, or '' when the last reply was not a fault.
+	private $last_fault_text = '';
+
+	// Sends the request and cleans up the reply.
+	// A fault is logged and returned as NULL, the same as "agent not reachable".
+	// Every caller already handles NULL, so none of them gets an array in explode().
+	protected function sendRequest($request)
+	{
+		$reply = $this->postRequest($request);
+		$this->last_fault_text = '';
+		if (remote_reply_is_fault($reply)) {
+			$this->last_fault_text = remote_reply_fault_text($reply);
+			$this->log_fault($this->last_fault_text);
+			return NULL;
+		}
+		return $reply;
+	}
+
+	private function log_fault($text)
+	{
+		error_log('RemoteLibrary ' . $this->host . ':' . $this->port . ' ' . $text);
+		global $db;
+		if (is_object($db) && method_exists($db, 'logger')) {
+			$db->logger($text);
+		}
+	}
+
+	protected function postRequest($request)
 	{
 		$context = stream_context_create
 			(array('http' => array
@@ -271,11 +310,24 @@ class RemoteLibrary
 		$this->add_enc_chk($params_array);
 		$request = xmlrpc_encode_request('get_log',$params_array);
 		$response = $this->sendRequest($request);
+		return $this->parse_log_reply($response, $data);
+	}
+
+	// Turns the agent reply into the get_log return value and fills $data.
+	// Returns an error string (not a number) when the agent faulted or the home was not found.
+	protected function parse_log_reply($response, &$data)
+	{
 		if ( $response === NULL )
+		{
+			if ( $this->last_fault_text !== '' )
+				return $this->last_fault_text;
 			return 0;
+		}
 
 		if ( $response == -10 )
 			return 'Agent Returned: -10. Home not found.';
+		if ( !is_string($response) )
+			$response = (string)(is_scalar($response) ? $response : '');
 		@list($retval,$data_tmp) = @explode(";",$response);
 		if ($retval == -8 && !empty($data_tmp))
 		{
