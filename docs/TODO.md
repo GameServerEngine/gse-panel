@@ -34,5 +34,7 @@
 | todo | Backup is a plain `cp -a` copy in /var/lib/gse-panel/backups/<timestamp>-<from_version>/panel/, newest earlier backup plus the new one kept, rollback copies back from it. Test on the test panel with a real update and a forced failure. | done (code), live test open | Claude | |
 | issue | First update on a panel with no update_manifest.json has no baseline, so edits made before that update cannot be detected and are overwritten. Decide whether to seed the manifest from the release the panel was installed from. | open | Claude | |
 | issue | Backup folders made before 2.6.0 hold panel-files.tar.gz. Rollback of those from the Update page now fails (restore needs the panel/ folder); copy files back by hand or extract the archive. | open | Claude | |
-| need | Admin bug report module (left for a later task). | open | Claude | |
+| need | Admin bug report module. | done 2.7.0: modules/bugreport (form creates a GitHub issue in GameServerEngine/gse-panel; token in settings table bugreport_github_token); tests in modules/bugreport/tests; browser and real GitHub post not tested | Claude | |
 | issue | update_safety_test.php lost 3 net checks in 2.6.0 (tar restore flags and mtime checks, replaced by copy restore). Added back an owner-preserve guard for the cp restore. cp -a now keeps modification times on purpose. | done | Claude | |
+| todo | Test the Bug report page in a browser on the test panel: menu entry under Admin, token save/clear, a real issue post. | open | Claude | |
+| need | Bug report module: GitHub token is stored as plain text in the settings table (bugreport_github_token). Use a fine-grained token limited to Issues on gse-panel; consider encrypting it. | open | Claude | |
