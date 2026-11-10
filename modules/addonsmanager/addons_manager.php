@@ -14,9 +14,8 @@
  *   3. A script-driven installer (post_script only, no download required).
  *   4. A Minecraft server jar / version switcher (future: install_method=minecraft_jar).
  *   5. A DayZ/Epoch/Arma profile copy (future: install_method=profile_copy).
- *   6. A Steam Workshop entry point (install behavior comes from game XML).
- *   7. A config preset (type=config).
- *   8. A full server profile built from multiple actions (type=profile).
+ *   6. A config preset (type=config).
+ *   7. A full server profile built from multiple actions (type=profile).
  *
  * DB table: DB_PREFIXaddons (unchanged for backward compatibility).
  * See SERVER_CONTENT_ROADMAP.md for the full migration plan.
@@ -29,11 +28,6 @@ require_once(dirname(__FILE__) . '/server_content_helpers.php');
 require_once("modules/config_games/server_config_parser.php");
 
 function exec_module() {
-
-	if (isset($install_method) && $install_method === 'steam_workshop') {
-		print_failure('Steam Workshop has been removed from Server Content. Use the Steam Workshop module instead.');
-		return;
-	}
 
 
 	global $db;
@@ -82,12 +76,6 @@ function exec_module() {
 		$fields['bot_uninstall_script']= isset($_POST['bot_uninstall_script']) ? trim((string)$_POST['bot_uninstall_script']) : '';
 		$fields['checksum_sha256']     = isset($_POST['checksum_sha256']) ? trim((string)$_POST['checksum_sha256']) : '';
 		$fields['addon_type']          = scm_get_addon_type_from_install_method($fields['install_method']);
-		if ($fields['install_method'] === 'steam_workshop') {
-			$fields['url'] = '';
-			$fields['path'] = '';
-			$fields['post_script'] = '';
-			$fields['config_edit_rule'] = '';
-		}
 		if ($fields['install_method'] === 'server_bot') {
 			$fields['post_script'] = '';
 			$fields['config_edit_rule'] = '';
@@ -104,10 +92,6 @@ function exec_module() {
 		elseif (empty($fields['home_cfg_id']))
 		{
 			print_failure(get_lang("select_a_game_type"));
-		}
-		elseif ($fields['install_method'] === 'steam_workshop' && (!($game_cfg = $db->getGameCfg($fields['home_cfg_id'])) || !($server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $game_cfg['home_cfg_file'], os_for_install_row($game_cfg))) || !scm_workshop_is_supported($server_xml)))
-		{
-			print_failure('Steam Workshop support must be configured in the selected game XML before creating a Workshop content entry.');
 		}
 		else
 		{
@@ -240,14 +224,6 @@ function exec_module() {
 					</td>
 					<td align="left">
 					<input type="text" value="<?php echo $path; ?>" name="path" size="85" title="<?php print_lang('path_info'); ?>" />
-				</td>
-			</tr>
-			<tr id="scm-row-workshop-xml-info">
-				<td align="right">
-					<b>Steam Workshop</b>
-				</td>
-				<td align="left">
-					<div class="info">Steam Workshop behavior is configured by the selected game's XML <code>workshop_support</code> block. Users install Workshop items from their server management page.</div>
 				</td>
 			</tr>
 			<tr id="scm-row-post-script">

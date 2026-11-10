@@ -1446,7 +1446,6 @@ function api_addonsmanager()
 {
 	global $request, $db, $user_info;
 	require_once(MODULES.'addonsmanager/server_content_helpers.php');
-	require_once(MODULES.'addonsmanager/workshop_action.php');
 	if (file_exists(MODULES.'steam_workshop/includes/functions.php'))
 		require_once(MODULES.'steam_workshop/includes/functions.php');
 
@@ -1565,32 +1564,6 @@ function api_addonsmanager()
 			$post_script = preg_replace( "/\%incremental\%/i", $home_info['incremental'], $post_script);
 		}
 
-		if ($install_method === 'steam_workshop') {
-			scm_ensure_workshop_schema($db);
-			$workshop_runtime = scm_build_workshop_runtime_context($db, $home_info, $server_xml, $validation_payload, $validation_message);
-			if ($workshop_runtime === false)
-				return array("status" => '422', "message" => $validation_message);
-			$workshop_item_id = (string)$workshop_runtime['workshop_item_id'];
-			$workshop_error = '';
-			$extra_manifest = array(
-				'addon_id' => (int)$addon_id,
-				'target_path_template' => (string)$workshop_runtime['target_path_template'],
-				'target_path_resolved' => (string)$workshop_runtime['target_path_resolved'],
-				'optional_folder_name' => isset($validation_payload['optional_folder_name']) ? (string)$validation_payload['optional_folder_name'] : '',
-				'config_edit_rule' => isset($addon_info['config_edit_rule']) ? (string)$addon_info['config_edit_rule'] : '',
-				'launch_param_additions' => isset($addon_info['launch_param_additions']) ? (string)$addon_info['launch_param_additions'] : '',
-				'workshop_app_id' => (string)$workshop_runtime['workshop_app_id'],
-				'steam_app_id' => (string)$workshop_runtime['steam_app_id'],
-				'steamcmd_path' => isset($workshop_runtime['steamcmd_path']) ? (string)$workshop_runtime['steamcmd_path'] : '',
-				'workshop_download_dir' => isset($workshop_runtime['workshop_download_dir']) ? (string)$workshop_runtime['workshop_download_dir'] : '',
-					'server_root' => isset($workshop_runtime['server_root']) ? (string)$workshop_runtime['server_root'] : rtrim((string)$home_info['game_root'], '/'),
-				'post_install_script' => trim((string)$post_script),
-			);
-			$ok = scm_workshop_write_manifest_and_run($db, $home_info, $server_xml, 'install', array($workshop_item_id), $workshop_error, $extra_manifest);
-			if ($ok)
-				return array("status" => "200", "message" => "Workshop content installed successfully.");
-			return array("status" => "342", "message" => "Workshop install failed: ".$workshop_error);
-		}
 		if ($install_method === 'post_script') {
 				$output = $remote->exec("cd " . escapeshellarg($home_info['game_root']) . " && /bin/bash -lc " . escapeshellarg((string)$post_script) . " ; echo __SCRIPT_EXIT:$?");
 			if (is_string($output) && preg_match('/__SCRIPT_EXIT:(\d+)/', $output, $m) && (int)$m[1] === 0)

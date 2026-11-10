@@ -111,19 +111,13 @@ function reloadJobs($server_homes, $remote_servers, $getAllJobs = true)
 function get_server_content_scheduled_actions() {
 	return array(
 		'server_content_check_updates',
-		'server_content_check_workshop_updates',
 		'server_content_install_updates_if_stopped',
 		'server_content_install_updates_next_restart',
 		'server_content_install_updates_now',
 		'server_content_install_updates_and_restart',
 		'server_content_notify_updates_only',
 		'server_content_update_all',
-		'server_content_validate_files',
 		'server_content_backup_before_update',
-		'workshop_update',
-		'workshop_update_and_restart',
-		'workshop_download_only',
-		'workshop_install_pending_on_restart',
 	);
 }
 
@@ -135,7 +129,7 @@ function build_cron_scheduler_command($panelURL, $token, $game_home, $action) {
 	if(in_array($action, get_server_content_scheduled_actions()))
 	{
 		$options = array('triggered_by' => 'scheduler');
-		if($action == 'server_content_install_updates_and_restart' || $action == 'workshop_update_and_restart')
+		if($action == 'server_content_install_updates_and_restart')
 		{
 			$options['safe_restart'] = true;
 			$options['restart_delay_seconds'] = 60;

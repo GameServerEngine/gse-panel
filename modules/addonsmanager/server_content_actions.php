@@ -9,7 +9,6 @@ require_once("includes/lib_remote.php");
 require_once("includes/lifecycle_contract_helpers.php");
 require_once("modules/config_games/server_config_parser.php");
 require_once(dirname(__FILE__) . '/server_content_helpers.php');
-require_once(dirname(__FILE__) . '/workshop_action.php');
 
 function server_content_get_home_info($home_id)
 {
@@ -19,28 +18,6 @@ function server_content_get_home_info($home_id)
 		return false;
 	}
 	return $db->getGameHome($home_id);
-}
-
-function server_content_collect_workshop_ids($db, $home_id, $pending_only = false)
-{
-	$where = "home_id=".(int)$home_id." AND install_state<>'removed'";
-	if ($pending_only) {
-		$where .= " AND pending_action='install_on_restart'";
-	}
-	$rows = $db->resultQuery(
-		"SELECT workshop_item_id FROM `".DB_PREFIX."server_content_workshop`
-		 WHERE {$where}"
-	);
-	$item_ids = array();
-	if (is_array($rows)) {
-		foreach ((array)$rows as $row) {
-			$item_id = trim((string)$row['workshop_item_id']);
-			if ($item_id !== '' && preg_match('/^[0-9]+$/', $item_id)) {
-				$item_ids[$item_id] = $item_id;
-			}
-		}
-	}
-	return array_values($item_ids);
 }
 
 function server_content_collect_manifest_addon_rows($db, $home_id)
@@ -175,22 +152,12 @@ function server_content_execute_manifest($home_id, $manifest_path, $script_key, 
 	if ($remote->status_chk() !== 1) {
 		return server_content_result('failed', 'Agent is offline.', array('remote_server_id' => (int)$home_info['remote_server_id']));
 	}
-	if ($script_key === 'workshop') {
-		$prepare_error = '';
-		$prepared_path = scm_prepare_workshop_script_for_agent($remote, $home_info, $server_xml, $prepare_error);
-		if ($prepared_path === false) {
-			return server_content_result('failed', $prepare_error, array('script_key' => (string)$script_key));
-		}
-		$script_path = $prepared_path;
+	$script_path = trim((string)$script_path);
+	if ($script_path === '' || !preg_match('/^[^\r\n\0]+$/', $script_path)) {
+		return server_content_result('failed', 'Configured server content script path is invalid.', array('script_key' => (string)$script_key));
 	}
-	else {
-		$script_path = trim((string)$script_path);
-		if ($script_path === '' || !preg_match('/^[^\r\n\0]+$/', $script_path)) {
-			return server_content_result('failed', 'Configured server content script path is invalid.', array('script_key' => (string)$script_key));
-		}
-		if ((int)$remote->rfile_exists($script_path) !== 1) {
-			return server_content_result('failed', 'Server content script was not found on agent host.', array('script_path' => $script_path));
-		}
+	if ((int)$remote->rfile_exists($script_path) !== 1) {
+		return server_content_result('failed', 'Server content script was not found on agent host.', array('script_path' => $script_path));
 	}
 	$command = "bash " . escapeshellarg($script_path) . " " . escapeshellarg((string)$manifest_path) . " ; echo __SERVER_CONTENT_EXIT:$?";
 	$output = $remote->exec($command);
@@ -222,12 +189,6 @@ function server_content_check_updates($home_id, $options = array())
 	return server_content_install_updates($home_id, $options);
 }
 
-function server_content_update_workshop($home_id, $options = array())
-{
-	$options['workshop_only'] = true;
-	return server_content_install_updates($home_id, $options);
-}
-
 function server_content_install_updates($home_id, $options = array())
 {
 	global $db;
@@ -236,15 +197,10 @@ function server_content_install_updates($home_id, $options = array())
 		return server_content_result('failed', 'Invalid server home.');
 	}
 	scm_ensure_phase2_schema($db);
-	scm_ensure_workshop_schema($db);
 
-	$workshop_action = isset($options['workshop_action']) ? (string)$options['workshop_action'] : '';
-	if ($workshop_action === '') {
-		$workshop_action = !empty($options['check_only']) ? 'check_updates' : 'update';
-	}
-	$workshop_ids = server_content_collect_workshop_ids($db, (int)$home_info['home_id'], !empty($options['pending_only']));
+	$update_action = !empty($options['check_only']) ? 'check_updates' : 'update';
 	$manifest_rows = server_content_collect_manifest_addon_rows($db, (int)$home_info['home_id']);
-	if (empty($workshop_ids) && empty($manifest_rows)) {
+	if (empty($manifest_rows)) {
 		$result = server_content_result('no_updates', 'No installed server content records were found for this home.', array(
 			'home_id' => (int)$home_info['home_id'],
 		));
@@ -256,102 +212,34 @@ function server_content_install_updates($home_id, $options = array())
 		return $result;
 	}
 
-	if (!empty($workshop_ids)) {
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION . "/" . $home_info['home_cfg_file'], os_for_install_row($home_info));
-		if ($server_xml === false) {
-			return server_content_result('failed', 'Unable to load server XML configuration for Workshop update.');
-		}
-		$manifest_context = scm_workshop_build_manifest_context($db, $home_info, $server_xml, $workshop_ids, array());
-		if (empty($manifest_context['workshop_app_id'])) {
-			return server_content_result('failed', 'Workshop App ID is missing from the game XML workshop_support block.');
-		}
-		if (empty($options['check_only'])) {
-			scm_workshop_update_rows_state($db, (int)$home_info['home_id'], $workshop_ids, 'installing', null, false, false);
-		}
-		$error = '';
-		$details = array();
-		$ok = scm_workshop_write_manifest_and_run($db, $home_info, $server_xml, $workshop_action, $workshop_ids, $error, $manifest_context, $details);
-		if (!$ok) {
-			if (empty($options['check_only'])) {
-				scm_workshop_update_rows_state($db, (int)$home_info['home_id'], $workshop_ids, 'failed', $error, false, false);
-			}
-			return server_content_result('failed', $error, $details);
-		}
-		if (empty($options['check_only'])) {
-			$final_state = ($workshop_action === 'download_only') ? 'downloaded' : 'installed';
-			scm_workshop_update_rows_state($db, (int)$home_info['home_id'], $workshop_ids, $final_state, null, false, true);
-			if (!empty($options['pending_only'])) {
-				scm_workshop_set_update_policy($db, (int)$home_info['home_id'], $workshop_ids, 'manual');
-			}
-			if ($workshop_action === 'download_only') {
-				scm_workshop_set_update_policy($db, (int)$home_info['home_id'], $workshop_ids, 'install_on_restart');
-			}
-			scm_workshop_record_catalog_items($db, (string)$manifest_context['workshop_app_id'], $workshop_ids, $home_info, isset($manifest_context['item_details']) ? $manifest_context['item_details'] : array(), true);
-		}
-		server_content_record_installed_content_state($home_info, array(
-			'home_id' => (int)$home_info['home_id'],
-			'last_action' => (string)$workshop_action,
-			'last_result' => 'success',
-			'last_manifest' => isset($details['manifest_path']) ? $details['manifest_path'] : '',
-			'last_updated_at' => date('Y-m-d H:i:s'),
-			'installed_workshop_ids' => $workshop_ids,
-		));
-		if (empty($manifest_rows) || !empty($options['workshop_only'])) {
-			if (!empty($options['check_only'])) {
-				return server_content_result('success', 'Workshop update check completed.', array(
-					'workshop_items' => count($workshop_ids),
-					'manifest_path' => isset($details['manifest_path']) ? $details['manifest_path'] : '',
-					'log_path' => isset($details['log_path']) ? $details['log_path'] : '',
-				));
-			}
-			return server_content_result('success', 'Workshop action completed.', array(
-				'workshop_action' => $workshop_action,
-				'workshop_items' => count($workshop_ids),
-				'manifest_path' => isset($details['manifest_path']) ? $details['manifest_path'] : '',
-				'log_path' => isset($details['log_path']) ? $details['log_path'] : '',
-			));
-		}
-	}
-
 	$manifest_items = array(
-		'workshop_item_ids' => array(),
 		'manifest_addons' => $manifest_rows,
 	);
-	$manifest_path = server_content_build_manifest($home_info['home_id'], 'server_content', $workshop_action, $manifest_items, $options);
+	$manifest_path = server_content_build_manifest($home_info['home_id'], 'server_content', $update_action, $manifest_items, $options);
 	if ($manifest_path === false) {
-		if (!empty($workshop_ids) && empty($options['check_only'])) {
-			scm_workshop_update_rows_state($db, (int)$home_info['home_id'], $workshop_ids, 'failed', 'Failed to build server content manifest.', false, false);
-		}
 		return server_content_result('failed', 'Failed to build server content manifest.');
 	}
 
-	$execute = server_content_execute_manifest($home_info['home_id'], $manifest_path, 'workshop', $options);
+	$execute = server_content_execute_manifest($home_info['home_id'], $manifest_path, 'server_content', $options);
 	if (empty($execute['success'])) {
-		if (!empty($workshop_ids) && empty($options['check_only'])) {
-			$error_message = isset($execute['message']) ? $execute['message'] : 'Unknown failure.';
-			scm_workshop_update_rows_state($db, (int)$home_info['home_id'], $workshop_ids, 'failed', $error_message, false, false);
-		}
 		return $execute;
 	}
 
 	server_content_record_installed_content_state($home_info, array(
 		'home_id' => (int)$home_info['home_id'],
-		'last_action' => (string)$workshop_action,
+		'last_action' => $update_action,
 		'last_result' => 'success',
 		'last_manifest' => $manifest_path,
 		'last_updated_at' => date('Y-m-d H:i:s'),
-		'installed_workshop_ids' => $workshop_ids,
 	));
 
 	if (!empty($options['check_only'])) {
 		return server_content_result('success', 'Server content update check completed.', array(
 			'manifest_path' => $manifest_path,
-			'workshop_items' => count($workshop_ids),
 		));
 	}
 	return server_content_result('success', 'Server content updates were installed.', array(
 		'manifest_path' => $manifest_path,
-		'workshop_items' => count($workshop_ids),
 		'manifest_rows' => count($manifest_rows),
 	));
 }
@@ -511,20 +399,13 @@ function server_content_run_scheduled_action($home_id, $action, $options = array
 	}
 	$handlers = array(
 		'server_content_check_updates' => 'server_content_check_updates',
-		'server_content_check_workshop_updates' => 'server_content_update_workshop',
 		'server_content_install_updates_if_stopped' => 'server_content_install_updates_if_stopped',
 		'server_content_install_updates_next_restart' => 'server_content_install_updates_next_restart',
 		'server_content_install_updates_now' => 'server_content_install_updates',
 		'server_content_install_updates_and_restart' => 'server_content_install_updates_and_restart',
-		'server_content_update_workshop' => 'server_content_update_workshop',
 		'server_content_update_all' => 'server_content_install_updates',
 		'server_content_notify_updates_only' => 'server_content_check_updates',
-		'server_content_validate_files' => 'server_content_update_workshop',
 		'server_content_backup_before_update' => 'server_content_install_updates',
-		'workshop_update' => 'server_content_update_workshop',
-		'workshop_update_and_restart' => 'server_content_install_updates_and_restart',
-		'workshop_download_only' => 'server_content_update_workshop',
-		'workshop_install_pending_on_restart' => 'server_content_install_updates',
 	);
 	if (!isset($handlers[$action]) || !function_exists($handlers[$action])) {
 		$result = server_content_result('failed', 'Unsupported scheduled server content action.', array(
@@ -534,28 +415,11 @@ function server_content_run_scheduled_action($home_id, $action, $options = array
 		return $result;
 	}
 
-	if ($action === 'server_content_check_workshop_updates' || $action === 'server_content_validate_files') {
-		$options['check_only'] = true;
-		$options['workshop_action'] = ($action === 'server_content_validate_files') ? 'validate_files' : 'check_updates';
-	}
 	if ($action === 'server_content_backup_before_update') {
 		$options['backup_before_update'] = true;
 	}
-	if ($action === 'server_content_install_updates_and_restart' || $action === 'workshop_update_and_restart') {
-		$options['workshop_action'] = 'update';
-	}
-	if (in_array($action, array('workshop_update', 'workshop_update_and_restart', 'workshop_download_only', 'workshop_install_pending_on_restart'), true)) {
-		$options['workshop_only'] = true;
-	}
-	if (($action === 'server_content_install_updates_and_restart' || $action === 'workshop_update_and_restart') && !isset($options['safe_restart'])) {
+	if ($action === 'server_content_install_updates_and_restart') {
 		$options['safe_restart'] = true;
-	}
-	if ($action === 'workshop_download_only') {
-		$options['workshop_action'] = 'download_only';
-	}
-	if ($action === 'workshop_install_pending_on_restart') {
-		$options['workshop_action'] = 'update';
-		$options['pending_only'] = true;
 	}
 	if ($action === 'server_content_notify_updates_only') {
 		$options['notify_only'] = true;

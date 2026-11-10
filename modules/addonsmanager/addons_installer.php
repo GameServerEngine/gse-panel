@@ -58,7 +58,6 @@
  *   Current method is always 'download_zip'.  Future methods:
  *     'download_file'  – single-file download, no extraction
  *     'post_script'    – run only the post_script, no download
- *     'steam_workshop' – pass workshop item IDs to the agent's workshop helper
  *     'minecraft_jar'  – download a Minecraft server jar + update start script
  *     'profile_copy'   – copy a profile directory tree into the server home
  *
@@ -79,10 +78,6 @@
  * TODO: user-friendly status output
  *   Replace the raw progress-bar with a card-style status block showing:
  *     content item name, version, download progress, script output, final status.
- *
- * TODO: Steam Workshop integration
- *   When install_method='steam_workshop', pass the workshop item ID list to
- *   the agent.  See SERVER_CONTENT_ROADMAP.md – Part 6 for the full design.
  *
  * TODO: Minecraft jar / version switching
  *   When install_method='minecraft_jar', download the jar from Mojang/Paper/
@@ -118,12 +113,6 @@ if (file_exists(dirname(__FILE__) . '/../steam_workshop/includes/functions.php')
 }
 
 function exec_module() {
-
-	if (isset($install_method) && $install_method === 'steam_workshop') {
-		print_failure('Steam Workshop has been removed from Server Content. Use the Steam Workshop module instead.');
-		return;
-	}
-
 
     global $db,$view;
 	$home_id = $_REQUEST['home_id'];
@@ -198,9 +187,7 @@ function exec_module() {
 		$install_method  = scm_get_install_method_default(isset($addon_info['install_method']) ? $addon_info['install_method'] : 'download_zip');
 		$content_version = isset($addon_info['content_version']) ? $addon_info['content_version'] : '';
 		$requires_stop   = !empty($addon_info['requires_stop']) ? 1 : 0;
-		$user_override_keys = ($install_method === 'steam_workshop')
-			? array('workshop_item_id')
-			: (($install_method === 'server_bot') ? array('bot_arguments') : array());
+		$user_override_keys = ($install_method === 'server_bot') ? array('bot_arguments') : array();
 		$install_payload = scm_collect_install_payload($addon_info, $_REQUEST, $user_override_keys);
 		$post_script = '';
 		$validation_message = '';
@@ -294,93 +281,15 @@ function exec_module() {
 			);
 			$_SESSION['scm_history_id_' . $home_id . '_' . $addon_id] = $history_id;
 				$log_target_path = (string)$install_payload['path'];
-				if ($install_method === 'steam_workshop') {
-					$log_target_path = scm_extract_workshop_install_path($server_xml);
-					if ($log_target_path === '') {
-						$log_target_path = scm_get_default_workshop_target_template(scm_detect_workshop_install_strategy($home_info, $server_xml));
-					}
-				}
 				scm_log_content_install_action(array(
 					'addon_id' => (int)$addon_id,
 					'addon_name' => isset($addon_info['name']) ? $addon_info['name'] : '',
 					'content_type' => $install_method,
 					'home_id' => (int)$home_id,
 					'home_cfg_id' => (int)$home_info['home_cfg_id'],
-					'workshop_id' => isset($install_payload['workshop_item_id']) ? (string)$install_payload['workshop_item_id'] : '',
 					'target_path' => $log_target_path,
 					'action' => 'started',
 				));
-			if ($install_method === 'steam_workshop') {
-				scm_ensure_workshop_schema($db);
-				$workshop_runtime = scm_build_workshop_runtime_context($db, $home_info, $server_xml, $install_payload, $validation_message);
-				if ($workshop_runtime === false) {
-					print_failure($validation_message);
-					echo "<p><a href=\"?m=addonsmanager&amp;p=user_addons&amp;home_id=$home_id&amp;mod_id=$mod_id&amp;ip=$ip&amp;port=$port\">".get_lang('back')."</a></p>";
-					return;
-				}
-				$workshop_item_id = (string)$workshop_runtime['workshop_item_id'];
-				$target_path_template = (string)$workshop_runtime['target_path_template'];
-				$workshop_app_id = (string)$workshop_runtime['workshop_app_id'];
-				$steam_app_id = (string)$workshop_runtime['steam_app_id'];
-				$target_path_resolved = (string)$workshop_runtime['target_path_resolved'];
-				$extra_manifest = array(
-					'addon_id' => (int)$addon_id,
-					'target_path_template' => $target_path_template,
-					'target_path_resolved' => $target_path_resolved,
-					'config_edit_rule' => trim((string)$addon_info['config_edit_rule']),
-					'launch_param_additions' => isset($server_xml->workshop_support->startup_param_format) ? trim((string)$server_xml->workshop_support->startup_param_format) : '',
-					'workshop_app_id' => $workshop_app_id,
-					'steam_app_id' => $steam_app_id,
-					'steamcmd_path' => isset($workshop_runtime['steamcmd_path']) ? (string)$workshop_runtime['steamcmd_path'] : '',
-					'workshop_download_dir' => isset($workshop_runtime['workshop_download_dir']) ? (string)$workshop_runtime['workshop_download_dir'] : '',
-					'server_root' => isset($workshop_runtime['server_root']) ? (string)$workshop_runtime['server_root'] : rtrim((string)$home_info['game_root'], '/'),
-					'post_install_script' => scm_workshop_post_install_action($server_xml),
-				);
-				$workshop_error = '';
-				$workshop_ok = scm_workshop_write_manifest_and_run($db, $home_info, $server_xml, 'install', array($workshop_item_id), $workshop_error, $extra_manifest);
-				if ($workshop_ok) {
-					scm_record_install_done($db, (int)$history_id, 'installed', 0, 'workshop_install_ok');
-					scm_upsert_manifest($db, $home_id, $addon_id, array(
-						'install_method' => $install_method,
-						'content_version' => $content_version,
-						'install_state' => 'installed',
-						'source_url' => 'steam://workshop/' . $workshop_item_id,
-						'installed_by' => $user_id,
-					));
-					scm_log_content_install_action(array(
-						'addon_id' => (int)$addon_id,
-						'addon_name' => isset($addon_info['name']) ? $addon_info['name'] : '',
-						'content_type' => $install_method,
-						'home_id' => (int)$home_id,
-						'home_cfg_id' => (int)$home_info['home_cfg_id'],
-						'workshop_id' => $workshop_item_id,
-						'steam_app_id' => $steam_app_id,
-						'workshop_app_id' => $workshop_app_id,
-						'target_path' => $target_path_resolved,
-						'final_folder_path' => $target_path_resolved,
-						'action' => 'succeeded',
-					));
-					print_success(get_lang('addon_installed_successfully'));
-				} else {
-					scm_record_install_done($db, (int)$history_id, 'failed', 1, $workshop_error);
-					scm_log_content_install_action(array(
-						'addon_id' => (int)$addon_id,
-						'addon_name' => isset($addon_info['name']) ? $addon_info['name'] : '',
-						'content_type' => $install_method,
-						'home_id' => (int)$home_id,
-						'home_cfg_id' => (int)$home_info['home_cfg_id'],
-						'workshop_id' => $workshop_item_id,
-						'steam_app_id' => $steam_app_id,
-						'workshop_app_id' => $workshop_app_id,
-						'target_path' => $target_path_resolved,
-						'action' => 'failed',
-						'error' => $workshop_error,
-					));
-					print_failure($workshop_error);
-				}
-				echo "<p><a href=\"?m=addonsmanager&amp;p=user_addons&amp;home_id=$home_id&amp;mod_id=$mod_id&amp;ip=$ip&amp;port=$port\">".get_lang('back')."</a></p>";
-				return;
-			}
 			if ($install_method === 'post_script') {
 				$script_command = "cd " . escapeshellarg($home_info['game_root']) . " && /bin/bash -lc " . escapeshellarg((string)$post_script) . " ; echo __SCRIPT_EXIT:$?";
 				$script_output = $remote->exec($script_command);
@@ -655,24 +564,9 @@ function exec_module() {
     		return;
     	}
 
-		// Steam Workshop is disabled in Server Content. Use the legacy steam_workshop module.
-		// where users enter their own Workshop IDs.  Redirect there immediately.
+		// Workshop items are not installed from Server Content. The Steam Workshop module does that.
 		if ($addon_type === 'workshop_item') {
-			$first_addon_id = 0;
-			$wk_addons = $db->resultQuery(
-				"SELECT addon_id FROM DB_PREFIXaddons
-				  WHERE addon_type='workshop_item' AND home_cfg_id=" . (int)$home_cfg_id . $query_groups . "
-				  ORDER BY name ASC LIMIT 1"
-			);
-			if (is_array($wk_addons) && !empty($wk_addons[0]['addon_id'])) {
-				$first_addon_id = (int)$wk_addons[0]['addon_id'];
-			}
-			$redirect = "?m=addonsmanager&p=workshop_content&home_id=" . (int)$home_id .
-				"&mod_id=" . (int)$mod_id . "&ip=" . urlencode($ip) . "&port=" . urlencode($port) .
-				($first_addon_id > 0 ? "&addon_id=" . $first_addon_id : '');
-			$view->refresh($redirect);
-			echo "<p>Redirecting to Workshop Content manager…<br>";
-			echo "<a href='" . htmlspecialchars($redirect, ENT_QUOTES, 'UTF-8') . "'>Click here if not redirected.</a></p>";
+			print_failure('Steam Workshop has been removed from Server Content. Use the Steam Workshop module instead.');
 			return;
 		}
 		?>
@@ -690,12 +584,6 @@ function exec_module() {
 				}
 				$selected_addon = isset($addons[0]) ? $addons[0] : array();
 				$default_install_method = isset($selected_addon['install_method']) ? scm_get_install_method_default($selected_addon['install_method']) : '';
-				$is_workshop_default = ($default_install_method === 'steam_workshop');
-				$default_workshop_app_id = scm_extract_workshop_app_id($server_xml);
-				$default_target_template = scm_extract_workshop_install_path($server_xml);
-				if ($default_target_template === '') {
-					$default_target_template = scm_get_default_workshop_target_template(scm_detect_workshop_install_strategy($home_info, $server_xml));
-				}
 			?>
 			<h2><?php echo htmlentities($home_info['home_name'])."&nbsp;".$addon_type_lang ;?></h2>
             <table class='center'>
@@ -718,7 +606,6 @@ function exec_module() {
 			<option
 				value="<?php echo (int)$addon['addon_id']; ?>"
 				data-install-method="<?php echo htmlspecialchars(scm_get_install_method_default(isset($addon['install_method']) ? $addon['install_method'] : ''), ENT_QUOTES, 'UTF-8'); ?>"
-				data-workshop-item-id="<?php echo htmlspecialchars(isset($addon['workshop_item_id']) ? $addon['workshop_item_id'] : '', ENT_QUOTES, 'UTF-8'); ?>"
 				data-bot-arguments="<?php echo htmlspecialchars(isset($addon['bot_arguments']) ? $addon['bot_arguments'] : '', ENT_QUOTES, 'UTF-8'); ?>"
 			><?php echo htmlspecialchars($addon['name']); ?></option>
 			<?php } ?>
@@ -727,20 +614,6 @@ function exec_module() {
             <tr class="scm-user-server-bot-row" <?php echo $default_install_method === 'server_bot' ? '' : 'style="display:none;"'; ?>><td align='right'><strong>Server Bot Arguments</strong></td><td align='left'>
 				<input type="text" id="scm-user-bot-arguments" name="bot_arguments" size="70" value="<?php echo htmlspecialchars(isset($selected_addon['bot_arguments']) ? $selected_addon['bot_arguments'] : '', ENT_QUOTES, 'UTF-8'); ?>" />
 				<div class="info" style="margin-top:4px;">Placeholders such as {PORT} are resolved for this server when installed.</div>
-			</td></tr>
-            <tr class="scm-user-workshop-row" <?php echo $is_workshop_default ? '' : 'style="display:none;"'; ?>><td align='right'><strong><?php print_lang('workshop_id'); ?></strong></td><td align='left'>
-				<input type="text" id="scm-user-workshop-id" name="workshop_item_id" size="50" value="<?php echo htmlspecialchars(isset($selected_addon['workshop_item_id']) ? $selected_addon['workshop_item_id'] : '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="Example Arma 3 Workshop ID: 450814997" />
-				<div class="info" style="margin-top:4px;">Install a Steam Workshop mod using Workshop ID. URL is not required.</div>
-			</td></tr>
-            <tr class="scm-user-workshop-row" <?php echo $is_workshop_default ? '' : 'style="display:none;"'; ?>><td align='right'><strong>Target Path Preview</strong></td><td align='left'>
-				<code id="scm-user-target-path-preview"
-					data-server-root="<?php echo htmlspecialchars(rtrim((string)$home_info['game_root'], '/'), ENT_QUOTES, 'UTF-8'); ?>"
-					data-game-root="<?php echo htmlspecialchars(rtrim((string)$home_info['game_root'], '/'), ENT_QUOTES, 'UTF-8'); ?>"
-					data-steam-app-id="<?php echo htmlspecialchars(scm_extract_workshop_steam_app_id($server_xml), ENT_QUOTES, 'UTF-8'); ?>"
-					data-workshop-app-id="<?php echo htmlspecialchars($default_workshop_app_id, ENT_QUOTES, 'UTF-8'); ?>"
-					data-target-template="<?php echo htmlspecialchars($default_target_template, ENT_QUOTES, 'UTF-8'); ?>"
-				><?php echo htmlspecialchars($default_target_template, ENT_QUOTES, 'UTF-8'); ?></code>
-				<div class="info" style="margin-top:4px;">Workshop App ID, install path, and launch parameter format are defined in the game XML.</div>
 			</td></tr>
             <tr><td colspan='2' class='info'>&nbsp;</td></tr>
             <td align='left'>
