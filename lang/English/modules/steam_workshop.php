@@ -93,5 +93,5 @@ define('LANG_workshop_configuration_not_found', "Workshop configuration not foun
 define('LANG_download_method', "Download Method");
 define('LANG_anonymous_login', "Anonymous Login");
 define('LANG_select_at_least_one_mod_or_enter_mod_id', "Select at least one mod or enter a mod ID.");
-define('LANG_no_game_servers_assigned', "You don't have any servers assigned to your account.");
+define('LANG_no_game_servers_assigned', "You don't have any game servers assigned to your account.");
 ?>

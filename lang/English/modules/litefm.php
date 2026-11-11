@@ -22,7 +22,7 @@
  *
  */
 
-define('LANG_dir_not_found', "Directory '%s' not found from the server.");
+define('LANG_dir_not_found', "Directory '%s' not found from the game server.");
 define('LANG_filename', "Filename");
 define('LANG_filesize', "Filesize");
 define('LANG_bytes', "Bytes");
@@ -31,8 +31,8 @@ define('LANG_group', "Group");
 define('LANG_empty_directory', "Directory is empty.");
 define('LANG_currently_viewing', "Currently viewing directory '%s'");
 define('LANG_wrote_changes', "Changes saved successfully.");
-define('LANG_failed_write', "Failed to write file to remote server.");
-define('LANG_failed_read', "Failed to read file from the remote server.");
+define('LANG_failed_write', "Failed to write file to remote game server.");
+define('LANG_failed_read', "Failed to read file from the remote game server.");
 define('LANG_failed_list', "Failed to retrieve directory list.");
 define('LANG_level_up', "^Up one Level^");
 define('LANG_unallowed_char', "Unallowed characters found from the path.");

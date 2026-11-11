@@ -61,7 +61,7 @@ define('LANG_password_too_short', "Your password is too short. It must be at lea
 define('LANG_password_contains_invalid_characters', "Your password contains invalid characters.");
 define('LANG_invalid_email_address', "You entered invalid e-mail address.");
 define('LANG_setup_complete', "Setup has been completed successfully. The GameServer Panel is now ready for use.");
-define('LANG_remove_install_and_secure_config', "You should delete install.php from your server and chmod your includes/config.inc.php back to 644 for security purposes.");
+define('LANG_remove_install_and_secure_config', "You should delete install.php from your game server and chmod your includes/config.inc.php back to 644 for security purposes.");
 define('LANG_go_to_panel', "Click here to login to your GSP.");
 define('LANG_unable_to_resolve', "If you are unable to resolve this problem please visit GSP website ");
 define('LANG_slogan', "The Open-Source one!");

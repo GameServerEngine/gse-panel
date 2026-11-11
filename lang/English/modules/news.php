@@ -69,7 +69,7 @@ define('LANG_permission_ok', "Required permissions are all OK!");
 define('LANG_empty_title', "Please fill the title");
 define('LANG_empty_description', "Please fill the content");
 define('LANG_empty_author', "Please fill the author name");
-define('LANG_gd_fail', "GD extension is NOT loaded on your server. Images upload disabled.");
+define('LANG_gd_fail', "GD extension is NOT loaded on your game server. Images upload disabled.");
 define('LANG_search_news', "Search the News");
 define('LANG_help', "help");
 define('LANG_help_date', "Get help regarding different formating of the date");

@@ -90,7 +90,7 @@ define('LANG_attachment_err_extension', "An extension stopped the upload of %s. 
 define('LANG_attachment_too_large', "%s (%s) is larger than the maximum allowed size of %s!");
 define('LANG_attachment_forbidden_type', "The file type of %s may not be uploaded.");
 define('LANG_attachment_directory_not_writable', "Unable to save the attached files. The specified save directory is not writable.");
-define('LANG_attachment_invalid_file_count', "The amount of files sent to the server was invalid. Only a maximum of %s may be uploaded");
+define('LANG_attachment_invalid_file_count', "The amount of files sent to the game server was invalid. Only a maximum of %s may be uploaded");
 define('LANG_ratings_enabled', "Ratings");
 define('LANG_ratings_enabled_info', "Set if rating responses should be allowed.");
 define('LANG_attachments_enabled', "Attachments");

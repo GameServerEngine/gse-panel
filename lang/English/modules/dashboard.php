@@ -23,11 +23,11 @@
  */
 
 define('LANG_dashboard_ftp_text', "The FTP client can compress files and send them via email, can uncompress too, edit text files and much more.");
-define('LANG_dashboard_addons_manager_text', "Manage all different types of services with GSP. Choose from over 115 servers, which supplied directly by GSP.");
-define('LANG_dashboard_game_monitor_text', "Watch and monitor your traffic & logs quickly. You can see what servers are up and down.");
+define('LANG_dashboard_addons_manager_text', "Manage all different types of services with GSP. Choose from over 115 game servers, which supplied directly by GSP.");
+define('LANG_dashboard_game_monitor_text', "Watch and monitor your traffic & logs quickly. You can see what game servers are up and down.");
 define('LANG_dashboard_support_text', "Get support from the GSP Professional Team on the forum. Fast response and great attention.");
 define('LANG_welcome_text', "Welcome to the GameServer Panel (GSP). GSP is an open-source software, that allows you to install, start and monitor different game servers.");
-define('LANG_any_server_is_online', "Any server is Online");
+define('LANG_any_server_is_online', "Any game server is Online");
 define('LANG_current_map', "Current Map");
 define('LANG_server_ip_port', "IP:Port");
 define('LANG_statistics', "Statistics");
