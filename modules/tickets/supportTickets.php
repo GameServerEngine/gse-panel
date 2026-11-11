@@ -25,7 +25,7 @@ function exec_module()
     $isAdmin = $db->isAdmin($_SESSION['user_id']);
 
     $ticketOwner = (!$isAdmin ? $_SESSION['user_id'] : null);
-    $ticketCount = $ticket->count((array)$ticketOwner);
+    $ticketCount = $ticket->count($ticketOwner);
     $tickets = $ticket->tickets($ticketOwner, $page, $limit);
 
     echo '<h2>'.get_lang('support_tickets').'</h2>';
