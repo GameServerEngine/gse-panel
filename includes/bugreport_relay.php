@@ -1,5 +1,6 @@
 <?php
-// Bug report helpers. No database or session access here, so tests can run them alone.
+// Bug report relay helpers and form for the admin page. The panel holds no token.
+// The functions down to bugreport_send_to_relay use no database or session, so tests can run them alone.
 
 define('BUGREPORT_RELAY_URL', 'https://gameserverengine.com/bugreport/');
 
@@ -133,4 +134,122 @@ function bugreport_send_to_relay($clean, $version, $username, $poster)
 	$payload = bugreport_relay_payload($clean, $version, $username);
 	list($status, $response) = call_user_func($poster, BUGREPORT_RELAY_URL, $headers, $payload);
 	return bugreport_read_relay_response($status, $response);
+}
+
+// ---- Form, CSRF and submit handling (use the session) ----
+
+function bugreport_h($text)
+{
+	return htmlspecialchars((string)$text, ENT_QUOTES, 'UTF-8');
+}
+
+function bugreport_csrf_token()
+{
+	if (empty($_SESSION['bugreport_csrf'])) {
+		$_SESSION['bugreport_csrf'] = bin2hex(random_bytes(16));
+	}
+	return $_SESSION['bugreport_csrf'];
+}
+
+function bugreport_csrf_ok()
+{
+	return isset($_POST['csrf']) && is_string($_POST['csrf'])
+		&& hash_equals(bugreport_csrf_token(), $_POST['csrf']);
+}
+
+function bugreport_panel_version()
+{
+	require_once(dirname(__FILE__) . '/panel_version.php');
+	return PANEL_VERSION;
+}
+
+function bugreport_send($db, $modules)
+{
+	return bugreport_send_with($db, $modules, 'bugreport_http_post');
+}
+
+// Same as bugreport_send, with the HTTP poster passed in so tests can replace it.
+function bugreport_send_with($db, $modules, $poster)
+{
+	list($clean, $errors) = bugreport_validate($_POST, $modules);
+	if ($errors) {
+		echo "<div class='error'>" . implode('<br>', array_map('bugreport_h', $errors)) . "</div>";
+		return $clean;
+	}
+	list($ok, $text) = bugreport_send_to_relay($clean, bugreport_panel_version(), $_SESSION['users_login'], $poster);
+	if ($ok) {
+		$db->logger('Bug report created: ' . $text);
+		echo "<div class='success'>Report sent: <a href='" . bugreport_h($text) . "' target='_blank' rel='noopener'>" . bugreport_h($text) . "</a></div>";
+		return array();
+	}
+	$db->logger('Bug report failed: ' . $text);
+	echo "<div class='error'>" . bugreport_h($text) . "</div>";
+	return $clean;
+}
+
+function bugreport_option_list($name, $label, $choices, $selected_value)
+{
+	echo "<p><label>" . bugreport_h($label) . "<br><select name='" . bugreport_h($name) . "'>";
+	foreach ($choices as $choice) {
+		$selected = $selected_value === $choice ? ' selected' : '';
+		echo "<option value='" . bugreport_h($choice) . "'$selected>" . bugreport_h($choice) . "</option>";
+	}
+	echo "</select></label></p>";
+}
+
+function bugreport_title_input($value)
+{
+	$field = bugreport_fields()['title'];
+	echo "<p><label>" . bugreport_h($field[0]) . "<br><input type='text' name='title' size='80' maxlength='" . $field[1] . "' value='" . bugreport_h($value) . "'></label></p>";
+}
+
+function bugreport_textarea($key, $value)
+{
+	$field = bugreport_fields()[$key];
+	echo "<p><label>" . bugreport_h($field[0]) . "<br><textarea name='$key' rows='6' cols='80' maxlength='" . $field[1] . "'>" . bugreport_h($value) . "</textarea></label></p>";
+}
+
+function bugreport_show_form($values, $modules)
+{
+	$get = function ($key) use ($values) {
+		return isset($values[$key]) ? $values[$key] : '';
+	};
+
+	echo "<h2>Bug report</h2>";
+	echo "<form method='post'><input type='hidden' name='csrf' value='" . bugreport_h(bugreport_csrf_token()) . "'>";
+	bugreport_option_list('module', 'Module', $modules, $get('module'));
+	bugreport_option_list('type', 'Type', bugreport_types(), $get('type'));
+	bugreport_title_input($get('title'));
+	foreach (array('bug', 'steps', 'expected') as $key) {
+		bugreport_textarea($key, $get($key));
+	}
+	echo "<p><strong>Do not paste customer data, passwords, keys or tokens into a bug report.</strong></p>";
+	echo "<p><button type='submit' name='action' value='send'>Send report</button></p></form>";
+}
+
+// Handles a submitted form (CSRF check, then send) and returns the values to refill the form with.
+function bugreport_handle_post($db, $modules)
+{
+	if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+		return array();
+	}
+	if (!bugreport_csrf_ok()) {
+		echo "<div class='error'>Form expired. Please try again.</div>";
+		return array();
+	}
+	if (($_POST['action'] ?? '') === 'send') {
+		return bugreport_send($db, $modules);
+	}
+	return array();
+}
+
+// Shows the bug report section for admin users only.
+function bugreport_render_section($db)
+{
+	if (($_SESSION['users_role'] ?? '') !== 'admin') {
+		return;
+	}
+	$modules = bugreport_module_list(dirname(__FILE__) . '/../modules');
+	$values = bugreport_handle_post($db, $modules);
+	bugreport_show_form($values, $modules);
 }

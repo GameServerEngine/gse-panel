@@ -1,8 +1,8 @@
 <?php
-// Bug report module. Run: php modules/bugreport/tests/bugreport_test.php   (exit 0 = all passed)
+// Bug report relay helpers. Run: php includes/tests/bugreport_relay_test.php   (exit 0 = all passed)
 // Uses a fake HTTP poster. The relay is never called. No files are written.
 
-require_once(dirname(__DIR__) . '/bugreport_lib.php');
+require_once(dirname(__DIR__) . '/bugreport_relay.php');
 
 $passed = 0;
 function br_assert($condition, $message)
@@ -55,8 +55,8 @@ list(, $errors) = bugreport_validate($input, $modules);
 br_assert(count($errors) === 1, 'non-string field is rejected');
 
 // Module list
-$list = bugreport_module_list(dirname(__DIR__, 2));
-br_assert(in_array('update', $list, true) && in_array('bugreport', $list, true), 'module list holds real modules');
+$list = bugreport_module_list(dirname(__DIR__, 2) . '/modules');
+br_assert(in_array('update', $list, true) && in_array('administration', $list, true), 'module list holds real modules');
 br_assert(!in_array('tests', $list, true) && !in_array('vendor', $list, true), 'module list skips tests and vendor');
 
 // Body
@@ -105,7 +105,6 @@ foreach ($cases as $name => $case) {
 
 // The page
 $_SESSION = array('users_login' => 'admin1', 'users_role' => 'admin');
-require_once(dirname(__DIR__) . '/bugreport.php');
 
 class FakeDb
 {
@@ -150,5 +149,12 @@ ob_start();
 bugreport_send_with($db2, $modules, $poster_ok);
 ob_get_clean();
 br_assert(count($calls) === 0, 'invalid input is not posted');
+
+// Non-admin users get no form
+$_SESSION['users_role'] = 'user';
+ob_start();
+bugreport_render_section($db2);
+$hidden = ob_get_clean();
+br_assert($hidden === '', 'non-admin sees no bug report section');
 
 echo "\n{$passed} checks passed\n";

@@ -241,5 +241,9 @@ function exec_module()
 		 "</td>\n".
          "</tr>\n".
 		 "</table>\n";
+
+	### BUG REPORT
+	require_once('includes/bugreport_relay.php');
+	bugreport_render_section($db);
 }
 ?>

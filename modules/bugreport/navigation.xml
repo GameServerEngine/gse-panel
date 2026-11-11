@@ -1,3 +1,0 @@
-<navigation>
-  <page key="default" file="bugreport.php" access="admin" />
-</navigation>
