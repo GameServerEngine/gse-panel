@@ -43,6 +43,10 @@ jobs:
                 echo "No changes since testing-$LAST; nothing to release."
                 exit 0
               fi
+              if [ "$(printf '%s\n%s\n' "$LAST" "$CUR" | sort -V | tail -1)" = "$CUR" ] && [ "$CUR" != "$LAST" ]; then
+                echo "VERSION $CUR was raised by hand; releasing it without a bump."
+                NEW="$CUR"
+              else
               BASE=$(for v in "$CUR" "$LAST"; do echo "$v"; done | sort -V | tail -1)
               MSGS=$(git log --format='%B' "testing-$LAST..HEAD")
               if echo "$MSGS" | grep -qE 'BREAKING CHANGE|^[A-Za-z]+([(][^)]*[)])?!:'; then
@@ -71,6 +75,7 @@ jobs:
               git add -A
               git commit -m "chore(release): testing $NEW [skip ci]"
               git push origin "HEAD:refs/heads/testing"
+              fi
             fi
           fi
 
