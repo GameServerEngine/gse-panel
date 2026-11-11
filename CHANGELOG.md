@@ -1,5 +1,12 @@
 # Changelog
 
+Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
+
+## 2.8.2 (2026-11-11)
+- **Fixed bot.def error preventing start:** Starting a server no longer checks for a manually made `bot.def` file in the server folder. Start had been refusing to run when that file was present. The panel now writes its own bot settings only when Server Bot content is installed, updated, or turned off. Commit `ec7d8091`, `79f548c5`.
+- **Server Bot changes no longer write bot.def:** The Windows agent reads Server Bot settings from `_alsoRun.cmd`, so enabling, updating, or disabling Server Bot content no longer creates or checks `bot.def`. Commit `ec7d8091`.
+- **Edited-files review on the update page:** Nothing is checked by default, so unchecked files are overwritten by the install. Checking a folder checks every edited file under it, and a check-all box is in the header. Commit `048a8c47`.
+
 ## 2026-10-20
 - **Scheduler v2 phase P1:** new tables, typed action catalog, per-server conflict lock, read-only run history (UI and API), 24 unit tests. Commit `fa897752`.
 - **ntfy notifications module:** helper module, customer subscribe page, and an installer step tested in isolation with a throwaway container. Commit `ae368a50`.
