@@ -118,6 +118,13 @@ ed_assert(um_keep_decision('themes/dark.css', array('themes/' => 'keep', 'themes
 ed_assert(um_keep_decision('modules/shop/s.php', $decisions) === true, 'a folder keep does not change other folders (default keep)');
 ed_assert(um_keep_decision('modules/shop/s.php', array('modules/shop/s.php' => 'overwrite', 'modules/forum/' => 'keep')) === false, 'a file in another folder can still be overwritten');
 
+// ---- 5b. the review form starts with nothing checked and lists every file and folder
+ob_start();
+render_edited_review_form($edited, array(), 'token', array(), array());
+$review_html = ob_get_clean();
+ed_assert(strpos($review_html, "' checked") === false, 'the review form starts with every box unchecked');
+ed_assert(substr_count($review_html, "name='keep_file[]'") === count($edited) && substr_count($review_html, "name='keep_folder[]'") === count($groups), 'the review form lists every edited file and folder');
+
 // ---- 6. choices from the review form are stored in the manifest
 $manifest = um_store_decisions($manifest, $edited, array('modules/forum/a.php'), array('themes/', 'not/offered/'));
 ed_assert($manifest['edited_decisions'] === array(

@@ -1201,29 +1201,30 @@ function update_hidden_row_fields(array $checked, array $row_tags)
 	return $html;
 }
 
-// The review shown BEFORE the install starts. Every box is checked: the default is keep my version.
+// The review shown BEFORE the install starts. Nothing is checked by default: an unchecked file is overwritten.
 function render_edited_review_form(array $edited, array $decisions, $csrf_token, array $checked, array $row_tags)
 {
 	echo "<h3>Files you edited</h3>\n";
 	echo "<p>These files were changed after the last update installed them. Nothing is installed until you press <strong>Install update</strong>. "
-		. "Leave a box checked to keep your version. Uncheck it to let the update overwrite the file. Checking a folder keeps every edited file under it.</p>\n";
+		. "Nothing is checked by default. Check a box to keep your version; an unchecked file is overwritten by the update. Checking a folder checks every edited file under it.</p>\n";
 	echo "<form method='POST' id='form_edited_review'>\n";
 	echo "<input type='hidden' name='update_action' value='update_selected'>\n";
 	echo "<input type='hidden' name='update_csrf' value='" . htmlspecialchars($csrf_token) . "'>\n";
 	echo "<input type='hidden' name='edited_review_submitted' value='1'>\n";
 	echo update_hidden_row_fields($checked, $row_tags);
-	echo "<table class='center'>\n<tr><th>Keep</th><th>Path</th></tr>\n";
+	echo "<table class='center'>\n<tr><th><input type='checkbox' id='keep_all' title='Check or uncheck all' onclick='toggleAllKeep(this)'></th><th>Path</th></tr>\n";
 	foreach (um_group_by_folder($edited) as $folder => $files) {
-		$folder_kept = empty($decisions) || (isset($decisions[$folder]) && $decisions[$folder] === 'keep');
-		echo "<tr><td><input type='checkbox' name='keep_folder[]' value='" . htmlspecialchars($folder, ENT_QUOTES, 'UTF-8') . "'" . ($folder_kept ? ' checked' : '') . "></td>";
+		$folder_kept = isset($decisions[$folder]) && $decisions[$folder] === 'keep';
+		echo "<tr class='edited-folder'><td><input type='checkbox' name='keep_folder[]' value='" . htmlspecialchars($folder, ENT_QUOTES, 'UTF-8') . "' onchange='toggleFolderKeep(this)'" . ($folder_kept ? ' checked' : '') . "></td>";
 		echo "<td><strong>keep whole folder</strong> <code>" . htmlspecialchars($folder) . "</code></td></tr>\n";
 		foreach ($files as $rel) {
-			$kept = um_keep_decision($rel, $decisions);
-			echo "<tr><td><input type='checkbox' name='keep_file[]' value='" . htmlspecialchars($rel, ENT_QUOTES, 'UTF-8') . "'" . ($kept ? ' checked' : '') . "></td>";
+			$kept = $folder_kept || (isset($decisions[$rel]) && $decisions[$rel] === 'keep');
+			echo "<tr><td><input type='checkbox' name='keep_file[]' value='" . htmlspecialchars($rel, ENT_QUOTES, 'UTF-8') . "' onchange='toggleFileKeep(this)'" . ($kept ? ' checked' : '') . "></td>";
 			echo "<td>keep my version <code>" . htmlspecialchars($rel) . "</code></td></tr>\n";
 		}
 	}
-	echo "</table>\n<p><button type='submit'>Install update</button></p>\n</form>\n";
+	echo "<script>function toggleAllKeep(b){document.querySelectorAll('#form_edited_review input[type=checkbox]').forEach(function(c){c.checked=b.checked;});}function toggleFolderKeep(f){var n=f.closest('tr').nextElementSibling;while(n&&!n.classList.contains('edited-folder')){var c=n.querySelector('input[type=checkbox]');if(c){c.checked=f.checked;}n=n.nextElementSibling;}syncKeepAll();}function toggleFileKeep(c){if(!c.checked){var p=c.closest('tr').previousElementSibling;while(p&&!p.classList.contains('edited-folder')){p=p.previousElementSibling;}if(p){p.querySelector('input').checked=false;}}syncKeepAll();}function syncKeepAll(){var boxes=document.querySelectorAll('#form_edited_review input[name=\"keep_file[]\"], #form_edited_review input[name=\"keep_folder[]\"]');var on=true;boxes.forEach(function(c){if(!c.checked){on=false;}});document.getElementById('keep_all').checked=on;}</script>\n";
+echo "</table>\n<p><button type='submit'>Install update</button></p>\n</form>\n";
 }
 
 /**
