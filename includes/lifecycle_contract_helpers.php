@@ -166,11 +166,9 @@ function lifecycle_start_payload($db, $remote, array $home_info, $server_xml, $m
 	$run_dir = clean_path(isset($server_xml->exe_location) ? (string)$server_xml->exe_location : "");
 	$absolute_run_dir = clean_path(rtrim($home_info['game_root'], '/') . '/' . (isset($server_xml->exe_location) ? (string)$server_xml->exe_location : ''));
 	$last_param = json_decode(isset($home_info['last_param']) ? (string)$home_info['last_param'] : '', true);
+	// Start/Restart never rewrites or checks bot.def. It is written when Server
+	// Bot content is installed, updated, or disabled (see scm_server_bot_manifest_action).
 	$bot_definition = lifecycle_current_bot_definition($db, $home_info);
-	$bot_error = '';
-	if (!lifecycle_sync_bot_definition($remote, $home_info, $bot_definition, $bot_error)) {
-		return array('error' => $bot_error);
-	}
 	return array(
 		'contract' => 'gse.lifecycle.v2',
 		'operation' => $restart_reason === '' ? 'start' : 'restart_start',

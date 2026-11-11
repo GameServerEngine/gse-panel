@@ -6,6 +6,7 @@
  */
 
 require_once(dirname(__DIR__, 2) . "/includes/game_path_helpers.php");
+require_once(dirname(__DIR__, 2) . "/includes/lifecycle_contract_helpers.php");
 
 
 function scm_get_home_for_user($db, $home_id, $user_id)
@@ -1169,6 +1170,13 @@ function scm_server_bot_manifest_action($db, $remote, array $home_info, $server_
 		'uninstall' => 'uninstalled',
 	);
 	$message = 'Server Bot content has been ' . (isset($labels[$action]) ? $labels[$action] : 'updated') . '.';
+	// Write bot.def now that the enabled set changed, so Start never has to.
+	$bot_definition = lifecycle_current_bot_definition($db, $home_info);
+	$sync_error = '';
+	if (!lifecycle_sync_bot_definition($remote, $home_info, $bot_definition, $sync_error)) {
+		$message = $sync_error;
+		return false;
+	}
 	return true;
 }
 
