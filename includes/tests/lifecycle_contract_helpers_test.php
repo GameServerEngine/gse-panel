@@ -169,10 +169,10 @@ lifecycle_test_assert($payload['port_context']['ip'] === '192.0.2.10' && $payloa
 lifecycle_test_assert($payload['port_context']['protocol'] === 'lgsl' && $payload['port_context']['control_protocol'] === 'rcon', 'payload carries protocol context');
 lifecycle_test_assert($payload['user_options']['players'] === '60', 'payload carries current saved user selections');
 lifecycle_test_assert($payload['replace_text_results'][0]['file'] === '/srv/gse/42/dayz_win64/serverDZ.cfg', 'payload carries replace-text results');
-lifecycle_test_assert($payload['bot']['command'] === 'node-mod-server.exe', 'payload carries one transparent bot command');
+lifecycle_test_assert(!array_key_exists('bot', $payload), 'Start payload builds no bot definition');
 // bot.def is written by the enable/update/disable path, not by Start.
 $syncPrepError = '';
-lifecycle_sync_bot_definition($remote, $homeInfo, $payload['bot'], $syncPrepError);
+lifecycle_sync_bot_definition($remote, $homeInfo, array('working_directory' => '/srv/gse/42/dayz_win64/dzsa', 'command' => 'node-mod-server.exe', 'arguments' => '"-port=2302" "-mod=@CF"'), $syncPrepError);
 lifecycle_test_assert(isset($remote->files['/srv/gse/42/bot.def']), 'writes bot.def in management home');
 lifecycle_test_assert(strpos($remote->files['/srv/gse/42/bot.def'], 'workdir=/srv/gse/42/dayz_win64/dzsa') !== false, 'bot.def contains simple workdir/executable/arguments keys');
 lifecycle_test_assert(!isset($remote->files['/srv/gse/42/dayz_win64/bot.def']), 'does not write bot.def beneath game root');
