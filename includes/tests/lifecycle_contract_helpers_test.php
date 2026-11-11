@@ -187,7 +187,10 @@ lifecycle_test_assert($remote->startPayloads[0]['arguments'] === '-config=livoni
 
 $remote->files['/srv/gse/42/bot.def'] = "workdir=/manual\nexecutable=manual\narguments=\n";
 $payload = lifecycle_start_payload(null, $remote, $homeInfo, $serverXml, 7, '192.0.2.10', 2302, 'cmd', '', '', array());
-lifecycle_test_assert(isset($payload['error']) && strpos($payload['error'], 'non-generated bot.def') !== false, 'refuses to overwrite manual bot.def');
+lifecycle_test_assert(isset($payload['error']) && strpos($payload['error'], 'non-generated bot.def') !== false, 'refuses to overwrite manual bot.def when a Server Bot is enabled');
+$noBotError = '';
+lifecycle_test_assert(lifecycle_sync_bot_definition($remote, $homeInfo, null, $noBotError) === true && $noBotError === '', 'manual bot.def does not block Start when no Server Bot is enabled');
+lifecycle_test_assert(($remote->files['/srv/gse/42/bot.def'] ?? '') === "workdir=/manual\nexecutable=manual\narguments=\n", 'manual bot.def is left untouched when no Server Bot is enabled');
 
 // The real GSE Windows agent's readfile RPC auto-creates a blank file on
 // first read of a path that doesn't exist, then reports success (retval 1)

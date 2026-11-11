@@ -127,13 +127,17 @@ function lifecycle_sync_bot_definition($remote, array $home_info, $bot_definitio
 		return false;
 	}
 	$bot_def_path = clean_path($management_home . '/bot.def');
+	if ($bot_definition === null) {
+		// No Server Bot is enabled: only remove a file the Panel generated.
+		// A manual bot.def is left alone and must not block Start/Restart.
+		if (lifecycle_bot_def_is_managed($remote, $bot_def_path)) {
+			$remote->exec('rm -f ' . escapeshellarg($bot_def_path));
+		}
+		return true;
+	}
 	if (!lifecycle_bot_def_is_managed($remote, $bot_def_path)) {
 		$error = 'A non-generated bot.def already exists. Remove or migrate it before enabling lifecycle-managed Server Bot content.';
 		return false;
-	}
-	if ($bot_definition === null) {
-		$remote->exec('rm -f ' . escapeshellarg($bot_def_path));
-		return true;
 	}
 	foreach (array('working_directory', 'command', 'arguments') as $key) {
 		$value = isset($bot_definition[$key]) ? (string)$bot_definition[$key] : '';
