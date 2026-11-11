@@ -93,7 +93,7 @@ define('LANG_login_ban_time_info', "How long a user stays temporarily banned aft
 define('LANG_custom_github_update_username', "GitHub update username");
 define('LANG_custom_github_update_username_info', "Enter your GitHub username ONLY to use your own forked repositories to update GSP. This should only be changed by developers who wish to use their own repos for development rather than checking in possibly buggy code into the main branch.");
 define('LANG_remote_query', "Remote query");
-define('LANG_remote_query_info', "Use the remote game server (agent) to make queries to the game servers (Only GameQ and LGSL).");
+define('LANG_remote_query_info', "Use the remote agent to make queries to the game servers (Only GameQ and LGSL).");
 define('LANG_check_expiry_by', "Check expiration using");
 define('LANG_check_expiry_by_info', "If set to once_logged_in, the user's game server assignments will be automatically deleted if past the expiration date. If set to cron_job, you will need to create a cron task using the cron module to check for the expiration date at a configured interval.");
 define('LANG_once_logged_in', "Once Logged In");

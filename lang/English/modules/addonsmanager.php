@@ -31,7 +31,7 @@ define('LANG_install_mappack', "Install Map Pack");
 define('LANG_install_config', "Install Config Pack");
 define('LANG_game_name', "Game Name");
 define('LANG_directory', "Directory Path");
-define('LANG_remote_server', "Remote server");
+define('LANG_remote_server', "Remote host");
 define('LANG_select_addon', "Select Server Content Item");
 define('LANG_install', "Install");
 define('LANG_failed_to_start_file_download', "Failed to start file download.");

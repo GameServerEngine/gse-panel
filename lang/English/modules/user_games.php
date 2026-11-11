@@ -79,7 +79,7 @@ define('LANG_change_user_id_main', "Change main owner");
 define('LANG_change_user_id_main_info', "The main game server home owner.");
 define('LANG_server_ftp_password', "FTP password");
 define('LANG_change_ftp_password', "Change FTP password");
-define('LANG_change_ftp_password_info', "This is the password to login to FTP game server for this home.");
+define('LANG_change_ftp_password_info', "This is the password to login to the FTP server for this home.");
 define('LANG_Delete_old_user_assigned_homes', "Unassign home to current users.");
 define('LANG_editing_home_called', "Editing home called");
 define('LANG_control_password_updated_successfully', "Control password updated successfully.");
@@ -190,7 +190,7 @@ define('LANG_sure_to_delete_serverid_from_remoteip_and_directory', "Are you sure
 define('LANG_yes_and_delete_the_files', "Yes and Delete the files");
 define('LANG_failed_to_remove_gamehome_from_database', "Failed to remove gamehome from database.");
 define('LANG_successfully_deleted_game_server_with_id', "Successfully deleted game server with ID %s.");
-define('LANG_failed_to_remove_ftp_account_from_remote_server', "Failed to remove FTP account from remote game server.");
+define('LANG_failed_to_remove_ftp_account_from_remote_server', "Failed to remove FTP account from the remote host.");
 define('LANG_remove_it_anyway', "Would you like to remove it anyway?");
 define('LANG_sucessfully_deleted', "Sucessfully deleted %s");
 define('LANG_the_agent_had_a_problem_deleting', "The Agent had a problem while deleting %s. Please, check the Agent's log.");
