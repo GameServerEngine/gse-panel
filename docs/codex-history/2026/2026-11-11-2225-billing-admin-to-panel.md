@@ -24,7 +24,13 @@ gse-panel (branch working)
 - Deleted: admin.php, adminserverlist.php, admin_xml_editor.php, admin_container_poc.php, container_poc.php, container_action.php, includes/container_poc.php, tests/ContainerPocWorkflowTest.php, tools/debug_invoices_redirect.php
 - docs/TODO.md, CHANGELOG.md, .github/module-map.md, .github/agent.md, .github/copilot-instructions.md
 
+## Files Changed (stage 2: My Servers and support tickets)
+- modules/billing/my_servers.php (query moved from the missing tables `home` / `game_configs` to `server_homes` / `config_homes`, newest order per server)
+- modules/billing/includes/support_tickets.php (new), support.php (ticket form and list), tests/SupportTicketsTest.php (new)
+- docs/TODO.md, CHANGELOG.md, .github/module-map.md
+
 ## Architecture Decisions
+- The support form writes the same rows as the panel's tickets module (tickets plus the first ticket_messages row, status 3 = waiting for staff, last_updated set, sub users belong to the main account); service_id is NULL for "no server". No get_result (works without mysqlnd).
 - Module-native `db_version` 14 replaces the old menu rows (idempotent, runs on update); no separate sql/migrations file.
 - Old page keys billing_setup, billing_operations and game_catalog still resolve so saved links work.
 - The XML editor was dropped: the config_games module already has one.
@@ -34,6 +40,7 @@ gse-panel (branch working)
 ## Validation Performed
 - php -l on changed files; all billing tests pass except GameReferenceCoverageTest.php, which already failed before this work (arma2 missing from games.json).
 - Scratch MySQL database (127.0.0.1:3307, gse_scratch_p2, install/gse_panel.sql plus migrations 0007 and 0008, synthetic rows): the db_version 14 queries run twice leave one Billing row; import with saved agents, second import, headroom insert/update/read: 12 checks passed.
+- Support tickets on a scratch MySQL 8 database loaded with an empty table prefix (as in production): 12 checks (own servers only, with and without a server, IPv4 and IPv6 address bytes, sub user parent, list, all-or-nothing rollback); SupportTicketsTest.php passes.
 - Not run in a browser. Nothing deployed and no live database touched.
 
 ## Git Commits

@@ -7,6 +7,7 @@ Each fixed issue gets an entry under the version that shipped it: a one-line tit
 - **Website admin and container pages removed:** The website's admin page, the old per-agent pricing page, the XML editor and everything for containers (customer container list, container actions and the container admin page) are gone. The container database tables are left as they were.
 - **Placement headroom moved:** The CPU, RAM and disk limits that decide which agent a new server is placed on are now set on the Game Catalog tab, since the old pricing page that held them is removed.
 - **Games chosen in the panel show on the storefront:** The import tool on the Game Catalog tab can use the agents that were saved on each old service, so games that were already set up for an agent appear without ticking every agent again. Preview shows what will be added first.
+- **Support tickets from the website:** The Support page has an Open a Ticket form for signed-in customers. It adds the ticket to the control panel's tickets (the same ones staff already answer under Support), with an optional choice of one of the customer's own servers, and lists the customer's tickets with a link to each in the panel.
 - **My Servers page works again:** The customer's server list read two tables that no longer exist (`home` and `game_configs`), so it could not list anything. It now reads the current server and game tables, and shows each server once with its newest order instead of repeating a server for every order the customer has.
 
 ## 2.8.4 (2026-11-11)
