@@ -36,11 +36,21 @@ function exec_module() {
 		$rhost_ftp_ip = trim($_POST['remote_host_ftp_ip']);
 		$rhost_ftp_port = trim($_POST['remote_host_ftp_port']);
 		$encryption_key = trim($_POST['remote_encryption_key']);
-		if ( strlen($encryption_key) > 16 ){
-			print_failure( 'The agent encryption key must be 16 characters or fewer.' );
+		if ( $encryption_key === '' || strlen($encryption_key) > 16 ){
+			print_failure( 'The agent encryption key must be 1 to 16 characters.' );
 			$view->refresh("?m=server");
 			return;
 		}
+		// The agent installer finds its server by this key, so each server needs its own.
+		foreach ( (array)$db->getRemoteServers() as $existing ) {
+			if ( is_array($existing) && (string)$existing['encryption_key'] === $encryption_key ) {
+				print_failure( 'Another server already uses this agent key. Use a different key for each server.' );
+				$view->refresh("?m=server");
+				return;
+			}
+		}
+		$pending_user = trim($_POST['remote_host_user_name'] ?? '');
+		if ( $pending_user === '' ) $pending_user = 'gameserver';
 		$timeout = trim($_POST['timeout']);
 		$use_nat = trim($_POST['use_nat']);
 		$display_public_ip = trim($_POST['display_public_ip']);
@@ -63,8 +73,19 @@ function exec_module() {
 		$status = $remote->status_chk();
 		if($status === 0)
 		{
-			print_failure( get_lang("agent_offline") . "<br>" . get_lang("could_not_add_server") . " " . $rhost_ip );
-			echo create_back_button($_GET['m']);
+			// No agent answers yet: save the server so the agent installer can use this key.
+			// The installer reports back when the agent runs; the panel then saves its IPs.
+			$rhost_id = $db->addRemoteServer($rhost_ip,$rhost_name,$pending_user,$rhost_port,$rhost_ftp_ip,$rhost_ftp_port,$encryption_key,$timeout,$use_nat,$display_public_ip);
+			if ( !$rhost_id )
+			{
+				print_failure( get_lang("could_not_add_server") ." ".$rhost_ip." ". get_lang("to_db") );
+				$view->refresh("?m=server");
+				return;
+			}
+			print_success( "Saved $rhost_ip. No agent is running there yet. Install it with the agent installer "
+				. "(gse-agent-linux-install.sh or gse-agent-windows-install.ps1 from the agent's GitHub release) "
+				. "and give it this panel's address and the agent key you entered." );
+			$view->refresh("?m=server", 30);
 			return;
 		}
 		elseif($status === -1)

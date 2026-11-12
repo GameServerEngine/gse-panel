@@ -240,7 +240,7 @@ function install_render_settings_form($base_dir, array $errors = array(), array 
     echo "<section class='install-panel'>\n";
     echo "<div class='install-panel-header'>\n";
     echo "<h1>Installation Settings</h1>\n";
-    echo "<p>Enter the deployment target, database connection, first administrator account, and install options. Password fields are never preserved after errors.</p>\n";
+    echo "<p>Enter the database connection and the first administrator account. Password fields are never preserved after errors.</p>\n";
     echo "</div>\n";
     if (!empty($errors)) {
         echo "<div class='message-box message-error'>";
@@ -266,19 +266,6 @@ function install_render_settings_form($base_dir, array $errors = array(), array 
         echo "<option value='" . install_h($locale_name) . "'{$selected}>" . install_h($locale_name) . '</option>';
     }
     echo "</select></label>\n";
-    echo "</div></fieldset>\n";
-    echo "<fieldset class='form-section'><legend>Deployment Target</legend>";
-    echo "<div class='form-grid'>\n";
-    echo "<label><span>Panel Domain / Hostname</span><input type='text' value='" . install_h($values['panel_domain']) . "' name='panel_domain' placeholder='panel.example.com or server IP' /></label>";
-    echo "<label><span>Storefront Domain / Hostname</span><input type='text' value='" . install_h($values['storefront_domain']) . "' name='storefront_domain' placeholder='Leave blank to share the panel domain at /store' /></label>";
-    echo "<label class='checkbox-field'><input type='checkbox' name='panel_use_vhost' value='1'" . ($values['panel_use_vhost'] === '1' ? " checked='checked'" : '') . " /> <span>Use a dedicated web server vhost for this domain</span></label>";
-    echo "<label class='checkbox-field'><input type='checkbox' name='panel_ssl' value='1'" . ($values['panel_ssl'] === '1' ? " checked='checked'" : '') . " /> <span>Use HTTPS / SSL for the public Panel URL</span></label>";
-    echo "<label><span>HTTPS Mode</span><select name='https_mode'>";
-    foreach (array('http-only' => 'HTTP only', 'letsencrypt' => "Let's Encrypt (via certbot)", 'existing-cert' => 'Existing certificate') as $mode_value => $mode_label) {
-        $selected = ($values['https_mode'] === $mode_value) ? " selected='selected'" : '';
-        echo "<option value='" . install_h($mode_value) . "'{$selected}>" . install_h($mode_label) . '</option>';
-    }
-    echo "</select><small>Vhosts and certificates are only previewed here; apply them with the root command shown after install.</small></label>";
     echo "</div></fieldset>\n";
     echo "<fieldset class='form-section'><legend>Database</legend>";
     echo "<div class='form-grid'>\n";
