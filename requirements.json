@@ -4,19 +4,29 @@
  "title": "GSE Panel",
  "minimum_os": [
   {
-   "name": "Any OS that runs PHP 8.3 and a web server",
-   "minimum": null
+   "name": "Ubuntu 22.04 LTS or newer, or Debian 12 or newer",
+   "minimum": "22.04",
+   "note": "Any OS with PHP 8.1 or newer works in theory. These are the releases that ship it."
   }
  ],
- "tested_on": [],
+ "tested_on": [
+  {
+   "name": "Ubuntu 24.04 LTS with PHP 8.3",
+   "note": "Runs against the dev Linux agent (2026-11-12)."
+  },
+  {
+   "name": "PHP 8.1 (Ubuntu 22.04) and PHP 8.2 (Debian 12)",
+   "note": "Syntax check of every .php file only (2026-11-12). Not run live."
+  }
+ ],
  "prerequisites": [
   {
-   "name": "PHP 8.3",
-   "note": "Required by the panel (see README)."
+   "name": "PHP 8.3 (recommended), 8.1 or newer (minimum)",
+   "note": "8.3 is what the panel is developed and tested on. Every file also passes php -l on 8.1 and 8.2."
   },
   {
    "name": "PHP extensions: mysqli, curl, mbstring, gd, xmlrpc",
-   "note": "The panel code checks for these functions. xmlrpc is needed to talk to the agents."
+   "note": "Ubuntu/Debian: apt install php-mysql php-curl php-mbstring php-gd php-xmlrpc. xmlrpc is needed to talk to the agents."
   },
   {
    "name": "MySQL or MariaDB database",
@@ -28,6 +38,7 @@
   }
  ],
  "unverified": [
-  "The OS, database version and web server versions are not yet set or tested."
+  "The database and web server versions are not yet set or tested.",
+  "PHP 8.1 and 8.2 were only syntax-checked."
  ]
 }

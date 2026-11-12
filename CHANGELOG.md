@@ -3,6 +3,7 @@
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
 ## 2.8.6 (2026-11-12)
+- **Requirements:** `requirements.json` now gives the minimum as Ubuntu 22.04, Debian 12 or any OS with PHP 8.1 or newer. PHP 8.3 is what the panel is tested on; every file also passes a syntax check on PHP 8.1 and 8.2.
 - **One listing per game on the storefront:** Each game config file now shows as one card on the storefront and one row on the Game Catalog tab. Before, a game showed a separate copy for each platform it was saved under. The stored data is unchanged.
 - **Game pictures on the storefront:** Each game card loads its own picture from the panel's game images folder, and the Game Catalog preview uses the same picture.
 - **Control Panel link goes to the panel:** The Control Panel link, the support ticket links and the admin sign-in redirect now point to the panel's own address instead of a `/panel/` path on the storefront site.
