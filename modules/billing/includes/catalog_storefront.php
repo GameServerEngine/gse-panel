@@ -7,6 +7,7 @@ require_once __DIR__ . '/storefront_locations.php';
  */
 
 require_once __DIR__ . '/catalog_pricing.php';
+require_once __DIR__ . '/catalog_games.php';
 
 if (!function_exists('catalog_load_enabled_games')) {
     /**
@@ -44,7 +45,7 @@ if (!function_exists('catalog_load_enabled_games')) {
         while ($res && ($row = $res->fetch_assoc())) {
             $rows[] = $row;
         }
-        return $rows;
+        return catalog_group_storefront_games($rows, catalog_list_images(__DIR__ . '/../../../images/games'));
     }
 }
 

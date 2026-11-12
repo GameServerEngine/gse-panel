@@ -157,6 +157,9 @@ if (!function_exists('billing_image_url')) {
         if ($filename === '') {
             return '';
         }
+        if (function_exists('panel_asset_url')) {
+            return panel_asset_url('images/games/' . $filename);
+        }
         return billing_url('images/games/' . $filename);
     }
 }

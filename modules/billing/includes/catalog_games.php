@@ -243,6 +243,139 @@ if (!function_exists('catalog_plan_legacy_import')) {
     }
 }
 
+if (!function_exists('catalog_image_key')) {
+    /** A picture or config name reduced to lowercase letters and digits, for matching. */
+    function catalog_image_key(string $name): string
+    {
+        return strtolower((string)preg_replace('/[^a-z0-9]/i', '', $name));
+    }
+}
+
+if (!function_exists('catalog_guess_image')) {
+    /**
+     * The picture whose file name matches a game config's file name (7daystodie.xml and
+     * 7daystodie.jpg). Returns '' when no picture matches.
+     */
+    function catalog_guess_image(string $configFile, array $available): string
+    {
+        $key = catalog_image_key(pathinfo($configFile, PATHINFO_FILENAME));
+        if ($key === '') {
+            return '';
+        }
+        foreach ($available as $name) {
+            if (catalog_image_key(pathinfo((string)$name, PATHINFO_FILENAME)) === $key) {
+                return (string)$name;
+            }
+        }
+        return '';
+    }
+}
+
+if (!function_exists('catalog_group_key')) {
+    /** Games group by their config file. A row without a file is its own group. */
+    function catalog_group_key(array $row): string
+    {
+        $file = strtolower(trim((string)($row['home_cfg_file'] ?? '')));
+        return $file !== '' ? 'file:' . $file : 'id:' . (int)$row['home_cfg_id'];
+    }
+}
+
+if (!function_exists('catalog_group_admin_games')) {
+    /**
+     * One row per game config file for the Game Catalog list. A config file can hold several
+     * platform variants, each with its own home_cfg_id. The row shown is the variant with the most
+     * published agents (then the lowest home_cfg_id), so its edit screen opens. Agent counts are
+     * added up and the lowest price is kept.
+     */
+    function catalog_group_admin_games(array $rows): array
+    {
+        $groups = array();
+        foreach ($rows as $row) {
+            $key = catalog_group_key($row);
+            $id = (int)$row['home_cfg_id'];
+            $agents = (int)($row['published_agents'] ?? 0);
+            $price = isset($row['from_price']) ? (float)$row['from_price'] : null;
+            if (!isset($groups[$key])) {
+                $groups[$key] = array('rep' => $row, 'ids' => array(), 'agents' => 0, 'price' => null);
+            }
+            $group = $groups[$key];
+            $group['ids'][] = $id;
+            $group['agents'] += $agents;
+            if ($price !== null && ($group['price'] === null || $price < $group['price'])) {
+                $group['price'] = $price;
+            }
+            $repAgents = (int)($group['rep']['published_agents'] ?? 0);
+            if ($agents > $repAgents || ($agents === $repAgents && $id < (int)$group['rep']['home_cfg_id'])) {
+                $group['rep'] = $row;
+            }
+            $groups[$key] = $group;
+        }
+        $out = array();
+        foreach ($groups as $group) {
+            $row = $group['rep'];
+            $row['variant_ids'] = $group['ids'];
+            $row['published_agents'] = $group['agents'];
+            $row['from_price'] = $group['price'];
+            $out[] = $row;
+        }
+        return $out;
+    }
+}
+
+if (!function_exists('catalog_group_storefront_games')) {
+    /**
+     * One storefront card per game config file. The card links to the variant with the lowest
+     * starting price (then the lowest home_cfg_id). Price and slot range cover every variant.
+     * A card without a picture of its own uses the picture named after its config file.
+     */
+    function catalog_group_storefront_games(array $rows, array $images): array
+    {
+        $groups = array();
+        foreach ($rows as $row) {
+            $key = catalog_group_key($row);
+            $id = (int)$row['home_cfg_id'];
+            $price = isset($row['starting_price_monthly']) ? (float)$row['starting_price_monthly'] : null;
+            if (!isset($groups[$key])) {
+                $groups[$key] = array('rep' => $row, 'rep_price' => $price, 'ids' => array(), 'price' => null, 'slot_min' => null, 'slot_max' => null);
+            }
+            $group = $groups[$key];
+            $group['ids'][] = $id;
+            if ($price !== null && ($group['price'] === null || $price < $group['price'])) {
+                $group['price'] = $price;
+            }
+            if (isset($row['slot_min_qty'])) {
+                $min = (int)$row['slot_min_qty'];
+                $group['slot_min'] = $group['slot_min'] === null ? $min : min($group['slot_min'], $min);
+            }
+            if (isset($row['slot_max_qty'])) {
+                $max = (int)$row['slot_max_qty'];
+                $group['slot_max'] = $group['slot_max'] === null ? $max : max($group['slot_max'], $max);
+            }
+            $repId = (int)$group['rep']['home_cfg_id'];
+            $better = ($price !== null && ($group['rep_price'] === null || $price < $group['rep_price']))
+                || ($price === $group['rep_price'] && $id < $repId);
+            if ($better) {
+                $group['rep'] = $row;
+                $group['rep_price'] = $price;
+            }
+            $groups[$key] = $group;
+        }
+        $out = array();
+        foreach ($groups as $group) {
+            $row = $group['rep'];
+            $row['variant_ids'] = $group['ids'];
+            $row['starting_price_monthly'] = $group['price'];
+            $row['slot_min_qty'] = $group['slot_min'];
+            $row['slot_max_qty'] = $group['slot_max'];
+            if (trim((string)($row['img_url'] ?? '')) === '') {
+                $row['img_url'] = catalog_guess_image((string)($row['home_cfg_file'] ?? ''), $images);
+            }
+            $out[] = $row;
+        }
+        return $out;
+    }
+}
+
 if (!function_exists('catalog_default_settings')) {
     /** Pricing settings shown for a game that has no offers yet. */
     function catalog_default_settings(): array

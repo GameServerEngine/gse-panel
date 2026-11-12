@@ -78,7 +78,7 @@ if ($ticketsReady) {
 $openedTicket = $_SESSION['support_ticket_opened'] ?? null;
 unset($_SESSION['support_ticket_opened']);
 $csrf = $ticketsReady ? billing_action_csrf_token($csrfKey) : '';
-$ticketBase = '/panel/home.php?m=tickets&p=viewticket';
+$ticketBase = (function_exists('panel_home_url') ? panel_home_url() : '/panel/') . 'home.php?m=tickets&p=viewticket';
 ?>
 <!DOCTYPE html>
 <html lang="en">

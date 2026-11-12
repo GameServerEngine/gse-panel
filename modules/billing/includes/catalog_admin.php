@@ -82,7 +82,7 @@ function catalog_admin_game_list(mysqli $db, string $prefix, string $search, str
             {$having}
             ORDER BY ch.game_name";
 
-    return catalog_admin_rows($db, $sql);
+    return catalog_group_admin_games(catalog_admin_rows($db, $sql));
 }
 
 /** One game config with its storefront details, or null when the game does not exist. */

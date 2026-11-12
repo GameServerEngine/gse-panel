@@ -32,5 +32,5 @@ if (billing_is_panel_context()) {
 
 // Billing administration lives only in the control panel. A request that reaches this file
 // outside the panel is sent to the panel's Billing page, where the panel does the login.
-header('Location: /panel/home.php?m=billing&p=billing');
+header('Location: ' . (function_exists('panel_home_url') ? panel_home_url() : '/panel/') . 'home.php?m=billing&p=billing');
 exit();

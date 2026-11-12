@@ -74,7 +74,7 @@ $returnTo = (string)($_SERVER['REQUEST_URI'] ?? '/');
         <?php echo billing_nav_link('my_account.php', 'My Account'); ?>
         <a href="<?php echo billing_nav_escape(billing_url('cart.php')); ?>" class="gsw-nav-link<?php echo basename((string)($_SERVER['SCRIPT_NAME'] ?? '')) === 'cart.php' ? ' is-active' : ''; ?>">Cart<?php if ($cart_count > 0): ?><span class="cart-badge"><?php echo $cart_count; ?></span><?php endif; ?></a>
       <?php endif; ?>
-      <a href="/panel/" class="gsw-nav-link">Control Panel</a>
+      <a href="<?php echo billing_nav_escape(panel_home_url()); ?>" class="gsw-nav-link">Control Panel</a>
       <?php if ($is_logged_in): ?>
         <a href="<?php echo billing_nav_escape(billing_url('logout.php') . '?return_to=' . urlencode($returnTo)); ?>" class="gsw-btn gsw-nav-cta" title="Signed in as <?php echo billing_nav_escape($username); ?>">Logout</a>
       <?php else: ?>

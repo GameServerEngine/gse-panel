@@ -84,4 +84,28 @@ assertCatalogSame(null, catalog_read_headroom(['headroom_cpu_pct' => '101', 'hea
 assertCatalogSame(null, catalog_read_headroom(['headroom_cpu_pct' => '5.5', 'headroom_ram_pct' => '60', 'headroom_disk_pct' => '85']), 'a decimal is refused');
 assertCatalogSame(null, catalog_read_headroom(['headroom_cpu_pct' => '5', 'headroom_ram_pct' => '60']), 'a missing value is refused');
 
+// --- one row per game config file ---
+assertCatalogSame('7daystodie.jpg', catalog_guess_image('7daystodie.xml', ['7dtd.jpg', '7daystodie.jpg']), 'a picture named after the config file is found');
+assertCatalogSame('', catalog_guess_image('arkse.xml', ['7daystodie.jpg']), 'no picture for an unrelated config');
+$adminGroups = catalog_group_admin_games(array(
+    array('home_cfg_id' => 1, 'home_cfg_file' => 'a.xml', 'game_name' => 'A', 'published_agents' => 0, 'from_price' => null),
+    array('home_cfg_id' => 2, 'home_cfg_file' => 'a.xml', 'game_name' => 'A', 'published_agents' => 2, 'from_price' => 5.0),
+    array('home_cfg_id' => 3, 'home_cfg_file' => 'b.xml', 'game_name' => 'B', 'published_agents' => 0, 'from_price' => null),
+));
+assertCatalogSame(2, count($adminGroups), 'admin list has one row per config file');
+assertCatalogSame(2, (int)$adminGroups[0]['home_cfg_id'], 'the variant with agents is the row shown');
+assertCatalogSame(2, (int)$adminGroups[0]['published_agents'], 'agent counts are added up');
+assertCatalogSame(5.0, $adminGroups[0]['from_price'], 'the lowest price is kept');
+assertCatalogSame(array(1, 2), $adminGroups[0]['variant_ids'], 'every variant id is kept');
+$storeGroups = catalog_group_storefront_games(array(
+    array('home_cfg_id' => 4, 'home_cfg_file' => 'c.xml', 'game_name' => 'C', 'starting_price_monthly' => 10.0, 'slot_min_qty' => 1, 'slot_max_qty' => 8, 'img_url' => ''),
+    array('home_cfg_id' => 5, 'home_cfg_file' => 'c.xml', 'game_name' => 'C', 'starting_price_monthly' => 7.5, 'slot_min_qty' => 2, 'slot_max_qty' => 16, 'img_url' => 'c.jpg'),
+), array('c.jpg'));
+assertCatalogSame(1, count($storeGroups), 'storefront has one card per config file');
+assertCatalogSame(5, (int)$storeGroups[0]['home_cfg_id'], 'the card links to the cheapest variant');
+assertCatalogSame(7.5, $storeGroups[0]['starting_price_monthly'], 'the card shows the lowest price');
+assertCatalogSame(1, (int)$storeGroups[0]['slot_min_qty'], 'slot range covers every variant (min)');
+assertCatalogSame(16, (int)$storeGroups[0]['slot_max_qty'], 'slot range covers every variant (max)');
+assertCatalogSame('c.jpg', $storeGroups[0]['img_url'], 'the chosen picture is kept');
+
 echo "CatalogGamesTest passed\n";

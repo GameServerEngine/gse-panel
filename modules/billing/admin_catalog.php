@@ -384,7 +384,7 @@ function cat_render_details_fields(array $game, array $images): void
               <?php endforeach; ?>
             </select>
             <img id="cat-picture" class="cat-picture<?php echo $game['img_url'] === '' ? ' cat-hidden' : ''; ?>" alt=""
-                 src="<?php echo $game['img_url'] === '' ? '' : cat_h('modules/billing/images/games/' . rawurlencode($game['img_url'])); ?>"></td></tr>
+                 src="<?php echo $game['img_url'] === '' ? '' : cat_h('images/games/' . rawurlencode($game['img_url'])); ?>"></td></tr>
     </table>
     <?php
 }

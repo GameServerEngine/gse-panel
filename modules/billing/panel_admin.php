@@ -28,12 +28,21 @@ if (!function_exists('exec_module')) {
         }
 
         $selected = (string)($_GET['s'] ?? '');
-        $section = $selected !== '' ? $selected : ($page === 'billing_setup' ? 'config' : 'invoices');
+        // Settings opens first. The old billing_operations link still opens Invoices.
+        $section = $selected !== '' ? $selected : ($page === 'billing_operations' ? 'invoices' : 'config');
 
+        echo '<style>'
+            . '.billing-admin-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}'
+            . '.billing-admin-tab{display:inline-block;padding:8px 16px;border:1px solid #3a5a7a;border-radius:6px;background:transparent;color:#cfe3f5;font-weight:600;text-decoration:none}'
+            . '.billing-admin-tab:hover{background:#243a52}'
+            . '.billing-admin-tab.is-active{background:#2f7fd1;border-color:#2f7fd1;color:#fff}'
+            . '</style>';
         echo '<nav class="billing-admin-tabs" aria-label="Billing administration">';
         foreach ($tabs as $key => $tab) {
-            $active = $key === $section ? ' aria-current="page" class="active"' : '';
-            echo '<a' . $active . ' href="home.php?m=billing&amp;p=billing&amp;s=' . rawurlencode($key) . '">'
+            $isActive = $key === $section;
+            echo '<a class="billing-admin-tab' . ($isActive ? ' is-active' : '') . '"'
+                . ($isActive ? ' aria-current="page"' : '')
+                . ' href="home.php?m=billing&amp;p=billing&amp;s=' . rawurlencode($key) . '">'
                 . htmlspecialchars($tab[0], ENT_QUOTES, 'UTF-8') . '</a>';
         }
         echo '</nav>';

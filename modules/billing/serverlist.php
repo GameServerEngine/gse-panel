@@ -89,10 +89,6 @@ if ($db instanceof mysqli) {
       <?php foreach ($gameRows as $row): ?>
         <?php
           $serviceDisplayName = (string)($row['display_name'] ?? $row['game_name'] ?? 'Game Server');
-          $variantLabel = billing_detect_variant_label($row);
-          if ($variantLabel !== '' && stripos($serviceDisplayName, $variantLabel) === false) {
-              $serviceDisplayName .= ' - ' . $variantLabel;
-          }
           $startingPrice = $row['starting_price_monthly'] ?? null;
           $priceLabel = ($startingPrice === null)
               ? 'See pricing options'
@@ -104,7 +100,7 @@ if ($db instanceof mysqli) {
         ?>
         <article class="gsw-catalog-card">
           <?php if (!empty($row['img_url'])): ?>
-            <img class="gsw-catalog-card-image" src="<?php echo billing_serverlist_e(billing_url('images/games/' . rawurlencode((string)$row['img_url']))); ?>" alt="" loading="lazy">
+            <img class="gsw-catalog-card-image" src="<?php echo billing_serverlist_e(panel_asset_url('images/games/' . rawurlencode((string)$row['img_url']))); ?>" alt="" loading="lazy">
           <?php endif; ?>
           <h2><?php echo billing_serverlist_e($serviceDisplayName); ?></h2>
           <p><?php echo billing_serverlist_e(billing_serverlist_excerpt((string)($row['description'] ?? ''))); ?></p>

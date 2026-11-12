@@ -124,6 +124,9 @@ if (!function_exists('billing_url')) {
             $configured = (string)$billing_runtime_site_config['panel_base'];
         }
         if (is_string($configured) && $configured !== '') {
+            if (preg_match('#^https?://#i', $configured)) {
+                return rtrim($configured, '/');
+            }
             return '/' . trim($configured, '/') === '/' ? '' : '/' . trim($configured, '/');
         }
         $billing = rtrim(billing_base_path(), '/');
@@ -133,6 +136,11 @@ if (!function_exists('billing_url')) {
     function panel_asset_url(string $path): string
     {
         return rtrim(panel_base_path(), '/') . '/' . ltrim($path, '/');
+    }
+
+    function panel_home_url(): string
+    {
+        return rtrim(panel_base_path(), '/') . '/';
     }
 
     function billing_url(string $path = ''): string
