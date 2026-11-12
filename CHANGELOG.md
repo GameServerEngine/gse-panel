@@ -2,6 +2,10 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.8.4 (2026-11-11)
+- **Game Catalog page for the storefront:** Billing Setup has a new Game Catalog tab. Open a game to set its display name, description and picture, its price (per slot, tiers, or base plus extra slots), the slots customers can pick, and which agents it is sold on. Games you publish now show up on the storefront catalog and can be rented. The storefront was empty because nothing had been published and the page for doing it had been left out of the menu. A one-time import copies the old services list onto the agents you pick.
+- **Billing Setup page easier to read:** The PayPal settings and diagnostics used dark grey text that was almost invisible on the dark panel. The text now follows the panel colours and is slightly larger.
+
 ## 2.8.3 (2026-11-11)
 - **Edited-files review on the update page:** Nothing is checked by default, so unchecked files are overwritten by the install. Checking a folder checks every edited file under it, and a check-all box is in the header. Commit `048a8c47`.
 

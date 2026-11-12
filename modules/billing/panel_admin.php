@@ -9,6 +9,7 @@ if (!function_exists('exec_module')) {
         $sections = array(
             'billing_setup' => array(
                 'config' => 'admin_config.php',
+                'game_catalog' => 'admin_catalog.php',
                 'locations' => 'admin_locations.php',
                 'coupons' => 'admin_coupons.php',
             ),
@@ -46,6 +47,9 @@ if (!function_exists('exec_module')) {
 
         if ($file === 'admin_orders.php' && function_exists('billing_admin_orders_exec')) {
             billing_admin_orders_exec();
+        }
+        if ($file === 'admin_catalog.php') {
+            billing_admin_catalog_render();
         }
     }
 }

@@ -108,7 +108,7 @@ if ($homeCfgId <= 0) {
       <div class="clearfix">
       <?php foreach ($games as $g): ?>
         <div class="float-left p-30-20 order-catalog-item">
-          <?php echo order_e($g['game_name']); ?><br>
+          <?php echo order_e($g['display_name']); ?><br>
           <a href="order.php?home_cfg_id=<?php echo (int)$g['home_cfg_id']; ?>" class="gsw-btn">Order Now</a>
         </div>
       <?php endforeach; ?>
@@ -136,8 +136,9 @@ if (!$gameRow || empty($offers)) {
     exit;
 }
 
-$displayName = (string)$gameRow['game_name'];
-$imgSrc = billing_image_url('');
+$gameDetails = catalog_load_game_details($db, $table_prefix, $homeCfgId);
+$displayName = $gameDetails['display_name'] !== '' ? $gameDetails['display_name'] : (string)$gameRow['game_name'];
+$imgSrc = billing_image_url($gameDetails['img_url']);
 if ($imgSrc === '') { $imgSrc = '/images/games/default_server.png'; }
 
 $is_logged_in = (isset($_SESSION['website_user_id']) && !empty($_SESSION['website_user_id'])) || (isset($_SESSION['website_username']) && !empty($_SESSION['website_username']));
@@ -157,7 +158,7 @@ foreach ($offers as $offer) {
 <img src="<?php echo order_e($imgSrc); ?>" alt="<?php echo order_e($displayName); ?>"
      onerror="this.src='/images/games/default_server.png'; this.onerror=null;">
 <center class="order-media-title"><b><?php echo order_e($displayName); ?></b></center>
-<p class="order-media-desc">Configured through the <?php echo billing_brand_e('name'); ?> billing catalog.</p>
+<p class="order-media-desc"><?php echo $gameDetails['description'] !== '' ? order_e($gameDetails['description']) : 'Configured through the ' . billing_brand_e('name') . ' billing catalog.'; ?></p>
 </div>
 <div class="order-form-card">
 <?php if ($orderErrorMessage !== ''): ?>

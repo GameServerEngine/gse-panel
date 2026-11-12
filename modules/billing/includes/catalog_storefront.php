@@ -17,27 +17,58 @@ if (!function_exists('catalog_load_enabled_games')) {
      */
     function catalog_load_enabled_games(mysqli $db, string $prefix): array
     {
-        $sql = "SELECT ch.home_cfg_id, ch.game_name, ch.game_key, ch.home_cfg_file,
+        $hasDetails = catalog_storefront_has_game_details($db, $prefix);
+        $detailColumns = $hasDetails
+            ? "COALESCE(NULLIF(cg.display_name, ''), ch.game_name) AS display_name, COALESCE(cg.description, '') AS description, COALESCE(cg.img_url, '') AS img_url"
+            : "ch.game_name AS display_name, '' AS description, '' AS img_url";
+        $detailJoin = $hasDetails ? "LEFT JOIN `{$prefix}catalog_game` cg ON cg.home_cfg_id = ch.home_cfg_id" : '';
+        $detailGroup = $hasDetails ? ', cg.display_name, cg.description, cg.img_url' : '';
+        $sql = "SELECT ch.home_cfg_id, ch.game_name, ch.game_key, ch.home_cfg_file, {$detailColumns},
                        MIN(
                            CASE co.pricing_mode
                                WHEN 'per_slot' THEN co.per_slot_price_monthly
                                WHEN 'base_plus_extra' THEN co.base_price_monthly
-                               ELSE NULL
+                               ELSE (SELECT MIN(t.price_monthly) FROM `{$prefix}catalog_tier` t WHERE t.offer_id = co.offer_id)
                            END
                        ) AS starting_price_monthly,
                        MIN(co.slot_min_qty) AS slot_min_qty,
                        MAX(co.slot_max_qty) AS slot_max_qty
                 FROM `{$prefix}catalog_offer` co
                 INNER JOIN `{$prefix}config_homes` ch ON ch.home_cfg_id = co.home_cfg_id
+                {$detailJoin}
                 WHERE co.enabled = 1
-                GROUP BY ch.home_cfg_id, ch.game_name, ch.game_key, ch.home_cfg_file
-                ORDER BY ch.game_name";
+                GROUP BY ch.home_cfg_id, ch.game_name, ch.game_key, ch.home_cfg_file{$detailGroup}
+                ORDER BY display_name";
         $res = $db->query($sql);
         $rows = [];
         while ($res && ($row = $res->fetch_assoc())) {
             $rows[] = $row;
         }
         return $rows;
+    }
+}
+
+if (!function_exists('catalog_storefront_has_game_details')) {
+    /** True once migration 0008 has created the game details table. Lets the storefront work before it runs. */
+    function catalog_storefront_has_game_details(mysqli $db, string $prefix): bool
+    {
+        $name = $db->real_escape_string($prefix . 'catalog_game');
+        $res = $db->query("SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$name}' LIMIT 1");
+        return $res !== false && $res->num_rows > 0;
+    }
+}
+
+if (!function_exists('catalog_load_game_details')) {
+    /** The storefront name, description and picture for one game. Falls back to the game config name. */
+    function catalog_load_game_details(mysqli $db, string $prefix, int $homeCfgId): array
+    {
+        $details = array('display_name' => '', 'description' => '', 'img_url' => '');
+        if (!catalog_storefront_has_game_details($db, $prefix)) {
+            return $details;
+        }
+        $res = $db->query("SELECT display_name, description, img_url FROM `{$prefix}catalog_game` WHERE home_cfg_id = " . (int)$homeCfgId . ' LIMIT 1');
+        $row = $res ? $res->fetch_assoc() : null;
+        return $row ? array_merge($details, $row) : $details;
     }
 }
 

@@ -48,7 +48,7 @@ This file captures how the control panel, storefront, agents, and helper scripts
 | --- | --- | --- |
 | Public pages | `modules/billing/index.php`, `serverlist.php`, `order.php`, `cart.php`, `payment_success.php`, `docs.php` | Runtime now lives under `modules/billing`. `Website/*.php` wrappers proxy legacy paths to these files. |
 | Auth | `modules/billing/login.php`, `register.php`, `reset_password.php`, `forgot_password.php`, `includes/login_required.php`, `includes/admin_auth.php` | Share `gameserverpanel_web` session, call into panel DB to validate roles. |
-| Admin | `modules/billing/admin.php`, `adminserverlist.php`, `admin_orders.php`, `admin_coupons.php`, `admin_config.php`, `my_orders_panel.php` | Manage services, coupons, prices, and provisioning. `adminserverlist.php` controls service availability per node. |
+| Admin | `modules/billing/admin.php`, `adminserverlist.php`, `admin_orders.php`, `admin_coupons.php`, `admin_config.php`, `my_orders_panel.php` | Manage services, coupons, prices, and provisioning. The Game Catalog tab (`admin_catalog.php`, Billing Setup) controls which games are sold, their prices and the agents they run on. `adminserverlist.php` is the old page and only holds headroom settings. |
 | PayPal API | `modules/billing/api/create_order.php`, `api/capture_order.php`, `paypal/webhook.php`, `logs/payment_capture.log` | Implements REST checkout. Legacy `Website/api/*` and `Website/paypal/webhook.php` wrappers proxy to module runtime. |
 | Provisioning bridge | `modules/billing/create_servers.php`, `includes/provisioner.php`, `includes/panel_bridge.php` | Shared between panel module and storefront backend. Encapsulates whole server creation/renewal pipeline. |
 | Cron helpers | `cron/cron-shop.php`, `diag_remote.php` | Automations for renewals, diagnostics, health checks. |
@@ -65,7 +65,7 @@ This file captures how the control panel, storefront, agents, and helper scripts
 ## Data touchpoints
 
 - **Users** – `users` table is shared. Registration uses `Website/register.php`, admin pages use `modules/user_admin`. Password upgrades must not break panel logins.
-- **Billing tables** – `billing_services`, `billing_orders`, `billing_invoices`, `billing_coupons`. Admin edits (pricing, enable/disable, locations) are done via `adminserverlist.php`; automation uses `cron-shop.php`.
+- **Billing tables** – `billing_services`, `billing_orders`, `billing_invoices`, `billing_coupons`. `billing_services` is the order snapshot; the storefront reads `catalog_offer`/`catalog_tier`/`catalog_game`. Admin edits (pricing, enable/disable, agents) are done in the Game Catalog tab, locations in the Locations tab; automation uses `cron-shop.php`.
 - **Homes/Mods/IPs** – Stored in `game_homes`, `game_mods`, `remote_server_ips`. Provisioner writes to these tables; `gamemanager`, `litefm`, `ftp`, and `user_games` read them.
 - **Logging** – `$db->logger()` writes to `logs`. Storefront-specific logs live in `Website/logs/` for quick inspection (payment capture, provisioning outcomes, coupon usage).
 

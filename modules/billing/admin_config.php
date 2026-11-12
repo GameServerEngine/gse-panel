@@ -173,11 +173,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="css/header.css">
   <style>
-    .cfg-section { background:#fff; border:1px solid #ddd; border-radius:6px; padding:20px 24px; margin-bottom:28px; }
-    .cfg-section h2 { margin-top:0; color:#333; border-bottom:2px solid #eee; padding-bottom:8px; }
+    .cfg-section { background:transparent; border:1px solid rgba(128,128,128,0.4); border-radius:6px; padding:20px 24px; margin-bottom:28px; }
+    .cfg-section h2 { margin-top:0; color:inherit; border-bottom:2px solid rgba(128,128,128,0.4); padding-bottom:8px; }
     .field-group { margin-bottom:18px; }
-    .field-group label { display:block; font-weight:600; color:#333; margin-bottom:4px; }
-    .field-help { font-size:0.85em; color:#666; margin-bottom:6px; }
+    .field-group label { display:block; font-weight:600; color:inherit; margin-bottom:4px; }
+    .field-help { font-size:0.9em; color:inherit; opacity:0.8; margin-bottom:6px; }
     .field-group input[type=text],
     .field-group input[type=password],
     .field-group input[type=number],
@@ -186,14 +186,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
     .field-group .pw-wrap { display:flex; gap:6px; align-items:center; max-width:520px; }
     .field-group .pw-wrap input { flex:1; }
     .btn-show { padding:8px 14px; font-size:0.9em; border:1px solid #aaa; border-radius:4px;
-                background:#f5f5f5; cursor:pointer; white-space:nowrap; }
+                background:#f5f5f5; color:#222; cursor:pointer; white-space:nowrap; }
     .status-box { padding:12px 16px; border-radius:4px; margin-bottom:18px; font-weight:600; }
     .status-success { background:#d4edda; color:#155724; border:1px solid #c3e6cb; }
     .status-error   { background:#f8d7da; color:#8b1e2d; border:1px solid #b21f35; }
     .status-info    { background:#d1ecf1; color:#0c5460; border:1px solid #bee5eb; }
     .panel-badge { background:#e8f4fd; border:1px solid #9ec8f0; color:#1a5276; padding:10px 14px;
                    border-radius:4px; margin-bottom:18px; font-size:0.9em; }
-    .readonly-field { background:#f4f4f4; color:#555; cursor:not-allowed; }
+    .readonly-field { background:rgba(128,128,128,0.15); color:inherit; cursor:not-allowed; }
     .warn-box { background:#fff3cd; border:1px solid #ffc107; color:#856404; padding:10px 14px;
                 border-radius:4px; margin-bottom:14px; font-size:0.9em; }
     .save-row { margin:14px 0; }
@@ -247,8 +247,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
                placeholder="(default: billing/data/)">
       </div>
 
-      <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
-      <h3 style="margin-top:0;color:#333;">PayPal Configuration</h3>
+      <hr style="border:none;border-top:1px solid rgba(128,128,128,0.4);margin:24px 0;">
+      <h3 style="margin-top:0;color:inherit;">PayPal Configuration</h3>
 
       <?php
       $isSandboxMode = ($cfgVals['paypal_mode'] ?? 'sandbox') !== 'live';
@@ -273,7 +273,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
       </div>
 
       <!-- Sandbox credentials -->
-      <h4 style="color:#555;margin:20px 0 8px;">Sandbox Credentials</h4>
+      <h4 style="color:inherit;margin:20px 0 8px;">Sandbox Credentials</h4>
       <div class="field-group">
         <label for="cfg_sb_id">Sandbox Client ID</label>
         <div class="field-help">Found in PayPal Developer Dashboard → sandbox app. Safe to expose in browser JS.</div>
@@ -300,7 +300,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
       </div>
 
       <!-- Live credentials -->
-      <h4 style="color:#555;margin:20px 0 8px;">Live Credentials</h4>
+      <h4 style="color:inherit;margin:20px 0 8px;">Live Credentials</h4>
       <div class="field-group">
         <label for="cfg_lv_id">Live Client ID</label>
         <div class="field-help">From your PayPal live app. Leave blank until ready for production.</div>
@@ -324,7 +324,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
       </div>
 
       <!-- Webhook path + computed URL -->
-      <h4 style="color:#555;margin:20px 0 8px;">Webhook Endpoint</h4>
+      <h4 style="color:inherit;margin:20px 0 8px;">Webhook Endpoint</h4>
       <div class="field-help" style="margin-bottom:10px;">
         PayPal requires a <strong>full public HTTPS URL</strong> to deliver webhook events.
         Copy the computed URL below into your PayPal app's webhook configuration.
@@ -338,7 +338,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
                oninput="updateWebhookUrl()">
       </div>
       <div class="field-group">
-        <label>Computed Full Webhook URL <small style="font-weight:normal;color:#888;">(read-only — paste this into PayPal)</small></label>
+        <label>Computed Full Webhook URL <small style="font-weight:normal;opacity:0.8;">(read-only — paste this into PayPal)</small></label>
         <div class="field-help">
           This is the URL PayPal will POST webhook events to.
           It must be publicly accessible over HTTPS before enabling live mode.
@@ -347,7 +347,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
                class="readonly-field"
                value="<?php echo h($computedWebhookUrl); ?>"
                readonly
-               style="font-family:monospace;color:#333;background:#f0f4ff;">
+               style="font-family:monospace;color:inherit;background:rgba(128,128,128,0.15);">
         <button type="button" id="copy_webhook_url_btn" class="btn-show" style="margin-top:4px;"
                 onclick="var u=document.getElementById('computed_webhook_url');if(u){navigator.clipboard.writeText(u.value).then(function(){var b=document.getElementById('copy_webhook_url_btn');b.textContent='Copied!';setTimeout(function(){b.textContent='Copy';},2000);});}">Copy</button>
       </div>
@@ -434,16 +434,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
   }
   ?>
   <style>
-    .diag-grid { display:grid; grid-template-columns:1fr; gap:8px; font-size:0.9em; }
-    @media (min-width:600px) { .diag-grid { grid-template-columns:220px 1fr; } }
+    .diag-grid { display:grid; grid-template-columns:1fr; gap:8px; font-size:1em; }
+    @media (min-width:600px) { .diag-grid { grid-template-columns:280px 1fr; } }
     .diag-row { display:contents; }
-    .diag-label { color:#555; font-weight:600; padding:6px 0; border-bottom:1px solid #f0f0f0; word-break:break-word; }
-    .diag-value { padding:6px 0; border-bottom:1px solid #f0f0f0; word-break:break-all; }
-    .diag-sub { font-size:0.85em; color:#888; margin-top:4px; }
-    .diag-sep { grid-column:1/-1; border-top:2px solid #e9ecef; margin:6px 0 2px; }
-    .recent-errors-table { width:100%; border-collapse:collapse; font-size:0.85em; overflow-x:auto; display:block; }
-    .recent-errors-table th { background:#f8f9fa; padding:6px 8px; text-align:left; border-bottom:2px solid #dee2e6; white-space:nowrap; }
-    .recent-errors-table td { padding:5px 8px; border-bottom:1px solid #eee; word-break:break-word; }
+    .diag-label { color:inherit; opacity:0.85; font-weight:600; padding:6px 0; border-bottom:1px solid rgba(128,128,128,0.3); word-break:break-word; }
+    .diag-value { padding:6px 0; border-bottom:1px solid rgba(128,128,128,0.3); word-break:break-all; }
+    .diag-sub { font-size:0.9em; color:inherit; opacity:0.75; margin-top:4px; }
+    .diag-sep { grid-column:1/-1; border-top:2px solid rgba(128,128,128,0.4); margin:6px 0 2px; }
+    .recent-errors-table { width:100%; border-collapse:collapse; font-size:0.95em; overflow-x:auto; display:block; }
+    .recent-errors-table th { background:rgba(128,128,128,0.2); padding:6px 8px; text-align:left; border-bottom:2px solid rgba(128,128,128,0.4); white-space:nowrap; }
+    .recent-errors-table td { padding:5px 8px; border-bottom:1px solid rgba(128,128,128,0.3); word-break:break-word; }
   </style>
   <div class="cfg-section">
     <h2>PayPal Diagnostics</h2>
@@ -551,7 +551,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
     </div>
 
     <?php if (!empty($diag_recent_events)): ?>
-    <h4 style="margin-top:22px;color:#555;">Recent Webhook Events</h4>
+    <h4 style="margin-top:22px;color:inherit;">Recent Webhook Events</h4>
     <div style="overflow-x:auto;">
     <table class="recent-errors-table">
       <thead><tr>
@@ -573,14 +573,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
     </table>
     </div>
     <?php else: ?>
-    <p style="color:#888;font-size:0.9em;margin-top:12px;">No webhook events recorded yet. Events will appear here after PayPal delivers the first webhook to <code><?php echo h($diag_wh_full_url ?: $diag_wh_path); ?></code>.</p>
+    <p style="opacity:0.8;font-size:0.95em;margin-top:12px;">No webhook events recorded yet. Events will appear here after PayPal delivers the first webhook to <code><?php echo h($diag_wh_full_url ?: $diag_wh_path); ?></code>.</p>
     <?php endif; ?>
 
-    <h4 style="margin-top:22px;color:#555;">Recent PayPal Errors</h4>
+    <h4 style="margin-top:22px;color:inherit;">Recent PayPal Errors</h4>
     <?php if ($diag_errors_warning): ?>
     <div class="warn-box"><?php echo h($diag_errors_warning); ?></div>
     <?php elseif (empty($diag_recent_errors)): ?>
-    <p style="color:#888;font-size:0.9em;">No PayPal errors logged yet.</p>
+    <p style="opacity:0.8;font-size:0.95em;">No PayPal errors logged yet.</p>
     <?php else: ?>
     <div style="overflow-x:auto;">
     <table class="recent-errors-table">
