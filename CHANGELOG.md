@@ -2,6 +2,12 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.8.6 (2026-11-12)
+- **One listing per game on the storefront:** Each game config file now shows as one card on the storefront and one row on the Game Catalog tab. Before, a game showed a separate copy for each platform it was saved under. The stored data is unchanged.
+- **Game pictures on the storefront:** Each game card loads its own picture from the panel's game images folder, and the Game Catalog preview uses the same picture.
+- **Control Panel link goes to the panel:** The Control Panel link, the support ticket links and the admin sign-in redirect now point to the panel's own address instead of a `/panel/` path on the storefront site.
+- **Billing tabs are buttons:** The tabs on the Billing page are now buttons, and the page opens on Settings instead of Invoices.
+
 ## 2.8.5 (2026-11-11)
 - **All billing administration is now in the control panel:** Administration has one Billing page with tabs for Invoices, Orders, Payments, Cancellations, Game Catalog, Locations, Coupons and Settings. The old Billing Setup and Billing Operations entries are replaced by it (the panel update changes the menu), and old links to them still open the Billing page. The website no longer has its own admin pages: opening one sends you to the panel.
 - **Website admin and container pages removed:** The website's admin page, the old per-agent pricing page, the XML editor and everything for containers (customer container list, container actions and the container admin page) are gone. The container database tables are left as they were.
