@@ -15,7 +15,6 @@ require_once(__DIR__ . '/includes/login_required.php');
 // Include billing bootstrap (loads config and DB helper)
 require_once(__DIR__ . '/bootstrap.php');
 require_once(__DIR__ . '/includes/action_security.php');
-require_once(__DIR__ . '/includes/container_poc.php');
 require_once(__DIR__ . '/classes/BillingRepository.php');
 
 // Variables from config.inc.php (helps IDEs understand scope)
@@ -30,7 +29,6 @@ $db = mysqli_connect($db_host, $db_user, $db_pass, $db_name, isset($db_port) ? (
 if (!$db) {
     die("Connection failed: " . mysqli_connect_error());
 }
-container_poc_ensure_schema($db);
 
 // Include top bar and menu
 include(__DIR__ . '/includes/top.php');
@@ -56,15 +54,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'reque
     header('Location: my_servers.php'); exit;
 }
 
-// Fetch user's active servers
-// We'll look for homes assigned to this user
-// The relationship is: {table_prefix}billing_orders -> user_id and contains home_id references
-// We need to join with {table_prefix}home to get server details
+// Fetch the user's servers: server_homes rows owned by the user (user_id_main), with the game name,
+// the agent, and the newest billing order for that server (billing_orders.home_id).
 
 $query = "SELECT 
             h.home_id,
             h.home_name,
-            h.enabled,
             h.billing_status,
             h.server_expiration_date,
             rs.remote_server_name,
@@ -80,100 +75,27 @@ $query = "SELECT
             o.coupon_id,
             bc.code AS coupon_code,
             bc.discount_percent AS coupon_discount_percent
-          FROM {$table_prefix}home h
+          FROM {$table_prefix}server_homes h
           LEFT JOIN {$table_prefix}remote_servers rs ON h.remote_server_id = rs.remote_server_id
-          LEFT JOIN {$table_prefix}game_configs gc ON h.home_cfg_id = gc.home_cfg_id
-          LEFT JOIN {$table_prefix}billing_orders o ON h.user_id = o.user_id
+          LEFT JOIN {$table_prefix}config_homes gc ON h.home_cfg_id = gc.home_cfg_id
+          LEFT JOIN {$table_prefix}billing_orders o ON o.order_id = (
+                SELECT MAX(o2.order_id) FROM {$table_prefix}billing_orders o2
+                WHERE o2.home_id = CAST(h.home_id AS CHAR) AND o2.user_id = h.user_id_main
+          )
           LEFT JOIN {$table_prefix}billing_services bs ON o.service_id = bs.service_id
           LEFT JOIN {$table_prefix}billing_coupons bc ON o.coupon_id = bc.coupon_id
-          WHERE h.user_id = $user_id
+          WHERE h.user_id_main = $user_id
           ORDER BY h.home_id DESC";
 
 $result = mysqli_query($db, $query);
 $pending_cancellations = [];
 $pending_result = mysqli_query($db, "SELECT home_id, mode FROM {$table_prefix}billing_cancellation_requests WHERE user_id={$user_id} AND status='pending'");
 if ($pending_result) while ($pending = mysqli_fetch_assoc($pending_result)) $pending_cancellations[(int)$pending['home_id']] = $pending['mode'];
-$container_csrf = billing_action_csrf_token('container_lifecycle_csrf');
-$containers = container_poc_fetch_all($db, "SELECT c.*, a.name AS application_name, ag.name AS agent_name FROM `" . container_poc_table('managed_containers') . "` c LEFT JOIN `" . container_poc_table('container_applications') . "` a ON c.application_id = a.application_id LEFT JOIN `" . container_poc_table('container_agents') . "` ag ON c.agent_id = ag.agent_id WHERE c.user_id = {$user_id} ORDER BY c.container_id DESC");
-$access_flash = $_SESSION['container_access_flash'] ?? null;
-unset($_SESSION['container_access_flash']);
 
 ?>
 
 <div class="site-panel">
     <div class="site-panel-title">My Game Servers</div>
-    <?php if (is_array($access_flash)): ?>
-        <?php $flash_profile = is_array($access_flash['profile'] ?? null) ? $access_flash['profile'] : []; ?>
-        <div class="gsw-alert-success">
-            <strong>SSH/SFTP password reset.</strong>
-            <div>Host: <?php echo container_poc_e($flash_profile['host'] ?? ''); ?>:<?php echo (int)($flash_profile['port'] ?? 0); ?></div>
-            <div>Username: <?php echo container_poc_e($flash_profile['username'] ?? ''); ?></div>
-            <div>Password: <code><?php echo container_poc_e($access_flash['password'] ?? ''); ?></code></div>
-        </div>
-    <?php endif; ?>
-    <?php if (!empty($containers)): ?>
-        <h2>Container Monitor</h2>
-        <table class="cart-table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Application</th>
-                    <th>Agent</th>
-                    <th>Status</th>
-                    <th>Resources</th>
-                    <th>Ports</th>
-                    <th>SSH/SFTP Access</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($containers as $container): ?>
-                    <?php $ports = container_poc_json_decode($container['ports_json'] ?? '[]', []); ?>
-                    <?php $access = container_poc_json_decode($container['access_profile_json'] ?? '', []); ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($container['name'] ?? 'Unknown', ENT_QUOTES, 'UTF-8'); ?></td>
-                        <td><?php echo htmlspecialchars($container['application_name'] ?? 'Empty Container', ENT_QUOTES, 'UTF-8'); ?></td>
-                        <td><?php echo htmlspecialchars($container['agent_name'] ?? 'Unknown', ENT_QUOTES, 'UTF-8'); ?></td>
-                        <td><?php echo htmlspecialchars($container['status'] ?? 'unknown', ENT_QUOTES, 'UTF-8'); ?></td>
-                        <td><?php echo htmlspecialchars((string)$container['cpu'], ENT_QUOTES, 'UTF-8'); ?> CPU / <?php echo (int)$container['memory_mb']; ?> MB / <?php echo (int)$container['storage_gb']; ?> GB</td>
-                        <td>
-                            <?php if ($ports): ?>
-                                <?php foreach ($ports as $port): ?>
-                                    <div><?php echo htmlspecialchars(($port['label'] ?? 'port') . ': ' . ($port['host_port'] ?? '') . ' -> ' . ($port['container_port'] ?? '') . '/' . ($port['protocol'] ?? 'tcp'), ENT_QUOTES, 'UTF-8'); ?></div>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <span class="muted">No ports</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <?php if (!empty($access['username']) && !empty($access['host']) && !empty($access['port'])): ?>
-                                <div>Status: <?php echo empty($access['revoked']) ? 'Enabled' : 'Revoked'; ?></div>
-                                <div>Host: <?php echo container_poc_e($access['host']); ?>:<?php echo (int)$access['port']; ?></div>
-                                <div>Username: <?php echo container_poc_e($access['username']); ?></div>
-                                <div>Protocols: SSH <?php echo !empty($access['ssh_supported']) ? 'on' : 'off'; ?> / SFTP <?php echo !empty($access['sftp_supported']) ? 'on' : 'off'; ?></div>
-                                <?php if (!empty($container['access_last_set_at'])): ?>
-                                    <small>Last set: <?php echo container_poc_e($container['access_last_set_at']); ?></small>
-                                <?php endif; ?>
-                            <?php else: ?>
-                                <span class="muted">Not provisioned</span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="gsw-inline-actions">
-                            <?php foreach (['start' => 'Start', 'stop' => 'Stop', 'restart' => 'Restart', 'reset_access' => 'Reset SSH/SFTP Password', 'delete' => 'Delete'] as $action => $label): ?>
-                                <form method="post" action="container_action.php">
-                                    <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($container_csrf, ENT_QUOTES, 'UTF-8'); ?>">
-                                    <input type="hidden" name="container_id" value="<?php echo (int)$container['container_id']; ?>">
-                                    <input type="hidden" name="action" value="<?php echo htmlspecialchars($action, ENT_QUOTES, 'UTF-8'); ?>">
-                                    <button class="<?php echo $action === 'delete' ? 'gsw-btn-secondary' : 'gsw-btn'; ?>" type="submit"><?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?></button>
-                                </form>
-                            <?php endforeach; ?>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php endif; ?>
-    
     <?php if ($result && mysqli_num_rows($result) > 0): ?>
         <table class="cart-table">
             <thead>

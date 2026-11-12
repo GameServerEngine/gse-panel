@@ -84,7 +84,7 @@ While scoping multi-file work, do **not** emit PHP/SQL/XML or run shell commands
 - Provisioner is responsible for calling `Website/create_servers.php` logic, adding homes, assigning ports, enabling FTP, and logging/notifications. Never bypass it.
 
 ### 4.4 Regions/Nodes (multi-remote)
-- `remote_servers` and `remote_server_ips` tables remain the source for available locations. Admin tooling (`adminserverlist.php`) must let staff toggle availability and restrict services per location.
+- `remote_servers` and `remote_server_ips` tables remain the source for available locations. Admin tooling (Administration > Billing > Locations and Game Catalog in the panel) must let staff toggle availability and restrict services per location.
 - When a node is globally disabled it must disappear (or show as unavailable) in ordering and admin tools.
 
 ### 4.5 Billing automation (website-side)

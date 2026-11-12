@@ -44,6 +44,7 @@ function exec_module() {
 	$ft->add_field('string','remote_host_ftp_ip',"");
 	$ft->add_field('string','remote_host_ftp_port',"21");
 	$ft->add_field('string','remote_encryption_key',"");
+	$ft->add_field('string','remote_host_user_name',"gameserver");
 	$ft->add_field('string','timeout',"5");
 	$ft->add_field('on_off','use_nat',"0");
 	$ft->add_field('string','display_public_ip',"");

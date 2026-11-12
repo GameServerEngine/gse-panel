@@ -208,7 +208,7 @@ function billing_admin_orders_exec()
 				echo "<a href='home.php?m=gamemanager&p=game_monitor&home_id-mod_id-ip=".$order['home_id']."' class='btn btn-sm'>View Server</a> ";
 				echo "<details style='margin-top:6px;'>";
 				echo "<summary class='btn btn-sm'>Change Service Term</summary>";
-				echo "<form method='post' action='home.php?m=billing&p=admin_orders' onsubmit=\"return confirm('Apply this service-term change to order #".intval($order['order_id'])." and linked server billing fields?');\">";
+				echo "<form method='post' action='home.php?m=billing&p=billing&s=orders' onsubmit=\"return confirm('Apply this service-term change to order #".intval($order['order_id'])." and linked server billing fields?');\">";
 				echo "<input type='hidden' name='csrf' value='".billing_admin_orders_h($csrf)."'>";
 				echo "<input type='hidden' name='admin_order_action' value='update_term'>";
 				echo "<input type='hidden' name='order_id' value='".intval($order['order_id'])."'>";

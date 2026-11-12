@@ -1,13 +1,11 @@
 <?php
-// Stylesheets shared by every storefront page. Uses the panel's helper when the
-// bootstrap has loaded it, and falls back to paths relative to the page otherwise
-// (order.php includes this before bootstrap.php).
-if (function_exists('panel_asset_url')) {
-    $gswTheme = panel_asset_url('themes/SimpleBootstrap/css/');
-} else {
-    $gswTheme = '../../themes/SimpleBootstrap/css/';
-}
+// Stylesheet shared by every storefront page: the GameServer Engine look.
+// billing_url() resolves the module path from any page; order.php includes this
+// before bootstrap.php, so fall back to a path relative to the page.
+$gswCss = function_exists('billing_url') ? billing_url('css/header.css') : 'css/header.css';
 ?>
-<link rel="stylesheet" href="<?php echo htmlspecialchars($gswTheme . 'bootstrap.min.css', ENT_QUOTES, 'UTF-8'); ?>">
-<link rel="stylesheet" href="<?php echo htmlspecialchars($gswTheme . 'main.css', ENT_QUOTES, 'UTF-8'); ?>">
-<link rel="stylesheet" href="css/header.css">
+<meta name="theme-color" content="#07080c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;550;650;750;800;900&amp;display=swap">
+<link rel="stylesheet" href="<?php echo htmlspecialchars($gswCss, ENT_QUOTES, 'UTF-8'); ?>">

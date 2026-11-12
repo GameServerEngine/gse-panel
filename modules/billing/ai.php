@@ -233,18 +233,37 @@ try {
     $error = $e->getMessage();
 }
 ?>
+<?php require_once __DIR__ . '/includes/brand.php'; require_once __DIR__ . '/billing_bootstrap.php'; ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Assistant - <?php echo billing_brand_e('name'); ?></title>
+  <link rel="icon" type="image/png" sizes="32x32" href="<?php echo htmlspecialchars(billing_url('images/brand/favicon-32x32.png'), ENT_QUOTES, 'UTF-8'); ?>">
+<?php include(__DIR__ . '/includes/theme_head.php'); ?>
+  <style>
+    /* Assistant-only rules. Page, button and form styles come from css/header.css. */
+    .ai-container { max-width: 860px; }
+    .ai-alert { padding: 12px 16px; margin: 12px 0; border: 1px solid #f0b4bd; border-radius: var(--radius); background: #fbe3e6; color: #7a1523; }
+    .ai-msg-meta { color: var(--muted); font-size: 0.8rem; }
+    .ai-textarea { width: 100%; }
+  </style>
+</head>
+<body>
 <?php
 // Include top and menu for website UI (session already started above)
 include(__DIR__ . '/includes/top.php');
 include(__DIR__ . '/includes/menu.php');
 ?>
+<main>
 <!-- UI -->
 <div class="ai-container">
-  <h3>Site Assistant</h3>
+  <h1>AI Assistant</h1>
   <p>Type a question below. Press <b>Enter</b> to send, <b>Shift+Enter</b> for a new line.</p>
 
   <?php if ($error): ?>
-  <div class="ai-alert" style="border:1px solid #c00;">
+  <div class="ai-alert">
       <strong>Error:</strong> <?php echo h($error); ?>
     </div>
   <?php endif; ?>
@@ -256,8 +275,8 @@ include(__DIR__ . '/includes/menu.php');
   <form id="chat-form" method="post" style="margin:12px 0;">
     <textarea id="chat-input" name="user_input" rows="3" class="ai-textarea" placeholder="Ask your question..."></textarea>
     <div style="margin-top:8px; display:flex; gap:8px;">
-      <button type="submit">Send</button>
-      <button type="submit" name="reset_thread" value="1">Reset Conversation</button>
+      <button type="submit" class="gsw-btn">Send</button>
+      <button type="submit" name="reset_thread" value="1" class="gsw-btn-secondary">Reset Conversation</button>
     </div>
   </form>
 
@@ -323,4 +342,7 @@ include(__DIR__ . '/includes/menu.php');
   });
 })();
 </script>
-
+</main>
+<?php include(__DIR__ . '/includes/footer.php'); ?>
+</body>
+</html>

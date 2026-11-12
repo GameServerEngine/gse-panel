@@ -58,7 +58,7 @@ CREATE TABLE `DB_PREFIXadminexternallinks` (
   `url` varchar(200) NOT NULL,
   `user_id` varchar(7) NOT NULL,
   PRIMARY KEY (`link_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -157,7 +157,7 @@ CREATE TABLE `DB_PREFIXbilling_cancellation_requests` (
   PRIMARY KEY (`request_id`),
   KEY `idx_cancel_home_status` (`home_id`,`status`),
   KEY `idx_cancel_status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -180,7 +180,7 @@ CREATE TABLE `DB_PREFIXbilling_config` (
   PRIMARY KEY (`config_id`),
   KEY `game_key` (`game_key`),
   KEY `enabled` (`enabled`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -204,7 +204,7 @@ CREATE TABLE `DB_PREFIXbilling_coupons` (
   UNIQUE KEY `idx_code` (`code`),
   KEY `idx_active_expires` (`is_active`,`expires`),
   KEY `idx_created_by` (`created_by`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -251,7 +251,7 @@ CREATE TABLE `DB_PREFIXbilling_invoices` (
   KEY `service_id` (`service_id`),
   KEY `idx_coupon` (`coupon_id`),
   KEY `idx_billing_invoices_home_id` (`home_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -263,7 +263,7 @@ CREATE TABLE `DB_PREFIXbilling_locations` (
   `enabled` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`location_id`),
   KEY `idx_loc_parent` (`parent_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -311,7 +311,7 @@ CREATE TABLE `DB_PREFIXbilling_paypal_errors` (
   PRIMARY KEY (`id`),
   KEY `idx_context` (`context`),
   KEY `idx_created_at` (`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -331,7 +331,7 @@ CREATE TABLE `DB_PREFIXbilling_paypal_webhook_events` (
   UNIQUE KEY `uidx_paypal_event_id` (`paypal_event_id`),
   KEY `idx_event_type` (`event_type`),
   KEY `idx_billing_order_id` (`billing_order_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -340,7 +340,7 @@ CREATE TABLE `DB_PREFIXbilling_service_agents` (
   `remote_server_id` int NOT NULL,
   PRIMARY KEY (`service_id`,`remote_server_id`),
   KEY `idx_bsa_remote` (`remote_server_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -350,7 +350,7 @@ CREATE TABLE `DB_PREFIXbilling_service_requirements` (
   `min_ram_mb` int NOT NULL DEFAULT '0',
   `min_disk_gb` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`home_cfg_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -360,7 +360,7 @@ CREATE TABLE `DB_PREFIXbilling_service_tiers` (
   `slot_count` int NOT NULL DEFAULT '0',
   `price_monthly` float(15,4) NOT NULL DEFAULT '0.0000',
   PRIMARY KEY (`service_id`,`tier_key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -389,7 +389,7 @@ CREATE TABLE `DB_PREFIXbilling_services` (
   `base_price_monthly` float(15,4) NOT NULL DEFAULT '0.0000',
   `extra_price_per_slot_monthly` float(15,4) NOT NULL DEFAULT '0.0000',
   PRIMARY KEY (`service_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -412,7 +412,7 @@ CREATE TABLE `DB_PREFIXbilling_transactions` (
   KEY `home_id` (`home_id`),
   KEY `status` (`status`),
   KEY `payment_method` (`payment_method`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -422,7 +422,7 @@ CREATE TABLE `DB_PREFIXcircular` (
   `message` text NOT NULL,
   `timestamp` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`circular_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -431,7 +431,7 @@ CREATE TABLE `DB_PREFIXcircular_recipients` (
   `circular_id` int NOT NULL,
   `status` tinyint NOT NULL,
   PRIMARY KEY (`user_id`,`circular_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -681,8 +681,7 @@ INSERT INTO `DB_PREFIXmodule_menus` (`module_id`, `subpage`, `group`, `menu_name
 (2,'addons_manager','admin','Server Content Manager',0),
 (3,'watch_logger','admin','Watch Logger',0),
 (4,'admin','admin','Backup/Restore Admin',0),
-(5,'billing_setup','admin','Billing Setup',0),
-(5,'billing_operations','admin','Billing Operations',0),
+(5,'billing','admin','Billing',0),
 (6,'','admin','Notification',0),
 (7,'','admin','Game/Mod Config',0),
 (8,'cron','admin','Cron Admin',0),
@@ -739,7 +738,7 @@ INSERT INTO `DB_PREFIXmodules` (`id`, `title`, `folder`, `version`, `db_version`
 (2,'Server Content Manager','addonsmanager','2.6',9,1),
 (3,'Administration','administration','1.0',1,1),
 (4,'Backup/Restore','backup-restore','1.2',1,1),
-(5,'billing','billing','3.6',13,1),
+(5,'billing','billing','3.7',14,1),
 (6,'Circular','circular','0.1',0,1),
 (7,'Config games','config_games','1.0',0,1),
 (8,'Cron','cron','1.0',0,1),
@@ -839,7 +838,7 @@ CREATE TABLE `DB_PREFIXpanel_update_log` (
   `started_at` datetime NOT NULL,
   `finished_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -1020,7 +1019,7 @@ CREATE TABLE `DB_PREFIXreseller_discount_codes` (
   `description` varchar(255) NOT NULL DEFAULT '0',
   `code` varchar(255) NOT NULL,
   PRIMARY KEY (`discount_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -1031,7 +1030,7 @@ CREATE TABLE `DB_PREFIXreseller_homes` (
   `assigned_slots` int NOT NULL,
   `status` varchar(16) NOT NULL DEFAULT '0',
   PRIMARY KEY (`home_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -1081,7 +1080,7 @@ CREATE TABLE `DB_PREFIXschema_migrations` (
   `migration_id` varchar(191) NOT NULL,
   `applied_at` datetime NOT NULL,
   PRIMARY KEY (`migration_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -1299,7 +1298,7 @@ CREATE TABLE `DB_PREFIXticket_attachments` (
   `unique_name` varchar(32) NOT NULL,
   PRIMARY KEY (`attachment_id`),
   UNIQUE KEY `unique_name` (`unique_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -1315,7 +1314,7 @@ CREATE TABLE `DB_PREFIXticket_messages` (
   PRIMARY KEY (`reply_id`),
   KEY `ticket_messages_fk0` (`ticket_id`),
   CONSTRAINT `ticket_messages_fk0` FOREIGN KEY (`ticket_id`) REFERENCES `tickets` (`tid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -1325,7 +1324,7 @@ CREATE TABLE `DB_PREFIXticket_settings` (
   `setting_value` text NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `setting_name` (`setting_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 INSERT INTO `DB_PREFIXticket_settings` (`id`, `setting_name`, `setting_value`) VALUES (1,'ratings_enabled','1'),
 (2,'attachments_enabled','1'),
@@ -1350,7 +1349,7 @@ CREATE TABLE `DB_PREFIXtickets` (
   `assigned_to` tinyint DEFAULT NULL,
   PRIMARY KEY (`tid`),
   UNIQUE KEY `uid` (`uid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
@@ -1394,7 +1393,7 @@ CREATE TABLE `DB_PREFIXupdate_patches` (
   `updater_version` varchar(80) DEFAULT NULL,
   `applied_at` datetime NOT NULL,
   PRIMARY KEY (`patch_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;

@@ -101,152 +101,36 @@ if ($db && $user_id > 0) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Successful - <?php echo billing_brand_e('name'); ?></title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .success-header {
-            text-align: center;
-            padding: 30px 0;
-            border-bottom: 2px solid #28a745;
-            margin-bottom: 30px;
-        }
-        .success-icon {
-            font-size: 64px;
-            color: #28a745;
-            margin-bottom: 20px;
-        }
-        h1 {
-            color: #28a745;
-            margin: 0 0 10px 0;
-        }
-        .subtitle {
-            color: #666;
-            font-size: 1.1em;
-        }
-        .info-box {
-            background: #e7f3ff;
-            border-left: 4px solid #007bff;
-            padding: 20px;
-            margin: 30px 0;
-            border-radius: 4px;
-        }
-        .info-box h3 {
-            margin-top: 0;
-            color: #007bff;
-        }
-        .info-box ul {
-            margin: 10px 0;
-            padding-left: 20px;
-        }
-        .info-box li {
-            margin: 8px 0;
-            line-height: 1.6;
-        }
-        .orders-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 30px 0;
-        }
-        .orders-table th {
-            background: #f8f9fa;
-            padding: 12px;
-            text-align: left;
-            border-bottom: 2px solid #dee2e6;
-            font-weight: 600;
-        }
-        .orders-table td {
-            padding: 15px 12px;
-            border-bottom: 1px solid #dee2e6;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.85em;
-            font-weight: 600;
-            background: #28a745;
-            color: white;
-        }
-        .status-pending {
-            background: #f0ad4e;
-        }
-        .status-failed {
-            background: #d9534f;
-        }
-        .provision-banner {
-            margin: 20px 0 0;
-            padding: 14px 18px;
-            border-radius: 6px;
-            color: #fff;
-            font-weight: 600;
-        }
-        .provision-debug {
-            margin-top: 20px;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            padding: 14px 16px;
-            background: #f8f9fa;
-        }
-        .provision-debug summary {
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .provision-debug-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 12px;
-        }
-        .provision-debug-table th,
-        .provision-debug-table td {
-            border-bottom: 1px solid #dee2e6;
-            padding: 8px 6px;
-            text-align: left;
-            font-size: 0.92em;
-            vertical-align: top;
-        }
-        .btn {
-            display: inline-block;
-            padding: 12px 24px;
-            margin: 10px 10px 10px 0;
-            background: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: 600;
-        }
-        .btn:hover {
-            background: #0056b3;
-        }
-        .btn-secondary {
-            background: #6c757d;
-        }
-        .btn-secondary:hover {
-            background: #545b62;
-        }
-        .actions {
-            text-align: center;
-            margin-top: 40px;
-            padding-top: 30px;
-            border-top: 2px solid #dee2e6;
-        }
-    </style>
 <?php include(__DIR__ . '/includes/theme_head.php'); ?>
+    <style>
+        /* Payment-success-only rules. Page, table and button styles come from css/header.css. */
+        .success-header { text-align: center; padding: 20px 0 30px; border-bottom: 2px solid var(--success); margin-bottom: 30px; }
+        .success-icon { font-size: 64px; color: var(--success); margin-bottom: 12px; }
+        .success-header h1 { color: var(--success); }
+        .subtitle { color: var(--muted); font-size: 1.1em; }
+        .info-box { background: #eaf4ff; border-left: 4px solid #2b6fb7; padding: 20px; margin: 30px 0; border-radius: var(--radius); }
+        .info-box h3 { margin-top: 0; color: #1d4f86; }
+        .info-box ul { margin: 10px 0; padding-left: 20px; }
+        .info-box li { margin: 8px 0; line-height: 1.6; }
+        .orders-table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+        .orders-table th { background: var(--page); padding: 12px; text-align: left; border-bottom: 2px solid var(--line); font-weight: 700; }
+        .orders-table td { padding: 14px 12px; border-bottom: 1px solid var(--line); }
+        .status-badge { background: #dcf5e8; color: var(--success); }
+        .status-pending { background: #fff0cc; color: var(--warning); }
+        .status-failed { background: #fbe3e6; color: var(--danger); }
+        .provision-banner { margin: 20px 0 0; padding: 14px 18px; border-radius: var(--radius); color: #fff; font-weight: 650; }
+        .provision-debug { margin-top: 20px; border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; background: var(--page); }
+        .provision-debug summary { cursor: pointer; font-weight: 650; }
+        .provision-debug-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .provision-debug-table th,
+        .provision-debug-table td { border-bottom: 1px solid var(--line); padding: 8px 6px; text-align: left; font-size: 0.92em; vertical-align: top; }
+        .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 40px; padding-top: 30px; border-top: 2px solid var(--line); }
+    </style>
 </head>
 <body>
+<?php include(__DIR__ . '/includes/top.php'); include(__DIR__ . '/includes/menu.php'); ?>
     <?php $banner = billing_payment_success_banner((array)$provision_summary, $orders); ?>
-    <div class="container">
+    <main>
         <div class="success-header">
             <div class="success-icon">✓</div>
             <h1>Payment Successful!</h1>
@@ -359,6 +243,7 @@ if ($db && $user_id > 0) {
             <a href="<?php echo htmlspecialchars(billing_url('order.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-secondary">Order Another Server</a>
             <a href="<?php echo htmlspecialchars(billing_url('index.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-secondary">Back to Home</a>
         </div>
-    </div>
+    </main>
+<?php include(__DIR__ . '/includes/footer.php'); ?>
 </body>
 </html>

@@ -1,0 +1,50 @@
+{
+ "schema": 1,
+ "component": "gse-panel",
+ "title": "GSE Panel",
+ "minimum_os": [
+  {
+   "name": "Ubuntu 22.04 LTS or newer, or Debian 12 or newer",
+   "minimum": "22.04",
+   "note": "Any OS with PHP 8.1 or newer works in theory. These are the releases that ship it."
+  }
+ ],
+ "tested_on": [
+  {
+   "name": "Ubuntu 24.04 LTS with PHP 8.3",
+   "note": "Runs against the dev Linux agent (2026-11-12)."
+  },
+  {
+   "name": "PHP 8.1 (Ubuntu 22.04) and PHP 8.2 (Debian 12)",
+   "note": "Syntax check of every .php file only (2026-11-12). Not run live."
+  },
+  {
+   "name": "MySQL 5.7.44 and 8.0.46",
+   "note": "Schema file imports all 87 tables on both; game database user creation and password change run on both (2026-11-12). The rest of the panel was run only against 8.0 on the dev server."
+  }
+ ],
+ "prerequisites": [
+  {
+   "name": "PHP 8.3 (recommended), 8.1 or newer (minimum)",
+   "note": "8.3 is what the panel is developed and tested on. Every file also passes php -l on 8.1 and 8.2."
+  },
+  {
+   "name": "PHP extensions: mysqli, curl, mbstring, gd, xmlrpc",
+   "note": "Ubuntu/Debian: apt install php-mysql php-curl php-mbstring php-gd php-xmlrpc. xmlrpc is needed to talk to the agents."
+  },
+  {
+   "name": "MySQL 5.7.8 or newer (8.0 supported), or a MySQL-compatible server",
+   "note": "Tested on MySQL 5.7.44 (the live database) and 8.0.46 (the test database). Game databases are created with mysql_native_password so old game clients (Arma 2 hives) can log in. MySQL 8.4 turns that plugin off by default (start the server with mysql_native_password=ON) and 9.0 removes it. MariaDB is untested."
+  },
+  {
+   "name": "Web server (Apache or nginx) with PHP",
+   "note": "Serves the panel."
+  }
+ ],
+ "unverified": [
+  "Web server versions are not set or tested.",
+  "PHP 8.1 and 8.2 were only syntax-checked.",
+  "Every panel page on MySQL 8.0 strict mode was not exercised; only the schema, the database module and the dev panel were.",
+  "MariaDB and MySQL 8.4 or newer were not tested."
+ ]
+}

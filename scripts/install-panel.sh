@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# The installer installs one release ZIP. There are no channels: pass --release-zip-url
-# to choose the release, or accept this default.
+# The installer installs one release ZIP. By default it asks GitHub for the newest
+# stable release and falls back to the newest testing release if none exists.
+# --channel stable|testing|working picks a channel, --release-zip-url picks an exact ZIP.
+GITHUB_REPO="GameServerEngine/gse-panel"
 DEFAULT_RELEASE_ZIP_URL="https://github.com/GameServerEngine/gse-panel/archive/refs/heads/stable.zip"
+CHANNEL="${GSE_PANEL_CHANNEL:-stable}"
 DEFAULT_WEB_GROUP="www-data"
 # The web server user runs the panel update. It must own the backup directory.
 DEFAULT_WEB_USER="www-data"
@@ -49,7 +52,7 @@ usage() {
   cat <<'USAGE'
 Usage:
   sudo bash scripts/install-panel.sh [--dry-run]
-  sudo bash scripts/install-panel.sh [--release-zip-url URL]
+  sudo bash scripts/install-panel.sh [--release-zip-url URL] [--channel stable|testing|working]
   sudo bash scripts/install-panel.sh --source git --repo-url URL --branch BRANCH
   sudo bash scripts/install-panel.sh --repair-permissions [--path PATH] [--owner USER|www-data] [--group www-data]
   sudo bash scripts/install-panel.sh [--path PATH] [--docroot PATH]
@@ -98,6 +101,43 @@ prompt() {
     read -r -p "$label: " value
     printf '%s' "$value"
   fi
+}
+
+# Print the .zip asset URLs of a GitHub API URL, one per line.
+github_zip_urls() {
+  curl -fsSL --retry 2 --connect-timeout 15 "$1" 2>/dev/null \
+    | grep -o '"browser_download_url": *"[^"]*\.zip"' | sed 's/.*"\(http[^"]*\)"$/\1/'
+}
+
+# Pick the release ZIP: stable (non-prerelease) first, then newest testing-*.
+resolve_release_zip_url() {
+  local api="https://api.github.com/repos/$GITHUB_REPO/releases" url=""
+  case "$CHANNEL" in
+    stable)
+      url="$(github_zip_urls "$api/latest" | head -n1 || true)"
+      [[ -n "$url" ]] && { printf '%s' "$url"; return 0; }
+      log "No stable release published yet; falling back to the newest testing release." >&2
+      ;&
+    testing)
+      # The releases list is newest first; testing-<ver> tags only.
+      url="$(github_zip_urls "$api?per_page=30" | grep '/testing-' | head -n1 || true)"
+      ;;
+    working) url="$(github_zip_urls "$api/tags/working-latest" | head -n1 || true)" ;;
+    *) die "--channel must be stable, testing or working." ;;
+  esac
+  [[ -n "$url" ]] || return 1
+  printf '%s' "$url"
+}
+
+# Verify the ZIP against its published .sha256 (release assets only).
+verify_release_sha256() {
+  local url="$1" file="$2" expect actual
+  [[ "$url" =~ ^https://github\.com/.+/releases/download/ ]] || return 0
+  expect="$(curl -fsSL --retry 2 --connect-timeout 15 "$url.sha256" 2>/dev/null | awk '{print $1; exit}')" || true
+  [[ -n "$expect" ]] || die "Release checksum file is missing: $url.sha256"
+  actual="$(sha256sum "$file" | awk '{print $1}')"
+  [[ "$expect" == "$actual" ]] || die "Checksum mismatch for the downloaded ZIP (expected $expect, got $actual)."
+  log "Checksum OK ($actual)."
 }
 
 validate_release_zip_url() {
@@ -378,6 +418,7 @@ install_release_archive() {
   log "Downloading Panel release ZIP: $release_url"
   curl -fL --retry 3 --connect-timeout 20 --output "$archive_file" "$release_url"
   [[ -s "$archive_file" ]] || die "Downloaded release ZIP is missing or empty."
+  verify_release_sha256 "$release_url" "$archive_file"
 
   unzip -q "$archive_file" -d "$staging_dir" || die "Cannot unzip the release ZIP."
   # The extracted tree belongs to the web user, not root.
@@ -469,7 +510,7 @@ while [[ $# -gt 0 ]]; do
     --install-db-server) INSTALL_DB_SERVER=1; shift ;;
     --https) WANT_HTTPS=1; shift ;;
     --source) INSTALL_SOURCE="${2:-}"; shift 2 ;;
-    --channel) die "--channel was removed. Use --release-zip-url URL to choose the release." ;;
+    --channel) CHANNEL="${2:-}"; shift 2 ;;
     --release-zip-url) RELEASE_ZIP_URL="${2:-}"; RELEASE_URL_OVERRIDE_SET=1; shift 2 ;;
     --repo-url) REPO_URL_OVERRIDE="${2:-}"; shift 2 ;;
     --branch) BRANCH_OVERRIDE="${2:-}"; shift 2 ;;
@@ -567,7 +608,12 @@ else
     fi
   fi
   if [[ "$RELEASE_URL_OVERRIDE_SET" != "1" ]]; then
-    release_zip_url="$(prompt "Release ZIP URL" "$DEFAULT_RELEASE_ZIP_URL")"
+    if release_zip_url="$(resolve_release_zip_url)"; then
+      log "Selected release: $release_zip_url"
+    else
+      log "Could not read GitHub releases; using the stable branch archive."
+      release_zip_url="$DEFAULT_RELEASE_ZIP_URL"
+    fi
   fi
   validate_release_zip_url "$release_zip_url"
   release_label="$release_zip_url"

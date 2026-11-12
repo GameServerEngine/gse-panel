@@ -289,308 +289,6 @@ $siteBase = $protocol . $host;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopping Cart - <?php echo billing_brand_e('name'); ?></title>
     <link rel="stylesheet" href="css/header.css">
-    <style>
-        /* Do not override site-wide font or header/menu styles here.
-           Keep body reset minimal so includes/menu.php can control header styling. */
-        body {
-            margin: 0;
-            padding: 0;
-        }
-        .cart-container {
-            max-width: 900px;
-            margin: 24px auto;
-            background: white;
-            padding: 24px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            width: min(100%, calc(100% - 24px));
-            box-sizing: border-box;
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 2em;
-        }
-        .alert {
-            padding: 12px 20px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-        }
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .cart-empty {
-            text-align: center;
-            padding: 60px 20px;
-        }
-        .cart-empty h2 {
-            color: #666;
-            margin-bottom: 15px;
-        }
-        .cart-empty p {
-            color: #999;
-            margin-bottom: 30px;
-        }
-        .cart-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-            table-layout: fixed;
-        }
-        .cart-table th {
-            background: #f8f9fa;
-            padding: 12px;
-            text-align: left;
-            border-bottom: 2px solid #dee2e6;
-            font-weight: 600;
-            color: #495057;
-        }
-        .cart-table td {
-            padding: 15px 12px;
-            border-bottom: 1px solid #dee2e6;
-        }
-        .cart-table tbody tr:hover {
-            background: #f8f9fa;
-        }
-        .game-name {
-            font-weight: 600;
-            color: #007bff;
-            font-size: 1.05em;
-        }
-        .server-name {
-            color: #666;
-            font-size: 0.9em;
-            margin-top: 4px;
-        }
-        .description {
-            color: #999;
-            font-size: 0.85em;
-            margin-top: 4px;
-        }
-        .price {
-            font-weight: 600;
-            color: #28a745;
-            font-size: 1.1em;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 0.85em;
-            font-weight: 600;
-            background: #fff3cd;
-            color: #856404;
-        }
-        .coupon-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .coupon-section h3 {
-            margin-top: 0;
-            color: #333;
-        }
-        .coupon-form {
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
-            flex-wrap: wrap;
-        }
-        .coupon-form > div {
-            flex: 1;
-        }
-        .coupon-form label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #495057;
-        }
-        .coupon-form input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-size: 1em;
-        }
-        .coupon-applied {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #d4edda;
-            padding: 15px;
-            border-radius: 4px;
-            border: 1px solid #c3e6cb;
-        }
-        .coupon-applied-text {
-            color: #155724;
-        }
-        .cart-total {
-            text-align: right;
-            padding: 20px 0;
-            border-top: 2px solid #dee2e6;
-            margin-bottom: 30px;
-        }
-        .cart-total-row {
-            margin-bottom: 10px;
-        }
-        .cart-total-label {
-            font-size: 1.2em;
-            font-weight: 600;
-            margin-right: 20px;
-            color: #495057;
-        }
-        .cart-total-amount {
-            font-size: 1.5em;
-            font-weight: 700;
-            color: #28a745;
-        }
-        .subtotal-amount {
-            font-size: 1.2em;
-            color: #666;
-        }
-        .discount-amount {
-            font-size: 1.2em;
-            font-weight: 600;
-            color: #28a745;
-        }
-        .btn {
-            display: inline-block;
-            padding: 12px 24px;
-            background: #007bff;
-            color: white;
-            text-decoration: none;
-            border: none;
-            border-radius: 5px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 1em;
-        }
-        .btn:hover {
-            background: #0056b3;
-        }
-        .btn-secondary {
-            background: #6c757d;
-        }
-        .btn-secondary:hover {
-            background: #545b62;
-        }
-        .btn-small {
-            padding: 8px 16px;
-            font-size: 0.9em;
-        }
-        .checkout-section {
-            padding: 20px 0;
-        }
-        .checkout-section h3 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .checkout-section p {
-            color: #666;
-            margin-bottom: 20px;
-        }
-        #paypal-button-container {
-            max-width: 400px;
-            margin: 20px 0;
-        }
-        .status-message {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-            display: none;
-        }
-        .action-buttons {
-            margin-top: 30px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .cart-table-wrap {
-            width: 100%;
-            max-width: 100%;
-            overflow-x: auto;
-        }
-        @media (max-width: 768px) {
-            .cart-container {
-                width: min(100%, calc(100% - 12px));
-                padding: 14px;
-                margin: 12px auto;
-            }
-            h1 {
-                font-size: 1.5rem;
-                margin-bottom: 18px;
-            }
-            .cart-table thead {
-                display: none;
-            }
-            .cart-table,
-            .cart-table tbody,
-            .cart-table tr,
-            .cart-table td {
-                display: block;
-                width: 100%;
-            }
-            .cart-table tr {
-                border: 1px solid #dee2e6;
-                border-radius: 8px;
-                margin-bottom: 12px;
-                padding: 6px 8px;
-                background: #fff;
-            }
-            .cart-table td {
-                border: 0;
-                padding: 6px 4px;
-                text-align: left !important;
-            }
-            .cart-table td[data-label]::before {
-                content: attr(data-label) ": ";
-                font-weight: 600;
-                color: #495057;
-            }
-            .coupon-form {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .coupon-form button {
-                width: 100%;
-            }
-            .coupon-applied {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-            .cart-total {
-                text-align: left;
-            }
-            .cart-total-row {
-                display: flex;
-                justify-content: space-between;
-                gap: 10px;
-            }
-            .cart-total-label,
-            .cart-total-amount,
-            .subtotal-amount,
-            .discount-amount {
-                font-size: 1rem;
-                margin-right: 0;
-            }
-            .btn {
-                width: 100%;
-                text-align: center;
-            }
-            .action-buttons {
-                margin-top: 16px;
-            }
-        }
-    </style>
     <!-- Favicon -->
     <link rel="icon" href="<?php echo htmlspecialchars(billing_url('images/brand/favicon-32x32.png'), ENT_QUOTES, 'UTF-8'); ?>" type="image/png">
     <link rel="apple-touch-icon" href="<?php echo htmlspecialchars(billing_url('images/brand/apple-touch-icon.png'), ENT_QUOTES, 'UTF-8'); ?>">
@@ -598,6 +296,55 @@ $siteBase = $protocol . $host;
     <script src="https://www.paypal.com/sdk/js?client-id=<?php echo htmlspecialchars($client_id, ENT_QUOTES, 'UTF-8'); ?>&currency=USD&intent=capture<?php echo $sandbox ? '&debug=false' : ''; ?>"></script>
     <?php endif; ?>
 <?php include(__DIR__ . '/includes/theme_head.php'); ?>
+    <style>
+        /* Cart-only rules. Page, table, button and alert styles come from css/header.css. */
+        .cart-empty { text-align: center; padding: 60px 20px; }
+        .cart-empty h2 { color: var(--muted); margin-bottom: 15px; }
+        .cart-empty p { color: var(--muted); margin-bottom: 30px; }
+        .cart-table { margin-bottom: 30px; table-layout: fixed; }
+        .cart-table tbody tr:hover { background: var(--page); }
+        .game-name { font-weight: 700; color: #b45f00; font-size: 1.05em; }
+        .server-name { color: var(--muted); font-size: 0.9em; margin-top: 4px; }
+        .description { color: var(--muted); font-size: 0.85em; margin-top: 4px; }
+        .price { font-weight: 700; color: var(--success); font-size: 1.1em; }
+        .status-badge { text-transform: none; background: #fff0cc; color: var(--warning); }
+        .coupon-section { background: var(--page); padding: 20px; border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 20px; }
+        .coupon-section h3 { margin-top: 0; }
+        .coupon-form { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+        .coupon-form > div { flex: 1; }
+        .coupon-form label { display: block; margin-bottom: 5px; font-weight: 700; }
+        .coupon-form input { width: 100%; }
+        .coupon-applied { display: flex; justify-content: space-between; align-items: center; background: #dcf5e8; padding: 15px; border-radius: var(--radius); border: 1px solid #a7dcc2; }
+        .coupon-applied-text { color: #0d5a37; }
+        .cart-total { text-align: right; padding: 20px 0; border-top: 2px solid var(--line); margin-bottom: 30px; }
+        .cart-total-row { margin-bottom: 10px; }
+        .cart-total-label { font-size: 1.2em; margin-right: 20px; border: 0; padding: 0; }
+        .cart-total-amount { font-size: 1.5em; font-weight: 800; color: var(--success); }
+        .subtotal-amount { font-size: 1.2em; color: var(--muted); }
+        .discount-amount { font-size: 1.2em; font-weight: 700; color: var(--success); }
+        .checkout-section { padding: 20px 0; }
+        .checkout-section h3 { margin-bottom: 10px; }
+        .checkout-section p { color: var(--muted); margin-bottom: 20px; }
+        #paypal-button-container { max-width: 400px; margin: 20px 0; }
+        .status-message { text-align: center; padding: 20px; color: var(--muted); display: none; }
+        .action-buttons { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 10px; }
+        .cart-table-wrap { width: 100%; max-width: 100%; overflow-x: auto; }
+        @media (max-width: 768px) {
+            .cart-table thead { display: none; }
+            .cart-table, .cart-table tbody, .cart-table tr, .cart-table td { display: block; width: 100%; }
+            .cart-table tr { border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 12px; padding: 6px 8px; background: var(--white); }
+            .cart-table td { border: 0; padding: 6px 4px; text-align: left !important; }
+            .cart-table td[data-label]::before { content: attr(data-label) ": "; font-weight: 700; }
+            .coupon-form { flex-direction: column; align-items: stretch; }
+            .coupon-form button { width: 100%; }
+            .coupon-applied { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .cart-total { text-align: left; }
+            .cart-total-row { display: flex; justify-content: space-between; gap: 10px; }
+            .cart-total-label, .cart-total-amount, .subtotal-amount, .discount-amount { font-size: 1rem; margin-right: 0; }
+            .btn { width: 100%; }
+            .action-buttons { margin-top: 16px; }
+        }
+    </style>
 </head>
 <body>
     <?php include(__DIR__ . '/includes/top.php'); ?>
@@ -605,7 +352,7 @@ $siteBase = $protocol . $host;
 
     <div class="cart-container">
         <?php if (!empty($db_error)): ?>
-            <div class="alert-error" style="margin-bottom:15px;">
+            <div class="alert alert-error">
                 <strong>Database error:</strong> <?php echo htmlspecialchars($db_error); ?>
             </div>
         <?php endif; ?>

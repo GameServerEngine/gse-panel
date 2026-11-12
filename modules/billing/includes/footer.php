@@ -1,55 +1,56 @@
-<?php require_once __DIR__ . '/brand.php'; ?>
 <?php
-// Simple footer include
-require_once(dirname(__DIR__) . '/billing_bootstrap.php');
+/**
+ * Storefront footer, in the GameServer Engine style.
+ *
+ * Closes the white content section (.gsw-content) and page (.gsw-page) that
+ * menu.php opened, prints the footer, then closes the #gsw-site shell.
+ */
+require_once __DIR__ . '/brand.php';
+require_once dirname(__DIR__) . '/billing_bootstrap.php';
+
+if (!function_exists('billing_footer_link')) {
+    /** One footer link to a storefront page. */
+    function billing_footer_link(string $target, string $label): string
+    {
+        return '<a href="' . htmlspecialchars(billing_url($target), ENT_QUOTES, 'UTF-8') . '">' . $label . '</a>';
+    }
+}
 ?>
+</div><!-- /.gsw-content -->
+</div><!-- /.gsw-page -->
+
 <footer class="gsw-footer">
-  <div class="container-wide gsw-footer-grid">
+  <div class="gsw-footer-inner">
     <div class="gsw-footer-brand">
-      <strong><?php echo billing_brand_e('name'); ?></strong>
-      <span>Game server hosting with human support from <?php echo billing_brand_e('company'); ?>.</span>
+      <img src="<?php echo htmlspecialchars(billing_url('images/brand/gse-logo-footer.png'), ENT_QUOTES, 'UTF-8'); ?>" alt="" class="gsw-footer-logo" width="56" height="56">
+      <p><strong><?php echo billing_brand_e('name'); ?></strong><br>Game server hosting with human support from <?php echo billing_brand_e('company'); ?>.</p>
     </div>
-    <div class="gsw-footer-group">
-      <h2>Navigation</h2>
-      <nav class="gsw-footer-links" aria-label="Footer navigation">
-        <a href="<?php echo htmlspecialchars(function_exists('billing_url') ? billing_url('serverlist.php') : 'serverlist.php', ENT_QUOTES, 'UTF-8'); ?>">Game Servers</a>
-        <a href="<?php echo htmlspecialchars(function_exists('billing_url') ? billing_url('support.php') : 'support.php', ENT_QUOTES, 'UTF-8'); ?>">Support</a>
-        <a href="<?php echo htmlspecialchars(function_exists('billing_url') ? billing_url('docs.php') : 'docs.php', ENT_QUOTES, 'UTF-8'); ?>">Docs</a>
-        <a href="<?php echo htmlspecialchars(function_exists('billing_url') ? billing_url('server_status.php') : 'server_status.php', ENT_QUOTES, 'UTF-8'); ?>">Server Status</a>
-      </nav>
-    </div>
-    <div class="gsw-footer-group">
-      <h2>Contact</h2>
-      <address class="gsw-footer-contact">
-        <?php echo billing_brand_e('company'); ?><br>
-        3400 Laurel Rd.<br>
-        Brunswick, OH 44212<br>
-        <a href="tel:13307868223">330-786-8223</a><br>
-        <a href="mailto:runlevelsystems@gmail.com">runlevelsystems@gmail.com</a>
-      </address>
-    </div>
-    <div class="gsw-footer-legal">
-      <nav class="gsw-footer-links" aria-label="Legal links">
-        <a href="<?php echo htmlspecialchars(function_exists('billing_url') ? billing_url('company.php') : 'company.php', ENT_QUOTES, 'UTF-8'); ?>">Company</a>
-        <a href="<?php echo htmlspecialchars(function_exists('billing_url') ? billing_url('contact.php') : 'contact.php', ENT_QUOTES, 'UTF-8'); ?>">Contact</a>
-        <a href="<?php echo htmlspecialchars(function_exists('billing_url') ? billing_url('privacy.php') : 'privacy.php', ENT_QUOTES, 'UTF-8'); ?>">Privacy</a>
-        <a href="<?php echo htmlspecialchars(function_exists('billing_url') ? billing_url('tos.php') : 'tos.php', ENT_QUOTES, 'UTF-8'); ?>">Terms</a>
-        <a href="<?php echo htmlspecialchars(function_exists('billing_url') ? billing_url('careers.php') : 'careers.php', ENT_QUOTES, 'UTF-8'); ?>">Careers</a>
-      </nav>
-      <p class="gsw-footer-copy">&copy; 2026 <?php echo billing_brand_e('company'); ?>. All rights reserved.</p>
-      <p class="gsw-footer-powered">Powered by GameServer Engine.</p>
-    </div>
-  </div>
-  <div class="last-updated">
-      <?php
+    <nav class="gsw-footer-links" aria-label="Footer navigation">
+      <?php echo billing_footer_link('serverlist.php', 'Game Servers'); ?>
+      <?php echo billing_footer_link('support.php', 'Support'); ?>
+      <?php echo billing_footer_link('docs.php', 'Docs'); ?>
+      <?php echo billing_footer_link('server_status.php', 'Server Status'); ?>
+      <?php echo billing_footer_link('company.php', 'Company'); ?>
+      <?php echo billing_footer_link('contact.php', 'Contact'); ?>
+      <?php echo billing_footer_link('privacy.php', 'Privacy'); ?>
+      <?php echo billing_footer_link('tos.php', 'Terms'); ?>
+      <?php echo billing_footer_link('careers.php', 'Careers'); ?>
+    </nav>
+    <address class="gsw-footer-contact">
+      <?php echo billing_brand_e('company'); ?><br>
+      3400 Laurel Rd.<br>
+      Brunswick, OH 44212<br>
+      <a href="tel:13307868223">330-786-8223</a><br>
+      <a href="mailto:runlevelsystems@gmail.com">runlevelsystems@gmail.com</a>
+    </address>
+    <p class="gsw-footer-copy">&copy; 2026 <?php echo billing_brand_e('company'); ?>. All rights reserved. Powered by GameServer Engine.<?php
       // Runtime reads modules/billing timestamp; sync from modules/billing/timestamp.txt is handled by billing_bootstrap.php.
-      $billing_ts = __DIR__ . '/../timestamp.txt';
-      if (file_exists($billing_ts)) {
-          echo trim(file_get_contents($billing_ts));
+      $billing_ts = dirname(__DIR__) . '/timestamp.txt';
+      if (is_file($billing_ts)) {
+          echo ' <span class="gsw-last-updated">' . htmlspecialchars(trim((string)file_get_contents($billing_ts)), ENT_QUOTES, 'UTF-8') . '</span>';
       }
-      ?>
-    </div>
+    ?></p>
+  </div>
 </footer>
 
-<!-- close site wrapper started in menu.php -->
-</div>
+</div><!-- /#gsw-site -->

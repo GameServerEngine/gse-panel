@@ -45,7 +45,7 @@ define('LANG_note_remote_host', "A remote host is a machine where the GSP Agent 
 define('LANG_ip_administration', "Server &amp; IP Administration :: GameServer Panel");
 define('LANG_unknown_error', "Unknown error - status_chk returned");
 define('LANG_remote_host_user_name', "UNIX user");
-define('LANG_remote_host_user_name_info', "Username where the Agent is running. Example: Jonhy");
+define('LANG_remote_host_user_name_info', "The user the agent runs as. Only used when the agent is not installed yet; the agent installer creates this user.");
 define('LANG_remote_host_ftp_ip', "FTP IP");
 define('LANG_remote_host_ftp_ip_info', "The FTP server <b>IP</b> for the current Agent.");
 define('LANG_remote_host_ftp_port', "FTP Port");

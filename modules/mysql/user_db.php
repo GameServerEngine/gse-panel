@@ -237,8 +237,10 @@ function exec_module() {
 							$host_stat = $remote->status_chk();
 							if($host_stat === 1 )
 							{
-								$SQL = "DROP USER '".$mysql_db['db_user']."'@'%';".
-									   "GRANT ".$mysql_db['privilegies_str']." ON \\`".$mysql_db['db_name']."\\`.* TO '".$mysql_db['db_user']."'@'%' IDENTIFIED BY '".$post_db_passwd."';".
+								$SQL = "DROP USER IF EXISTS '".$mysql_db['db_user']."'@'%';".
+									   "CREATE USER IF NOT EXISTS '".$mysql_db['db_user']."'@'%' IDENTIFIED WITH mysql_native_password BY '".$post_db_passwd."';".
+									   "ALTER USER '".$mysql_db['db_user']."'@'%' IDENTIFIED WITH mysql_native_password BY '".$post_db_passwd."';".
+									   "GRANT ".$mysql_db['privilegies_str']." ON \\`".$mysql_db['db_name']."\\`.* TO '".$mysql_db['db_user']."'@'%';".
 									   "FLUSH PRIVILEGES;";
 
 								$command = "mysql --host=localhost --port=".$mysql_db['mysql_port']." -u".get_mysql_admin_user($mysql_db)." -p".$mysql_db['mysql_root_passwd']." -e \"".$SQL."\"";
@@ -253,8 +255,10 @@ function exec_module() {
 
 								if ( $link !== FALSE )
 								{
-									$queries = array("DROP USER '".$mysql_db['db_user']."'@'%';",
-													 "GRANT ".$mysql_db['privilegies_str']." ON `".$mysql_db['db_name']."`.* TO '".$mysql_db['db_user']."'@'%' IDENTIFIED BY '".$post_db_passwd."';",
+									$queries = array("DROP USER IF EXISTS '".$mysql_db['db_user']."'@'%';",
+													 "CREATE USER IF NOT EXISTS '".$mysql_db['db_user']."'@'%' IDENTIFIED WITH mysql_native_password BY '".$post_db_passwd."';",
+													 "ALTER USER '".$mysql_db['db_user']."'@'%' IDENTIFIED WITH mysql_native_password BY '".$post_db_passwd."';",
+													 "GRANT ".$mysql_db['privilegies_str']." ON `".$mysql_db['db_name']."`.* TO '".$mysql_db['db_user']."'@'%';",
 													 "FLUSH PRIVILEGES;");
 									foreach ((array)$queries as $query)
 									{
