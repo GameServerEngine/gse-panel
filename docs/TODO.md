@@ -2,6 +2,7 @@
 
 | Type | Item | Status | Owner | GitLab |
 | --- | --- | --- | --- | --- |
+| need | Run every panel page against MySQL 8.0 strict mode (the dev panel on port 3307 is 8.0.46) and fix inserts or queries that 5.7's lenient mode let through. Only the schema, the database module and the grant statements were tested on 2026-11-12. | open | Claude | |
 | todo | Game Catalog admin tab (Administration > Billing > Game Catalog): edit a game name, description, picture, price, slots and the agents it is sold on; storefront cards and order page show them. Run the panel update so migration 0008 (catalog_game) applies, then open the tab on the test panel. | done (code, scratch DB checked), browser test open | Claude | |
 | need | Storefront stays empty until an admin publishes games. The import tool can now also use the agents saved on each old billing_services row (when they still exist), or the agents you tick. Run it with Preview first. | open | Claude | |
 | need | install/gse_panel.sql does not contain the catalog tables (catalog_offer, catalog_tier, catalog_order_price, catalog_game); they come only from migrations 0007/0008. Regenerate with tools/build_gse_panel_schema.php when a scratch MySQL is available. | open | Claude | |
