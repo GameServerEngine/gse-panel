@@ -54,15 +54,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'reque
     header('Location: my_servers.php'); exit;
 }
 
-// Fetch user's active servers
-// We'll look for homes assigned to this user
-// The relationship is: {table_prefix}billing_orders -> user_id and contains home_id references
-// We need to join with {table_prefix}home to get server details
+// Fetch the user's servers: server_homes rows owned by the user (user_id_main), with the game name,
+// the agent, and the newest billing order for that server (billing_orders.home_id).
 
 $query = "SELECT 
             h.home_id,
             h.home_name,
-            h.enabled,
             h.billing_status,
             h.server_expiration_date,
             rs.remote_server_name,
@@ -78,13 +75,16 @@ $query = "SELECT
             o.coupon_id,
             bc.code AS coupon_code,
             bc.discount_percent AS coupon_discount_percent
-          FROM {$table_prefix}home h
+          FROM {$table_prefix}server_homes h
           LEFT JOIN {$table_prefix}remote_servers rs ON h.remote_server_id = rs.remote_server_id
-          LEFT JOIN {$table_prefix}game_configs gc ON h.home_cfg_id = gc.home_cfg_id
-          LEFT JOIN {$table_prefix}billing_orders o ON h.user_id = o.user_id
+          LEFT JOIN {$table_prefix}config_homes gc ON h.home_cfg_id = gc.home_cfg_id
+          LEFT JOIN {$table_prefix}billing_orders o ON o.order_id = (
+                SELECT MAX(o2.order_id) FROM {$table_prefix}billing_orders o2
+                WHERE o2.home_id = CAST(h.home_id AS CHAR) AND o2.user_id = h.user_id_main
+          )
           LEFT JOIN {$table_prefix}billing_services bs ON o.service_id = bs.service_id
           LEFT JOIN {$table_prefix}billing_coupons bc ON o.coupon_id = bc.coupon_id
-          WHERE h.user_id = $user_id
+          WHERE h.user_id_main = $user_id
           ORDER BY h.home_id DESC";
 
 $result = mysqli_query($db, $query);
