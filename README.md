@@ -99,7 +99,7 @@ Customers manage hosted game servers with the same practical control they would 
 2. Keep each change scoped to one module.
 3. Run `php -l` on changed files and the module's tests before committing.
 4. Push to `working`. Merge to `testing` only when a version works well enough to build.
-5. Live is updated by git pull from `working` or `testing`, never by committing on the server.
+5. Live is updated by running the update script, which pulls the release from git and applies the files directly to the live panel. Never commit on the server.
 
 Stable means customer-ready. Unstable means in progress.
 
