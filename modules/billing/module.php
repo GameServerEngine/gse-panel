@@ -24,15 +24,14 @@
 
 // Module general information
 $module_title = "billing";
-$module_version = "3.6";
-$db_version = 13;
+$module_version = "3.7";
+$db_version = 14;
 $module_required = FALSE;
 // Module description
 $module_description = "Billing storefront / provisioning integration.";
 
 $module_menus = array(
-    array('subpage' => 'billing_setup', 'name' => 'Billing Setup', 'group' => 'admin'),
-    array('subpage' => 'billing_operations', 'name' => 'Billing Operations', 'group' => 'admin'),
+    array('subpage' => 'billing', 'name' => 'Billing', 'group' => 'admin'),
 );
 
 $install_queries = array();
@@ -593,6 +592,20 @@ $install_queries[11] = array(
         `price_monthly` FLOAT(15,4) NOT NULL DEFAULT 0,
         PRIMARY KEY (`service_id`, `tier_key`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+);
+
+// db_version 14 - one Billing entry in the Administration menu. All billing admin screens are
+// tabs of that page (panel_admin.php). Idempotent: removes the old Billing Setup / Billing Operations
+// rows and adds the Billing row only when it is missing.
+$install_queries[14] = array(
+    "DELETE mm FROM `".DB_PREFIX."module_menus` mm
+     INNER JOIN `".DB_PREFIX."modules` m ON m.id = mm.module_id
+     WHERE m.folder = 'billing' AND mm.group = 'admin' AND mm.subpage IN ('billing_setup', 'billing_operations')",
+    "INSERT INTO `".DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+     SELECT m.id, 'billing', 'admin', 'Billing', 0
+     FROM `".DB_PREFIX."modules` m
+     WHERE m.folder = 'billing'
+       AND NOT EXISTS (SELECT 1 FROM `".DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'billing' AND mm.group = 'admin')"
 );
 
 ?>

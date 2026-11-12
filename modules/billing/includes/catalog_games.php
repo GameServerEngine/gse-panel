@@ -153,6 +153,22 @@ if (!function_exists('catalog_new_agent_ids')) {
     }
 }
 
+if (!function_exists('catalog_saved_agent_ids')) {
+    /** The agent ids in an old comma-separated remote_server_id list that are real agents. */
+    function catalog_saved_agent_ids(string $csv, array $validAgentIds): array
+    {
+        $valid = array_flip(array_map('intval', $validAgentIds));
+        $ids = array();
+        foreach (explode(',', $csv) as $part) {
+            $part = trim($part);
+            if ($part !== '' && ctype_digit($part) && isset($valid[(int)$part])) {
+                $ids[(int)$part] = (int)$part;
+            }
+        }
+        return array_values($ids);
+    }
+}
+
 if (!function_exists('catalog_plan_legacy_import')) {
     /**
      * Works out what importing the old billing_services rows would do. No database access.
@@ -163,6 +179,8 @@ if (!function_exists('catalog_plan_legacy_import')) {
      * $existingKeys  map "homeCfgId:agentId" => true for offers that already exist
      * $detailIdSet   map home_cfg_id => true for games that already have a catalog_game row
      * $images        image file names the storefront can show
+     * $useSavedAgents  also use the agents saved on each old row (its remote_server_id list)
+     * $validAgentIds   the agents that exist, so a saved id for a removed agent is ignored
      *
      * Existing offers and existing game details are never changed.
      * Returns array('games' => list of planned games, 'counts' => numbers for the preview).
@@ -173,7 +191,9 @@ if (!function_exists('catalog_plan_legacy_import')) {
         array $agentIds,
         array $existingKeys,
         array $detailIdSet,
-        array $images
+        array $images,
+        bool $useSavedAgents = false,
+        array $validAgentIds = array()
     ): array {
         $counts = array('games' => 0, 'offers' => 0, 'no_config' => 0, 'no_price' => 0, 'already_set_up' => 0);
         $games = array();
@@ -192,8 +212,14 @@ if (!function_exists('catalog_plan_legacy_import')) {
                 continue;
             }
 
-            $newAgents = catalog_new_agent_ids($homeCfgId, $agentIds, $existingKeys);
-            $counts['already_set_up'] += count($agentIds) - count($newAgents);
+            $wantedAgents = $agentIds;
+            if ($useSavedAgents) {
+                $saved = catalog_saved_agent_ids((string)($row['remote_server_id'] ?? ''), $validAgentIds);
+                $wantedAgents = array_values(array_unique(array_merge($wantedAgents, $saved)));
+                sort($wantedAgents);
+            }
+            $newAgents = catalog_new_agent_ids($homeCfgId, $wantedAgents, $existingKeys);
+            $counts['already_set_up'] += count($wantedAgents) - count($newAgents);
             if (empty($newAgents)) {
                 continue;
             }
@@ -279,5 +305,24 @@ if (!function_exists('catalog_settings_are_free')) {
             return $settings['base_monthly'] <= 0;
         }
         return $settings['per_slot_monthly'] <= 0;
+    }
+}
+
+if (!function_exists('catalog_read_headroom')) {
+    /**
+     * Reads the placement headroom form: cpu, ram and disk, each a whole number from 1 to 100.
+     * Returns array('cpu' => int, 'ram' => int, 'disk' => int), or null when any value is not valid.
+     */
+    function catalog_read_headroom(array $post): ?array
+    {
+        $out = array();
+        foreach (array('cpu', 'ram', 'disk') as $key) {
+            $raw = isset($post['headroom_' . $key . '_pct']) ? trim((string)$post['headroom_' . $key . '_pct']) : '';
+            if ($raw === '' || !ctype_digit($raw) || (int)$raw < 1 || (int)$raw > 100) {
+                return null;
+            }
+            $out[$key] = (int)$raw;
+        }
+        return $out;
     }
 }

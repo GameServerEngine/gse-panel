@@ -2,8 +2,14 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.8.5 (2026-11-11)
+- **All billing administration is now in the control panel:** Administration has one Billing page with tabs for Invoices, Orders, Payments, Cancellations, Game Catalog, Locations, Coupons and Settings. The old Billing Setup and Billing Operations entries are replaced by it (the panel update changes the menu), and old links to them still open the Billing page. The website no longer has its own admin pages: opening one sends you to the panel.
+- **Website admin and container pages removed:** The website's admin page, the old per-agent pricing page, the XML editor and everything for containers (customer container list, container actions and the container admin page) are gone. The container database tables are left as they were.
+- **Placement headroom moved:** The CPU, RAM and disk limits that decide which agent a new server is placed on are now set on the Game Catalog tab, since the old pricing page that held them is removed.
+- **Games chosen in the panel show on the storefront:** The import tool on the Game Catalog tab can use the agents that were saved on each old service, so games that were already set up for an agent appear without ticking every agent again. Preview shows what will be added first.
+
 ## 2.8.4 (2026-11-11)
-- **Game Catalog page for the storefront:** Billing Setup has a new Game Catalog tab. Open a game to set its display name, description and picture, its price (per slot, tiers, or base plus extra slots), the slots customers can pick, and which agents it is sold on. Games you publish now show up on the storefront catalog and can be rented. The storefront was empty because nothing had been published and the page for doing it had been left out of the menu. A one-time import copies the old services list onto the agents you pick.
+- **Game Catalog page for the storefront:** Billing has a new Game Catalog tab. Open a game to set its display name, description and picture, its price (per slot, tiers, or base plus extra slots), the slots customers can pick, and which agents it is sold on. Games you publish now show up on the storefront catalog and can be rented. The storefront was empty because nothing had been published and the page for doing it had been left out of the menu. A one-time import copies the old services list onto the agents you pick.
 - **Billing Setup page easier to read:** The PayPal settings and diagnostics used dark grey text that was almost invisible on the dark panel. The text now follows the panel colours and is slightly larger.
 
 ## 2.8.3 (2026-11-11)

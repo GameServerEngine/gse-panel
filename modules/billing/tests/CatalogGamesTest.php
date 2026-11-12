@@ -58,4 +58,30 @@ assertCatalogSame(2, $plan['counts']['games'], 'two games can be imported');
 assertCatalogSame(3, $plan['counts']['offers'], 'Valheim gets 2 offers and Rust gets the 1 that is missing');
 assertCatalogSame(1, $plan['counts']['already_set_up'], 'the existing Rust offer is counted and kept');
 
+// --- import using the agents saved on the old rows ---
+assertCatalogSame([1, 3], catalog_saved_agent_ids('1, 3,x,99,3', [1, 2, 3]), 'saved agents keep real agents, once each');
+assertCatalogSame([], catalog_saved_agent_ids('', [1, 2]), 'an empty list gives no agents');
+
+$legacySaved = [
+    ['service_id' => 1, 'home_cfg_id' => 101, 'service_name' => 'Valheim', 'img_url' => '', 'slot_min_qty' => 2, 'slot_max_qty' => 32, 'price_monthly' => 6.0, 'remote_server_id' => '1,2'],
+    ['service_id' => 4, 'home_cfg_id' => 103, 'service_name' => 'Rust', 'img_url' => '', 'slot_min_qty' => 5, 'slot_max_qty' => 50, 'price_monthly' => 10.0, 'remote_server_id' => '1,9'],
+    ['service_id' => 5, 'home_cfg_id' => 102, 'service_name' => 'Minecraft', 'img_url' => '', 'slot_min_qty' => 5, 'slot_max_qty' => 50, 'price_monthly' => 4.0, 'remote_server_id' => ''],
+];
+$planSaved = catalog_plan_legacy_import($legacySaved, $gameIds, [], $existing, [], [], true, [1, 2]);
+assertCatalogSame(1, $planSaved['counts']['games'], 'a game with no saved agents, and a game whose only real agent is already set up, are left out');
+assertCatalogSame(2, $planSaved['counts']['offers'], 'Valheim gets agents 1 and 2; the unknown agent 9 on Rust is ignored');
+assertCatalogSame(1, $planSaved['counts']['already_set_up'], 'the existing Rust offer on agent 1 is kept');
+assertCatalogSame([1, 2], $planSaved['games'][0]['agent_ids'], 'Valheim agents come from its saved list');
+
+$planBoth = catalog_plan_legacy_import($legacySaved, $gameIds, [2], [], [], [], true, [1, 2]);
+assertCatalogSame([1, 2], $planBoth['games'][0]['agent_ids'], 'ticked and saved agents are joined without repeats');
+assertCatalogSame([2], $planBoth['games'][2]['agent_ids'], 'a game with no saved agents gets the ticked ones');
+
+// --- placement headroom form ---
+assertCatalogSame(['cpu' => 70, 'ram' => 60, 'disk' => 85], catalog_read_headroom(['headroom_cpu_pct' => '70', 'headroom_ram_pct' => ' 60 ', 'headroom_disk_pct' => '85']), 'valid headroom is read');
+assertCatalogSame(null, catalog_read_headroom(['headroom_cpu_pct' => '0', 'headroom_ram_pct' => '60', 'headroom_disk_pct' => '85']), 'zero is refused');
+assertCatalogSame(null, catalog_read_headroom(['headroom_cpu_pct' => '101', 'headroom_ram_pct' => '60', 'headroom_disk_pct' => '85']), 'over 100 is refused');
+assertCatalogSame(null, catalog_read_headroom(['headroom_cpu_pct' => '5.5', 'headroom_ram_pct' => '60', 'headroom_disk_pct' => '85']), 'a decimal is refused');
+assertCatalogSame(null, catalog_read_headroom(['headroom_cpu_pct' => '5', 'headroom_ram_pct' => '60']), 'a missing value is refused');
+
 echo "CatalogGamesTest passed\n";

@@ -16,7 +16,7 @@ Created XML configuration to expose billing pages in the panel:
 **Access URLs:**
 - `home.php?m=billing&p=provision_servers` - Provision paid servers
 - `home.php?m=billing&p=my_orders` - View user's orders
-- `home.php?m=billing&p=admin_orders` - Admin order management
+- `home.php?m=billing&p=billing&s=orders` - Admin order management
 
 ### 2. User Order Management (`my_orders_panel.php`)
 **File:** `modules/billing/my_orders_panel.php`
@@ -123,7 +123,7 @@ status='in-cart' → (payment) → status='paid' → (provision) → status='ins
 
 ### Admin Perspective:
 1. Log into panel with admin account
-2. Navigate to `home.php?m=billing&p=admin_orders`
+2. Navigate to `home.php?m=billing&p=billing&s=orders`
 3. View all orders across all users
 4. Filter by status or search for specific orders
 5. Select multiple orders with checkboxes
@@ -296,5 +296,5 @@ The GSP billing module is now fully integrated with the panel provisioning syste
 
 **Panel URLs:**
 - User Orders: `home.php?m=billing&p=my_orders`
-- Admin Orders: `home.php?m=billing&p=admin_orders`
+- Admin Orders: `home.php?m=billing&p=billing&s=orders`
 - Provision: `home.php?m=billing&p=provision_servers&order_id=X`

@@ -1,0 +1,40 @@
+# Task
+
+## User Request
+All configuration pages belong in the control panel. modules/billing is only the customer-facing storefront (order, pay, invoices, history) on shared logins and data. Move the website admin pages (such as adminserverlist.php) into the panel Administration menu under one Billing page with subpages, delete the website admin pages and all container features, make games chosen in the panel show on the storefront, add a ticket form on the support page that inserts into the panel tickets module, and give modules/billing the GameServer Engine look (logo, imagery, content in the white section).
+
+## Problem
+- Admin pages existed twice: standalone on the website and inside the panel (Billing Setup / Billing Operations).
+- Games enabled in the old website admin page were written to `billing_services`, which the storefront does not read (it reads `catalog_offer`), so they never appeared.
+- Placement headroom could only be edited on the old website page.
+
+## Root Cause
+The billing design moved to the panel, but the website admin pages, the old pricing page and the container proof of concept were never removed, and the old page kept writing a table the storefront no longer reads.
+
+## Repositories Inspected
+gse-panel (branch working)
+
+## Files Changed (stage 1: panel consolidation and catalog fix)
+- modules/billing/panel_admin.php (one Billing page, eight tabs, old keys kept as aliases)
+- modules/billing/navigation.xml, module.php (db_version 14, version 3.7, one Billing menu row), install/gse_panel.sql (menu row and module version hand-edited)
+- modules/billing/includes/admin_auth.php (outside the panel, redirect to the panel Billing page)
+- modules/billing/includes/menu.php (Admin link and admin lookup removed, "My Containers" renamed "My Servers"), my_servers.php (container block removed)
+- modules/billing/admin_catalog.php, includes/catalog_games.php, includes/catalog_admin.php (placement headroom form, import with saved agents), tests/CatalogGamesTest.php
+- modules/billing/admin_config.php, admin_orders.php, test_integration.php, PANEL_INTEGRATION.md, COUPON_SYSTEM.md (links)
+- Deleted: admin.php, adminserverlist.php, admin_xml_editor.php, admin_container_poc.php, container_poc.php, container_action.php, includes/container_poc.php, tests/ContainerPocWorkflowTest.php, tools/debug_invoices_redirect.php
+- docs/TODO.md, CHANGELOG.md, .github/module-map.md, .github/agent.md, .github/copilot-instructions.md
+
+## Architecture Decisions
+- Module-native `db_version` 14 replaces the old menu rows (idempotent, runs on update); no separate sql/migrations file.
+- Old page keys billing_setup, billing_operations and game_catalog still resolve so saved links work.
+- The XML editor was dropped: the config_games module already has one.
+- Container database tables (migration 0004) are left untouched.
+- Import with saved agents intersects each old row's `remote_server_id` list with agents that exist, plus any ticked agents.
+
+## Validation Performed
+- php -l on changed files; all billing tests pass except GameReferenceCoverageTest.php, which already failed before this work (arma2 missing from games.json).
+- Scratch MySQL database (127.0.0.1:3307, gse_scratch_p2, install/gse_panel.sql plus migrations 0007 and 0008, synthetic rows): the db_version 14 queries run twice leave one Billing row; import with saved agents, second import, headroom insert/update/read: 12 checks passed.
+- Not run in a browser. Nothing deployed and no live database touched.
+
+## Git Commits
+Repository: gse-panel, branch working. Hash: see git log.

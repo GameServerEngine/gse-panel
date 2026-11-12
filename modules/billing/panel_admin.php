@@ -1,48 +1,49 @@
 <?php
 /**
- * Panel dispatcher for billing administrator pages.
+ * Panel dispatcher for the Billing administration page (Administration > Billing).
+ *
+ * One page with a tab for each billing admin screen:
+ *   Invoices, Orders, Payments, Cancellations, Game Catalog, Locations, Coupons, Settings.
+ * The tab is chosen with &s=<key>. The older page keys billing_setup and billing_operations
+ * still open this page (on Settings and Invoices) so saved links keep working.
  */
 if (!function_exists('exec_module')) {
     function exec_module(): void
     {
-        $page = (string)($_GET['p'] ?? '');
-        $sections = array(
-            'billing_setup' => array(
-                'config' => 'admin_config.php',
-                'game_catalog' => 'admin_catalog.php',
-                'locations' => 'admin_locations.php',
-                'coupons' => 'admin_coupons.php',
-            ),
-            'billing_operations' => array(
-                'invoices' => 'admin_invoices.php',
-                'orders' => 'admin_orders.php',
-                'payments' => 'admin_payments.php',
-                'cancellations' => 'admin_cancellations.php',
-            ),
+        $tabs = array(
+            'invoices' => array('Invoices', 'admin_invoices.php'),
+            'orders' => array('Orders', 'admin_orders.php'),
+            'payments' => array('Payments', 'admin_payments.php'),
+            'cancellations' => array('Cancellations', 'admin_cancellations.php'),
+            'game_catalog' => array('Game Catalog', 'admin_catalog.php'),
+            'locations' => array('Locations', 'admin_locations.php'),
+            'coupons' => array('Coupons', 'admin_coupons.php'),
+            'config' => array('Settings', 'admin_config.php'),
         );
 
-        if (!isset($sections[$page])) {
+        $page = (string)($_GET['p'] ?? '');
+        if (!in_array($page, array('billing', 'billing_setup', 'billing_operations'), true)) {
             echo '<div class="failure">Invalid billing admin page.</div>';
             return;
         }
 
-        $selected = $_GET['s'] ?? '';
-        $default = $page === 'billing_setup' ? 'config' : 'invoices';
-        $section = $selected === '' ? $default : (string)$selected;
+        $selected = (string)($_GET['s'] ?? '');
+        $section = $selected !== '' ? $selected : ($page === 'billing_setup' ? 'config' : 'invoices');
+
         echo '<nav class="billing-admin-tabs" aria-label="Billing administration">';
-        foreach ($sections[$page] as $key => $file) {
-            $label = ucwords(str_replace('_', ' ', $key));
+        foreach ($tabs as $key => $tab) {
             $active = $key === $section ? ' aria-current="page" class="active"' : '';
-            echo '<a' . $active . ' href="home.php?m=billing&amp;p=' . rawurlencode($page) . '&amp;s=' . rawurlencode($key) . '">' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</a>';
+            echo '<a' . $active . ' href="home.php?m=billing&amp;p=billing&amp;s=' . rawurlencode($key) . '">'
+                . htmlspecialchars($tab[0], ENT_QUOTES, 'UTF-8') . '</a>';
         }
         echo '</nav>';
 
-        if (!isset($sections[$page][$section])) {
+        if (!isset($tabs[$section])) {
             echo '<div class="failure">Unknown billing admin section.</div>';
             return;
         }
 
-        $file = $sections[$page][$section];
+        $file = $tabs[$section][1];
         include __DIR__ . '/' . $file;
 
         if ($file === 'admin_orders.php' && function_exists('billing_admin_orders_exec')) {

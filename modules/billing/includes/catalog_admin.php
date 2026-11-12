@@ -295,13 +295,13 @@ function catalog_admin_legacy_rows(mysqli $db, string $prefix): array
     }
     return catalog_admin_rows(
         $db,
-        "SELECT service_id, home_cfg_id, service_name, img_url, slot_min_qty, slot_max_qty, price_monthly
+        "SELECT service_id, home_cfg_id, service_name, img_url, slot_min_qty, slot_max_qty, price_monthly, remote_server_id
          FROM `{$prefix}billing_services` WHERE enabled = 1 ORDER BY service_id"
     );
 }
 
 /** Builds the import plan for the ticked agents. Reads the database, changes nothing. */
-function catalog_admin_import_plan(mysqli $db, string $prefix, array $agentIds, array $images): array
+function catalog_admin_import_plan(mysqli $db, string $prefix, array $agentIds, array $images, bool $useSavedAgents = false): array
 {
     $gameIdSet = array();
     foreach (catalog_admin_rows($db, "SELECT home_cfg_id FROM `{$prefix}config_homes`") as $row) {
@@ -316,7 +316,10 @@ function catalog_admin_import_plan(mysqli $db, string $prefix, array $agentIds, 
         $detailIdSet[(int)$row['home_cfg_id']] = true;
     }
     $legacyRows = catalog_admin_legacy_rows($db, $prefix);
-    return catalog_plan_legacy_import($legacyRows, $gameIdSet, $agentIds, $existingKeys, $detailIdSet, $images);
+    $validAgentIds = array_map('intval', array_column(catalog_admin_agents($db, $prefix), 'remote_server_id'));
+    return catalog_plan_legacy_import(
+        $legacyRows, $gameIdSet, $agentIds, $existingKeys, $detailIdSet, $images, $useSavedAgents, $validAgentIds
+    );
 }
 
 /** Writes one planned game: its picture (if any) and its offers. Existing rows are left alone. */
@@ -379,4 +382,54 @@ function catalog_admin_missing_tables(mysqli $db, string $prefix): array
         }
     }
     return $missing;
+}
+
+/** Placement headroom (the share of an agent that may be used before it is skipped). Defaults 70/70/85. */
+function catalog_admin_headroom(mysqli $db, string $prefix): array
+{
+    $out = array('cpu' => 70, 'ram' => 70, 'disk' => 85);
+    if (!catalog_admin_table_exists($db, $prefix . 'billing_config')) {
+        return $out;
+    }
+    $rows = catalog_admin_rows(
+        $db,
+        "SELECT headroom_cpu_pct, headroom_ram_pct, headroom_disk_pct
+         FROM `{$prefix}billing_config` ORDER BY config_id ASC LIMIT 1"
+    );
+    if (!empty($rows)) {
+        $out = array(
+            'cpu' => (int)$rows[0]['headroom_cpu_pct'],
+            'ram' => (int)$rows[0]['headroom_ram_pct'],
+            'disk' => (int)$rows[0]['headroom_disk_pct'],
+        );
+    }
+    return $out;
+}
+
+/** Saves the placement headroom on the first billing_config row, creating it when there is none. Returns an error text or ''. */
+function catalog_admin_save_headroom(mysqli $db, string $prefix, int $cpu, int $ram, int $disk): string
+{
+    try {
+        $rows = catalog_admin_rows($db, "SELECT config_id FROM `{$prefix}billing_config` ORDER BY config_id ASC LIMIT 1");
+        if (!empty($rows)) {
+            catalog_admin_run(
+                $db,
+                "UPDATE `{$prefix}billing_config` SET headroom_cpu_pct = ?, headroom_ram_pct = ?, headroom_disk_pct = ?
+                 WHERE config_id = ?",
+                'iiii',
+                array($cpu, $ram, $disk, (int)$rows[0]['config_id'])
+            );
+        } else {
+            catalog_admin_run(
+                $db,
+                "INSERT INTO `{$prefix}billing_config` (game_key, headroom_cpu_pct, headroom_ram_pct, headroom_disk_pct)
+                 VALUES ('__global__', ?, ?, ?)",
+                'iii',
+                array($cpu, $ram, $disk)
+            );
+        }
+    } catch (Throwable $e) {
+        return 'The headroom was not saved: ' . $e->getMessage();
+    }
+    return '';
 }

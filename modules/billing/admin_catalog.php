@@ -1,6 +1,6 @@
 <?php
 /**
- * Game Catalog admin page (Billing Setup > Game Catalog).
+ * Game Catalog admin page (Administration > Billing > Game Catalog).
  *
  * The list shows every game config. Open a game to change what the storefront shows
  * (name, description, picture), its price, and which agents it is sold on.
@@ -8,6 +8,7 @@
  *
  * panel_admin.php includes this file and calls billing_admin_catalog_render().
  * The older page key game_catalog still works through exec_module() at the bottom.
+ * The placement headroom form (how full an agent may get before it is skipped) is on the list view.
  */
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/includes/action_security.php';
@@ -28,7 +29,7 @@ function cat_money($value): string
 /** Link to this page inside the panel. Returns text that is safe to put in an href. */
 function cat_url(array $params = array()): string
 {
-    $params = array_merge(array('m' => 'billing', 'p' => 'billing_setup', 's' => 'game_catalog'), $params);
+    $params = array_merge(array('m' => 'billing', 'p' => 'billing', 's' => 'game_catalog'), $params);
     return cat_h('home.php?' . http_build_query($params));
 }
 
@@ -133,13 +134,15 @@ function cat_import(mysqli $db, string $prefix): array
 {
     $validIds = array_map('intval', array_column(catalog_admin_agents($db, $prefix), 'remote_server_id'));
     $agentIds = array_values(array_intersect($validIds, array_map('intval', (array)($_POST['agent_ids'] ?? array()))));
-    if (empty($agentIds)) {
-        cat_set_flash('err', array('Tick at least one agent to import onto.'));
+    $useSaved = !empty($_POST['use_saved_agents']);
+    if (empty($agentIds) && !$useSaved) {
+        cat_set_flash('err', array('Tick at least one agent, or choose to use the agents saved on the old services.'));
         return array('redirect' => null, 'preview' => null);
     }
 
-    $plan = catalog_admin_import_plan($db, $prefix, $agentIds, catalog_list_images(cat_image_dir()));
+    $plan = catalog_admin_import_plan($db, $prefix, $agentIds, catalog_list_images(cat_image_dir()), $useSaved);
     $plan['agent_ids'] = $agentIds;
+    $plan['use_saved_agents'] = $useSaved;
     $mode = (string)($_POST['mode'] ?? 'preview');
     if ($mode === 'preview') {
         return array('redirect' => null, 'preview' => $plan);
@@ -153,6 +156,23 @@ function cat_import(mysqli $db, string $prefix): array
         cat_set_flash('ok', array('Imported ' . $plan['counts']['games'] . ' game(s), ' . $plan['counts']['offers'] . ' offer(s) ' . $what . '.'));
     }
     return array('redirect' => cat_url(), 'preview' => null);
+}
+
+/** Saves the placement headroom form. Returns the address to go to, or null to show the page again. */
+function cat_save_headroom(mysqli $db, string $prefix): ?string
+{
+    $values = catalog_read_headroom($_POST);
+    if ($values === null) {
+        cat_set_flash('err', array('Placement headroom percentages must be whole numbers between 1 and 100.'));
+        return null;
+    }
+    $error = catalog_admin_save_headroom($db, $prefix, $values['cpu'], $values['ram'], $values['disk']);
+    if ($error !== '') {
+        cat_set_flash('err', array($error));
+        return null;
+    }
+    cat_set_flash('ok', array('Placement headroom saved.'));
+    return cat_url();
 }
 
 /** Handles any form post. Same return value as cat_import(). */
@@ -169,6 +189,9 @@ function cat_handle_post(mysqli $db, string $prefix): array
     }
     if ($action === 'import') {
         return cat_import($db, $prefix);
+    }
+    if ($action === 'save_headroom') {
+        return array('redirect' => cat_save_headroom($db, $prefix), 'preview' => null);
     }
     return $none;
 }
@@ -188,6 +211,7 @@ function cat_render_styles(): void
     .cat-muted { opacity: 0.75; font-size: 0.9em; }
     .cat-wide { width: 100%; max-width: 520px; box-sizing: border-box; }
     .cat-number { width: 90px; }
+    .cat-input { width: 70px; margin: 0 14px 0 6px; }
     .cat-hidden { display: none; }
     .cat-picture { display: block; max-width: 180px; margin-top: 8px; }
     .cat-badge-on { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 1px 8px; border-radius: 3px; font-size: 0.9em; }
@@ -229,6 +253,28 @@ function cat_render_import_preview(array $plan): void
     echo '</div>';
 }
 
+/** The placement headroom form. */
+function cat_render_headroom(mysqli $db, string $prefix, string $csrf): void
+{
+    $headroom = catalog_admin_headroom($db, $prefix);
+    ?>
+    <details class="cat-box">
+      <summary><strong>Placement headroom</strong></summary>
+      <p>When a customer orders, an agent is only picked if its use stays under these percentages.</p>
+      <form method="post" action="<?php echo cat_url(); ?>">
+        <input type="hidden" name="csrf" value="<?php echo cat_h($csrf); ?>">
+        <input type="hidden" name="action" value="save_headroom">
+        <?php foreach (array('cpu' => 'CPU %', 'ram' => 'RAM %', 'disk' => 'Disk %') as $key => $label) : ?>
+          <label><?php echo cat_h($label); ?>
+            <input type="number" min="1" max="100" class="cat-input" name="headroom_<?php echo $key; ?>_pct"
+                   value="<?php echo (int)$headroom[$key]; ?>"></label>
+        <?php endforeach; ?>
+        <p><button type="submit" class="cat-button">Save headroom</button></p>
+      </form>
+    </details>
+    <?php
+}
+
 /** The import tool: copies the old services list into the catalog on the agents you tick. */
 function cat_render_import(mysqli $db, string $prefix, string $csrf, array $agents, ?array $preview): void
 {
@@ -241,13 +287,15 @@ function cat_render_import(mysqli $db, string $prefix, string $csrf, array $agen
     ?>
     <details class="cat-box"<?php echo $open; ?>>
       <summary><strong>Import from the old services list</strong> (<?php echo $oldCount; ?> enabled)</summary>
-      <p>Copies each old service's price, slot range and picture into the catalog on the agents you tick below.
+      <p>Copies each old service's price, slot range and picture into the catalog, on the agents it was saved with and/or the agents you tick below.
          Games that are already set up are not changed, and old services with no price are skipped.</p>
       <?php if ($preview !== null) { cat_render_import_preview($preview); } ?>
       <form method="post" action="<?php echo cat_url(); ?>">
         <input type="hidden" name="csrf" value="<?php echo cat_h($csrf); ?>">
         <input type="hidden" name="action" value="import">
-        <p>Put them on these agents:</p>
+        <p><label><input type="checkbox" name="use_saved_agents" value="1"<?php echo !empty($preview['use_saved_agents']) ? ' checked' : ''; ?>>
+           Also use the agents already saved on each old service</label></p>
+        <p>And put them on these agents:</p>
         <?php cat_render_agent_checkboxes($agents, $ticked); ?>
         <p>
           <button type="submit" name="mode" value="preview" class="cat-button">Preview</button>
@@ -266,7 +314,7 @@ function cat_render_filter(string $search, string $status): void
     ?>
     <form method="get" action="home.php" style="margin:12px 0;">
       <input type="hidden" name="m" value="billing">
-      <input type="hidden" name="p" value="billing_setup">
+      <input type="hidden" name="p" value="billing">
       <input type="hidden" name="s" value="game_catalog">
       <input type="text" name="q" value="<?php echo cat_h($search); ?>" placeholder="Search games">
       <select name="status">
@@ -306,6 +354,7 @@ function cat_render_list(mysqli $db, string $prefix, string $csrf, ?array $previ
        Open a game to edit it. Only published games appear on the storefront.</p>
     <?php
     cat_render_import($db, $prefix, $csrf, catalog_admin_agents($db, $prefix), $preview);
+    cat_render_headroom($db, $prefix, $csrf);
     cat_render_filter($search, $status);
     ?>
     <p class="cat-muted"><?php echo count($games); ?> game(s) shown.</p>

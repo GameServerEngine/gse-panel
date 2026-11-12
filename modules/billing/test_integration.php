@@ -94,7 +94,7 @@ function exec_module()
 	echo "<ul>";
 	echo "<li><a href='home.php?m=billing&p=my_orders'>My Orders (user)</a></li>";
 	if ($isAdmin) {
-		echo "<li><a href='home.php?m=billing&p=admin_orders'>Admin Orders (admin only)</a></li>";
+		echo "<li><a href='home.php?m=billing&p=billing&s=orders'>Admin Orders (admin only)</a></li>";
 	}
 	echo "</ul>";
 
@@ -133,7 +133,7 @@ function exec_module()
 	echo "<li>Display user orders via <code>home.php?m=billing&p=my_orders</code></li>";
 	echo "<li>Provision servers via <code>home.php?m=billing&p=provision_servers</code></li>";
 	if ($isAdmin) {
-		echo "<li>Admin management via <code>home.php?m=billing&p=admin_orders</code></li>";
+		echo "<li>Admin management via <code>home.php?m=billing&p=billing&s=orders</code></li>";
 	}
 	echo "</ul>";
 	echo "</div>";

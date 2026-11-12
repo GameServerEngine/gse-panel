@@ -66,9 +66,7 @@ Added columns:
 ### Accessing Coupon Management
 
 1. Log in as an administrator
-2. Navigate to `/modules/billing/admin.php`
-3. Click on "Manage Coupons" button
-4. Or go directly to `/modules/billing/admin_coupons.php`
+2. Open Administration > Billing in the control panel and choose the Coupons tab
 
 ### Creating a New Coupon
 

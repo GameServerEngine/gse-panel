@@ -65,55 +65,6 @@ if (isset($_SESSION['website_username']) && !empty($_SESSION['website_username']
   // fetch username lazily if only user_id is present
   $username = htmlspecialchars((string)($_SESSION['website_user_id']));
 }
-
-// Determine if the logged-in user is an admin by checking the panel DB
-$is_admin = false;
-if ($is_logged_in) {
-  // load DB credentials
-  require_once(__DIR__ . '/config_loader.php');
-  
-  // Variables from config.inc.php (helps IDEs understand scope)
-  /** @var string $db_host Database host */
-  /** @var string $db_user Database user */
-  /** @var string $db_pass Database password */
-  /** @var string $db_name Database name */
-  /** @var string $table_prefix Table prefix for database tables */
-  
-  // Prefer reusing an existing $db if present, otherwise open a local connection
-  $menu_db = null;
-  $menu_db_opened = false;
-  // Only reuse $db if it is still an open (non-closed) connection.
-  // mysqli_thread_id() returns 0 on a closed handle; no @ needed since instanceof
-  // already guarantees $db is a mysqli object.
-  if (isset($db) && $db instanceof mysqli && mysqli_thread_id($db)) {
-    $menu_db = $db;
-  } else {
-    $menu_db_port = isset($db_port) ? (int)$db_port : null;
-    $menu_db = @mysqli_connect($db_host, $db_user, $db_pass, $db_name, $menu_db_port);
-    $menu_db_opened = true;
-  }
-
-  if ($menu_db) {
-    $uid = null;
-    if (isset($_SESSION['website_user_id']) && !empty($_SESSION['website_user_id'])) {
-      $uid = intval($_SESSION['website_user_id']);
-    }
-    if (!empty($uid)) {
-      $res = mysqli_query($menu_db, "SELECT users_role FROM {$table_prefix}users WHERE user_id = $uid LIMIT 1");
-      if ($res && mysqli_num_rows($res) === 1) {
-        $row = mysqli_fetch_assoc($res);
-        if (strtolower((string)($row['users_role'] ?? '')) === 'admin') $is_admin = true;
-      }
-    }
-    if ($menu_db_opened) {
-      if (function_exists('billing_maybe_close_db')) {
-        billing_maybe_close_db($menu_db);
-      } else {
-        @mysqli_close($menu_db);
-      }
-    }
-  }
-}
 ?>
 <link rel="stylesheet" href="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('css/header.css') : ($nav_prefix . 'css/header.css')); ?>">
 
@@ -166,10 +117,7 @@ if ($is_logged_in) {
             if ($cart_count > 0) echo ' <span class="cart-badge">' . intval($cart_count) . '</span>';
           ?>
         </a>
-        <a href="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('my_servers.php') : ($nav_prefix . 'my_servers.php')); ?>" class="<?php echo billing_nav_escape(billing_nav_link_class('my_servers.php')); ?>">My Containers</a>
-      <?php endif; ?>
-      <?php if ($is_logged_in && $is_admin): ?>
-        <a href="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('admin.php') : ($nav_prefix . 'admin.php')); ?>" class="<?php echo billing_nav_escape(billing_nav_link_class('admin.php')); ?>">Admin</a>
+        <a href="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('my_servers.php') : ($nav_prefix . 'my_servers.php')); ?>" class="<?php echo billing_nav_escape(billing_nav_link_class('my_servers.php')); ?>">My Servers</a>
       <?php endif; ?>
       <?php $panelRoot = function_exists('billing_runtime_panel_root') ? billing_runtime_panel_root() : null; ?>
       <a href="<?php echo billing_nav_escape($panelRoot ? '/panel/' : (function_exists('billing_url') ? billing_url('index.php') : ($nav_prefix . 'index.php'))); ?>" class="gsw-nav-link">Control Panel</a>

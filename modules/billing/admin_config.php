@@ -218,7 +218,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
        SECTION A: Interactive form
   ==================================================================== -->
   <div class="cfg-section">
-    <form method="post" action="home.php?m=billing&amp;p=billing_setup">
+    <form method="post" action="home.php?m=billing&amp;p=billing&amp;s=config">
       <input type="hidden" name="csrf"   value="<?php echo h($csrf); ?>">
       <input type="hidden" name="action" value="save_form">
 
