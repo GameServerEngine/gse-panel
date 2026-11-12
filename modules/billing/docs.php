@@ -199,228 +199,36 @@ uksort($grouped, function($a, $b) use ($categoryOrder) {
     <title><?php echo htmlspecialchars('Documentation - ' . billing_brand('name'), ENT_QUOTES, 'UTF-8'); ?></title>
     <link rel="icon" type="image/png" sizes="32x32" href="<?php echo htmlspecialchars(billing_url('images/brand/favicon-32x32.png'), ENT_QUOTES, 'UTF-8'); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(billing_url('css/header.css'), ENT_QUOTES, 'UTF-8'); ?>">
-    <style>
-        /* Documentation-specific styles - consistent with site theme */
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-
-        .header {
-            margin-bottom: 40px;
-        }
-
-        .header h1 {
-            font-size: 32px;
-            margin: 0 0 12px;
-            color: #fff;
-        }
-
-        .header p {
-            color: rgba(255,255,255,0.7);
-            margin: 0;
-        }
-
-        .back-button {
-            display: inline-block;
-            padding: 10px 20px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            color: #7fb3ff;
-            text-decoration: none;
-            margin-bottom: 20px;
-            transition: all 0.2s;
-        }
-
-        .back-button:hover {
-            background: rgba(255,255,255,0.06);
-            border-color: #667eea;
-        }
-
-        .category-section {
-            margin-bottom: 40px;
-        }
-
-        .category-title {
-            font-size: 24px;
-            color: #4de1ff;
-            margin: 0 0 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid rgba(255,255,255,0.1);
-        }
-
-        .docs-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-        }
-
-        .game-search-input {
-            width: 100%;
-            max-width: 400px;
-            padding: 10px 15px;
-            margin-bottom: 20px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            color: #fff;
-            font-size: 14px;
-        }
-
-        .game-search-input:focus {
-            outline: none;
-            border-color: #4de1ff;
-        }
-
-        .doc-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 20px;
-            transition: all 0.2s;
-            text-decoration: none;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .doc-card:hover {
-            border-color: #4de1ff;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
-        }
-
-        .doc-icon-wrapper {
-            width: 60px;
-            height: 60px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
-        }
-
-        .doc-icon {
-            max-width: 100%;
-            max-height: 100%;
-            border-radius: 6px;
-        }
-
-        .doc-icon-placeholder {
-            font-size: 28px;
-            color: rgba(255,255,255,0.6);
-        }
-
-        .doc-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #fff;
-            margin: 0 0 8px;
-        }
-
-        .doc-description {
-            font-size: 14px;
-            color: rgba(255,255,255,0.7);
-            margin: 0;
-            flex-grow: 1;
-        }
-
-        .doc-view-container {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 30px;
-            min-height: 400px;
-        }
-
-        .doc-view-container h1,
-        .doc-view-container h2,
-        .doc-view-container h3,
-        .doc-view-container h4 {
-            color: #fff;
-        }
-
-        .doc-view-container a {
-            color: #7fb3ff;
-        }
-
-        .doc-view-container code {
-            background: rgba(0,0,0,0.3);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            color: #a5b4fc;
-        }
-
-        .doc-view-container pre {
-            background: rgba(0,0,0,0.3);
-            padding: 15px;
-            border-radius: 8px;
-            overflow-x: auto;
-        }
-
-        .doc-view-container pre code {
-            background: none;
-            padding: 0;
-        }
-
-        .nav-links {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 30px;
-        }
-
-        .nav-links h3 {
-            margin: 0 0 15px;
-            color: #4de1ff;
-            font-size: 18px;
-        }
-
-        .nav-links a {
-            display: inline-block;
-            padding: 8px 15px;
-            margin: 5px 10px 5px 0;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 5px;
-            color: #7fb3ff;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .nav-links a:hover {
-            background: #2b7dff;
-            color: #fff;
-            border-color: #2b7dff;
-        }
-
-        .return-to-top {
-            text-align: center;
-            margin: 30px 0;
-        }
-
-        .return-to-top a {
-            display: inline-block;
-            padding: 10px 20px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            color: #7fb3ff;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .return-to-top a:hover {
-            background: rgba(255,255,255,0.06);
-            border-color: #667eea;
-        }
-    </style>
 <?php include(__DIR__ . '/includes/theme_head.php'); ?>
+<style>
+        /* Documentation-only rules. Page, panel and form styles come from css/header.css. */
+        .header { margin-bottom: 32px; }
+        .header p { color: var(--muted); margin: 0; }
+        .back-button { display: inline-block; padding: 9px 18px; margin-bottom: 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--white); color: var(--ink); font-weight: 650; text-decoration: none; }
+        .back-button:hover { border-color: var(--orange); color: #b45f00; }
+        .category-section { margin-bottom: 40px; }
+        .category-title { font-size: 1.4rem; margin: 0 0 20px; padding-bottom: 10px; border-bottom: 2px solid var(--line); }
+        .docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .game-search-input { width: 100%; max-width: 400px; margin-bottom: 20px; }
+        .doc-card { display: flex; flex-direction: column; color: inherit; text-decoration: none; transition: border-color 0.2s, transform 0.2s; }
+        .doc-card:hover { border-color: var(--orange); transform: translateY(-2px); color: inherit; }
+        .doc-icon-wrapper { width: 60px; height: 60px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius); background: var(--panel); }
+        .doc-icon { max-width: 100%; max-height: 100%; border-radius: 6px; }
+        .doc-icon-placeholder { font-size: 28px; color: var(--mist); }
+        .doc-title { font-size: 1.1rem; font-weight: 750; margin: 0 0 8px; }
+        .doc-description { font-size: 0.9rem; color: var(--muted); margin: 0; flex-grow: 1; }
+        .doc-view-container { min-height: 400px; padding: 30px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--white); }
+        .doc-view-container code { padding: 2px 6px; border-radius: 4px; background: var(--page); font-family: "Courier New", monospace; }
+        .doc-view-container pre { padding: 15px; border-radius: var(--radius); background: var(--panel); color: var(--mist); overflow-x: auto; }
+        .doc-view-container pre code { padding: 0; background: none; color: inherit; }
+        .nav-links { padding: 20px; margin-bottom: 30px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--page); }
+        .nav-links h3 { margin: 0 0 15px; }
+        .nav-links a { display: inline-block; padding: 8px 15px; margin: 5px 10px 5px 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--white); color: var(--ink); text-decoration: none; }
+        .nav-links a:hover { border-color: var(--orange); color: #b45f00; }
+        .return-to-top { text-align: center; margin: 30px 0; }
+        .return-to-top a { display: inline-block; padding: 10px 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--white); color: var(--ink); text-decoration: none; }
+        .return-to-top a:hover { border-color: var(--orange); color: #b45f00; }
+    </style>
 </head>
 <body>
     <?php include(__DIR__ . '/includes/menu.php'); ?>
@@ -467,7 +275,7 @@ uksort($grouped, function($a, $b) use ($categoryOrder) {
                             if ($value === null || $value === '') {
                                 return;
                             }
-                            echo '<tr><td style="padding:6px 12px;color:rgba(255,255,255,0.6);vertical-align:top;white-space:nowrap;">'
+                            echo '<tr><td style="padding:6px 12px;color:var(--muted);vertical-align:top;white-space:nowrap;">'
                                 . htmlspecialchars($label) . '</td><td style="padding:6px 12px;word-break:break-all;">'
                                 . htmlspecialchars((string)$value) . '</td></tr>';
                         };

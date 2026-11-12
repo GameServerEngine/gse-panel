@@ -11,6 +11,7 @@
 | issue | modules/billing/includes/login_required.php is a no-op left from debugging, so website pages such as My Servers do not redirect signed-out visitors (they show nothing). Decide whether to turn the redirect back on. | open: owner decision needed | Claude | |
 | need | Container database tables (managed_containers and the rest of migration 0004) are left in place on purpose; only the code was removed. Drop them later if the container idea is dropped for good. | open: owner decision needed | Claude | |
 | need | Administration page shows a broken image for Billing (no modules/administration/images/billing.png). Add an icon like the other entries. | open | Claude | |
+| todo | Storefront restyle (GameServer Engine look, white content section on every page: css/header.css, includes/menu.php, footer.php, theme_head.php). Check in a browser on the test site: header and mobile menu, home hero, game list, order, cart, sign in, support, docs, My Account and My Servers. Not seen in a browser yet. | open | Claude | |
 | need | Agents need a city (Billing > Locations) and installs turned on before customers can order. Check each agent. | open | Leroy | |
 | issue | modules/billing/tests/GameReferenceCoverageTest.php fails before this work (game_key arma2 missing from games.json). | open | Claude | |
 | todo | API page: per-machine dropdown, filled-in game server commands, admin machine commands. Test in a browser on the test panel (not run against any database). | done (code), browser test open | Claude | |

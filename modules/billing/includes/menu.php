@@ -1,12 +1,15 @@
-<?php require_once __DIR__ . '/brand.php'; ?>
 <?php
 /**
- * Navigation Menu for GameServers.World Website
- * This file provides a consistent navigation menu across all website pages
+ * Storefront header and navigation, in the GameServer Engine style.
+ *
+ * Opens the page shell: #gsw-site > .gsw-page > .gsw-content (the white content
+ * section). footer.php closes the content section, prints the footer and closes
+ * the shell, so every page's markup lands inside the white section.
  */
 
-require_once(__DIR__ . '/session_bridge.php');
-require_once(dirname(__DIR__) . '/billing_bootstrap.php');
+require_once __DIR__ . '/brand.php';
+require_once __DIR__ . '/session_bridge.php';
+require_once dirname(__DIR__) . '/billing_bootstrap.php';
 
 if (!function_exists('billing_nav_escape')) {
   function billing_nav_escape($value) {
@@ -14,116 +17,72 @@ if (!function_exists('billing_nav_escape')) {
   }
 }
 
-if (!function_exists('billing_nav_is_active')) {
-  function billing_nav_is_active(string $target): bool {
+if (!function_exists('billing_nav_link')) {
+  /** One primary navigation link; the link for the current script gets is-active. */
+  function billing_nav_link(string $target, string $label): string {
     $current = basename((string)($_SERVER['SCRIPT_NAME'] ?? ''));
-    return $current === basename($target);
+    $class = 'gsw-nav-link' . ($current === $target ? ' is-active' : '');
+    return '<a href="' . billing_nav_escape(billing_url($target)) . '" class="' . $class . '">' . $label . '</a>';
   }
 }
 
-if (!function_exists('billing_nav_link_class')) {
-  function billing_nav_link_class(string $target): string {
-    return 'gsw-nav-link' . (billing_nav_is_active($target) ? ' is-active' : '');
-  }
-}
-
-$nav_prefix = '';
-$scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
-if (is_string($scriptName) && $scriptName !== '') {
-  if (preg_match('#/modules/billing/(.*)$#', $scriptName, $match)) {
-    // Panel-embedded or non-root deployment: depth relative to modules/billing/
-    $subPath = $match[1];
-    if ($subPath !== '') {
-      $depth = substr_count($subPath, '/');
-      if ($depth > 0) {
-        $nav_prefix = str_repeat('../', $depth);
-      }
-    }
-  } else {
-    // Root deployment: compute prefix from the script's directory depth so that
-    // links such as index.php correctly resolve to /index.php even when the
-    // current page lives in a subdirectory like /docs/.
-    $dir = dirname($scriptName);
-    if ($dir !== '/' && $dir !== '' && $dir !== '.') {
-      $segments = array_filter(explode('/', $dir), static function ($s) { return $s !== ''; });
-      if (!empty($segments)) {
-        $nav_prefix = str_repeat('../', count($segments));
-      }
-    }
-  }
-}
-$nav_prefix = $nav_prefix ?: '';
-
-// Check login status
-// Primary check uses website_user_id, but some remote deployments may only set website_username.
-// Treat presence of website_username as a fallback to consider the user logged in for UI purposes.
-$is_logged_in = (isset($_SESSION['website_user_id']) && !empty($_SESSION['website_user_id'])) || (isset($_SESSION['website_username']) && !empty($_SESSION['website_username']));
+// Signed in when the shared session carries a website user (the id is the panel user id).
+$is_logged_in = !empty($_SESSION['website_user_id']) || !empty($_SESSION['website_username']);
 $username = '';
-if (isset($_SESSION['website_username']) && !empty($_SESSION['website_username'])) {
-  $username = htmlspecialchars($_SESSION['website_username']);
-} elseif (isset($_SESSION['website_user_id']) && !empty($_SESSION['website_user_id'])) {
-  // fetch username lazily if only user_id is present
-  $username = htmlspecialchars((string)($_SESSION['website_user_id']));
+if (!empty($_SESSION['website_username'])) {
+  $username = (string)$_SESSION['website_username'];
+} elseif (!empty($_SESSION['website_user_id'])) {
+  $username = (string)$_SESSION['website_user_id'];
 }
-?>
-<link rel="stylesheet" href="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('css/header.css') : ($nav_prefix . 'css/header.css')); ?>">
 
-<!-- site wrapper for scoping styles -->
+$cart_count = 0;
+if ($is_logged_in && file_exists(__DIR__ . '/cart_helper.php')) {
+  include_once __DIR__ . '/cart_helper.php';
+  if (function_exists('get_cart_count')) {
+    $cart_count = (int)get_cart_count();
+  }
+}
+
+// The brand name is two words on the GameServer Engine mark: "Game Server" / "Engine".
+$brandName = trim(billing_brand('name'));
+$brandSplit = strrpos($brandName, ' ');
+$brandFirst = $brandSplit === false ? $brandName : substr($brandName, 0, $brandSplit);
+$brandLast = $brandSplit === false ? '' : substr($brandName, $brandSplit + 1);
+
+$returnTo = (string)($_SERVER['REQUEST_URI'] ?? '/');
+?>
 <div id="gsw-site">
 
-<div class="gsw-header">
-  <div class="gsw-header-top">
+<header class="gsw-header">
+  <div class="gsw-header-inner">
+    <a href="<?php echo billing_nav_escape(billing_url('index.php')); ?>" class="gsw-brand" aria-label="<?php echo billing_brand_e('name'); ?> home">
+      <img src="<?php echo billing_nav_escape(billing_url('images/brand/gse-icon-mark.png')); ?>" alt="" class="gsw-brand-mark" width="64" height="64">
+      <span class="gsw-brand-text"><strong><?php echo billing_nav_escape($brandFirst); ?></strong><?php if ($brandLast !== ''): ?> <span><?php echo billing_nav_escape($brandLast); ?></span><?php endif; ?></span>
+    </a>
     <button class="gsw-nav-toggle" type="button" aria-controls="gsw-primary-nav" aria-expanded="false" aria-label="Open primary navigation">
       <span class="gsw-nav-toggle-bars" aria-hidden="true"></span>
     </button>
-    <a href="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('index.php') : ($nav_prefix . 'index.php')); ?>" class="gsw-logo-link">
-      <img src="<?php echo billing_nav_escape(function_exists('billing_url') ? panel_asset_url('images/logo.png') : ($nav_prefix . 'images/brand/gsw-text-logo.png')); ?>" alt="" class="gsw-logo-text" aria-hidden="true">
-      <span class="gsw-site-name"><?php echo billing_brand_e('name'); ?></span>
-    </a>
-    <div class="gsw-header-actions">
-      <!-- Always show the user-info area (may be empty for guests) and an auth button -->
-      <?php
-        // Build a safe absolute return_to under this site so auth redirects stay within this module
-        $current = $_SERVER['REQUEST_URI'] ?? '/';
-        $return_to_param = $current;
-      ?>
-      <?php if ($is_logged_in): ?>
-        <a href="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('my_account.php') : ($nav_prefix . 'my_account.php')); ?>" class="gsw-user-info">Welcome, <?php echo $username; ?></a>
-        <a href="<?php echo billing_nav_escape((function_exists('billing_url') ? billing_url('logout.php') : ($nav_prefix . 'logout.php')) . '?return_to=' . urlencode($return_to_param)); ?>" class="gsw-header-btn"><span>Logout</span></a>
-      <?php else: ?>
-        <a href="<?php echo billing_nav_escape((function_exists('billing_url') ? billing_url('login.php') : ($nav_prefix . 'login.php')) . '?return_to=' . urlencode($return_to_param)); ?>" class="gsw-header-btn"><span>Login</span></a>
-      <?php endif; ?>
-    </div>
-  </div>
-
-  <div class="gsw-header-bottom">
     <nav class="gsw-header-nav" id="gsw-primary-nav" aria-label="Primary navigation">
-      <a href="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('index.php') : ($nav_prefix . 'index.php')); ?>" class="<?php echo billing_nav_escape(billing_nav_link_class('index.php')); ?>">Home</a>
-      <a href="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('serverlist.php') : ($nav_prefix . 'serverlist.php')); ?>" class="<?php echo billing_nav_escape(billing_nav_link_class('serverlist.php')); ?>">Game Servers</a>
-      <a href="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('docs.php') : ($nav_prefix . 'docs.php')); ?>" class="<?php echo billing_nav_escape(billing_nav_link_class('docs.php')); ?>">Documentation</a>
-      <a href="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('ai.php') : ($nav_prefix . 'ai.php')); ?>" class="<?php echo billing_nav_escape(billing_nav_link_class('ai.php')); ?>">AI Assistant</a>
-      <a href="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('support.php') : ($nav_prefix . 'support.php')); ?>" class="<?php echo billing_nav_escape(billing_nav_link_class('support.php')); ?>">Support</a>
-      <a href="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('contact.php') : ($nav_prefix . 'contact.php')); ?>" class="<?php echo billing_nav_escape(billing_nav_link_class('contact.php')); ?>">Contact</a>
+      <?php echo billing_nav_link('index.php', 'Home'); ?>
+      <?php echo billing_nav_link('serverlist.php', 'Game Servers'); ?>
+      <?php echo billing_nav_link('docs.php', 'Documentation'); ?>
+      <?php echo billing_nav_link('ai.php', 'AI Assistant'); ?>
+      <?php echo billing_nav_link('support.php', 'Support'); ?>
+      <?php echo billing_nav_link('contact.php', 'Contact'); ?>
       <?php if ($is_logged_in): ?>
-        <!-- My Account as a regular nav link, not a prominent button -->
-        <a href="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('my_account.php') : ($nav_prefix . 'my_account.php')); ?>" class="<?php echo billing_nav_escape(billing_nav_link_class('my_account.php')); ?>">My Account</a>
-        <a href="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('cart.php') : ($nav_prefix . 'cart.php')); ?>" class="<?php echo billing_nav_escape(billing_nav_link_class('cart.php')); ?>">Cart
-          <?php
-            $cart_count = 0;
-            if (file_exists(__DIR__ . '/cart_helper.php')) {
-              include_once __DIR__ . '/cart_helper.php';
-              if (function_exists('get_cart_count')) $cart_count = (int) get_cart_count();
-            }
-            if ($cart_count > 0) echo ' <span class="cart-badge">' . intval($cart_count) . '</span>';
-          ?>
-        </a>
-        <a href="<?php echo billing_nav_escape(function_exists('billing_url') ? billing_url('my_servers.php') : ($nav_prefix . 'my_servers.php')); ?>" class="<?php echo billing_nav_escape(billing_nav_link_class('my_servers.php')); ?>">My Servers</a>
+        <?php echo billing_nav_link('my_servers.php', 'My Servers'); ?>
+        <?php echo billing_nav_link('my_account.php', 'My Account'); ?>
+        <a href="<?php echo billing_nav_escape(billing_url('cart.php')); ?>" class="gsw-nav-link<?php echo basename((string)($_SERVER['SCRIPT_NAME'] ?? '')) === 'cart.php' ? ' is-active' : ''; ?>">Cart<?php if ($cart_count > 0): ?><span class="cart-badge"><?php echo $cart_count; ?></span><?php endif; ?></a>
       <?php endif; ?>
-      <?php $panelRoot = function_exists('billing_runtime_panel_root') ? billing_runtime_panel_root() : null; ?>
-      <a href="<?php echo billing_nav_escape($panelRoot ? '/panel/' : (function_exists('billing_url') ? billing_url('index.php') : ($nav_prefix . 'index.php'))); ?>" class="gsw-nav-link">Control Panel</a>
+      <a href="/panel/" class="gsw-nav-link">Control Panel</a>
+      <?php if ($is_logged_in): ?>
+        <a href="<?php echo billing_nav_escape(billing_url('logout.php') . '?return_to=' . urlencode($returnTo)); ?>" class="gsw-btn gsw-nav-cta" title="Signed in as <?php echo billing_nav_escape($username); ?>">Logout</a>
+      <?php else: ?>
+        <a href="<?php echo billing_nav_escape(billing_url('login.php') . '?return_to=' . urlencode($returnTo)); ?>" class="gsw-btn gsw-nav-cta">Login</a>
+      <?php endif; ?>
     </nav>
   </div>
-</div>
+</header>
 <script>
 (function () {
   var header = document.querySelector('.gsw-header');
@@ -139,14 +98,13 @@ if (isset($_SESSION['website_username']) && !empty($_SESSION['website_username']
     setOpen(!header.classList.contains('is-open'));
   });
   nav.addEventListener('click', function (event) {
-    if (event.target && event.target.closest('a')) {
-      setOpen(false);
-    }
+    if (event.target && event.target.closest('a')) setOpen(false);
   });
   document.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape') {
-      setOpen(false);
-    }
+    if (event.key === 'Escape') setOpen(false);
   });
 })();
 </script>
+
+<div class="gsw-page">
+<div class="gsw-content" id="gsw-content">

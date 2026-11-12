@@ -43,5 +43,25 @@ gse-panel (branch working)
 - Support tickets on a scratch MySQL 8 database loaded with an empty table prefix (as in production): 12 checks (own servers only, with and without a server, IPv4 and IPv6 address bytes, sub user parent, list, all-or-nothing rollback); SupportTicketsTest.php passes.
 - Not run in a browser. Nothing deployed and no live database touched.
 
+## Files Changed (stage 3: GameServer Engine restyle)
+- modules/billing/css/header.css (rewritten: light page, white content section, GSE header and footer, tokens from gameserverengine.com), includes/menu.php (GSE header, opens .gsw-page and .gsw-content), includes/footer.php (closes them, GSE footer), includes/theme_head.php (Inter font and header.css only)
+- Pages with their own inline styles moved onto the shared theme: login.php, forgot_password.php, reset_password.php (inline style removed), cart.php, docs.php, order.php, payment_success.php (page-only rules kept after the theme link), ai.php (now a full page with header, footer and styles), payment_success.php (now shows header and footer)
+- modules/billing/support.php (rewritten: the Open a Ticket form from stage 2 was missing from the tree; helper file and tests were committed but the page was not)
+- modules/billing/images/brand: new favicons, apple-touch-icon, gse-hero-artwork.webp, gse-logo-footer.png; removed gsw-globe-icon, gsw-globe-logo, gsw-text-logo
+- docs/TODO.md, CHANGELOG.md
+
+## Architecture Decisions (stage 3)
+- One shell: menu.php opens `#gsw-site > .gsw-page > .gsw-content`; footer.php closes it. Every page that includes the menu and footer therefore has its content in the white section; page wrappers (main, .container, .container-wide, .site-panel, .gsw-section) are neutralised inside it.
+- Page-only CSS stays in the page, after the theme link, so it wins over the shared rules; shared rules (buttons, forms, tables, alerts, panels) live only in header.css.
+- The storefront no longer loads the panel's SimpleBootstrap files; the pages only used `.btn`, `.btn-secondary` and `.btn-small` from them, now defined in header.css.
+- Control Panel link is always shown (it points to /panel/).
+
+## Validation Performed (stage 3)
+- php -l on every changed file; CatalogGamesTest and SupportTicketsTest pass.
+- Served the module with php -S: 26 storefront pages return 200 with the content section and footer present and no PHP errors (pages that need a database show their normal no-database output).
+- Support page end to end on the scratch MySQL database through a copy of the module and a throwaway panel config (removed afterwards): form lists only the customer's own servers; a ticket on an own server and one with no server are saved (status 3, one first message, address bytes, parent id); another customer's server and a bad CSRF token are refused with no row; the list shows both tickets. Test rows deleted.
+- Class coverage script: every class used on storefront pages is either styled or only a script hook.
+- Not run in a browser (no browser on the dev host): layout, colours and the mobile menu still need a look on the test site.
+
 ## Git Commits
 Repository: gse-panel, branch working. Hash: see git log.

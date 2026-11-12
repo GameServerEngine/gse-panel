@@ -5,44 +5,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Server - <?php echo billing_brand_e('name'); ?></title>
-    <link rel="stylesheet" href="css/header.css">
+<?php include(__DIR__ . '/includes/theme_head.php'); ?>
     <style>
-        body { margin: 0; padding: 0; }
-        .order-shell { width: min(1100px, 100% - 24px); margin: 20px auto 28px; }
-        .order-layout { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
+        /* Order-only rules. Page, button, form and panel styles come from css/header.css. */
+        .order-layout { display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
         .order-media { flex: 0 1 310px; max-width: 100%; }
-        .order-media img { width: 100%; max-width: 280px; height: auto; border-radius: 8px; display: block; }
+        .order-media img { width: 100%; max-width: 280px; height: auto; border-radius: var(--radius); display: block; }
         .order-media-title { margin: 10px 0 6px; text-align: center; }
-        .order-media-desc { color: #c6c6c6; max-width: 100%; word-break: break-word; }
-        .order-form-card { flex: 1 1 500px; max-width: 100%; background: rgba(0,0,0,0.25); border-radius: 10px; padding: 14px; }
+        .order-media-desc { color: var(--muted); max-width: 100%; word-break: break-word; }
+        .order-form-card { flex: 1 1 500px; max-width: 100%; background: var(--page); }
         .order-form-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         .order-form-table td { padding: 8px 6px; vertical-align: top; }
-        .order-form-table td:first-child { width: 34%; }
+        .order-form-table td:first-child { width: 34%; font-weight: 650; }
         .order-form-table input[type="text"],
         .order-form-table input[type="number"],
         .order-form-table select,
-        .order-form-table textarea {
-            width: 100%;
-            min-height: 40px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.2);
-            padding: 8px 10px;
-        }
+        .order-form-table textarea { width: 100%; min-height: 40px; }
         .order-form-table input[type="radio"] { margin-right: 8px; }
         .location-option { margin-bottom: 8px; }
         .slidecontainer { max-width: 100%; }
         .slidecontainer .slider { width: 100%; }
         .order-pricing { line-height: 1.5; word-break: break-word; }
         .order-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-        .order-actions .gsw-btn,
-        .order-actions .gsw-btn-secondary { width: auto; }
         .order-back-form { margin: 0; }
         .tier-option { display: inline-block; margin: 0 10px 8px 0; }
         .offer-pricing-fields { display: none; }
         .offer-pricing-fields.offer-pricing-active { display: block; }
-
         @media (max-width: 768px) {
-            .order-shell { width: min(100%, calc(100% - 16px)); margin: 12px auto 20px; }
             .order-layout { gap: 12px; }
             .order-media { flex: 1 1 100%; display: flex; flex-direction: column; align-items: center; }
             .order-media img { max-width: min(100%, 260px); }
@@ -55,10 +44,9 @@
             .order-form-table td { padding: 6px 4px; }
             .order-actions { flex-direction: column; }
             .order-actions .gsw-btn,
-            .order-actions .gsw-btn-secondary { width: 100%; text-align: center; }
+            .order-actions .gsw-btn-secondary { width: 100%; }
         }
     </style>
-<?php include(__DIR__ . '/includes/theme_head.php'); ?>
 </head>
 <body>
 <?php
@@ -382,6 +370,6 @@ foreach ($locationGroups as $group):
 <?php
 billing_maybe_close_db($db);
 ?>
-</body>
 <?php include(__DIR__ . '/includes/footer.php'); ?>
+</body>
 </html>
