@@ -1,0 +1,33 @@
+{
+ "schema": 1,
+ "component": "gse-panel",
+ "title": "GSE Panel",
+ "minimum_os": [
+  {
+   "name": "Any OS that runs PHP 8.3 and a web server",
+   "minimum": null
+  }
+ ],
+ "tested_on": [],
+ "prerequisites": [
+  {
+   "name": "PHP 8.3",
+   "note": "Required by the panel (see README)."
+  },
+  {
+   "name": "PHP extensions: mysqli, curl, mbstring, gd, xmlrpc",
+   "note": "The panel code checks for these functions. xmlrpc is needed to talk to the agents."
+  },
+  {
+   "name": "MySQL or MariaDB database",
+   "note": "Version not yet set."
+  },
+  {
+   "name": "Web server (Apache or nginx) with PHP",
+   "note": "Serves the panel."
+  }
+ ],
+ "unverified": [
+  "The OS, database version and web server versions are not yet set or tested."
+ ]
+}

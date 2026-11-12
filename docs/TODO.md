@@ -68,3 +68,4 @@
 | need | exec_operation() still returns plain FALSE for most failures (agent errors, stop failures), so the group result shows the generic "The operation failed. See the panel log" for those. Pass the agent's error text up. | open | Codex | |
 | need | Check the new checkbox and group buttons in the other themes (Silver, Obsidian, Revolution, mobile). | open | Codex | |
 | TK-1 | issue | done | Tickets page warned Array to string conversion (database_mysqli.php line 84). supportTickets.php cast the owner to an array before count(), so admins got an empty owner check too. Now passes the owner unchanged. | Claude | 2026-11-10 | 2026-11-10 | |
+| need | requirements.json: set the minimum database version, web server and OS after testing; the website should read the file. | open | Claude | |
