@@ -582,3 +582,86 @@ function sd_release_home_safe($dbHandle, $prefix, $home_id)
         error_log('subdomain release failed: ' . $e->getMessage());
     }
 }
+
+// Server address rows for the game monitor's edit page (user_games/edit_home.php).
+// Handles its own form post, then prints table rows. Does nothing when the module is not set up.
+function sd_render_edit_rows($dbHandle, $prefix, $home_id, $isAdmin, $userId)
+{
+    try {
+        $sdb = new SdDb($dbHandle, $prefix);
+        if (!$sdb->rows("SHOW TABLES LIKE '" . $sdb->esc($prefix . 'subdomains') . "'")) {
+            return;
+        }
+        $settings = sd_settings($sdb);
+        if (!sd_is_ready($settings)) {
+            return;
+        }
+        $provider = new SdCpanel($settings);
+        $home_id = (int)$home_id;
+        list($ip, $port) = sd_home_address($sdb, $home_id);
+        $gameKey = sd_home_game_key($sdb, $home_id);
+        $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); };
+        $msg = '';
+        $msgOk = true;
+        if (isset($_POST['sd_action'])) {
+            if ($ip === '') {
+                $msg = 'This server has no IP and port yet.';
+                $msgOk = false;
+            } elseif ($_POST['sd_action'] === 'set') {
+                list($msgOk, $msg) = sd_set_for_home($sdb, $provider, $settings, $home_id, (int)$userId,
+                    isset($_POST['sd_name']) ? $_POST['sd_name'] : '', isset($_POST['sd_domain']) ? $_POST['sd_domain'] : '',
+                    $ip, $port, $gameKey, $isAdmin);
+                if ($msgOk) {
+                    $msg = 'Saved. DNS changes can take a few minutes to show up everywhere.';
+                }
+            } elseif ($_POST['sd_action'] === 'refresh') {
+                $r = sd_row_for_home($sdb, $home_id);
+                if ($r) {
+                    list($msgOk, $msg) = sd_sync_row($sdb, $provider, $settings, $r, $ip, $port, $gameKey);
+                    if ($msgOk) {
+                        $msg = 'DNS refreshed.';
+                    }
+                }
+            } elseif ($_POST['sd_action'] === 'remove' && $isAdmin) {
+                $msgOk = sd_release_home($sdb, $provider, $home_id);
+                $msg = $msgOk ? 'Name removed.' : 'Could not remove the DNS records.';
+            }
+        }
+        $row = sd_row_for_home($sdb, $home_id);
+        if ($row && $ip !== '' && $msg === '' && ($row['ip'] !== $ip || (int)$row['port'] !== (int)$port || $row['status'] !== 'active')) {
+            sd_sync_row($sdb, $provider, $settings, $row, $ip, $port, $gameKey); // server moved or DNS retry
+            $row = sd_row_for_home($sdb, $home_id);
+        }
+        $action = '?m=user_games&p=edit&home_id=' . $home_id;
+        echo "<tr><td class='right'>Server address:</td><td class='left'>";
+        if ($row) {
+            echo "<b>" . $h(sd_fqdn($row)) . "</b>";
+            echo sd_wants_srv($settings, $gameKey) ? " (players can join with just this name)" : ($port > 0 ? " (use port " . (int)$port . ")" : '');
+            if ($row['status'] !== 'active') {
+                echo " <span style='color:#c0392b'>DNS not in place yet, press Refresh DNS.</span>";
+            }
+            echo "<br>";
+        }
+        echo "<form action='" . $h($action) . "' method='post'><input type='hidden' name='sd_action' value='set'>";
+        echo "<input type='text' size='24' maxlength='32' id='sd_name' name='sd_name' value='" . $h($row ? $row['name'] : '') . "' autocomplete='off' placeholder='my-server'> ";
+        echo "<select id='sd_domain' name='sd_domain'>";
+        foreach (sd_domains($settings) as $d) {
+            echo "<option value='" . $h($d) . "'" . ($row && $row['domain'] === $d ? ' selected' : '') . ">." . $h($d) . "</option>";
+        }
+        echo "</select> <input type='submit' value='Save address'> <span id='sd_status'></span></form>";
+        if ($row) {
+            echo "<form action='" . $h($action) . "' method='post' style='display:inline'><input type='hidden' name='sd_action' value='refresh'><input type='submit' value='Refresh DNS'></form> ";
+            if ($isAdmin) {
+                echo "<form action='" . $h($action) . "' method='post' style='display:inline' onsubmit=\"return confirm('Remove this address?')\"><input type='hidden' name='sd_action' value='remove'><input type='submit' value='Remove'></form>";
+            }
+        }
+        if ($msg !== '') {
+            echo "<div style='color:" . ($msgOk ? '#2e9b3a' : '#c0392b') . "'>" . $h($msg) . "</div>";
+        }
+        echo sd_live_check_js('?m=subdomains&p=check&type=cleared&home_id=' . $home_id, 'sd_name', 'sd_domain', 'sd_status');
+        echo "</td></tr>";
+        echo "<tr><td colspan='2' class='info'>A free name players can use instead of your IP address. You can change it every few minutes.</td></tr>";
+    } catch (Exception $e) {
+        error_log('subdomain edit rows failed: ' . $e->getMessage());
+    }
+}

@@ -724,6 +724,13 @@ function exec_module()
 	echo "</form></td></tr>";
 	echo "<tr><td colspan='2' class='info'>". get_lang("change_control_password_info") ."</td></tr>";
 	}
+	// Free server address (subdomains module), only shown when the module is set up
+	$sdLib = dirname(__DIR__) . '/subdomains/includes/subdomain_lib.php';
+	if ( is_file($sdLib) )
+	{
+		require_once $sdLib;
+		sd_render_edit_rows($db, DB_PREFIX, $home_id, $isAdmin, $_SESSION['user_id']);
+	}
 	if ( $isAdmin && $ftp_installed )
 	{
 		// Forms to enable/disable ftp account
