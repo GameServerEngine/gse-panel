@@ -2,6 +2,14 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.8.11 (2026-11-12)
+- **Storefront menu wrapped onto two lines:** The storefront header was too narrow for all its links, so the menu broke across rows. The header is wider, the links stay on one line, and on narrow windows it collapses to a Menu button.
+- **Storefront status monitor was unreadable:** The status frame on the support page used dark text on a dark background. It now uses light text. The Control Panel line always shows Online, because the page is served by the panel. Agent and game server lines come from a snapshot that refreshes on visits (at most once a minute), and the page says so while the first snapshot is being gathered.
+- **Storefront is a required module:** The billing module can no longer be disabled, so the storefront and its status page stay available. It is marked required in the module list.
+- **Remote Agents everywhere:** The Servers module is now called Remote Agents in the menu, the module title in the database (a database update renames it on existing installs), the language files and the pages that link to it. The module folder stays `server`.
+- **Storefront files were readable on some web servers:** The storefront `.htaccess` let existing files through before its block rules ran, so `/includes`, `/classes` and `site_config.php` could be opened. The block rules now come first.
+- **Storefront install guide:** New `modules/billing/INSTALL.md` and https://gameserverengine.com/storefront.html cover the DNS record, Apache and nginx virtual hosts, payment, accounts and cron.
+
 ## 2.8.10 (2026-11-12)
 - **Stable releases:** Pushing to the `stable` branch now publishes a stable-<version> release (a full release, not a prerelease) of the version already on the branch, so the Update page's stable choice has something to install. Before, only testing and working builds were published.
 

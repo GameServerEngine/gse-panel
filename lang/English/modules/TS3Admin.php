@@ -171,5 +171,5 @@ define('LANG_assign_to_subuser', "Assign to subuser.");
 define('LANG_select_subuser', "Select subuser.");
 define('LANG_no_ts3_servers_assigned_to_account', "You have no servers assigned to your account.");
 define('LANG_change_virtual_server', "Change Virtual Server");
-define('LANG_change_remote_server', "Change Remote Server");
+define('LANG_change_remote_server', "Change Remote Agent");
 ?>

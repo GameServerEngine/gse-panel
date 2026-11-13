@@ -87,7 +87,7 @@ define('LANG_TS3Admin', "TS3 Admin");
 define('LANG_administration', "Administration");
 define('LANG_config_games', "Spil/Mod Config");
 define('LANG_modulemanager', "Moduler");
-define('LANG_server', "Servers");
+define('LANG_server', "Remote Agents");
 define('LANG_settings', "Panel indstillinger");
 define('LANG_themes', "Tema indstillinge");
 define('LANG_user_admin', "Brugere");

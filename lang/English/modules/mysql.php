@@ -33,7 +33,7 @@ define('LANG_could_not_add_mysql_server', "Could not add MySQL server.");
 define('LANG_game_server_name_info', "Server name helps users to identify their game servers.");
 define('LANG_note_mysql_host', "Note: Using a 'Direct connection' the server must accept external connections so the servers can connect remotely, whereas connecting through a remote server it will be used just as a local connection.");
 define('LANG_direct_connection', "Direct connection");
-define('LANG_connection_through_remote_server_named', "Connection through remote game server named %s");
+define('LANG_connection_through_remote_server_named', "Connection through remote agent named %s");
 define('LANG_add_mysql_server', "Add MySQL server");
 define('LANG_mysql_online', "MySQL online");
 define('LANG_mysql_offline', "MySQL offline");

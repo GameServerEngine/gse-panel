@@ -305,7 +305,7 @@ function updateGameConfigsPostInstall($clear_old = false){
 }
 
 function isCoreModule($module){
-	$coreModules = array('modulemanager', 'server', 'settings', 'gamemanager', 'config_games', 'administration', 'user_games', 'user_admin', 'update');
+	$coreModules = array('modulemanager', 'server', 'settings', 'gamemanager', 'config_games', 'administration', 'user_games', 'user_admin', 'update', 'billing');
 	if(in_array($module, $coreModules)){
 		return true;
 	}
@@ -321,7 +321,8 @@ function isCoreModule($module){
  * auth) so it is always active regardless of this list.
  */
 function module_cannot_be_disabled($module){
-	$undisableable = array('modulemanager', 'settings', 'user_admin');
+	// billing is the public storefront and status site: the panel is what serves it, so it stays on.
+	$undisableable = array('modulemanager', 'settings', 'user_admin', 'billing');
 	return in_array($module, $undisableable, true);
 }
 

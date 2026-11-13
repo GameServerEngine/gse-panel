@@ -81,7 +81,7 @@ function exec_module() {
 	$rhost_id = isset($_REQUEST['rhost_id']) ? (int)$_REQUEST['rhost_id'] : 0;
 	$remote_server = $db->getRemoteServer($rhost_id);
 	if (!$remote_server) {
-		print_failure('Remote host not found.');
+		print_failure('Remote agent not found.');
 		return;
 	}
 

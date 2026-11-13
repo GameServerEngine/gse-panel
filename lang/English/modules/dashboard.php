@@ -39,5 +39,5 @@ define('LANG_online_servers', "Online Servers");
 define('LANG_add_games_in', "If you want to add games you can do it in %s");
 define('LANG_currently_online', "Currently Online");
 define('LANG_game_servers', "Game Servers");
-define('LANG_select_remote_server', "Select Remote Server");
+define('LANG_select_remote_server', "Select Remote Agent");
 ?>

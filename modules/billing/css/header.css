@@ -126,7 +126,7 @@ p {
 }
 
 .gsw-header-inner {
-    width: min(1180px, calc(100% - 32px));
+    width: min(1400px, calc(100% - 32px));
     min-height: var(--header-height);
     margin: 0 auto;
     display: flex;
@@ -169,21 +169,23 @@ p {
 .gsw-header-nav {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: flex-end;
-    gap: 4px;
+    gap: 2px;
+    min-width: 0;
 }
 
 .gsw-nav-link {
     display: inline-flex;
     align-items: center;
     min-height: 38px;
-    padding: 7px 11px;
+    padding: 7px 10px;
     border-radius: var(--radius);
     color: var(--mist);
-    font-size: 0.93rem;
+    font-size: 0.92rem;
     font-weight: 650;
     text-decoration: none;
+    white-space: nowrap;
 }
 
 .gsw-nav-link:hover,
@@ -194,8 +196,10 @@ p {
 }
 
 .gsw-nav-cta {
-    margin-left: 6px;
+    margin-left: 8px;
     min-height: 38px;
+    white-space: nowrap;
+    flex: 0 0 auto;
 }
 
 .cart-badge {
@@ -1017,11 +1021,8 @@ p {
 
 /* ---- Small screens ---- */
 
-@media (max-width: 940px) {
-    :root {
-        --header-height: 72px;
-    }
-
+/* The menu collapses to the toggle before it can ever wrap onto a second row. */
+@media (max-width: 1320px) {
     .gsw-nav-toggle {
         display: inline-flex;
     }
@@ -1045,6 +1046,12 @@ p {
 
     .gsw-nav-cta {
         margin: 6px 0 0;
+    }
+}
+
+@media (max-width: 940px) {
+    :root {
+        --header-height: 72px;
     }
 
     .gsw-trust-strip {
@@ -1220,11 +1227,22 @@ p {
     border-top: 1px solid #263044;
 }
 
-.gsw-status-note {
-    margin: 10px 0 0;
-    color: #8b95a7;
-    font-size: 0.82rem;
+.gsw-status-frame,
+.gsw-status-frame .gsw-status-line > span,
+.gsw-status-frame .gsw-status-line > b {
+    color: #e6ebf3;
 }
+
+.gsw-status-frame .gsw-status-note {
+    margin: 10px 0 0;
+    color: #b4bfd0;
+    font-size: 0.85rem;
+}
+
+.gsw-status-frame .gsw-status-line > b.gsw-st.st-good { color: #3ddc84; }
+.gsw-status-frame .gsw-status-line > b.gsw-st.st-bad { color: #ff7a7a; }
+.gsw-status-frame .gsw-status-line > b.gsw-st.st-warn { color: #ffc14d; }
+.gsw-status-frame .gsw-status-line > b.gsw-st.st-unknown { color: #b4bfd0; }
 
 .gsw-st.st-good { color: #3ddc84; }
 .gsw-st.st-bad { color: #ff6b6b; }

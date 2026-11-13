@@ -97,7 +97,7 @@ if (!defined('LANG_remove_cart')) define('LANG_remove_cart', "Remove Cart");
 if (!defined('LANG_there_are_no_orders_in_cart')) define('LANG_there_are_no_orders_in_cart', "There are no orders in this cart.");
 if (!defined('LANG_redirecting_to')) define('LANG_redirecting_to', "Redirecting to %s...");
 if (!defined('LANG_id')) define('LANG_id', "ID#");
-if (!defined('LANG_remote_server')) define('LANG_remote_server', "Remote Server");
+if (!defined('LANG_remote_server')) define('LANG_remote_server', "Remote Agent");
 if (!defined('LANG_price_hourly')) define('LANG_price_hourly', "Price Hourly");
 if (!defined('LANG_price_monthly')) define('LANG_price_monthly', "Price Monthly");
 if (!defined('LANG_price_year')) define('LANG_price_year', "Price Year");
