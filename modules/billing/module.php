@@ -637,7 +637,7 @@ $install_queries[15] = array(
         `tid` INT(11) NOT NULL DEFAULT 0,
         `details` TEXT NULL,
         `total_price` DECIMAL(10,2) NULL DEFAULT NULL,
-        `next_stage` INT(11) NOT NULL DEFAULT 2,
+        `next_stage` INT(11) NOT NULL DEFAULT 1,
         `status` VARCHAR(20) NOT NULL DEFAULT 'awaiting_quote',
         `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -382,7 +382,7 @@ CREATE TABLE `DB_PREFIXbilling_service_requests` (
   `tid` int NOT NULL DEFAULT '0',
   `details` text,
   `total_price` decimal(10,2) DEFAULT NULL,
-  `next_stage` int NOT NULL DEFAULT '2',
+  `next_stage` int NOT NULL DEFAULT '1',
   `status` varchar(20) NOT NULL DEFAULT 'awaiting_quote',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
