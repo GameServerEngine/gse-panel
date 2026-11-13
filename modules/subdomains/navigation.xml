@@ -1,0 +1,5 @@
+<navigation>
+  <page key="admin" file="admin_settings.php" access="admin" />
+  <page key="edit" file="edit.php" access="admin,user,subuser" />
+  <page key="check" file="check.php" access="admin,user,subuser" />
+</navigation>

@@ -166,6 +166,27 @@ foreach ($offers as $offer) {
 <input type="text" name="home_name" size="40" value="<?php echo order_e($displayName); ?>">
 </td>
 </tr>
+<?php
+require_once __DIR__ . '/includes/subdomain_bridge.php';
+$sdCtx = billing_sd_load($db, $table_prefix);
+if ($sdCtx):
+    $sdDomains = sd_domains($sdCtx[1]);
+    $sdName = isset($_GET['sd_name']) ? preg_replace('/[^a-z0-9-]/', '', strtolower((string)$_GET['sd_name'])) : '';
+?>
+<tr>
+<td align="right"><b>Free Server Address</b></td>
+<td align="left">
+<input type="text" id="sd_name" name="sd_name" maxlength="32" value="<?php echo order_e($sdName); ?>" autocomplete="off" placeholder="my-server (optional)" style="width:55%;display:inline-block;">
+<select id="sd_domain" name="sd_domain" style="width:40%;display:inline-block;">
+<?php foreach ($sdDomains as $sdD): ?>
+<option value="<?php echo order_e($sdD); ?>">.<?php echo order_e($sdD); ?></option>
+<?php endforeach; ?>
+</select>
+<div id="sd_status" style="min-height:1.4em;margin-top:4px;"></div>
+<?php echo sd_live_check_js('subdomain_check.php?home_cfg_id=' . (int)$homeCfgId, 'sd_name', 'sd_domain', 'sd_status'); ?>
+</td>
+</tr>
+<?php endif; ?>
 <tr>
   <td align="right"><b>Location</b></td>
   <td align="left">

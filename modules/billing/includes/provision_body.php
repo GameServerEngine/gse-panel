@@ -812,6 +812,10 @@ function billing_run_provision_body()
 				'message' => (string)$install_message,
 				'skip_reason' => (string)$skip_reason,
 			);
+			if (!$order_failed && isset($home_id) && intval($home_id) > 0) {
+				require_once __DIR__ . '/subdomain_bridge.php';
+				billing_sd_activate_after_provision($db, $db_prefix, intval($provision_invoice_id), intval($home_id));
+			}
 			billing_write_provision_log($provisionContext);
 			$db->logger(
 				'BILLING PROVISION RESULT order_id=' . intval($order_id)

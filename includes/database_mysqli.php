@@ -2919,6 +2919,11 @@ class DatabaseMySQL extends Database
 	/// \brief Deletes the game home.
 	public function deleteGameHome($home_id){
 		$home_id = $this->realEscapeSingle($home_id);
+		$sdLib = dirname(__DIR__) . '/modules/subdomains/includes/subdomain_lib.php';
+		if (is_file($sdLib)) {
+			require_once $sdLib;
+			sd_release_home_safe($this, $this->table_prefix, $home_id);
+		}
 		$return = TRUE;
 
 		$queries = array("DELETE FROM `%suser_homes` WHERE `home_id` = %d;",
