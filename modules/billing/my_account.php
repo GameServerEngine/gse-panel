@@ -310,7 +310,18 @@ $status_config = [
         <h2>My Game Servers</h2>
 
         <?php if ($servers_result && mysqli_num_rows($servers_result) > 0): ?>
-            <?php while ($server = mysqli_fetch_assoc($servers_result)): ?>
+            <?php
+            // Expired servers are tucked into a collapsed row; everything else is listed as before.
+            $active_rows = array();
+            $expired_rows = array();
+            while ($row = mysqli_fetch_assoc($servers_result)) {
+                if (strtolower(trim((string)($row['status'] ?? ''))) === 'expired') {
+                    $expired_rows[] = $row;
+                } else {
+                    $active_rows[] = $row;
+                }
+            }
+            $render_server = function (array $server) use ($renew_csrf) { ?>
                 <div class="server-item">
                     <div class="server-name"><?php echo htmlspecialchars($server['home_name'] ?? 'Unnamed Server'); ?></div>
                     <div class="server-details">
@@ -355,7 +366,14 @@ $status_config = [
 	                        <?php endif; ?>
                     </div>
                 </div>
-            <?php endwhile; ?>
+            <?php };
+            foreach ($active_rows as $server) { $render_server($server); }
+            if ($expired_rows): ?>
+                <details class="gsw-expired-servers">
+                    <summary>Expired Servers (<?php echo count($expired_rows); ?>)</summary>
+                    <?php foreach ($expired_rows as $server) { $render_server($server); } ?>
+                </details>
+            <?php endif; ?>
         <?php else: ?>
             <div class="no-data">
                 <p>You don't have any game servers yet.</p>

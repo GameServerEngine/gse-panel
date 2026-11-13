@@ -302,11 +302,15 @@ function um_skip_reason($rel, array $exclusions, array $edited, array $decisions
 /**
  * Record the files an update installed. The manifest is created on the first run and edited after that.
  * Every installed file gets its sha256 and the release version. The review choices are used up, so they are cleared.
+ * $release_rels is the list of every file the release ships (see um_release_files). When it is given, entries for
+ * files the release no longer ships are dropped, because the update can never overwrite them again and they would
+ * otherwise be offered as "edited" at every update. Those files are left on disk. $dropped receives their paths.
  * Returns '' or the reason it failed.
  */
-function um_record_install($root, array $installed_rels, $version)
+function um_record_install($root, array $installed_rels, $version, $release_rels = null, &$dropped = null)
 {
 	$root = rtrim($root, '/');
+	$dropped = array();
 	$loaded = um_manifest_load($root);
 	if ($loaded['error'] !== '') {
 		return $loaded['error'];
@@ -315,8 +319,60 @@ function um_record_install($root, array $installed_rels, $version)
 	foreach ($installed_rels as $rel) {
 		$manifest['files'][$rel] = array('sha256' => um_sha256($root . '/' . $rel), 'version' => (string)$version);
 	}
+	if (is_array($release_rels)) {
+		$result = um_drop_removed_files($manifest, $release_rels);
+		$manifest = $result['manifest'];
+		$dropped = $result['dropped'];
+	}
 	$manifest['edited_decisions'] = array();
 	return um_manifest_save($root, $manifest);
+}
+
+/**
+ * Every file (not folder) in a release tree, as clean paths relative to its root.
+ */
+function um_release_files($src_root)
+{
+	$src_root = rtrim($src_root, '/');
+	$rels = array();
+	if (!is_dir($src_root)) {
+		return $rels;
+	}
+	$iter = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($src_root, RecursiveDirectoryIterator::SKIP_DOTS));
+	foreach ($iter as $item) {
+		if ($item->isDir()) {
+			continue;
+		}
+		$rel = um_clean_path(substr($item->getPathname(), strlen($src_root) + 1));
+		if ($rel !== '') {
+			$rels[] = $rel;
+		}
+	}
+	return $rels;
+}
+
+/**
+ * Remove manifest entries for files that are not in the release any more (for example a module that was deleted).
+ * Safety: a release list far smaller than the manifest is treated as partial and drops nothing, so a bad or
+ * incomplete release can never make the update forget the user's files.
+ * Returns manifest and dropped (the removed paths, sorted).
+ */
+function um_drop_removed_files(array $manifest, array $release_rels)
+{
+	$total = count($manifest['files']);
+	if ($total === 0 || count($release_rels) * 2 < $total) {
+		return array('manifest' => $manifest, 'dropped' => array());
+	}
+	$shipped = array_flip($release_rels);
+	$dropped = array();
+	foreach (array_keys($manifest['files']) as $rel) {
+		if (!isset($shipped[$rel])) {
+			unset($manifest['files'][$rel]);
+			$dropped[] = $rel;
+		}
+	}
+	sort($dropped);
+	return array('manifest' => $manifest, 'dropped' => $dropped);
 }
 
 // Save a new exclusions list from the Update page to both files. Returns '' or the reason.

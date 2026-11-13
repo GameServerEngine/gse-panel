@@ -1162,9 +1162,14 @@ updateAllPanelModules();
 if (function_exists('runPostUpdateOperations')) {
 runPostUpdateOperations();
 }
-$manifest_error = um_record_install($panel_dest, $sync_installed, $staged['version']);
+// Files the release no longer ships stop being tracked, so they are not offered as "edited" at every update.
+$release_rels = $same_tree ? null : um_release_files($panel_source);
+$manifest_dropped = [];
+$manifest_error = um_record_install($panel_dest, $sync_installed, $staged['version'], $release_rels, $manifest_dropped);
 if ($manifest_error !== '') {
 update_log('Update manifest not written: ' . $manifest_error);
+} elseif (!empty($manifest_dropped)) {
+update_log('Update manifest: stopped tracking ' . count($manifest_dropped) . ' file(s) the release no longer ships, for example ' . $manifest_dropped[0] . '. They were left on disk.');
 }
 update_log('Panel update complete: ' . $staged['version'] . ' from ' . $staged['release_zip_url']);
 

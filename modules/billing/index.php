@@ -29,8 +29,10 @@ function gsw_home_e($value): string
 </head>
 <body>
 <?php include(__DIR__ . '/includes/top.php'); ?>
-<?php include(__DIR__ . '/includes/menu.php'); ?>
+<?php $GLOBALS['gsw_defer_content_open'] = true; include(__DIR__ . '/includes/menu.php'); ?>
 
+<div class="gsw-home-band">
+<div class="gsw-home-band-inner">
 <section class="gsw-supported-games-banner" aria-label="Supported game servers">
   <div class="gsw-supported-games-inner">
     <a class="gsw-supported-game-card" href="<?php echo gsw_home_e(billing_url('serverlist.php')); ?>">
@@ -56,7 +58,6 @@ function gsw_home_e($value): string
   </div>
 </section>
 
-<main>
   <section class="gsw-hero-shell" aria-labelledby="home-title">
     <div class="gsw-hero gsw-hero-simple">
       <div>
@@ -70,6 +71,11 @@ function gsw_home_e($value): string
       </div>
     </div>
   </section>
+</div>
+</div>
+
+<?php billing_open_content(); ?>
+<main>
 
   <section class="gsw-trust-strip" aria-label="Hosting priorities">
     <div class="gsw-trust-item"><strong>Human Support</strong><span>Work with real people who run and build game-server systems.</span></div>

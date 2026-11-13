@@ -191,6 +191,37 @@ ed_assert($rows === array('index.php' => false, 'modules/shop/' => true), 'candi
 ed_assert(um_save_exclusions($panel3, array('index.php')) === '', 'saving the section works');
 ed_assert(um_read_exclusions_file($panel3) === array('index.php') && um_manifest_load($panel3)['manifest']['exclusions'] === array('index.php'), 'saving writes update_exclusions.txt and the manifest');
 
+// ---- 11. files the release stopped shipping are not offered as edited again (a deleted module)
+$panel5 = $work . '/panel5';
+ed_make_panel($panel5);
+ed_put($panel5 . '/modules/oldmod/x.php', 'old module x v1');
+ed_put($panel5 . '/modules/oldmod/y.php', 'old module y v1');
+um_record_install($panel5, array('modules/oldmod/x.php', 'modules/oldmod/y.php'), '2.6.0');
+ed_put($panel5 . '/modules/oldmod/x.php', 'old module x changed later');
+ed_assert(um_find_edited($panel5, um_manifest_load($panel5)['manifest']) === array('modules/oldmod/x.php'), 'a changed file the release dropped is listed as edited (the bug)');
+$release5 = $work . '/release5';
+ed_make_release($release5);
+$rels5 = um_release_files($release5);
+ed_assert(in_array('modules/forum/sub/c.php', $rels5, true) && in_array('brand_new.php', $rels5, true) && !in_array('modules/forum/', $rels5, true) && !in_array('modules/oldmod/x.php', $rels5, true), 'the release file list holds files only, and not the dropped module');
+$plan5 = update_install_plan($panel5);
+$res5 = component_copy_tree($release5, $panel5, 'Panel', $plan5['skip']);
+$dropped5 = array();
+ed_assert(um_record_install($panel5, $res5['installed_files'], '2.6.1', $rels5, $dropped5) === '', 'recording the install with the release file list works');
+ed_assert($dropped5 === array('modules/oldmod/x.php', 'modules/oldmod/y.php'), 'files the release no longer ships are reported as dropped');
+$after5 = um_manifest_load($panel5)['manifest'];
+ed_assert(!isset($after5['files']['modules/oldmod/x.php']) && !isset($after5['files']['modules/oldmod/y.php']), 'dropped files are gone from the manifest');
+ed_assert(um_find_edited($panel5, $after5) === array(), 'the dropped file is not offered as edited at the next update');
+ed_assert(file_get_contents($panel5 . '/modules/oldmod/x.php') === 'old module x changed later', 'a dropped file is left on disk, not deleted');
+ed_assert(isset($after5['files']['modules/forum/a.php']) && isset($after5['files']['brand_new.php']) && count($after5['files']) === 7, 'files the release still ships stay tracked');
+
+// a release list far smaller than the manifest drops nothing
+$panel6 = $work . '/panel6';
+ed_make_panel($panel6);
+$dropped6 = array('sentinel');
+ed_assert(um_record_install($panel6, array(), '2.6.1', array('index.php'), $dropped6) === '' && $dropped6 === array(), 'a partial release list drops nothing');
+ed_assert(count(um_manifest_load($panel6)['manifest']['files']) === 6, 'the manifest keeps every file after a partial release list');
+ed_assert(um_record_install($panel6, array(), '2.6.1', array(), $dropped6) === '' && count(um_manifest_load($panel6)['manifest']['files']) === 6, 'an empty release list drops nothing');
+
 ed_remove($work);
 ed_assert(!file_exists($work), 'test artifacts are removed');
 echo "All {$passed} edited-file checks passed.\n";

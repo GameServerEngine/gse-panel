@@ -66,7 +66,6 @@ $returnTo = (string)($_SERVER['REQUEST_URI'] ?? '/');
       <?php echo billing_nav_link('index.php', 'Home'); ?>
       <?php echo billing_nav_link('serverlist.php', 'Game Servers'); ?>
       <?php echo billing_nav_link('docs.php', 'Documentation'); ?>
-      <?php echo billing_nav_link('ai.php', 'AI Assistant'); ?>
       <?php echo billing_nav_link('support.php', 'Support'); ?>
       <?php echo billing_nav_link('contact.php', 'Contact'); ?>
       <?php if ($is_logged_in): ?>
@@ -83,6 +82,7 @@ $returnTo = (string)($_SERVER['REQUEST_URI'] ?? '/');
     </nav>
   </div>
 </header>
+<div class="gsw-spacer" aria-hidden="true"></div>
 <script>
 (function () {
   var header = document.querySelector('.gsw-header');
@@ -106,5 +106,13 @@ $returnTo = (string)($_SERVER['REQUEST_URI'] ?? '/');
 })();
 </script>
 
-<div class="gsw-page">
-<div class="gsw-content" id="gsw-content">
+<?php
+require_once __DIR__ . '/page_header.php';
+// Home sets $gsw_defer_content_open so it can print its full-width black band first,
+// then call billing_open_content() itself. Every other page gets the uniform dark page
+// header built from its own title (see page_header.php).
+if (empty($GLOBALS['gsw_defer_content_open'])) {
+  ob_start('billing_page_header_filter');
+  billing_open_content();
+}
+?>
