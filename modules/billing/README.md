@@ -29,6 +29,14 @@ Anything not set falls back to the defaults in `includes/brand.php`. To change t
 
 `site_config.php` is tracked in git and holds the defaults. `site_config.local.php` is gitignored and overrides it on each install. `site_config.example.php` lists the keys.
 
+## Storefront text (content profiles)
+
+All storefront wording is content. `content/default.php` is the neutral text every new install gets. To use your own wording, copy it to `content/<name>.php` (it only needs the keys you change), then set `'content_profile' => '<name>'` in `site_config.local.php`. Single texts can also be changed with `'content' => [...]` in `site_config.local.php`. Lists replace, keyed arrays merge, and `{name}`, `{company}` and `{email}` are filled from the brand settings. Address lines, phone and the Careers page are part of the content (`contact.address_lines`, `contact.phone`, `careers.enabled`).
+
+## Services
+
+Administration > Billing > Services edits what customers can order besides game servers. A service is a paid service (order form, ticket and invoice) or a support type (ticket only), with a fixed price or a quote, payment steps like `Deposit | 50` and `Payment on delivery | 50`, and the questions asked. An order creates a row in `billing_service_requests`, a support ticket named `[Service] title`, and an invoice (`invoice_kind = 'service'`, with `request_id`, `stage_no`, `stage_label`) for the first step. Paying a service invoice moves the request on and writes to the ticket; it never creates a server order. For a quote, send the price on the Requests table; use Bill next step for later steps.
+
 ## PayPal
 
 - Set up in the billing admin, PayPal section. Mode is `sandbox` or `live`.

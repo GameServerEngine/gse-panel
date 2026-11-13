@@ -24,8 +24,8 @@
 
 // Module general information
 $module_title = "billing";
-$module_version = "3.8";
-$db_version = 14;
+$module_version = "3.9";
+$db_version = 15;
 $module_required = TRUE;
 // Module description
 $module_description = "Billing storefront / provisioning integration.";
@@ -606,6 +606,87 @@ $install_queries[14] = array(
      FROM `".DB_PREFIX."modules` m
      WHERE m.folder = 'billing'
        AND NOT EXISTS (SELECT 1 FROM `".DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'billing' AND mm.group = 'admin')"
+);
+
+// db_version 15 - services besides game servers (server setup, custom development, ...).
+// Service types are edited by the admin; each order is a service request tied to a support ticket and to
+// one invoice per payment stage. Idempotent: tables are created only when missing, the invoice columns
+// only when absent, and the starter service types only when the table is empty.
+$install_queries[15] = array(
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."billing_service_types` (
+        `type_id` INT(11) NOT NULL AUTO_INCREMENT,
+        `slug` VARCHAR(40) NOT NULL,
+        `name` VARCHAR(80) NOT NULL,
+        `kind` VARCHAR(10) NOT NULL DEFAULT 'paid',
+        `summary` VARCHAR(255) NOT NULL DEFAULT '',
+        `description` TEXT NULL,
+        `price_mode` VARCHAR(10) NOT NULL DEFAULT 'quote',
+        `price` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+        `stages` TEXT NULL,
+        `fields` TEXT NULL,
+        `enabled` TINYINT(1) NOT NULL DEFAULT 1,
+        `sort_order` INT(11) NOT NULL DEFAULT 0,
+        PRIMARY KEY (`type_id`),
+        UNIQUE KEY `slug` (`slug`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."billing_service_requests` (
+        `request_id` INT(11) NOT NULL AUTO_INCREMENT,
+        `type_id` INT(11) NOT NULL,
+        `user_id` INT(11) NOT NULL,
+        `home_id` INT(11) NOT NULL DEFAULT 0,
+        `tid` INT(11) NOT NULL DEFAULT 0,
+        `details` TEXT NULL,
+        `total_price` DECIMAL(10,2) NULL DEFAULT NULL,
+        `next_stage` INT(11) NOT NULL DEFAULT 1,
+        `status` VARCHAR(20) NOT NULL DEFAULT 'awaiting_quote',
+        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (`request_id`),
+        KEY `user_id` (`user_id`),
+        KEY `tid` (`tid`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+    function($db) {
+        $cols = array(
+            'invoice_kind' => "VARCHAR(10) NOT NULL DEFAULT 'game'",
+            'request_id'   => "INT(11) NOT NULL DEFAULT 0",
+            'stage_no'     => "INT(11) NOT NULL DEFAULT 0",
+            'stage_label'  => "VARCHAR(60) NOT NULL DEFAULT ''",
+        );
+        foreach ($cols as $name => $def) {
+            $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_invoices' AND COLUMN_NAME = '".$name."'");
+            if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) continue;
+            if (!$db->query("ALTER TABLE `DB_PREFIXbilling_invoices` ADD `".$name."` ".$def)) return false;
+        }
+        return true;
+    },
+    function($db) {
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM `DB_PREFIXbilling_service_types`");
+        if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) return true;
+        $two = json_encode(array(array('label' => 'Deposit to start', 'percent' => 50), array('label' => 'Payment on delivery', 'percent' => 50)));
+        $one = json_encode(array(array('label' => 'Payment', 'percent' => 100)));
+        $setup = json_encode(array(
+            array('label' => 'Game', 'type' => 'text', 'required' => true),
+            array('label' => 'Mods or plugins to install', 'type' => 'textarea', 'required' => false),
+            array('label' => 'Settings you want (slots, difficulty, rules)', 'type' => 'textarea', 'required' => false),
+        ));
+        $dev = json_encode(array(
+            array('label' => 'Game', 'type' => 'text', 'required' => true),
+            array('label' => 'What should it do?', 'type' => 'textarea', 'required' => true),
+            array('label' => 'Deadline, if any', 'type' => 'text', 'required' => false),
+        ));
+        $rows = array(
+            array('support', 'Support Request', 'support', 'Help with your server, billing or an account question.', 'fixed', 0, $one, '[]', 1),
+            array('server-setup', 'Server Setup', 'paid', 'We install and configure your game, mods and settings for you. Placeholder price: set yours in Administration.', 'fixed', 25, $one, $setup, 2),
+            array('custom-development', 'Custom Development', 'paid', 'We build a mod, script or feature for your server. We quote after we read your idea.', 'quote', 0, $two, $dev, 3),
+        );
+        foreach ($rows as $x) {
+            $ok = $db->query("INSERT INTO `DB_PREFIXbilling_service_types` (slug, name, kind, summary, price_mode, price, stages, fields, enabled, sort_order) VALUES ('"
+                . $db->real_escape_string($x[0]) . "','" . $db->real_escape_string($x[1]) . "','" . $x[2] . "','" . $db->real_escape_string($x[3]) . "','"
+                . $x[4] . "'," . (float)$x[5] . ",'" . $db->real_escape_string($x[6]) . "','" . $db->real_escape_string($x[7]) . "',1," . (int)$x[8] . ")");
+            if (!$ok) return false;
+        }
+        return true;
+    }
 );
 
 ?>

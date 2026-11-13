@@ -181,6 +181,39 @@ class BillingLifecycleService
                 throw new RuntimeException('invoice_update_failed');
             }
 
+            // Service invoices (server setup, custom development, ...) never create an order or touch a server:
+            // record the payment and let the service request move on.
+            if (($invoice['invoice_kind'] ?? 'game') === 'service') {
+                $transactionId = $this->repo->logTransaction([
+                    'invoice_id' => $invoiceId,
+                    'user_id' => (int)$invoice['user_id'],
+                    'home_id' => $homeId,
+                    'payment_method' => $method,
+                    'transaction_external_id' => $txid,
+                    'amount' => $amount,
+                    'currency' => $currency,
+                    'status' => 'completed',
+                    'raw_response' => $payment['raw_response'] ?? [],
+                ]);
+                $this->commit();
+                if (!$alreadyPaid && method_exists($this->repo, 'getDb')) {
+                    require_once __DIR__ . '/../includes/services_catalog.php';
+                    billing_service_on_invoice_paid($this->repo->getDb(), $this->repo->getPrefix(), $invoice);
+                }
+                return [
+                    'success' => true,
+                    'invoice_id' => $invoiceId,
+                    'order_id' => 0,
+                    'home_id' => $homeId,
+                    'paid_through' => null,
+                    'transaction_id' => $transactionId,
+                    'created_order' => false,
+                    'became_paid' => !$alreadyPaid,
+                    'idempotent' => $alreadyPaid,
+                    'service_request_id' => (int)($invoice['request_id'] ?? 0),
+                ];
+            }
+
             $createdOrder = false;
             if ($orderId > 0 && $order) {
                 $orderUpdate = [

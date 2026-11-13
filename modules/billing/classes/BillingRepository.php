@@ -15,6 +15,16 @@ class BillingRepository
         $this->prefix = $prefix;
     }
 
+    public function getDb(): mysqli
+    {
+        return $this->db;
+    }
+
+    public function getPrefix(): string
+    {
+        return $this->prefix;
+    }
+
     public function beginLifecycleTransaction(): bool
     {
         return $this->db->begin_transaction();
