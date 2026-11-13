@@ -4,10 +4,12 @@ name: Release
 # testing: every push that changes the branch bumps VERSION from the commits since the last
 # testing release (BREAKING CHANGE or type! -> major, feat -> minor, anything else -> fix),
 # commits the new VERSION back with [skip ci], and publishes testing-<version>.
+# stable: every push publishes stable-<version> as a full (non-pre) release of the VERSION already
+# on the branch; the version is not bumped, because stable only receives what testing released.
 # The bump commit uses GITHUB_TOKEN, which does not start another workflow run.
 on:
   push:
-    branches: [working, testing]
+    branches: [working, testing, stable]
 
 concurrency:
   group: release-${{ github.ref_name }}
@@ -80,9 +82,14 @@ jobs:
           fi
 
           SHA=$(git rev-parse HEAD)
+          PRE=--prerelease
           if [ "$BRANCH" = "testing" ]; then
             TAG="testing-$NEW"
             TITLE="testing $NEW"
+          elif [ "$BRANCH" = "stable" ]; then
+            TAG="stable-$NEW"
+            TITLE="stable $NEW"
+            PRE=--latest
           else
             TAG="working-latest"
             TITLE="working $NEW"
@@ -95,4 +102,4 @@ jobs:
           NAME="gse-panel-$BRANCH-$NEW"
           git archive --format=zip --prefix="$NAME/" -o "$NAME.zip" HEAD
           sha256sum "$NAME.zip" | awk '{print $1}' > "$NAME.zip.sha256"
-          gh release create "$TAG" "$NAME.zip" "$NAME.zip.sha256" gse-panel-install.sh --repo "$GITHUB_REPOSITORY" --target "$SHA" --title "$TITLE" --notes "Built from $BRANCH at $SHA." --prerelease
+          gh release create "$TAG" "$NAME.zip" "$NAME.zip.sha256" gse-panel-install.sh --repo "$GITHUB_REPOSITORY" --target "$SHA" --title "$TITLE" --notes "Built from $BRANCH at $SHA." $PRE

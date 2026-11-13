@@ -2,6 +2,9 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.8.10 (2026-11-12)
+- **Stable releases:** Pushing to the `stable` branch now publishes a stable-<version> release (a full release, not a prerelease) of the version already on the branch, so the Update page's stable choice has something to install. Before, only testing and working builds were published.
+
 ## 2.8.8 (2026-11-12)
 - **Update page listed files from a removed module as yours:** After a release dropped the `bugreport` module, its files kept showing under "Files you edited". The update list now ignores manifest entries for files a release no longer ships, so only files you really changed appear. The first update after this one may still list them once; leave them unchecked.
 - **Remote Agents:** The Servers menu entry and module are now called Remote Agents. The action buttons on the list are all the same size and wrap onto a second row when the window is narrow.
