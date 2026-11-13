@@ -101,6 +101,36 @@ if [ "$WANT_DB" = yes ]; then
 		GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO '$DB_USER'@'localhost';
 		FLUSH PRIVILEGES;
 	SQL
+
+	# Game servers need this database over the network, not just from this machine.
+	say "Opening the database to the network"
+	for f in /etc/mysql/mysql.conf.d/mysqld.cnf /etc/mysql/mariadb.conf.d/50-server.cnf; do
+		[ -f "$f" ] && sed -i -E 's/^(bind-address[[:space:]]*=).*/\1 0.0.0.0/' "$f"
+	done
+	printf '[mysqld]\nbind-address = 0.0.0.0\n' > /etc/mysql/conf.d/gse-public.cnf
+	systemctl restart mysql 2>/dev/null || systemctl restart mariadb 2>/dev/null || service mysql restart 2>/dev/null || service mariadb restart
+	DB_PORT=$(mysql -uroot -N -e 'SELECT @@port' 2>/dev/null || echo 3306)
+	if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q 'Status: active'; then
+		ufw allow "$DB_PORT"/tcp comment 'GSE MySQL' >/dev/null
+	fi
+
+	# root must only ever log in locally, through the Unix socket as the root OS
+	# user, never over the network with a password. Force that explicitly instead
+	# of trusting the package defaults (Debian's MariaDB ships root with a
+	# network-capable password plugin), and drop any root@'%' account.
+	if [ "$ID" = ubuntu ]; then
+		mysql -uroot -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH auth_socket;" 2>/dev/null || true
+	else
+		mysql -uroot -e "ALTER USER 'root'@'localhost' IDENTIFIED VIA unix_socket;" 2>/dev/null || true
+	fi
+	mysql -uroot -N -e "SELECT CONCAT(\"DROP USER '\",User,\"'@'\",Host,\"'\") FROM mysql.user WHERE User='root' AND Host!='localhost'" 2>/dev/null | mysql -uroot 2>/dev/null || true
+
+	say "Installing phpMyAdmin"
+	debconf-set-selections <<-SEL
+		phpmyadmin phpmyadmin/dbconfig-install boolean false
+		phpmyadmin phpmyadmin/reconfigure-webserver multiselect apache2
+	SEL
+	apt-get install -y -q phpmyadmin
 fi
 
 # ---------- release ----------
@@ -190,6 +220,7 @@ SETUP_URL="http://${IP:-<server-ip>}$URL_PATH/install.php"
 		echo "Database name:     $DB_NAME"
 		echo "Database user:     $DB_USER"
 		echo "Database password: $DB_PASS"
+		echo "Database is reachable on the network on port ${DB_PORT:-3306}; phpMyAdmin: http://${IP:-<server-ip>}/phpmyadmin"
 	fi
 } > "$INFO_FILE"
 chmod 600 "$INFO_FILE"
