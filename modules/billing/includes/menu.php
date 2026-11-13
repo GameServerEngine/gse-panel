@@ -65,6 +65,7 @@ $returnTo = (string)($_SERVER['REQUEST_URI'] ?? '/');
     <nav class="gsw-header-nav" id="gsw-primary-nav" aria-label="Primary navigation">
       <?php echo billing_nav_link('index.php', 'Home'); ?>
       <?php echo billing_nav_link('serverlist.php', 'Game Servers'); ?>
+      <?php echo billing_nav_link('services.php', 'Services'); ?>
       <?php echo billing_nav_link('docs.php', 'Documentation'); ?>
       <?php echo billing_nav_link('support.php', 'Support'); ?>
       <?php echo billing_nav_link('contact.php', 'Contact'); ?>

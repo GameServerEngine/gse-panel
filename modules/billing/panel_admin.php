@@ -18,6 +18,7 @@ if (!function_exists('exec_module')) {
             'game_catalog' => array('Game Catalog', 'admin_catalog.php'),
             'locations' => array('Locations', 'admin_locations.php'),
             'coupons' => array('Coupons', 'admin_coupons.php'),
+            'services' => array('Services', 'admin_services.php'),
             'config' => array('Settings', 'admin_config.php'),
         );
 

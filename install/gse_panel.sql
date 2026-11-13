@@ -243,6 +243,10 @@ CREATE TABLE `DB_PREFIXbilling_invoices` (
   `subtotal` decimal(15,2) NOT NULL DEFAULT '0.00',
   `total_due` decimal(15,2) NOT NULL DEFAULT '0.00',
   `qty` int NOT NULL DEFAULT '1',
+  `invoice_kind` varchar(10) NOT NULL DEFAULT 'game',
+  `request_id` int NOT NULL DEFAULT '0',
+  `stage_no` int NOT NULL DEFAULT '0',
+  `stage_label` varchar(60) NOT NULL DEFAULT '',
   PRIMARY KEY (`invoice_id`),
   KEY `order_id` (`order_id`),
   KEY `user_id` (`user_id`),
@@ -354,6 +358,42 @@ CREATE TABLE `DB_PREFIXbilling_service_requirements` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `DB_PREFIXbilling_service_types` (
+  `type_id` int NOT NULL AUTO_INCREMENT,
+  `slug` varchar(40) NOT NULL,
+  `name` varchar(80) NOT NULL,
+  `kind` varchar(10) NOT NULL DEFAULT 'paid',
+  `summary` varchar(255) NOT NULL DEFAULT '',
+  `description` text,
+  `price_mode` varchar(10) NOT NULL DEFAULT 'quote',
+  `price` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `stages` text,
+  `fields` text,
+  `enabled` tinyint(1) NOT NULL DEFAULT '1',
+  `sort_order` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`type_id`),
+  UNIQUE KEY `slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `DB_PREFIXbilling_service_requests` (
+  `request_id` int NOT NULL AUTO_INCREMENT,
+  `type_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `home_id` int NOT NULL DEFAULT '0',
+  `tid` int NOT NULL DEFAULT '0',
+  `details` text,
+  `total_price` decimal(10,2) DEFAULT NULL,
+  `next_stage` int NOT NULL DEFAULT '2',
+  `status` varchar(20) NOT NULL DEFAULT 'awaiting_quote',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`request_id`),
+  KEY `user_id` (`user_id`),
+  KEY `tid` (`tid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+INSERT INTO `DB_PREFIXbilling_service_types` (`slug`,`name`,`kind`,`summary`,`price_mode`,`price`,`stages`,`fields`,`enabled`,`sort_order`) VALUES
+('support','Support Request','support','Help with your server, billing or an account question.','fixed',0.00,'[{"label":"Payment","percent":100}]','[]',1,1),
+('server-setup','Server Setup','paid','We install and configure your game, mods and settings for you. Placeholder price: set yours in Administration.','fixed',25.00,'[{"label":"Payment","percent":100}]','[{"label":"Game","type":"text","required":true},{"label":"Mods or plugins to install","type":"textarea","required":false},{"label":"Settings you want (slots, difficulty, rules)","type":"textarea","required":false}]',1,2),
+('custom-development','Custom Development','paid','We build a mod, script or feature for your server. We quote after we read your idea.','quote',0.00,'[{"label":"Deposit to start","percent":50},{"label":"Payment on delivery","percent":50}]','[{"label":"Game","type":"text","required":true},{"label":"What should it do?","type":"textarea","required":true},{"label":"Deadline, if any","type":"text","required":false}]',1,3);
 CREATE TABLE `DB_PREFIXbilling_service_tiers` (
   `service_id` int NOT NULL,
   `tier_key` varchar(16) NOT NULL,
@@ -738,7 +778,7 @@ INSERT INTO `DB_PREFIXmodules` (`id`, `title`, `folder`, `version`, `db_version`
 (2,'Server Content Manager','addonsmanager','2.6',9,1),
 (3,'Administration','administration','1.0',1,1),
 (4,'Backup/Restore','backup-restore','1.2',1,1),
-(5,'billing','billing','3.8',14,1),
+(5,'billing','billing','3.9',15,1),
 (6,'Circular','circular','0.1',0,1),
 (7,'Config games','config_games','1.0',0,1),
 (8,'Cron','cron','1.0',0,1),

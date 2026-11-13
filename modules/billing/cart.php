@@ -193,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_invoice_ajax']
     }
 
     // Verify ownership and that invoice is still unpaid/due
-    $check_q = "SELECT invoice_id FROM {$table_prefix}billing_invoices WHERE invoice_id = " . intval($remove_id) . " AND user_id = " . intval($user_id) . " AND (status = 'due' OR status = '') AND (payment_status IS NULL OR payment_status NOT IN ('paid','cancelled','refunded')) LIMIT 1";
+    $check_q = "SELECT invoice_id FROM {$table_prefix}billing_invoices WHERE invoice_id = " . intval($remove_id) . " AND user_id = " . intval($user_id) . " AND invoice_kind <> 'service' AND (status = 'due' OR status = '') AND (payment_status IS NULL OR payment_status NOT IN ('paid','cancelled','refunded')) LIMIT 1";
     $check_r = mysqli_query($db, $check_q);
     if (!($check_r && mysqli_num_rows($check_r) === 1)) {
         echo json_encode(['success' => false, 'error' => 'Invoice not found or cannot be removed.']);
@@ -201,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_invoice_ajax']
     }
 
     // Hard-delete the invoice row
-    $del_q = "DELETE FROM {$table_prefix}billing_invoices WHERE invoice_id = " . intval($remove_id) . " AND user_id = " . intval($user_id) . " AND (status = 'due' OR status = '') AND (payment_status IS NULL OR payment_status NOT IN ('paid','cancelled','refunded')) LIMIT 1";
+    $del_q = "DELETE FROM {$table_prefix}billing_invoices WHERE invoice_id = " . intval($remove_id) . " AND user_id = " . intval($user_id) . " AND invoice_kind <> 'service' AND (status = 'due' OR status = '') AND (payment_status IS NULL OR payment_status NOT IN ('paid','cancelled','refunded')) LIMIT 1";
     $ok = mysqli_query($db, $del_q);
     if ($ok && mysqli_affected_rows($db) > 0) {
         echo json_encode(['success' => true]);
@@ -221,11 +221,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_invoice']) && 
             $error_message = 'Unable to remove item: database unavailable.';
         } else {
             // Verify ownership and that invoice is still unpaid/due
-            $check_q = "SELECT invoice_id FROM {$table_prefix}billing_invoices WHERE invoice_id = " . intval($remove_id) . " AND user_id = " . intval($user_id) . " AND (status = 'due' OR status = '') AND (payment_status IS NULL OR payment_status NOT IN ('paid','cancelled','refunded')) LIMIT 1";
+            $check_q = "SELECT invoice_id FROM {$table_prefix}billing_invoices WHERE invoice_id = " . intval($remove_id) . " AND user_id = " . intval($user_id) . " AND invoice_kind <> 'service' AND (status = 'due' OR status = '') AND (payment_status IS NULL OR payment_status NOT IN ('paid','cancelled','refunded')) LIMIT 1";
             $check_r = mysqli_query($db, $check_q);
             if ($check_r && mysqli_num_rows($check_r) === 1) {
                 // Hard-delete to remove from cart
-                $del_q = "DELETE FROM {$table_prefix}billing_invoices WHERE invoice_id = " . intval($remove_id) . " AND user_id = " . intval($user_id) . " AND (status = 'due' OR status = '') AND (payment_status IS NULL OR payment_status NOT IN ('paid','cancelled','refunded')) LIMIT 1";
+                $del_q = "DELETE FROM {$table_prefix}billing_invoices WHERE invoice_id = " . intval($remove_id) . " AND user_id = " . intval($user_id) . " AND invoice_kind <> 'service' AND (status = 'due' OR status = '') AND (payment_status IS NULL OR payment_status NOT IN ('paid','cancelled','refunded')) LIMIT 1";
                 if (mysqli_query($db, $del_q)) {
                     // Reload to avoid form re-submission and refresh invoice list
                     header('Location: ' . billing_url('cart.php'));
@@ -258,7 +258,7 @@ $sandbox   = function_exists('paypal_is_sandbox')    ? paypal_is_sandbox()    : 
 $paypal_items = [];
 $paypal_invoice_ids = [];
 foreach ((array)$invoices as $inv) {
-    $game_display = !empty($inv['game_name']) ? $inv['game_name'] : 'Game Server';
+    $game_display = ($inv['invoice_kind'] ?? 'game') === 'service' ? 'Service' : (!empty($inv['game_name']) ? $inv['game_name'] : 'Game Server');
     $qty = max(1, intval($inv['qty']));
     $paypal_invoice_ids[] = intval($inv['invoice_id']);
     $lineAmountCents = billing_cart_money_to_cents((float)($inv['total_due'] ?? $inv['amount'] ?? 0));
@@ -389,7 +389,7 @@ $siteBase = $protocol . $host;
                     <?php foreach ((array)$invoices as $inv): ?>
                     <tr>
                         <td data-label="Game Server">
-                            <div class="game-name"><?php echo htmlspecialchars($inv['game_name'] ?? 'Game Server'); ?></div>
+                            <div class="game-name"><?php echo htmlspecialchars(($inv['invoice_kind'] ?? 'game') === 'service' ? 'Service' : ($inv['game_name'] ?? 'Game Server')); ?></div>
                             <div class="server-name"><?php echo htmlspecialchars($inv['home_name']); ?></div>
                             <?php if (!empty($inv['description'])): ?>
                             <div class="description"><?php echo htmlspecialchars($inv['description']); ?></div>
@@ -402,9 +402,13 @@ $siteBase = $protocol . $host;
                                     <span class="price">$<?php echo number_format(floatval($inv['total_due'] ?? $inv['amount'] ?? 0), 2); ?></span>
                                 </td>
                                 <td data-label="Action" style="text-align: right;">
+                                    <?php if (($inv['invoice_kind'] ?? 'game') !== 'service'): ?>
                                     <button type="button" class="btn btn-secondary btn-small" title="Remove" onclick="removeInvoice(<?php echo intval($inv['invoice_id']); ?>)">
                                         Remove
                                     </button>
+                                    <?php else: ?>
+                                    <a href="<?php echo htmlspecialchars(billing_url('support.php')); ?>" class="btn btn-secondary btn-small">Ask us</a>
+                                    <?php endif; ?>
                                 </td>
                     </tr>
                     <?php endforeach; ?>

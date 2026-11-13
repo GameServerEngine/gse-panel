@@ -5,6 +5,8 @@ require_once __DIR__ . '/includes/session_bridge.php';
 require_once __DIR__ . '/includes/action_security.php';
 require_once __DIR__ . '/includes/support_tickets.php';
 require_once __DIR__ . '/includes/status_snapshot.php';
+require_once __DIR__ . '/includes/services_catalog.php';
+require_once __DIR__ . '/includes/content.php';
 
 /*
  * Support page: contact details, account link, live service status, and tickets.
@@ -24,6 +26,8 @@ $subject = '';
 $message = '';
 $email = '';
 $serviceId = 0;
+$typeSlug = 'support';
+$requestTypes = array();
 $db = null;
 $ticketsReady = false;
 $services = array();
@@ -37,6 +41,9 @@ try {
         $db->set_charset('utf8mb4');
         $prefix = (string)$table_prefix;
         $ticketsReady = support_ticket_available($db, $prefix);
+        if (billing_service_types_ready($db, $prefix)) {
+            $requestTypes = billing_service_types_list($db, $prefix, true);
+        }
         $snapshot = billing_status_load($db, $prefix);
     }
 } catch (Throwable $e) {
@@ -61,6 +68,16 @@ if ($ticketsReady) {
             $message = trim((string)($_POST['message'] ?? ''));
             $serviceId = $userId > 0 ? (int)($_POST['service_id'] ?? 0) : 0;
             $email = trim((string)($_POST['email'] ?? ''));
+            $typeSlug = (string)($_POST['request_type'] ?? 'support');
+            $chosenType = null;
+            foreach ($requestTypes as $candidate) {
+                if ($candidate['slug'] === $typeSlug) {
+                    $chosenType = $candidate;
+                }
+            }
+            if ($chosenType === null) {
+                $typeSlug = 'support';
+            }
 
             if (!$csrfOk) {
                 $formErrors[] = 'Your session expired. Please try again.';
@@ -70,8 +87,21 @@ if ($ticketsReady) {
                     $formErrors = array_merge($formErrors, support_email_errors($email));
                 }
             }
+            if (!$formErrors && $chosenType !== null && $chosenType['kind'] === 'paid') {
+                // A paid service needs its own questions and an invoice: carry what was typed over to the order form.
+                if ($userId <= 0) {
+                    $formErrors[] = 'Sign in to order ' . $chosenType['name'] . ', or choose another request type.';
+                } else {
+                    $_SESSION['service_prefill'] = array('subject' => $subject, 'message' => $message, 'home_id' => $serviceId);
+                    header('Location: ' . billing_url('services.php') . '?service=' . urlencode($chosenType['slug']) . '#order');
+                    exit();
+                }
+            }
             if (!$formErrors) {
                 try {
+                    if ($chosenType !== null && $chosenType['slug'] !== 'support') {
+                        $subject = billing_service_subject((string)$chosenType['name'], $subject);
+                    }
                     if ($userId > 0) {
                         $opened = support_ticket_open($db, $prefix, $userId, $ip, $subject, $message, $serviceId);
                     } else {
@@ -176,9 +206,9 @@ $renderTicket = function (array $ticket, bool $isOpen, bool $expand) use ($posts
 <body>
 <?php include(__DIR__ . '/includes/top.php'); include(__DIR__ . '/includes/menu.php'); ?>
 <main>
-  <p class="gsw-section-eyebrow">Hosting Support</p>
+  <p class="gsw-section-eyebrow"><?php echo billing_text_e('support.eyebrow', 'Support'); ?></p>
   <h1>Support</h1>
-  <p>Use this page for help with <?php echo billing_brand_e('name'); ?> orders, hosted servers, account access, billing, renewals, and service status. The service is managed by developers and gamers at <?php echo billing_brand_e('company'); ?>.</p>
+  <p><?php echo billing_text_e('support.intro'); ?></p>
 
   <p class="gsw-support-contact">
     <strong>Contact us:</strong>
@@ -241,6 +271,17 @@ $renderTicket = function (array $ticket, bool $isOpen, bool $expand) use ($posts
         <label for="ticket-email">Your email <span class="muted">(required, so we can reach you)</span></label>
         <input type="email" id="ticket-email" name="email" maxlength="190" value="<?php echo support_h($email); ?>" autocomplete="email" required>
         <p class="muted">You are not signed in. We keep a cookie on this browser so you can come back here and read the replies. <a href="<?php echo support_h(billing_url('login.php') . '?return_to=' . urlencode(billing_url('support.php'))); ?>">Sign in</a> to link a ticket to one of your servers.</p>
+      </div>
+<?php endif; ?>
+<?php if (count($requestTypes) > 1): ?>
+      <div class="form-group">
+        <label for="ticket-type">Request type</label>
+        <select id="ticket-type" name="request_type">
+<?php foreach ($requestTypes as $rt): ?>
+          <option value="<?php echo support_h($rt['slug']); ?>"<?php echo $typeSlug === $rt['slug'] ? ' selected' : ''; ?>><?php echo support_h($rt['name']); ?><?php echo $rt['kind'] === 'paid' ? ' (paid service)' : ''; ?></option>
+<?php endforeach; ?>
+        </select>
+        <p class="muted">Paid services open an order form and an invoice, and are tracked in a ticket. <a href="<?php echo support_h(billing_url('services.php')); ?>">See all services</a>.</p>
       </div>
 <?php endif; ?>
       <div class="form-group">
