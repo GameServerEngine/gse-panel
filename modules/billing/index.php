@@ -34,23 +34,23 @@ function gsw_home_e($value): string
 <section class="gsw-supported-games-banner" aria-label="Supported game servers">
   <div class="gsw-supported-games-inner">
     <a class="gsw-supported-game-card" href="<?php echo gsw_home_e(billing_url('serverlist.php')); ?>">
-      <img src="<?php echo gsw_home_e(panel_asset_url('images/games/day_z.jpg')); ?>" alt="" loading="eager">
+      <img src="<?php echo gsw_home_e(billing_url('images/games/day_z.jpg')); ?>" alt="" loading="eager">
       <span>DayZ</span>
     </a>
     <a class="gsw-supported-game-card" href="<?php echo gsw_home_e(billing_url('serverlist.php')); ?>">
-      <img src="<?php echo gsw_home_e(panel_asset_url('images/games/rust_header.jpg')); ?>" alt="" loading="eager">
+      <img src="<?php echo gsw_home_e(billing_url('images/games/rust_header.jpg')); ?>" alt="" loading="eager">
       <span>Rust</span>
     </a>
     <a class="gsw-supported-game-card" href="<?php echo gsw_home_e(billing_url('serverlist.php')); ?>">
-      <img src="<?php echo gsw_home_e(panel_asset_url('images/games/minecraft.jpg')); ?>" alt="" loading="eager">
+      <img src="<?php echo gsw_home_e(billing_url('images/games/minecraft.jpg')); ?>" alt="" loading="eager">
       <span>Minecraft</span>
     </a>
     <a class="gsw-supported-game-card" href="<?php echo gsw_home_e(billing_url('serverlist.php')); ?>">
-      <img src="<?php echo gsw_home_e(panel_asset_url('images/games/cstrikesource.jpg')); ?>" alt="" loading="eager">
+      <img src="<?php echo gsw_home_e(billing_url('images/games/cstrikesource.jpg')); ?>" alt="" loading="eager">
       <span>Counter-Strike Source</span>
     </a>
     <a class="gsw-supported-game-card" href="<?php echo gsw_home_e(billing_url('serverlist.php')); ?>">
-      <img src="<?php echo gsw_home_e(panel_asset_url('images/games/arma2.jpg')); ?>" alt="" loading="eager">
+      <img src="<?php echo gsw_home_e(billing_url('images/games/arma2.jpg')); ?>" alt="" loading="eager">
       <span>Arma 2</span>
     </a>
   </div>

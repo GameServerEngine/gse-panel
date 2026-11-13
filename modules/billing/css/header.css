@@ -595,14 +595,18 @@ p {
     border-color: rgba(255, 255, 255, 0.3);
 }
 
+/* Black game row that sits flush on top of the hero: no gaps between tiles or before the hero. */
 .gsw-supported-games-banner {
-    margin-bottom: 20px;
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+    border-radius: var(--radius) var(--radius) 0 0;
 }
 
 .gsw-supported-games-inner {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 10px;
+    gap: 0;
 }
 
 .gsw-supported-game-card {
@@ -610,11 +614,14 @@ p {
     min-width: 0;
     aspect-ratio: 460 / 215;
     overflow: hidden;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
     color: var(--white);
-    background: var(--panel);
+    background: #000;
     text-decoration: none;
+}
+
+.gsw-supported-games-banner + main .gsw-hero-shell {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
 }
 
 .gsw-supported-game-card::after {
