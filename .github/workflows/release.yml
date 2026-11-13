@@ -1,9 +1,12 @@
 name: Release
 
-# working: every push rebuilds one rolling prerelease, working-latest, at the current VERSION.
-# testing: every push that changes the branch bumps VERSION from the commits since the last
-# testing release (BREAKING CHANGE or type! -> major, feat -> minor, anything else -> fix),
-# commits the new VERSION back with [skip ci], and publishes testing-<version>.
+# The version names the code. It is bumped once, on working, and then carried unchanged by merges.
+# working: every push that changes the branch bumps VERSION from the commits in that push
+# (BREAKING CHANGE or type! -> major, feat -> minor, anything else -> fix), commits the new VERSION
+# and PANEL_VERSION back to working with [skip ci], and rebuilds the rolling prerelease working-latest.
+# testing: every push publishes testing-<version> for the VERSION already on the branch. It never
+# bumps, so testing only releases code that was versioned on working. If testing-<version> exists
+# but the code differs, the run fails: bump on working and merge again.
 # stable: every push publishes stable-<version> as a full (non-pre) release of the VERSION already
 # on the branch; the version is not bumped, because stable only receives what testing released.
 # The bump commit uses GITHUB_TOKEN, which does not start another workflow run.
@@ -38,19 +41,22 @@ jobs:
           CODE=$(awk -F"'" '/PANEL_VERSION/ {print $4}' includes/panel_version.php)
           if [ "$CODE" != "$CUR" ]; then echo "PANEL_VERSION ($CODE) does not match VERSION ($CUR)" >&2; exit 1; fi
           NEW="$CUR"
-          if [ "$BRANCH" = "testing" ]; then
-            LAST=$(git tag -l 'testing-*' | sed 's/^testing-//' | grep -E '^[0-9]+([.][0-9]+)*$' | sort -V | tail -1 || true)
-            if [ -n "$LAST" ]; then
-              if git diff --quiet "testing-$LAST" HEAD; then
-                echo "No changes since testing-$LAST; nothing to release."
-                exit 0
-              fi
-              if [ "$(printf '%s\n%s\n' "$LAST" "$CUR" | sort -V | tail -1)" = "$CUR" ] && [ "$CUR" != "$LAST" ]; then
-                echo "VERSION $CUR was raised by hand; releasing it without a bump."
-                NEW="$CUR"
+          if [ "$BRANCH" = "working" ]; then
+            # Same code as an already released testing version (for example testing merged back): keep that version.
+            if git rev-parse -q --verify "refs/tags/testing-$CUR" >/dev/null && git diff --quiet "testing-$CUR" HEAD; then
+              echo "Code equals testing-$CUR; keeping $CUR."
+            else
+              LAST=$(git tag -l 'testing-*' | sed 's/^testing-//' | grep -E '^[0-9]+([.][0-9]+)*$' | sort -V | tail -1 || true)
+              BEFORE="${{ github.event.before }}"
+              if [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+                MSGS=$(git log --format='%B' "$BEFORE..HEAD")
               else
-              BASE=$(for v in "$CUR" "$LAST"; do echo "$v"; done | sort -V | tail -1)
-              MSGS=$(git log --format='%B' "testing-$LAST..HEAD")
+                MSGS=$(git log -1 --format='%B')
+              fi
+              BASE="$CUR"
+              if [ -n "$LAST" ]; then
+                BASE=$(printf '%s\n%s\n' "$CUR" "$LAST" | sort -V | tail -1)
+              fi
               if echo "$MSGS" | grep -qE 'BREAKING CHANGE|^[A-Za-z]+([(][^)]*[)])?!:'; then
                 KIND=major
               elif echo "$MSGS" | grep -qE '^feat([(]|:)'; then
@@ -65,19 +71,19 @@ jobs:
                 *) PA=$((PA + 1)) ;;
               esac
               NEW="$MA.$MI.$PA"
-              if git rev-parse -q --verify "refs/tags/testing-$NEW" >/dev/null; then
-                echo "testing-$NEW already exists" >&2
-                exit 1
-              fi
               echo "Bumping $BASE to $NEW ($KIND change)"
               echo "$NEW" > VERSION
               sed -i "s/define('PANEL_VERSION', *'$CUR')/define('PANEL_VERSION', '$NEW')/" includes/panel_version.php
               git config user.name 'github-actions[bot]'
               git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
               git add -A
-              git commit -m "chore(release): testing $NEW [skip ci]"
-              git push origin "HEAD:refs/heads/testing"
-              fi
+              git commit -m "chore(release): working $NEW [skip ci]"
+              git push origin "HEAD:refs/heads/working" || { git pull --rebase origin working && git push origin "HEAD:refs/heads/working"; }
+            fi
+          elif [ "$BRANCH" = "testing" ]; then
+            if git rev-parse -q --verify "refs/tags/testing-$NEW" >/dev/null && ! git diff --quiet "testing-$NEW" HEAD; then
+              echo "testing-$NEW already exists but the code differs. Bump the version on working and merge it again." >&2
+              exit 1
             fi
           fi
 
