@@ -708,7 +708,7 @@ INSERT INTO `DB_PREFIXmodule_menus` (`module_id`, `subpage`, `group`, `menu_name
 (25,'rs_accounts','admin','Reseller Accounts',0),
 (25,'rs_services','admin','Reseller Services',0),
 (25,'rs_settings','admin','Reseller Settings',0),
-(26,'','admin','Servers',0),
+(26,'','admin','Remote Agents',0),
 (27,'','admin','Panel Settings',0),
 (27,'themes','admin','Theme Settings',0),
 (29,'workshop_admin','admin','Steam Workshop',0),
@@ -759,7 +759,7 @@ INSERT INTO `DB_PREFIXmodules` (`id`, `title`, `folder`, `version`, `db_version`
 (23,'Rcon','rcon','1.0',0,1),
 (24,'register','register','1.0',0,1),
 (25,'Reseller','reseller','0.1',0,1),
-(26,'Server manager','server','1.0',3,1),
+(26,'Remote Agents','server','1.1',3,1),
 (27,'Settings','settings','1.0',1,1),
 (28,'Status','status','Alpha',0,1),
 (29,'Steam Workshop','steam_workshop','1.1',0,1),
@@ -859,6 +859,19 @@ CREATE TABLE `DB_PREFIXport_allocation_events` (
   KEY `idx_port_events_ip_time` (`ip_id`,`created_at`),
   KEY `idx_port_events_type_time` (`event_type`,`created_at`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Port allocation audit events';
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `DB_PREFIXport_ranges` (
+  `range_id` int NOT NULL AUTO_INCREMENT,
+  `remote_server_id` int DEFAULT NULL COMMENT 'NULL = global, applies to every agent',
+  `range_start` int unsigned NOT NULL,
+  `range_end` int unsigned NOT NULL,
+  `label` varchar(128) NOT NULL DEFAULT '',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`range_id`),
+  KEY `idx_port_ranges_agent` (`remote_server_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Ports game servers may be allocated from, global or per agent';
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;

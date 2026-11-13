@@ -481,6 +481,39 @@ if (!function_exists('port_allocator_offsets_fit')) {
 	}
 }
 
+if (!function_exists('port_allocator_allowed_ranges')) {
+	/**
+	 * Port ranges an admin allows game servers on for this agent: global ranges plus
+	 * ranges set for the agent itself. Empty means no limit (scan upward from the default port).
+	 */
+	function port_allocator_allowed_ranges($db, $db_prefix, $remote_server_id, $default_port)
+	{
+		if (!port_allocator_table_exists($db, $db_prefix, 'port_ranges')) {
+			return array();
+		}
+		$remote_server_id = port_allocator_int($remote_server_id);
+		$rows = port_allocator_rows(
+			$db,
+			"SELECT range_start, range_end FROM `{$db_prefix}port_ranges`
+			  WHERE remote_server_id IS NULL OR remote_server_id={$remote_server_id}
+			  ORDER BY range_start ASC"
+		);
+		$default_port = port_allocator_int($default_port);
+		$ahead = array();
+		$behind = array();
+		foreach ($rows as $row) {
+			$start = port_allocator_int($row['range_start']);
+			$end = port_allocator_int($row['range_end']);
+			if ($end >= $default_port) {
+				$ahead[] = array(max($start, $default_port), $end);
+			} else {
+				$behind[] = array($start, $end);
+			}
+		}
+		return array_merge($ahead, $behind);
+	}
+}
+
 if (!function_exists('port_allocator_find_candidate')) {
 	function port_allocator_find_candidate($db, $db_prefix, $remote_server_id, $home_cfg_id, $preferred_ip_id = null, $manual_port = null, $allow_admin_override = false)
 	{
@@ -523,7 +556,16 @@ if (!function_exists('port_allocator_find_candidate')) {
 				continue;
 			}
 
-			foreach (port_allocator_candidate_starts($default_port, $range_end, $block_size) as $block_start) {
+			$allowed = port_allocator_allowed_ranges($db, $db_prefix, $remote_server_id, $default_port);
+			$starts = array();
+			if (empty($allowed)) {
+				$starts = port_allocator_candidate_starts($default_port, $range_end, $block_size);
+			} else {
+				foreach ($allowed as $range) {
+					$starts = array_merge($starts, port_allocator_candidate_starts($range[0], $range[1], $block_size));
+				}
+			}
+			foreach ($starts as $block_start) {
 				$block_end = $block_start + $block_size - 1;
 				if (port_allocator_block_has_conflict($db, $db_prefix, $ip_id, $remote_server_id, $block_start, $block_end)) {
 					continue;
