@@ -479,6 +479,14 @@ function exec_operation( $action, $home_id, $mod_id, $ip, $port, $override = fal
 	{
 		if( $server_xml->replace_texts )
 		{
+			// Same per-mod merge the start/restart branches do below. This is the only place
+			// cfg_text_replace.php actually runs (require_once skips it there), so without this
+			// merge $server_home['mod_cfg_id'] is unset and incrementalNumByHomeId() breaks the SQL.
+			if (isset($home_info['mods'][$mod_id]) && is_array($home_info['mods'][$mod_id])) {
+				foreach ($home_info['mods'][$mod_id] as $key => $value) {
+					$home_info[$key] = $value;
+				}
+			}
 			$server_home = $home_info;
 			if(	isset($server_xml->lgsl_query_name) )
 				require_once('protocol/lgsl/lgsl_protocol.php');
