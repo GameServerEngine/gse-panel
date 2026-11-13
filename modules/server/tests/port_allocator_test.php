@@ -11,6 +11,7 @@ class PortAllocatorFakeDb
 	public $arrangePorts = array();
 	public $configHomes = array();
 	public $portBlockSize = 10;
+	public $ranges = array();
 	public $mappedPoolsEnabled = true;
 	public $queries = array();
 	private $nextBlockId = 1;
@@ -25,6 +26,9 @@ class PortAllocatorFakeDb
 		$this->queries[] = $query;
 		if (strpos($query, 'SHOW TABLES LIKE') !== false) {
 			return array(array('Tables_in_test' => 'ok'));
+		}
+		if (strpos($query, 'FROM `DB_PREFIXport_ranges`') !== false) {
+			return $this->ranges;
 		}
 		if (strpos($query, 'FROM `DB_PREFIXsettings`') !== false && strpos($query, "setting`='port_block_size'") !== false) {
 			return array(array('value' => $this->portBlockSize));
@@ -47,7 +51,7 @@ class PortAllocatorFakeDb
 				return array(array('home_id' => (int)$m[1], 'remote_server_id' => 1, 'home_cfg_id' => 5));
 			}
 		}
-		if (strpos($query, 'INNER JOIN `port_pools`') !== false) {
+		if (strpos($query, 'INNER JOIN `DB_PREFIXport_pools`') !== false) {
 			if (!$this->mappedPoolsEnabled) {
 				return array();
 			}
@@ -79,16 +83,16 @@ class PortAllocatorFakeDb
 			}
 			return array();
 		}
-		if (strpos($query, 'FROM `game_port_offsets`') !== false) {
+		if (strpos($query, 'FROM `DB_PREFIXgame_port_offsets`') !== false) {
 			return $this->offsets;
 		}
-		if (strpos($query, 'FROM `static_port_reservations`') !== false) {
+		if (strpos($query, 'FROM `DB_PREFIXstatic_port_reservations`') !== false) {
 			return $this->matchingStaticReservation($query);
 		}
 		if (strpos($query, 'FROM `DB_PREFIXhome_ip_ports`') !== false) {
 			return $this->matchingHomeIpPorts($query);
 		}
-		if (strpos($query, 'FROM `home_port_blocks`') !== false) {
+		if (strpos($query, 'FROM `DB_PREFIXhome_port_blocks`') !== false) {
 			return $this->matchingBlocks($query);
 		}
 		return array();
@@ -97,7 +101,7 @@ class PortAllocatorFakeDb
 	public function query($query)
 	{
 		$this->queries[] = $query;
-		if (strpos($query, 'INSERT INTO `home_port_blocks`') !== false) {
+		if (strpos($query, 'INSERT INTO `DB_PREFIXhome_port_blocks`') !== false) {
 			if (!preg_match("/VALUES\s+\((\d+),\s*(\d+),\s*(NULL|\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*'([^']+)'/s", $query, $m)) {
 				return false;
 			}
@@ -128,7 +132,7 @@ class PortAllocatorFakeDb
 			$this->homeIpPorts[] = array('ip_id' => (int)$m[1], 'port' => (int)$m[2], 'home_id' => (int)$m[3]);
 			return true;
 		}
-		if (strpos($query, 'UPDATE `home_port_blocks` SET status=') !== false && preg_match('/block_id=(\d+)/', $query, $m)) {
+		if (strpos($query, 'UPDATE `DB_PREFIXhome_port_blocks` SET status=') !== false && preg_match('/block_id=(\d+)/', $query, $m)) {
 			foreach ($this->blocks as &$row) {
 				if ((int)$row['block_id'] === (int)$m[1]) {
 					$row['status'] = 'released';
@@ -209,30 +213,37 @@ port_allocator_test_assert($starts[0] === 32000 && $starts[990] === 32990, 'cand
 
 $db = new PortAllocatorFakeDb();
 $db->configHomes[5] = array('home_cfg_id' => 5, 'game_key' => 'minecraft_linux64', 'game_name' => 'Minecraft', 'home_cfg_file' => 'minecraft_linux64.xml');
-$first = port_allocate_home_block($db, '', 100, 1, 5);
+$first = port_allocate_home_block($db, 'DB_PREFIX', 100, 1, 5);
 port_allocator_test_assert(!empty($first['ok']), 'allocates without manual port pool mappings');
 port_allocator_test_assert($first['ip_id'] === 10 && $first['port'] === 25565 && $first['block_end'] === 25574, 'allocator tries the game default port first');
 port_allocator_test_assert($first['block_size'] === 10, 'default global block size is 10');
 port_allocator_test_assert(count($db->homeIpPorts) === 1 && $db->homeIpPorts[0]['port'] === 25565, 'allocation mirrors primary port to home_ip_ports');
 
-$second = port_allocate_home_block($db, '', 101, 1, 5);
+$second = port_allocate_home_block($db, 'DB_PREFIX', 101, 1, 5);
 port_allocator_test_assert(!empty($second['ok']) && $second['port'] === 25575, 'occupied block advances to the next free contiguous block');
-port_allocator_test_assert(!port_allocator_block_has_conflict($db, '', 11, 1, 25565, 25574), 'same block can be reused on a different ip_id');
+port_allocator_test_assert(!port_allocator_block_has_conflict($db, 'DB_PREFIX', 11, 1, 25565, 25574), 'same block can be reused on a different ip_id');
 
 $db = new PortAllocatorFakeDb();
 $db->configHomes[5] = array('home_cfg_id' => 5, 'game_key' => 'minecraft_linux64', 'game_name' => 'Minecraft', 'home_cfg_file' => 'minecraft_linux64.xml');
 $db->staticReservations[] = array('reservation_id' => 1, 'status' => 'active', 'port_start' => 25565, 'port_end' => 25574);
-$reserved = port_allocate_home_block($db, '', 102, 1, 5);
+$reserved = port_allocate_home_block($db, 'DB_PREFIX', 102, 1, 5);
 port_allocator_test_assert(!empty($reserved['ok']) && $reserved['port'] === 25575, 'static service reservation blocks the overlapping game block');
 
 $db = new PortAllocatorFakeDb();
 $db->configHomes[5] = array('home_cfg_id' => 5, 'game_key' => 'minecraft_linux64', 'game_name' => 'Minecraft', 'home_cfg_file' => 'minecraft_linux64.xml');
 $db->portBlockSize = 4;
-$custom = port_allocate_home_block($db, '', 103, 1, 5);
+$custom = port_allocate_home_block($db, 'DB_PREFIX', 103, 1, 5);
 port_allocator_test_assert(!empty($custom['ok']) && $custom['block_size'] === 4 && $custom['block_end'] === 25568, 'custom global block size is honored');
 
 $db = new PortAllocatorFakeDb();
-$fallback = port_allocator_find_candidate($db, '', 1, 99, 10, null);
+$fallback = port_allocator_find_candidate($db, 'DB_PREFIX', 1, 99, 10, null);
 port_allocator_test_assert(!empty($fallback['ok']) && $fallback['primary_port'] === 27015 && $fallback['default_port_source'] === 'fallback', 'unknown games use the safe fallback base port');
 
 echo "All port allocator tests passed.\n";
+
+$rangeDb = new PortAllocatorFakeDb();
+$rangeDb->configHomes[5] = array('home_cfg_id' => 5, 'game_key' => 'minecraft_linux64', 'game_name' => 'Minecraft', 'home_cfg_file' => 'minecraft_linux64.xml');
+$rangeDb->ranges[] = array('range_start' => 30000, 'range_end' => 30099);
+$ranged = port_allocate_home_block($rangeDb, 'DB_PREFIX', 200, 1, 5);
+port_allocator_test_assert(!empty($ranged['ok']) && $ranged['port'] === 30000, 'a game port range moves allocation into the range');
+

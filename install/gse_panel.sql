@@ -862,6 +862,19 @@ CREATE TABLE `DB_PREFIXport_allocation_events` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `DB_PREFIXport_ranges` (
+  `range_id` int NOT NULL AUTO_INCREMENT,
+  `remote_server_id` int DEFAULT NULL COMMENT 'NULL = global, applies to every agent',
+  `range_start` int unsigned NOT NULL,
+  `range_end` int unsigned NOT NULL,
+  `label` varchar(128) NOT NULL DEFAULT '',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`range_id`),
+  KEY `idx_port_ranges_agent` (`remote_server_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Ports game servers may be allocated from, global or per agent';
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `DB_PREFIXport_pool_games` (
   `pool_game_id` int NOT NULL AUTO_INCREMENT,
   `pool_id` int NOT NULL,

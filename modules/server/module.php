@@ -25,7 +25,7 @@
 // Module general information
 $module_title = "Remote Agents";
 $module_version = "1.1";
-$db_version = 3;
+$db_version = 4;
 $module_required = TRUE;
 $module_menus = array(
 array( 'subpage' => '', 'name'=>'Remote Agents', 'group'=>'admin' )
@@ -240,5 +240,17 @@ $install_queries[3] = array(
     "INSERT INTO `".DB_PREFIX."settings` (`setting`,`value`)
      VALUES ('port_block_size','10')
      ON DUPLICATE KEY UPDATE `value`=`value`;"
+);
+$install_queries[4] = array(
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."port_ranges` (
+  `range_id` int NOT NULL AUTO_INCREMENT,
+  `remote_server_id` int DEFAULT NULL COMMENT 'NULL = global, applies to every agent',
+  `range_start` int unsigned NOT NULL,
+  `range_end` int unsigned NOT NULL,
+  `label` varchar(128) NOT NULL DEFAULT '',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`range_id`),
+  KEY `idx_port_ranges_agent` (`remote_server_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Ports game servers may be allocated from, global or per agent';"
 );
 ?>
