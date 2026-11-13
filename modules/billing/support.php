@@ -270,8 +270,9 @@ $renderTicket = function (array $ticket, bool $isOpen, bool $expand) use ($posts
 (function () {
   var frame = document.getElementById('gsw-status-frame');
   if (!frame || !window.fetch) return;
-  // The page reads a cached snapshot, so refreshing often is cheap.
-  setInterval(function () {
+  // The page reads a cached snapshot, so refreshing often is cheap. The first fetch runs at once,
+  // which also rebuilds a snapshot that has gone stale.
+  function refresh() {
     fetch(frame.getAttribute('data-feed'), { credentials: 'same-origin' })
       .then(function (r) { return r.ok ? r.text() : null; })
       .then(function (html) {
@@ -281,7 +282,9 @@ $renderTicket = function (array $ticket, bool $isOpen, bool $expand) use ($posts
         frame.scrollTop = top;
       })
       .catch(function () {});
-  }, 30000);
+  }
+  refresh();
+  setInterval(refresh, 30000);
 })();
 </script>
 <?php include(__DIR__ . '/includes/footer.php'); ?>

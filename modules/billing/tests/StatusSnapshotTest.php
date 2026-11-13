@@ -29,10 +29,12 @@ status_check(strpos($html, 'st-bad">Offline') !== false, 'offline agent is red')
 // A stale snapshot must not claim anything is up.
 $stale = $snap; $stale['generated'] = $now - 3600;
 $staleHtml = billing_status_render($stale, $now);
-status_check(strpos($staleHtml, 'st-good') === false, 'stale snapshot shows nothing as up');
+status_check(strpos($staleHtml, 'Core</span><b class="gsw-st st-good') === false, 'stale snapshot shows no agent as up');
+status_check(strpos($staleHtml, 'Control Panel</span><b class="gsw-st st-good">Online') !== false, 'control panel is up whenever the page renders');
 status_check(strpos($staleHtml, 'status is behind') !== false, 'stale snapshot says it is behind');
 
-status_check(strpos(billing_status_render(null, $now), 'not available') !== false, 'no snapshot message');
+status_check(strpos(billing_status_render(null, $now), 'Control Panel</span><b class="gsw-st st-good">Online') !== false, 'no snapshot still shows the panel up');
+status_check(strpos(billing_status_render(null, $now), 'being gathered') !== false, 'no snapshot message');
 $noBackup = $snap; unset($noBackup['backup_at']);
 status_check(strpos(billing_status_render($noBackup, $now), 'Not reported') !== false, 'missing backup reported honestly');
 status_check(billing_status_ago($now - 3 * 3600, $now) === '3 hours ago', 'hours text');

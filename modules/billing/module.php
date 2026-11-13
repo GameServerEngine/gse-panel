@@ -24,9 +24,9 @@
 
 // Module general information
 $module_title = "billing";
-$module_version = "3.7";
+$module_version = "3.8";
 $db_version = 14;
-$module_required = FALSE;
+$module_required = TRUE;
 // Module description
 $module_description = "Billing storefront / provisioning integration.";
 

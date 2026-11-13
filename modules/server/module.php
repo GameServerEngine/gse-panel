@@ -24,8 +24,8 @@
 
 // Module general information
 $module_title = "Remote Agents";
-$module_version = "1.1";
-$db_version = 4;
+$module_version = "1.2";
+$db_version = 5;
 $module_required = TRUE;
 $module_menus = array(
 array( 'subpage' => '', 'name'=>'Remote Agents', 'group'=>'admin' )
@@ -252,5 +252,10 @@ $install_queries[4] = array(
   PRIMARY KEY (`range_id`),
   KEY `idx_port_ranges_agent` (`remote_server_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Ports game servers may be allocated from, global or per agent';"
+);
+
+// db_version 5 - the module is called Remote Agents everywhere. Existing installs still carry the old title.
+$install_queries[5] = array(
+    "UPDATE `".DB_PREFIX."modules` SET `title` = 'Remote Agents' WHERE `folder` = 'server';"
 );
 ?>

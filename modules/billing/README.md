@@ -2,6 +2,8 @@
 
 The billing module is the customer storefront for game server hosting. It lives in `modules/billing` inside the GameServer Engine panel repo and can be served on its own virtual host.
 
+The module is required: the panel does not let it be disabled. Install steps, with the DNS record and the Apache and nginx virtual hosts, are in `INSTALL.md` and at https://gameserverengine.com/storefront.html.
+
 ## Rebranding
 
 Change the name and company in `site_config.local.php` (per install, not in git), or in `site_config.php` for a default that goes with the code:
@@ -22,7 +24,8 @@ Anything not set falls back to the defaults in `includes/brand.php`. To change t
 | `base_path` | Storefront base URL path |
 | `panel_path` | Path to the panel installation |
 | `paypal_key_file` (set in `site_config.local.php`) | Encryption key for the stored PayPal secret. Keep it outside the web root, readable by the web server only. |
-| `brand` | Name and company text (see above) |
+| `panel_base` | Panel address for the Control Panel link and shared pictures |
+| `brand` | Name, company, tagline, email and Discord link (see above) |
 
 `site_config.php` is tracked in git and holds the defaults. `site_config.local.php` is gitignored and overrides it on each install. `site_config.example.php` lists the keys.
 
@@ -45,6 +48,7 @@ Anything not set falls back to the defaults in `includes/brand.php`. To change t
 
 ## Documentation in this folder
 
+- `INSTALL.md`: domain, virtual hosts, payment and cron checklist
 - `INVOICE_FIRST_FLOW.md`: how orders become invoices and services
 - `INVOICE_SYSTEM.md`: invoice fields and statuses
 - `PANEL_INTEGRATION.md`: how the storefront uses the panel

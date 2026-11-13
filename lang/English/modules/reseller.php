@@ -79,7 +79,7 @@ define('LANG_remove_cart', "Remove Cart");
 define('LANG_there_are_no_orders_in_cart', "There are no orders in this cart.");
 define('LANG_redirecting_to_paypal', "Redirecting to PayPal...");
 define('LANG_id', "ID#");
-define('LANG_remote_server', "Remote Server");
+define('LANG_remote_server', "Remote Agent");
 define('LANG_price_hourly', "Price Hourly");
 define('LANG_price_monthly', "Price Monthly");
 define('LANG_price_year', "Price Year");

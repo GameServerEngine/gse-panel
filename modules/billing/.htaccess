@@ -4,14 +4,6 @@
 Options -Indexes
 DirectoryIndex index.php
 
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-
-    # Keep normal existing files/directories working.
-    RewriteCond %{REQUEST_FILENAME} -f [OR]
-    RewriteCond %{REQUEST_FILENAME} -d
-    RewriteRule ^ - [L]
-</IfModule>
 
 # Never expose local configuration, SQL migrations, logs, payment data, docs-as-source,
 # or implementation-only PHP libraries directly over HTTP.
@@ -20,6 +12,15 @@ DirectoryIndex index.php
 </FilesMatch>
 
 <IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # These come first. A rule that lets existing files through would otherwise stop
+    # rewriting before they were reached, and the folders would be served.
     RewriteRule ^(_archived|classes|includes|sql|tools|data|logs|config)(/|$) - [F,L]
     RewriteRule ^(site_config\.local\.php|site_config\.example\.php|site_config\.php)$ - [F,L]
+
+    # Keep normal existing files/directories working.
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
 </IfModule>

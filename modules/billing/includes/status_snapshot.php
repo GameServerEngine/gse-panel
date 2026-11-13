@@ -129,14 +129,16 @@ if (!function_exists('billing_status_render')) {
     function billing_status_render(?array $snap, ?int $now = null): string
     {
         $now = $now ?? time();
+        // This page is served by the control panel itself (the storefront is a panel module that
+        // cannot be switched off), so if a visitor can read it the panel is up.
+        $panelLine = billing_status_line('Control Panel', 'online');
         if ($snap === null) {
-            return '<p class="gsw-status-note">Status is not available yet.</p>';
+            return $panelLine . '<p class="gsw-status-note">Agent and game server status is being gathered. Check back in a minute.</p>';
         }
         $generated = (int)($snap['generated'] ?? 0);
         $fresh = $generated > 0 && ($now - $generated) <= BILLING_STATUS_STALE_AFTER;
 
-        // The control panel is "online" while its refresher keeps reporting in.
-        $html = billing_status_line('Control Panel', $fresh ? 'online' : 'unknown');
+        $html = $panelLine;
         foreach ((array)($snap['agents'] ?? array()) as $agent) {
             $code = !$fresh ? 'unknown' : (!empty($agent['online']) ? 'online' : 'offline');
             $html .= billing_status_line((string)($agent['name'] ?? 'Agent'), $code);

@@ -87,7 +87,7 @@ define('LANG_TS3Admin', "TS3 Admin");
 define('LANG_administration', "Administration");
 define('LANG_config_games', "Game/Mod Config");
 define('LANG_modulemanager', "Modules");
-define('LANG_server', "Servers");
+define('LANG_server', "Remote Agents");
 define('LANG_settings', "Panel Settings");
 define('LANG_themes', "Theme Settings");
 define('LANG_user_admin', "Users");
