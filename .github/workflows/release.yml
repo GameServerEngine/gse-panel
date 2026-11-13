@@ -3,7 +3,8 @@ name: Release
 # The version names the code. It is bumped once, on working, and then carried unchanged by merges.
 # working: every push that changes the branch bumps VERSION from the commits in that push
 # (BREAKING CHANGE or type! -> major, feat -> minor, anything else -> fix), commits the new VERSION
-# and PANEL_VERSION back to working with [skip ci], and rebuilds the rolling prerelease working-latest.
+# and PANEL_VERSION back to working, and rebuilds the rolling prerelease working-latest. The bump commit
+# must NOT say [skip ci]: it becomes the head that testing receives, and a skipped head would not release.
 # testing: every push publishes testing-<version> for the VERSION already on the branch. It never
 # bumps, so testing only releases code that was versioned on working. If testing-<version> exists
 # but the code differs, the run fails: bump on working and merge again.
@@ -77,7 +78,7 @@ jobs:
               git config user.name 'github-actions[bot]'
               git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
               git add -A
-              git commit -m "chore(release): working $NEW [skip ci]"
+              git commit -m "chore(release): working $NEW"
               git push origin "HEAD:refs/heads/working" || { git pull --rebase origin working && git push origin "HEAD:refs/heads/working"; }
             fi
           elif [ "$BRANCH" = "testing" ]; then
