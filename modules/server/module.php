@@ -23,12 +23,12 @@
  */
 
 // Module general information
-$module_title = "Server manager";
-$module_version = "1.0";
+$module_title = "Remote Agents";
+$module_version = "1.1";
 $db_version = 3;
 $module_required = TRUE;
 $module_menus = array(
-array( 'subpage' => '', 'name'=>'Servers', 'group'=>'admin' )
+array( 'subpage' => '', 'name'=>'Remote Agents', 'group'=>'admin' )
 );
 
 $install_queries = array();

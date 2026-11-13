@@ -19,3 +19,23 @@
 .agent-details a {
 	margin-left: auto;
 }
+
+/* Remote agent action buttons: one size, wrap to a lower row */
+.agent-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+.agent-actions > * {
+	box-sizing: border-box;
+	flex: 0 0 8.5em;
+	min-height: 2.4em;
+	margin: 0;
+	padding: 0 8px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid currentColor;
+	border-radius: 4px;
+	text-decoration: none;
+}

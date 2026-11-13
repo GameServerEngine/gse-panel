@@ -95,12 +95,12 @@ function exec_module() {
 		$ram_percent = agent_snapshot_field($snapshot, 'ram_percent', '');
 		$disk_percent = agent_snapshot_field($snapshot, 'disk_percent', '');
 		$load_average = agent_snapshot_field($snapshot, 'load_average', '');
-		$buttons = "<button type='button' onclick=\"location.href='?m=server&amp;p=agent_interface&amp;rhost_id=".$server_row['remote_server_id']."'\">Manage Agent</button>\n".
-					"<a href='?m=server&amp;p=edit&amp;rhost_id=".$server_row['remote_server_id']."&amp;edit'>[". get_lang("edit") ."]</a>\n".
-					"<a href='?m=server&amp;p=edit&amp;rhost_id=".$server_row['remote_server_id']."&amp;delete'>[". get_lang("delete") ."]</a>\n".
-					"<a href='?m=server&amp;p=log&amp;rhost_id=".$server_row['remote_server_id']."'>[". get_lang("view_log") ."]</a>\n".
-					"<a href='?m=server&amp;p=restart&amp;rhost_id=".$server_row['remote_server_id']."'>[". get_lang("restart") ."]</a>\n".
-					"<a href='?m=server&amp;p=reboot&amp;rhost_id=".$server_row['remote_server_id']."'>[". get_lang("reboot") ."]</a>\n";
+		$buttons = "<div class='agent-actions'>\n<button type='button' onclick=\"location.href='?m=server&amp;p=agent_interface&amp;rhost_id=".$server_row['remote_server_id']."'\">Manage Agent</button>\n".
+					"<a href='?m=server&amp;p=edit&amp;rhost_id=".$server_row['remote_server_id']."&amp;edit'>". get_lang("edit") ."</a>\n".
+					"<a href='?m=server&amp;p=edit&amp;rhost_id=".$server_row['remote_server_id']."&amp;delete'>". get_lang("delete") ."</a>\n".
+					"<a href='?m=server&amp;p=log&amp;rhost_id=".$server_row['remote_server_id']."'>". get_lang("view_log") ."</a>\n".
+					"<a href='?m=server&amp;p=restart&amp;rhost_id=".$server_row['remote_server_id']."'>". get_lang("restart") ."</a>\n".
+					"<a href='?m=server&amp;p=reboot&amp;rhost_id=".$server_row['remote_server_id']."'>". get_lang("reboot") ."</a>\n</div>";
 
 		$resource_text = "CPU: " . (is_numeric($cpu_percent) ? round($cpu_percent, 1) . '%' : 'n/a') . "<br />" .
 			"RAM: " . (is_numeric($ram_percent) ? round($ram_percent, 1) . '%' : 'n/a') . "<br />" .
