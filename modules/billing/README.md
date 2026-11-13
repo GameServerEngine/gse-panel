@@ -37,6 +37,10 @@ All storefront wording is content. `content/default.php` is the neutral text eve
 
 Administration > Billing > Services edits what customers can order besides game servers. A service is a paid service (order form, ticket and invoice) or a support type (ticket only), with a fixed price or a quote, payment steps like `Deposit | 50` and `Payment on delivery | 50`, and the questions asked. An order creates a row in `billing_service_requests`, a support ticket named `[Service] title`, and an invoice (`invoice_kind = 'service'`, with `request_id`, `stage_no`, `stage_label`) for the first step. Paying a service invoice moves the request on and writes to the ticket; it never creates a server order. For a quote, send the price on the Requests table; use Bill next step for later steps.
 
+## Installable app (PWA)
+
+The storefront is installable: `manifest.php` (not .json, which `.htaccess` blocks), `sw.js`, `offline.html` and the icons in `images/brand/` (`gse-icon-192.png`, `gse-icon-mark.png` at 512 px). `includes/theme_head.php` links them and registers the worker. Pages and POSTs are never cached. Needs HTTPS and `sw.js` served from the storefront root.
+
 ## PayPal
 
 - Set up in the billing admin, PayPal section. Mode is `sandbox` or `live`.

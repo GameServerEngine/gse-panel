@@ -291,7 +291,6 @@ $siteBase = $protocol . $host;
     <link rel="stylesheet" href="css/header.css">
     <!-- Favicon -->
     <link rel="icon" href="<?php echo htmlspecialchars(billing_url('images/brand/favicon-32x32.png'), ENT_QUOTES, 'UTF-8'); ?>" type="image/png">
-    <link rel="apple-touch-icon" href="<?php echo htmlspecialchars(billing_url('images/brand/apple-touch-icon.png'), ENT_QUOTES, 'UTF-8'); ?>">
     <?php if (!$cart_empty && !empty($client_id)): ?>
     <script src="https://www.paypal.com/sdk/js?client-id=<?php echo htmlspecialchars($client_id, ENT_QUOTES, 'UTF-8'); ?>&currency=USD&intent=capture<?php echo $sandbox ? '&debug=false' : ''; ?>"></script>
     <?php endif; ?>
