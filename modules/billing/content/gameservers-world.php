@@ -21,8 +21,8 @@ return array(
         'trust' => array(
             array('title' => 'Built by game developers', 'text' => 'We make games and the tools that run servers, so we know what you are trying to do.'),
             array('title' => '20 years of hosting', 'text' => 'Two decades of running game servers, from new releases to old classics.'),
-            array('title' => 'We can do the work', 'text' => 'Server setup, mods, scripts and custom development, ordered like a game server.'),
-            array('title' => 'Real people', 'text' => 'Open a ticket and talk to the team that runs the platform.'),
+            array('title' => '24/7 support', 'text' => 'Real people on the other end of a ticket, any hour. Better support than most hosts give.'),
+            array('title' => 'Money-back guarantee', 'text' => 'Not what you hoped for? Get your money back, no questions asked.'),
         ),
         'why' => array(
             'eyebrow' => 'Why creators choose {name}',
@@ -33,14 +33,22 @@ return array(
                 array('kicker' => 'Real control', 'title' => 'Change what you want, when you want', 'text' => 'Edit config files in the browser or over FTP, install Steam Workshop mods, schedule restarts and updates. No locked-down templates.'),
                 array('kicker' => 'Self-healing', 'title' => 'Crashes get handled', 'text' => 'A crashed server is detected and restarted, status shows whether your game port really answers, and repeated failures open a ticket for you automatically.'),
                 array('kicker' => 'Safety net', 'title' => 'Backups you can restore yourself', 'text' => 'Back up your server and bring it back without waiting for support when a mod update goes wrong.'),
-                array('kicker' => 'Games', 'title' => 'New favourites and old classics', 'text' => 'More than 150 game setups, including older titles that are hard to find. Each comes with its own setup guide.'),
-                array('kicker' => 'Experience', 'title' => 'Developers on your side', 'text' => 'The people behind the platform host servers every day and build games. Your questions go to people who can answer them.'),
+                array('kicker' => 'Games', 'title' => 'New favourites and old classics', 'text' => 'More than 150 game setups, including older titles that are hard to find. Each comes with its own setup guide, and one-click modpacks get a community going fast.'),
+                array('kicker' => 'Protected', 'title' => 'DDoS protection built in', 'text' => 'Our hosting providers filter attack traffic on their networks, so every server is protected without extra setup or fees.'),
             ),
         ),
         'included' => array(
             'eyebrow' => 'Included with every server',
             'title' => 'The tools to run your community.',
             'copy' => 'Everything is in one control panel, so you spend your time on your players and not on plumbing.',
+            'cards' => array(
+                array('kicker' => 'Ports', 'title' => 'Game, query and admin ports', 'text' => 'The ports your server needs are set up and shown in the panel, ready to share with players.'),
+                array('kicker' => 'Mods', 'title' => 'Workshop mods and modpacks', 'text' => 'Install Steam Workshop mods and collections, or pick a ready-made modpack and install it in one click.'),
+                array('kicker' => 'Database', 'title' => 'Free MySQL', 'text' => 'A MySQL database for the games and mods that need one, at no extra charge, managed from the same panel.'),
+                array('kicker' => 'Automation', 'title' => 'Scheduled restarts and tasks', 'text' => 'Schedule restarts, updates and other routine tasks for the times that suit you.'),
+                array('kicker' => 'Files', 'title' => 'File manager and FTP', 'text' => 'Manage configs, maps and mod files in the browser or over FTP.'),
+                array('kicker' => 'Safety Net', 'title' => 'Backups', 'text' => 'Back up your server and restore it yourself if a change goes wrong.'),
+            ),
         ),
         'services' => array(
             'enabled' => '1',
@@ -72,9 +80,6 @@ return array(
     'services' => array(
         'heading' => 'Hands-on help from game developers',
         'intro' => 'Tell us what you want your server to be. Choose a service, describe the job, and we open a ticket tied to your invoice. You pay, we build, and we keep you posted in the ticket. Bigger jobs can be paid in stages.',
-    ),
-    'support' => array(
-        'intro' => 'Open a ticket and the team answers from here. Choose Support Request for a problem or a question. Choose a service when you want us to do the work, such as server setup or custom development.',
     ),
     'support' => array(
         'eyebrow' => 'Support',

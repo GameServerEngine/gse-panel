@@ -41,7 +41,6 @@ $ctaSecondaryTarget = $showServices && billing_text('home.cta.secondary') === 'S
     <title><?php echo billing_brand_e('name'); ?> - <?php echo billing_text_e('home.title_suffix'); ?></title>
     <link rel="icon" type="image/png" sizes="16x16" href="<?php echo gsw_home_e(billing_url('images/brand/favicon-16x16.png')); ?>">
     <link rel="icon" type="image/png" sizes="32x32" href="<?php echo gsw_home_e(billing_url('images/brand/favicon-32x32.png')); ?>">
-    <link rel="apple-touch-icon" href="<?php echo gsw_home_e(billing_url('images/brand/apple-touch-icon.png')); ?>">
 <?php include(__DIR__ . '/includes/theme_head.php'); ?>
 </head>
 <body>
