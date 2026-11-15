@@ -2,6 +2,9 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.10.1 (2026-11-15)
+- **Storefront game guides did not list the new games:** The Game Servers list on the storefront's documentation page is built from `reference/games.json`, which was last built on 2026-11-08 from the old per-OS game files, so it showed 147 games and none of the 83 added in 2.10.0. It is rebuilt from the current game files and now lists every game. Three helper files that are not games (Testing App, VirtualBox and the WinDev test listener) are left out of the public list.
+
 ## 2.10.0 (2026-11-14)
 - **83 new games:** 72 games from LinuxGSM that the panel did not have (for example Counter-Strike 2, Palworld, Satisfactory, Project Zomboid, Soulmask, The Front, Core Keeper, Barotrauma, Minecraft Bedrock, PaperMC and Vintage Story) and 11 that other hosts sell (for example ARK: Survival Ascended, Enshrouded, V Rising, Sons Of The Forest and Icarus). LinuxGSM is used as the source of truth for Linux: the install, executable and start options come from its configs, and each file says at the top where it came from and what is left to do. Windows blocks and the 11 other games are written from Steam's launch data and each game's documented options; none are tested on an agent yet. New tools in `tools/lgsm_xml/` regenerate and check the files.
 - **Space Engineers installed the wrong game:** Its XML used Steam app 950900, which is Operation: Harsh Doorstop. It now uses 298740, the Space Engineers Dedicated Server.
