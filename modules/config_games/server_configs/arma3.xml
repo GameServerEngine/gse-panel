@@ -111,7 +111,7 @@ Arma3Server_x64.exe
     </windows>
     <linux arch="x64">
       <exe>arma3server_x64</exe>
-      <cli_template>%CONFIG% %CFG% %PROFILES% %NAME% %IP% %PORT% %PLAYERS% %MODLIST% %SERVERMODLIST% %AUTOINIT%</cli_template>
+      <cli_template>%CONFIG% %CFG% -profiles=profile %NAME% %IP% %PORT% %PLAYERS% %MODLIST% %SERVERMODLIST% %AUTOINIT%</cli_template>
       <cli_params>
         <cli_param cli_string="-ip=" id="IP"/>
         <cli_param cli_string="-port=" id="PORT"/>

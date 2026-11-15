@@ -78,7 +78,10 @@
     </windows>
     <linux>
       <exe>hlds_run</exe>
-      <cli_template>-game cstrike +servercfgfile csserver.cfg %MAP% %IP% %PORT% %PLAYERS%</cli_template>
+      <reserve_ports>
+        <port type="subtract" id="CLIENTPORT" cli_string="+clientport" options="s">10</port>
+      </reserve_ports>
+      <cli_template>-game cstrike +servercfgfile csserver.cfg %MAP% %IP% %PORT% %PLAYERS% -strictportbind -norestart %CLIENTPORT%</cli_template>
       <cli_params>
         <cli_param id="PID_FILE" cli_string="-pidfile" options="s"/>
         <cli_param id="MAP" cli_string="+map" options="s"/>
@@ -91,6 +94,7 @@
       <mods>
         <mod key="cstrike">
           <name>none</name>
+          <installer_name>90</installer_name>
         </mod>
       </mods>
       <server_params>

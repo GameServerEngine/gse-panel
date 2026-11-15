@@ -6,6 +6,10 @@
   <os>
     <linux arch="x86">
       <exe>srcds_run</exe>
+      <reserve_ports>
+        <port type="subtract" id="CLIENTPORT" cli_string="+clientport" options="s">10</port>
+      </reserve_ports>
+      <cli_template>%GAME_TYPE% %PID_FILE% %MAP% %IP% %PORT% %PLAYERS% -strictportbind -norestart %CLIENTPORT%</cli_template>
     </linux>
   </os>
   <cli_template>%GAME_TYPE% %PID_FILE% %MAP% %IP% %PORT% %PLAYERS%</cli_template>

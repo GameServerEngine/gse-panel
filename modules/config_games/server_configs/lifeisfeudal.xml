@@ -8,7 +8,7 @@
       <exe>ddctd_cm_yo_server.exe</exe>
     </windows>
   </os>
-  <cli_template>-worldID %PORT%</cli_template>
+  <cli_template>-worldID 1</cli_template>
   <max_user_amount>64</max_user_amount>
   <mods>
     <mod key="default">

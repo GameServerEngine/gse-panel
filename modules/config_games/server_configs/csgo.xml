@@ -93,7 +93,11 @@
     </windows>
     <linux>
       <exe>srcds_run</exe>
-      <cli_template>%GAME_TYPE% -console -usercon %MAP% %MAPGROUP% %IP% %PORT% %PLAYERS% -pidfile game_startup.pid</cli_template>
+      <reserve_ports>
+        <port type="subtract" id="CLIENTPORT" cli_string="+clientport" options="s">10</port>
+        <port type="add" id="TVPORT" cli_string="+tv_port" options="s">5</port>
+      </reserve_ports>
+      <cli_template>%GAME_TYPE% -console -usercon %MAP% %MAPGROUP% %IP% %PORT% %PLAYERS% -pidfile game_startup.pid -strictportbind -norestart %CLIENTPORT% %TVPORT%</cli_template>
       <maps_location>csgo/maps/</maps_location>
       <map_list>csgo/maplist.txt</map_list>
       <max_user_amount>64</max_user_amount>

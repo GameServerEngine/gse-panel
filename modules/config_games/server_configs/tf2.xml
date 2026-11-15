@@ -117,8 +117,12 @@
       </custom_fields>
     </windows>
     <linux>
-      <exe>srcds_run</exe>
-      <cli_template>%GAME_TYPE% %PID_FILE% %MAP% %IP% %PORT% %PLAYERS%</cli_template>
+      <exe>srcds_run_64</exe>
+      <reserve_ports>
+        <port type="subtract" id="CLIENTPORT" cli_string="+clientport" options="s">10</port>
+        <port type="add" id="TVPORT" cli_string="+tv_port" options="s">5</port>
+      </reserve_ports>
+      <cli_template>%GAME_TYPE% %PID_FILE% %MAP% %IP% %PORT% %PLAYERS% -strictportbind -norestart %CLIENTPORT% %TVPORT%</cli_template>
       <cli_params>
         <cli_param id="PID_FILE" cli_string="-pidfile ../"/>
         <cli_param id="MAP" cli_string="+map" options="s"/>

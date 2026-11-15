@@ -66,6 +66,12 @@
           <options>s</options>
           <desc>If set to enabled, use websocket RCON. If set to disabled, use legacy source engine RCON.</desc>
         </param>
+        <param key="+server.secure" type="select" id="SECURE">
+          <option value="true">Enabled</option>
+          <option value="false">Disabled</option>
+          <options>s</options>
+          <desc>Enables or disables Valve Anti-Cheat protection on the server.</desc>
+        </param>
       </server_params>
       <pre_start>
 </pre_start>

@@ -106,7 +106,8 @@ HarshDoorstopServer-Win64-Shipping.exe
       </configuration_files>
     </windows>
     <linux arch="x64">
-      <exe>StartServer</exe>
+      <exe>HarshDoorstopServer-Linux-Shipping</exe>
+      <exe_location>HarshDoorstop/Binaries/Linux</exe_location>
       <cli_template>%MAP%?%bBotAutofill%%BLUFORFACTION%?%OPFORFACTION%?%BLUFORNUMBOTS%?%OPFORNUMBOTS%?%BLUFORTICKETS%?%OPFORTICKETS%?%bDisableKitRestrictions% %IP% %PORT% %QUERY_PORT% %SERVERNAME%</cli_template>
       <console_log>HarshDoorstop/Saved/Logs/HarshDoorstop.log</console_log>
       <control_protocol>armabe</control_protocol>
