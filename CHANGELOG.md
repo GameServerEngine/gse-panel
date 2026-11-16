@@ -2,6 +2,9 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.10.5 (2026-11-15)
+- **Storefront home page now leads with classic games:** The GameServers World home page talked about "creators" and building worlds, and did not say what we are best at. It now says we host every game we can but specialize in the classics (Counter-Strike, Rust and DayZ) at a low price, and that the servers are managed by developers. The Counter-Strike banner moved up beside DayZ and Rust. The services text now says we install and configure games and create mods, scripts and custom changes, and that the price is quoted per job. The company page intro was updated to match. Only wording and the banner order changed, so no styles were touched.
+
 ## 2.10.4 (2026-11-15)
 - **Anyone could create invoices without signing in:** Add to Cart ran for visitors who were not signed in, so bots left hundreds of unpaid invoices owned by no one (861 on the live panel). Add to Cart now sends visitors to the sign-in page first and returns them to the order page.
 
