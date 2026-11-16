@@ -392,7 +392,7 @@ CREATE TABLE `DB_PREFIXbilling_service_requests` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 INSERT INTO `DB_PREFIXbilling_service_types` (`slug`,`name`,`kind`,`summary`,`price_mode`,`price`,`stages`,`fields`,`enabled`,`sort_order`) VALUES
 ('support','Support Request','support','Help with your server, billing or an account question.','fixed',0.00,'[{"label":"Payment","percent":100}]','[]',1,1),
-('server-setup','Server Setup','paid','We install and configure your game, mods and settings for you. Placeholder price: set yours in Administration.','fixed',25.00,'[{"label":"Payment","percent":100}]','[{"label":"Game","type":"text","required":true},{"label":"Mods or plugins to install","type":"textarea","required":false},{"label":"Settings you want (slots, difficulty, rules)","type":"textarea","required":false}]',1,2),
+('server-setup','Server Setup','paid','We install and configure your game, mods and settings for you.','fixed',25.00,'[{"label":"Payment","percent":100}]','[{"label":"Game","type":"text","required":true},{"label":"Mods or plugins to install","type":"textarea","required":false},{"label":"Settings you want (slots, difficulty, rules)","type":"textarea","required":false}]',1,2),
 ('custom-development','Custom Development','paid','We build a mod, script or feature for your server. We quote after we read your idea.','quote',0.00,'[{"label":"Deposit to start","percent":50},{"label":"Payment on delivery","percent":50}]','[{"label":"Game","type":"text","required":true},{"label":"What should it do?","type":"textarea","required":true},{"label":"Deadline, if any","type":"text","required":false}]',1,3);
 CREATE TABLE `DB_PREFIXbilling_service_tiers` (
   `service_id` int NOT NULL,

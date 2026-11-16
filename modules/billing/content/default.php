@@ -88,6 +88,16 @@ return array(
         'eyebrow' => 'Services',
         'heading' => 'Extra help for your game server',
         'intro' => 'Choose a service, tell us what you need, and we open a ticket tied to your invoice. You pay the invoice, we do the work, and we keep you posted in the ticket.',
+        'featured_title' => 'Game Server Hosting',
+        'featured_text' => 'Your game server, hosted and managed by us on {name}. Pick your game, we set it up, and you control it from your own control panel: start, stop, restart, update, mods, settings, backups and files.',
+        'featured_points' => array(
+            array('text' => 'Many supported games', 'link' => 'serverlist.php'),
+            array('text' => 'Your own control panel', 'link' => ''),
+            array('text' => 'Backups and updates', 'link' => ''),
+            array('text' => 'Help from real people through support tickets', 'link' => ''),
+        ),
+        'featured_primary' => 'Browse game servers',
+        'featured_secondary' => 'Get help',
         'empty' => 'No services are available right now. You can still open a support ticket.',
         'how_title' => 'How it works',
         'how_steps' => array(

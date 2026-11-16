@@ -131,6 +131,20 @@ $pageTitle = billing_text('services.title', 'Services');
   <h1><?php echo billing_text_e('services.heading', 'Extra help for your game server'); ?></h1>
   <p><?php echo billing_text_e('services.intro'); ?></p>
 
+  <section class="panel gsw-featured-card">
+    <h2><?php echo billing_text_e('services.featured_title', 'Game Server Hosting'); ?></h2>
+    <p><?php echo billing_text_e('services.featured_text'); ?></p>
+    <ul class="gsw-featured-points">
+<?php foreach (billing_text_list('services.featured_points') as $point): ?>
+      <li><?php if ($point['link'] !== ''): ?><a href="<?php echo support_h(billing_url($point['link'])); ?>"><?php echo support_h($point['text']); ?></a><?php else: ?><?php echo support_h($point['text']); ?><?php endif; ?></li>
+<?php endforeach; ?>
+    </ul>
+    <p class="gsw-card-actions">
+      <a class="gsw-btn" href="<?php echo support_h(billing_url('serverlist.php')); ?>"><?php echo billing_text_e('services.featured_primary', 'Browse game servers'); ?></a>
+      <a class="gsw-btn-secondary" href="<?php echo support_h(billing_url('support.php')); ?>"><?php echo billing_text_e('services.featured_secondary', 'Get help'); ?></a>
+    </p>
+  </section>
+
 <?php if ($selected): ?>
   <section class="panel" id="order">
     <h2><?php echo support_h($selected['name']); ?></h2>
