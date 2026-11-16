@@ -497,6 +497,18 @@ button.mfp-close:focus {
 }
 
 
+/* *** Status colors (same palette as the netdiag report) ***
+   bad = red, good = green, info = blue, warning = gold.
+   The live log panel is dark in every SimpleBootstrap variant, so one set of colors is used. */
+.log-bad  { color: #f85149; }
+.log-good { color: #3fb950; }
+.log-info { color: #58a6ff; }
+.log-warn { color: #d29922; }
+.gse-badge-good { color: #3fb950; background: rgba(63, 185, 80, 0.12); }
+.gse-badge-warn { color: #d29922; background: rgba(210, 153, 34, 0.12); }
+.gse-badge-bad  { color: #f85149; background: rgba(248, 81, 73, 0.12); }
+p.note { color: #79c0ff; }
+
 /* *** UI-Dialog Restyling *** */
 .ui-widget-content {
         background-color: transparent !important;

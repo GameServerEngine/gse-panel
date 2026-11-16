@@ -157,6 +157,6 @@ function exec_module() {
 				}
 			}
 	}
-	$view->refresh("?m=gamemanager&amp;p=game_monitor&amp;home_id-mod_id-ip-port=". $home_id . "-". $mod_id . "-" . $ip . "-" . $port,3);
+	gse_js_redirect("?m=gamemanager&p=game_monitor&home_id-mod_id-ip-port=". $home_id . "-". $mod_id . "-" . $ip . "-" . $port, 3);
 }
 ?>

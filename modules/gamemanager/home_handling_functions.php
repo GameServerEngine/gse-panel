@@ -858,4 +858,30 @@ function get_server_billing_expiration_html(int $home_id): string
 		return "<span style='color:red;'>Less than 1 day remaining</span>";
 	}
 }
+
+// Starts the in-page status script of the start page (js/gse_live.js).
+// Waiting states keep polling poll_url; other states leave once for leave_url.
+function gse_status_poll_script($answer, $poll_url, $leave_url, $retry)
+{
+	$options = array(
+		'url' => $poll_url,
+		'leaveUrl' => $leave_url,
+		'retry' => $retry + 1,
+		'state' => $answer['state'],
+		'delay' => $answer['delay'],
+	);
+	$json = json_encode($options, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	echo "<script type='text/javascript' src='js/gse_live.js'></script>\n";
+	echo "<script type='text/javascript'>(function(){ var o = ".$json."; o.el = document.getElementById('gse-status-line'); GseStatusPoll(o); })();</script>\n";
+}
+
+// Leaves the page once after some seconds without a page reload loop.
+// Browsers without JavaScript get the old meta refresh through $view.
+function gse_js_redirect($plain_url, $seconds)
+{
+	global $view;
+	$json = json_encode($plain_url, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	echo "<script type='text/javascript'>window.setTimeout(function(){ window.location.href = ".$json."; }, ".((int)$seconds * 1000).");</script>\n";
+	$view->refreshNoscript(htmlspecialchars($plain_url), $seconds);
+}
 ?>

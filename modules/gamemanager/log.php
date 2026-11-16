@@ -3,10 +3,45 @@
 require_once('home_handling_functions.php');
 require_once("modules/config_games/server_config_parser.php");
 
+// Turns the agent get_log answer into what the page and the live box show.
+// state: running, stopped (not running yet), error (no log to show).
+if (!function_exists('log_view_state')) {
+	function log_view_state($log_retval, $home_log, $has_wildcard, $log_path)
+	{
+		$retval = (string)$log_retval;
+		if ($retval === '1' || $retval === '2')
+		{
+			// Force log file contents to be UTF-8 (fixes forum/viewthread.php?thread_id=5379)
+			if (hasValue($home_log)) {
+				$home_log = utf8_encode($home_log);
+			}
+			return array('state' => $retval === '1' ? 'running' : 'stopped', 'text' => (string)$home_log);
+		}
+		if ($retval === '0')
+			return array('state' => 'error', 'text' => get_lang("agent_offline"));
+		if ($retval === '-8' && $has_wildcard)
+		{
+			// The game makes this file when it starts, so keep the live box and wait.
+			$text = !empty($home_log) ? $home_log : "No log files matched pattern: " . $log_path;
+			return array('state' => 'stopped', 'text' => $text);
+		}
+		return array('state' => 'error', 'text' => get_lang_f('unable_to_get_log', $log_retval));
+	}
+}
+
+// The agent does not tell which file a pattern resolved to, so show the pattern.
+if (!function_exists('log_file_caption')) {
+	function log_file_caption($log_path, $has_wildcard)
+	{
+		if ($log_path === '')
+			return '';
+		return $has_wildcard ? $log_path . ' (newest match)' : $log_path;
+	}
+}
+
     global $view;
 
 
-	echo "home id = " .$home_id;
         $user_id = $_SESSION['user_id'];
 
 
@@ -68,117 +103,52 @@ require_once("modules/config_games/server_config_parser.php");
 			$home_log);
 	}
 
-    if ($log_retval == 0)
-    {
-        print_failure( get_lang("agent_offline") );
-		echo create_back_button( $_GET['m'], 'game_monitor&home_id-mod_id-ip-port='.$_GET['home_id-mod_id-ip-port'] );
-    }
-    elseif ($log_retval == 1 || $log_retval == 2)
-    {
-		// Force log file contents to be UTF-8 (fixes forum/viewthread.php?thread_id=5379)
-		if(hasValue($home_log)){
-			$home_log = utf8_encode($home_log);
-		}
+    $has_wildcard = isset($log_path) && preg_match('/[*?\[]/', $log_path);
+    $log_view = log_view_state($log_retval, $home_log, $has_wildcard, isset($log_path) ? $log_path : '');
 
-			// Using the refreshed class
-			if( isset($_GET['refreshed']) )
-			{
-				if (!headers_sent()) {
-					header('Content-Type: text/plain; charset=UTF-8');
-				}
-				echo $home_log;
-				return;
-			}
-			else
-			{
-				echo "<h2>".htmlentities($home_info['home_name'])."</h2>";
-				if($log_retval == 1)
-				{
-					$log_url = "home.php?m=gamemanager&p=log&type=cleared&refreshed&home_id-mod_id-ip-port=".rawurlencode($_GET['home_id-mod_id-ip-port']);
-					echo '<style>
-					#live-server-log.gsp-live-log-panel {
-						display:block;
-						width:100%;
-						max-width:1600px;
-						min-height:500px;
-						height:55vh;
-						max-height:75vh;
-						box-sizing:border-box;
-						font-family:Consolas, Monaco, "Courier New", monospace;
-						font-size:13px;
-						line-height:1.35;
-						margin:0 0 12px 0;
-						padding:12px;
-						background:#050505;
-						color:#e6edf3;
-						border:1px solid #333;
-						border-radius:4px;
-						white-space:pre-wrap;
-						overflow-y:auto;
-						overflow-x:auto;
-						overflow-wrap:anywhere;
-						tab-size:4;
-					}
-					@media (max-width: 700px) {
-						#live-server-log.gsp-live-log-panel {
-							min-height:45vh;
-							height:45vh;
-							font-size:12px;
-						}
-					}
-					</style>';
-					echo '<pre id="live-server-log" class="gsp-live-log-panel" tabindex="0">'.htmlentities($home_log, ENT_QUOTES, "UTF-8").'</pre>';
-					?>
-					<script type="text/javascript">
-					(function(){
-						var logBox = document.getElementById('live-server-log');
-						if (!logBox) return;
-						function isAtBottom() {
-							return (logBox.scrollTop + logBox.clientHeight) >= (logBox.scrollHeight - 24);
-						}
-						function refreshLog() {
-							var shouldScroll = isAtBottom();
-							fetch('<?php echo $log_url; ?>', {cache: 'no-store'})
-								.then(function(response){ return response.text(); })
-								.then(function(text){
-									logBox.textContent = text;
-									if (shouldScroll) {
-										logBox.scrollTop = logBox.scrollHeight;
-									}
-								})
-								.catch(function(){});
-						}
-						logBox.scrollTop = logBox.scrollHeight;
-						window.setInterval(refreshLog, 4000);
-					})();
-					</script>
-					<?php
-					if(	($server_xml->control_protocol and preg_match("/^r?l?con2?$/", $server_xml->control_protocol)) OR
-						($server_xml->gameq_query_name and $server_xml->gameq_query_name == "minecraft") OR
-					($server_xml->lgsl_query_name  and $server_xml->lgsl_query_name == "7dtd") )
-					require('modules/gamemanager/rcon.php');
-			}
-			else
-			{
-				echo "<pre class='log'>" . htmlentities($home_log) . "</pre>";
-				print_failure( get_lang("server_not_running") );
-			}
-			echo create_back_button( $_GET['m'], 'game_monitor&home_id-mod_id-ip-port='.$_GET['home_id-mod_id-ip-port'] );
-		}
-    }
-    else
+    // Reply for the live box script: plain text, state in a header.
+    if ( isset($_GET['refreshed']) )
     {
-		if ($log_retval == -8 && isset($log_path) && preg_match('/[*?\[]/', $log_path))
-		{
-			if (!empty($home_log))
-				print_failure(htmlentities($home_log, ENT_QUOTES, "UTF-8"));
-			else
-				print_failure("No log files matched pattern: " . htmlentities($log_path, ENT_QUOTES, "UTF-8"));
-		}
-		else
-		{
-        print_failure(get_lang_f('unable_to_get_log',$log_retval));
-		}
-		echo create_back_button( $_GET['m'], 'game_monitor&home_id-mod_id-ip-port='.$_GET['home_id-mod_id-ip-port'] );
+        if (!headers_sent()) {
+            header('Content-Type: text/plain; charset=UTF-8');
+            header('X-Log-State: ' . $log_view['state']);
+            header('X-Log-File: ' . rawurlencode(log_file_caption($log_path ?? '', $has_wildcard)));
+        }
+        echo $log_view['text'];
+        return;
     }
+
+    if ($log_view['state'] === 'error')
+    {
+        print_failure(htmlentities($log_view['text'], ENT_QUOTES, "UTF-8"));
+        echo create_back_button( $_GET['m'], 'game_monitor&home_id-mod_id-ip-port='.$_GET['home_id-mod_id-ip-port'] );
+        return;
+    }
+
+    $log_url = "home.php?m=gamemanager&p=log&type=cleared&refreshed&home_id-mod_id-ip-port=".rawurlencode($_GET['home_id-mod_id-ip-port']);
+    $caption = log_file_caption($log_path ?? '', $has_wildcard);
+    echo "<h2>".htmlentities($home_info['home_name'])."</h2>";
+    echo '<div><span id="live-server-status" class="gse-badge"></span></div>';
+    echo '<div id="live-server-file" class="gse-log-caption"></div>';
+    echo '<pre id="live-server-log" class="gsp-live-log-panel" tabindex="0"></pre>';
+    $options = array(
+        'url' => $log_url,
+        'initialText' => $log_view['text'],
+        'initialState' => $log_view['state'],
+        'initialFile' => $caption,
+    );
+    $json = json_encode($options, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE);
+    echo "<script type='text/javascript' src='js/gse_live.js'></script>\n";
+    echo "<script type='text/javascript'>(function(){ var o = ".$json."; o.box = document.getElementById('live-server-log'); o.statusEl = document.getElementById('live-server-status'); o.fileEl = document.getElementById('live-server-file'); GseLiveLog(o); })();</script>\n";
+    // Without JavaScript the box shows the log from this page load.
+    echo '<noscript><pre class="log">'.htmlentities($log_view['text'], ENT_QUOTES, "UTF-8").'</pre></noscript>';
+
+    if ($log_view['state'] === 'running' AND
+        (($server_xml->control_protocol and preg_match("/^r?l?con2?$/", $server_xml->control_protocol)) OR
+        ($server_xml->gameq_query_name and $server_xml->gameq_query_name == "minecraft") OR
+        ($server_xml->lgsl_query_name  and $server_xml->lgsl_query_name == "7dtd")) )
+    {
+        require('modules/gamemanager/rcon.php');
+    }
+    echo create_back_button( $_GET['m'], 'game_monitor&home_id-mod_id-ip-port='.$_GET['home_id-mod_id-ip-port'] );
 ?>
