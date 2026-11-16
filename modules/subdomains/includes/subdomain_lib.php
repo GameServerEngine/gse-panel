@@ -78,6 +78,7 @@ function sd_setting_defaults()
         'cpanel_user' => '',
         'cpanel_token' => '',
         'domains' => 'iaregamer.com',
+        'node_domains' => '',
         'ttl' => '300',
         'verify_tls' => '1',
         'srv_games' => 'minecraft,spigotmc',
@@ -113,6 +114,36 @@ function sd_domains($settings)
     return $out;
 }
 
+// Domains that belong to one location, one per line: remote_server_id=domain (for example 2=game1.isaserver.net).
+function sd_node_domains($settings)
+{
+    $out = array();
+    foreach (preg_split('/[\s,]+/', strtolower($settings['node_domains'])) as $line) {
+        $parts = explode('=', $line);
+        if (count($parts) === 2 && (int)$parts[0] > 0 && preg_match('/^[a-z0-9.-]+\.[a-z]{2,}$/', $parts[1])) {
+            $out[(int)$parts[0]] = $parts[1];
+        }
+    }
+    return $out;
+}
+
+// Every domain a name may live under: the shared ones plus each location's own domain.
+function sd_all_domains($settings)
+{
+    return array_values(array_unique(array_merge(sd_domains($settings), array_values(sd_node_domains($settings)))));
+}
+
+// The domains a customer may pick for a server at this location.
+function sd_domains_for($settings, $remote_server_id)
+{
+    $out = sd_domains($settings);
+    $nodes = sd_node_domains($settings);
+    if (isset($nodes[(int)$remote_server_id])) {
+        $out[] = $nodes[(int)$remote_server_id];
+    }
+    return $out;
+}
+
 function sd_is_ready($settings)
 {
     return $settings['enabled'] === '1' && $settings['cpanel_host'] !== '' && $settings['cpanel_user'] !== ''
@@ -126,6 +157,7 @@ function sd_reserved_names()
         'panel', 'admin', 'administrator', 'root', 'api', 'cpanel', 'whm', 'ns', 'ns1', 'ns2', 'ns3', 'dns',
         'mx', 'mx1', 'mx2', 'autodiscover', 'autoconfig', 'billing', 'store', 'shop', 'support', 'help',
         'status', 'monitor', 'node', 'core', 'devops', 'gitlab', 'dr', 'vpn', 'wg', 'test', 'dev', 'staging',
+        'git', 'node0', 'node1', 'node2', 'win1', 'game1', 'game2', 'game3', 'game4', 'game5', 'game6', 'game7',
         'localhost', 'gameservers', 'isaserver', 'iaregamer', 'abuse', 'postmaster', 'hostmaster', 'webmaster',
         'security', 'ntfy', 'cdn', 'static', 'assets', 'blog', 'docs', 'wiki', 'forum', 'login', 'account',
     );
@@ -193,11 +225,12 @@ function sd_row_for_invoice($sdb, $invoice_id)
 // Availability: format, domain allowed, not used (DB), not present in the DNS zone.
 // $own_home / $own_invoice let a server or invoice keep its own current name.
 // Returns array(bool ok, string message).
-function sd_check_available($sdb, $provider, $settings, $name, $domain, $own_home = 0, $own_invoice = 0)
+function sd_check_available($sdb, $provider, $settings, $name, $domain, $own_home = 0, $own_invoice = 0, $remote_server_id = 0)
 {
     $name = sd_clean_name($name);
     $domain = strtolower(trim((string)$domain));
-    if (!in_array($domain, sd_domains($settings), true)) {
+    $allowed = $remote_server_id > 0 ? sd_domains_for($settings, $remote_server_id) : sd_all_domains($settings);
+    if (!in_array($domain, $allowed, true)) {
         return array(false, 'Choose one of the listed domains.');
     }
     $err = sd_validate_name($name);
@@ -298,7 +331,7 @@ function sd_set_for_home($sdb, $provider, $settings, $home_id, $user_id, $name, 
             return array(false, 'You can change the name again in ' . ceil($wait / 60) . ' minute(s).');
         }
     }
-    list($ok, $msg) = sd_check_available($sdb, $provider, $settings, $name, $domain, $home_id);
+    list($ok, $msg) = sd_check_available($sdb, $provider, $settings, $name, $domain, $home_id, 0, sd_home_remote_server_id($sdb, $home_id));
     if (!$ok) {
         return array(false, $msg);
     }
@@ -437,6 +470,38 @@ class SdCpanel
         return $this->cache[$domain];
     }
 
+    // A node domain such as game3.isaserver.net is not its own zone: its records live in isaserver.net.
+    // Find the zone by trying the domain, then each parent. Returns array(zone, prefix) where prefix is '' or 'game3.'.
+    private function find_zone($domain)
+    {
+        $labels = explode('.', $domain);
+        $last = null;
+        while (count($labels) >= 2) {
+            $zone = implode('.', $labels);
+            try {
+                $this->zone($zone, true);
+                return array($zone, $zone === $domain ? '' : substr($domain, 0, -strlen($zone)));
+            } catch (Exception $e) {
+                $last = $e;
+                array_shift($labels);
+            }
+        }
+        throw $last ? $last : new Exception('No DNS zone found for ' . $domain);
+    }
+
+    // Turn (domain, name) into the zone to edit and the name inside that zone.
+    public function resolve($domain, $name)
+    {
+        list($zone, $prefix) = $this->find_zone($domain);
+        return array($zone, $name . ($prefix === '' ? '' : '.' . rtrim($prefix, '.')));
+    }
+
+    public function test_domain($domain)
+    {
+        list($zone, ) = $this->find_zone($domain);
+        return $zone . ' (' . count($this->zone($zone)['records']) . ' records)';
+    }
+
     private function relative($domain, $dname)
     {
         $dname = rtrim(strtolower($dname), '.');
@@ -457,6 +522,7 @@ class SdCpanel
 
     public function name_exists($domain, $name)
     {
+        list($domain, $name) = $this->resolve($domain, $name);
         $z = $this->zone($domain, true);
         foreach ($z['records'] as $r) {
             $rel = $this->relative($domain, $r['name']);
@@ -501,6 +567,7 @@ class SdCpanel
 
     public function replace_name($domain, $name, $ip, $srv_port, $ttl)
     {
+        list($domain, $name) = $this->resolve($domain, $name);
         $adds = array(array('dname' => $name, 'ttl' => $ttl, 'record_type' => 'A', 'data' => array($ip)));
         if ($srv_port > 0) {
             $adds[] = array(
@@ -513,6 +580,7 @@ class SdCpanel
 
     public function remove_name($domain, $name)
     {
+        list($domain, $name) = $this->resolve($domain, $name);
         $lines = $this->lines_for($domain, $name);
         if ($lines) {
             $this->edit($domain, $lines, array());
@@ -526,6 +594,12 @@ function sd_home_address($sdb, $home_id)
     $r = $sdb->rows('SELECT i.ip AS ip, p.port AS port FROM ' . $sdb->t('home_ip_ports') . ' p JOIN '
         . $sdb->t('remote_server_ips') . ' i ON i.ip_id = p.ip_id WHERE p.home_id=' . (int)$home_id . ' ORDER BY p.port ASC LIMIT 1');
     return $r ? array($r[0]['ip'], (int)$r[0]['port']) : array('', 0);
+}
+
+function sd_home_remote_server_id($sdb, $home_id)
+{
+    $r = $sdb->rows('SELECT remote_server_id FROM ' . $sdb->t('server_homes') . ' WHERE home_id=' . (int)$home_id . ' LIMIT 1');
+    return $r ? (int)$r[0]['remote_server_id'] : 0;
 }
 
 function sd_home_game_key($sdb, $home_id)
@@ -645,7 +719,7 @@ function sd_render_edit_rows($dbHandle, $prefix, $home_id, $isAdmin, $userId)
         echo "<form action='" . $h($action) . "' method='post'><input type='hidden' name='sd_action' value='set'>";
         echo "<input type='text' size='24' maxlength='32' id='sd_name' name='sd_name' value='" . $h($row ? $row['name'] : '') . "' autocomplete='off' placeholder='my-server'> ";
         echo "<select id='sd_domain' name='sd_domain'>";
-        foreach (sd_domains($settings) as $d) {
+        foreach (sd_domains_for($settings, sd_home_remote_server_id($sdb, $home_id)) as $d) {
             echo "<option value='" . $h($d) . "'" . ($row && $row['domain'] === $d ? ' selected' : '') . ">." . $h($d) . "</option>";
         }
         echo "</select> <input type='submit' value='Save address'> <span id='sd_status'></span></form>";

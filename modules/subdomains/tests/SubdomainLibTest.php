@@ -32,6 +32,30 @@ $settings['domains'] = 'iaregamer.com';
 sdAssert(true, sd_wants_srv($settings, 'minecraft'), 'minecraft gets SRV');
 sdAssert(false, sd_wants_srv($settings, 'cs2'), 'cs2 has no SRV');
 
+// --- location domains (no database needed) ---
+$settings['node_domains'] = "2=Game1.isaserver.net\n3=game3.isaserver.net, bad, 0=x.example.com, 5=no_dot";
+sdAssert(array(2 => 'game1.isaserver.net', 3 => 'game3.isaserver.net'), sd_node_domains($settings), 'location domains are cleaned');
+sdAssert(array('iaregamer.com', 'game1.isaserver.net', 'game3.isaserver.net'), sd_all_domains($settings), 'all domains');
+sdAssert(array('iaregamer.com', 'game3.isaserver.net'), sd_domains_for($settings, 3), 'location 3 domains');
+sdAssert(array('iaregamer.com'), sd_domains_for($settings, 9), 'location without its own domain');
+$settings['node_domains'] = '';
+
+// --- zone lookup: a location domain is found inside its parent zone ---
+class FakeZoneCpanel extends SdCpanel
+{
+    public $zones = array('isaserver.net' => true, 'iaregamer.com' => true);
+    public function zone($domain, $fresh = false)
+    {
+        if (!isset($this->zones[$domain])) {
+            throw new Exception('cPanel: no zone ' . $domain);
+        }
+        return array('serial' => 1, 'records' => array());
+    }
+}
+$cp = new FakeZoneCpanel($settings);
+sdAssert(array('iaregamer.com', 'mine'), $cp->resolve('iaregamer.com', 'mine'), 'shared domain is its own zone');
+sdAssert(array('isaserver.net', 'mine.game3'), $cp->resolve('game3.isaserver.net', 'mine'), 'location domain lives in the parent zone');
+
 $user = getenv('SD_TEST_USER');
 if ($user === false || $user === '') {
     echo "SKIP database tests (SD_TEST_USER not set)\n";

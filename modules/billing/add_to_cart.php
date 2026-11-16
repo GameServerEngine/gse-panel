@@ -162,7 +162,7 @@ $sd_ctx = null;
 if ($sd_name !== '') {
     $sd_ctx = billing_sd_load($db, $table_prefix);
     if ($sd_ctx) {
-        list($sd_ok, $sd_msg) = sd_check_available($sd_ctx[0], $sd_ctx[2], $sd_ctx[1], $sd_name, $sd_domain);
+        list($sd_ok, $sd_msg) = sd_check_available($sd_ctx[0], $sd_ctx[2], $sd_ctx[1], $sd_name, $sd_domain, 0, 0, (int)$offer['remote_server_id']);
         if (!$sd_ok) {
             billing_fail_add_to_cart('Subdomain not available', ['name' => $sd_name], '/order.php?home_cfg_id=' . intval($home_cfg_id) . '&sd_name=' . rawurlencode($sd_name) . '&error_message=' . rawurlencode('Server address: ' . $sd_msg));
         }

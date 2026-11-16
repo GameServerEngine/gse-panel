@@ -170,7 +170,9 @@ foreach ($offers as $offer) {
 require_once __DIR__ . '/includes/subdomain_bridge.php';
 $sdCtx = billing_sd_load($db, $table_prefix);
 if ($sdCtx):
-    $sdDomains = sd_domains($sdCtx[1]);
+    $sdDomains = sd_all_domains($sdCtx[1]);
+    $sdSharedDomains = sd_domains($sdCtx[1]);
+    $sdNodeDomains = sd_node_domains($sdCtx[1]);
     $sdName = isset($_GET['sd_name']) ? preg_replace('/[^a-z0-9-]/', '', strtolower((string)$_GET['sd_name'])) : '';
 ?>
 <tr>
@@ -179,7 +181,7 @@ if ($sdCtx):
 <input type="text" id="sd_name" name="sd_name" maxlength="32" value="<?php echo order_e($sdName); ?>" autocomplete="off" placeholder="my-server (optional)" style="width:55%;display:inline-block;">
 <select id="sd_domain" name="sd_domain" style="width:40%;display:inline-block;">
 <?php foreach ($sdDomains as $sdD): ?>
-<option value="<?php echo order_e($sdD); ?>">.<?php echo order_e($sdD); ?></option>
+<option value="<?php echo order_e($sdD); ?>" data-node="<?php echo in_array($sdD, $sdSharedDomains, true) ? 0 : (int)array_search($sdD, $sdNodeDomains, true); ?>">.<?php echo order_e($sdD); ?></option>
 <?php endforeach; ?>
 </select>
 <div id="sd_status" style="min-height:1.4em;margin-top:4px;"></div>
@@ -294,6 +296,7 @@ foreach ($locationGroups as $group):
     var offerData = <?php echo json_encode(array_map(static function (array $o) {
         return [
             'offer_id' => (int)$o['offer_id'],
+            'remote_server_id' => (int)$o['remote_server_id'],
             'pricing_mode' => (string)$o['pricing_mode'],
             'per_slot_price_monthly' => (float)$o['per_slot_price_monthly'],
             'base_slots' => (int)$o['base_slots'],
@@ -380,12 +383,35 @@ foreach ($locationGroups as $group):
     document.querySelectorAll('.offer-tier-input').forEach(function (input) {
         input.addEventListener('change', recalc);
     });
+    // Show only the free-address domains that belong to the chosen location.
+    var sdSelect = document.getElementById('sd_domain');
+    function filterDomains() {
+        if (!sdSelect) return;
+        var offer = findOffer(activeOfferId());
+        var node = offer ? offer.remote_server_id : 0;
+        var firstShown = null;
+        for (var i = 0; i < sdSelect.options.length; i++) {
+            var opt = sdSelect.options[i];
+            var optNode = parseInt(opt.getAttribute('data-node') || '0', 10);
+            var show = optNode === 0 || optNode === node;
+            opt.hidden = !show;
+            opt.disabled = !show;
+            if (show && !firstShown) firstShown = opt;
+        }
+        if (sdSelect.options[sdSelect.selectedIndex].disabled && firstShown) {
+            sdSelect.value = firstShown.value;
+            sdSelect.dispatchEvent(new Event('change'));
+        }
+    }
+
     locationRadios.forEach(function (input) {
         input.addEventListener('change', recalc);
+        input.addEventListener('change', filterDomains);
     });
     monthsSlider.addEventListener('input', recalc);
 
     recalc();
+    filterDomains();
 })();
 </script>
 <?php

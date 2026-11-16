@@ -13,7 +13,7 @@ function exec_module()
     echo "<h2>Subdomains</h2>";
     $msg = '';
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $keys = array('cpanel_host', 'cpanel_port', 'cpanel_user', 'domains', 'ttl', 'srv_games', 'cooldown');
+        $keys = array('cpanel_host', 'cpanel_port', 'cpanel_user', 'domains', 'node_domains', 'ttl', 'srv_games', 'cooldown');
         foreach ($keys as $k) {
             if (isset($_POST[$k])) {
                 sd_save_setting($sdb, $k, trim($_POST[$k]));
@@ -29,10 +29,9 @@ function exec_module()
         if (isset($_POST['test'])) {
             $provider = new SdCpanel($settings);
             $out = array();
-            foreach (sd_domains($settings) as $d) {
+            foreach (sd_all_domains($settings) as $d) {
                 try {
-                    $z = $provider->zone($d, true);
-                    $out[] = $d . ': OK (' . count($z['records']) . ' records)';
+                    $out[] = $d . ': OK, zone ' . $provider->test_domain($d);
                 } catch (Exception $e) {
                     $out[] = $d . ': ' . $e->getMessage();
                 }
@@ -51,6 +50,7 @@ function exec_module()
     echo "<tr><td>API token</td><td><input type='password' name='cpanel_token' value='' size='40' autocomplete='new-password'> "
         . ($settings['cpanel_token'] !== '' ? '(saved, leave blank to keep)' : '(not set)') . "</td></tr>";
     echo "<tr><td>Domains (comma separated)</td><td><input type='text' name='domains' value='" . sd_ah($settings['domains']) . "' size='40'></td></tr>";
+    echo "<tr><td>Location domains<br>(one per line: remote server id=domain)</td><td><textarea name='node_domains' rows='4' cols='40'>" . sd_ah($settings['node_domains']) . "</textarea></td></tr>";
     echo "<tr><td>Record TTL (seconds)</td><td><input type='text' name='ttl' value='" . sd_ah($settings['ttl']) . "' size='6'></td></tr>";
     echo "<tr><td>SRV record for game keys</td><td><input type='text' name='srv_games' value='" . sd_ah($settings['srv_games']) . "' size='40'></td></tr>";
     echo "<tr><td>Name change cooldown (seconds)</td><td><input type='text' name='cooldown' value='" . sd_ah($settings['cooldown']) . "' size='6'></td></tr>";
