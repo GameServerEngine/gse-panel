@@ -4,6 +4,7 @@ Each fixed issue gets an entry under the version that shipped it: a one-line tit
 
 ## 2.10.2 (2026-11-15)
 - **Free server addresses under a location's own domain:** Free server addresses could only use the shared domain (iaregamer.com). A location can now have its own domain too, such as game3.isaserver.net, set on the Subdomains admin page as `remote server id=domain`. The order page and the game monitor edit page offer the shared domain plus the domain of that server's location. The DNS code now finds the real zone (isaserver.net) and puts the name inside it.
+- **Anyone could create invoices without signing in:** Add to Cart ran for visitors who were not signed in, so bots left hundreds of unpaid invoices owned by no one (861 on the live panel). Add to Cart now sends visitors to the sign-in page first and returns them to the order page.
 
 ## 2.10.1 (2026-11-15)
 - **Storefront game guides did not list the new games:** The Game Servers list on the storefront's documentation page is built from `reference/games.json`, which was last built on 2026-11-08 from the old per-OS game files, so it showed 147 games and none of the 83 added in 2.10.0. It is rebuilt from the current game files and now lists every game. Three helper files that are not games (Testing App, VirtualBox and the WinDev test listener) are left out of the public list.

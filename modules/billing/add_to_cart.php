@@ -143,6 +143,13 @@ if (!empty($resolve_username_for_user_id) && $db) {
     }
 }
 
+// An order needs a signed-in customer. Without one the invoice would belong to nobody and never show in a cart.
+if ($user_id <= 0) {
+    $return = rawurlencode('/order.php?home_cfg_id=' . (isset($_POST['home_cfg_id']) ? intval($_POST['home_cfg_id']) : 0));
+    header('Location: ' . billing_url('login.php') . '?return_to=' . $return);
+    exit;
+}
+
 $durationInfo = billing_normalize_duration('month');
 
 if ($offer_id <= 0) {
