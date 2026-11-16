@@ -2,6 +2,9 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.10.6 (2026-11-15)
+- **Remote Servers list: online/offline was too small to read:** The status word was shown in the same tiny 11px text as the CPU and RAM notes, so a server being online or offline was easy to miss. The status word is now larger (16px); the resource notes stay small.
+
 ## 2.10.5 (2026-11-15)
 - **Storefront home page now leads with classic games:** The GameServers World home page talked about "creators" and building worlds, and did not say what we are best at. It now says we host every game we can but specialize in the classics (Counter-Strike, Rust and DayZ) at a low price, and that the servers are managed by developers. The Counter-Strike banner moved up beside DayZ and Rust. The services text now says we install and configure games and create mods, scripts and custom changes, and that the price is quoted per job. The company page intro was updated to match. Only wording and the banner order changed, so no styles were touched.
 
