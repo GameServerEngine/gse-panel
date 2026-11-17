@@ -37,6 +37,7 @@ define('LANG_failed_list', "Failed to retrieve directory list.");
 define('LANG_level_up', "^Up one Level^");
 define('LANG_unallowed_char', "Unallowed characters found from the path.");
 define('LANG_button_edit', "[Edit]");
+define('LANG_analyze_log', "Analyze Log");
 define('LANG_save', "Save");
 define('LANG_home_id_missing', "Home ID is missing.");
 define('LANG_upload', "Upload");

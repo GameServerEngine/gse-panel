@@ -24,6 +24,7 @@
 
 require_once(MODULES."/litefm/functions.php");
 require_once(MODULES."/litefm/litefm.php");
+require_once("includes/diagnostics/log_analyzer.php");
 function exec_module()
 {
 	$home_id = $_REQUEST['home_id'];
@@ -635,6 +636,7 @@ function exec_module()
 							 "<td align=left id='fileid$i' >";
 						echo "<img class=\"viewitem\" src=\"" . check_theme_image("images/txt.png") . "\" alt=\"Text file\" /> ".
 							 "<a href=\"?m=litefm&amp;home_id=$home_id&amp;item=$i&amp;p=read_file&amp;name=" . $encodedFileName . "&amp;type=file\">". get_lang("button_edit") ."</a>".
+							 (log_file_supported($fileName) ? " <a href=\"?m=litefm&amp;home_id=$home_id&amp;item=$i&amp;p=analyze_log&amp;name=" . $encodedFileName . "&amp;type=file\">[". get_lang("analyze_log") ."]</a> " : "").
 							 "<a href=\"javascript:downloadFile($home_id, $i, {$file['size']}, '".str_replace("'", "\\'", $fileName)."');\" id=\"jsDwl$i\" >" .$escapedFileName . "</a>&nbsp;".
 							 "</td>$secureFile<td>" . $file['size'] . "</td> <td>" . $file['user'] . " " . $file['group']. "</td>\n";
 						echo "</tr>\n";
