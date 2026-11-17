@@ -23,6 +23,7 @@
  */
 
 require_once(__DIR__ . "/../Crypt/XXTEA.php");
+require_once(__DIR__ . "/diagnostics/contract.php");
 
 if (!defined('XMLRPC_READY')) {
 	if (!function_exists('xmlrpc_encode_request') || !function_exists('xmlrpc_decode')) {
@@ -1291,6 +1292,41 @@ class RemoteLibrary
 		$this->add_enc_chk($args);
 		$request = xmlrpc_encode_request("agent_resource_snapshot", $args);
 		return $this->decode_component_response($this->sendRequest($request));
+	}
+
+	/// Capability probe for the diagnostics contract (docs/agent-diagnostics-protocol.md).
+	/// Returns array('state' => 'offline'|'unsupported'|'ok', 'caps' => array|null).
+	/// An agent that is online but has no diag_capabilities method answers with an XML-RPC fault.
+	/// That is "unsupported", not an error, so the fault is not written to the log here.
+	public function diag_probe()
+	{
+		if ($this->status_chk() !== 1) {
+			return array('state' => 'offline', 'caps' => null);
+		}
+		$args = NULL;
+		$this->add_enc_chk($args);
+		$reply = $this->postRequest(xmlrpc_encode_request("diag_capabilities", $args));
+		if (!is_array($reply) || remote_reply_is_fault($reply)) {
+			return array('state' => 'unsupported', 'caps' => null);
+		}
+		$caps = diag_parse_capabilities($this->decode_component_response($reply));
+		return array('state' => $caps === null ? 'unsupported' : 'ok', 'caps' => $caps);
+	}
+
+	/// Runs one diagnostic tool on the agent. $params is an array, sent as JSON.
+	/// Always returns the array from diag_parse_run_reply().
+	public function diag_run($tool, $params)
+	{
+		$params_array = $this->encrypt_params($tool, json_encode($params));
+		$this->add_enc_chk($params_array);
+		$request = xmlrpc_encode_request("diag_run", $params_array);
+		$response = $this->sendRequest($request);
+		if ($response === NULL) {
+			$text = $this->last_fault_text !== '' ? $this->last_fault_text : 'No response from agent.';
+			return array('success' => false, 'status' => 'agent_unreachable', 'message' => $text,
+				'result' => array(), 'duration_ms' => 0, 'truncated' => false);
+		}
+		return diag_parse_run_reply($this->decode_component_response($response));
 	}
 
 	private function decode_component_response($response)

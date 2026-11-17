@@ -21,24 +21,29 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  */
-include 'includes/lib_remote.php';
+require_once 'includes/lib_remote.php';
+require_once 'modules/util/diag_env.php';
+
+// Lists the agents this user may use, with online status. An admin sees every agent.
+// A user sees only agents that host one of their game servers (the old page listed every agent to everyone).
 function exec_module()
 {
 	global $db;
-	$remoteServers = $db->getRemoteServers();
+	ini_set('display_errors', '0'); // an offline agent makes the XML-RPC decoder print a warning; keep it out of the JSON
+	$env = util_diag_env($db);
+	$all = util_diag_all_agents($db);
 	$servers = array();
 
-	if(is_array($remoteServers)){
-		foreach ((array)$remoteServers as $server){
-			$remote = new RemoteLibrary($server['agent_ip'], $server['agent_port'], $server['encryption_key'], 1);
-			$status = (int)$remote->status_chk();
+	foreach ($env['agent_ids'] as $agent_id){
+		$server = $all[$agent_id];
+		$remote = new RemoteLibrary($server['agent_ip'], $server['agent_port'], $server['encryption_key'], 1);
+		$status = (int)$remote->status_chk();
 
-			$servers[] = array(
-				'id'		=>	$server['remote_server_id'],
-				'name'		=>	$server['remote_server_name'] .' '. (($status) === 0 ? '('.get_lang('offline').')' : '('.get_lang('online').')'),
-				'status'	=>	$status,
-			);
-		}
+		$servers[] = array(
+			'id'		=>	$server['remote_server_id'],
+			'name'		=>	$server['remote_server_name'] .' '. (($status) === 0 ? '('.get_lang('offline').')' : '('.get_lang('online').')'),
+			'status'	=>	$status,
+		);
 	}
 	echo json_encode($servers);
 }

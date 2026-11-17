@@ -564,6 +564,27 @@ CREATE TABLE `DB_PREFIXcrash_ticket_marks` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `DB_PREFIXdiag_audit` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `created_at` int unsigned NOT NULL,
+  `user_id` int NOT NULL DEFAULT 0,
+  `remote_server_id` int NOT NULL DEFAULT 0,
+  `tool` varchar(32) NOT NULL DEFAULT '',
+  `target` varchar(255) NOT NULL DEFAULT '',
+  `port` int NOT NULL DEFAULT 0,
+  `protocol` varchar(16) NOT NULL DEFAULT '',
+  `status` varchar(16) NOT NULL DEFAULT 'running',
+  `outcome` varchar(40) NOT NULL DEFAULT '',
+  `duration_ms` int NOT NULL DEFAULT 0,
+  `detail` varchar(255) NOT NULL DEFAULT '',
+  `client_ip` varchar(64) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`),
+  KEY `idx_diag_user_time` (`user_id`,`created_at`),
+  KEY `idx_diag_agent_time` (`remote_server_id`,`created_at`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `DB_PREFIXhome_ip_ports` (
   `ip_id` int NOT NULL,
   `port` int NOT NULL,

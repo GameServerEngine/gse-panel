@@ -21,76 +21,43 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  */
-require 'includes/lib_remote.php';
+require_once 'modules/util/diag_env.php';
+
+// The old Network Tools endpoint (command + remote_target + agent, plain text answer).
+// It now runs through the same checks as the new page: role, agent permission, target policy,
+// rate limits, audit. Ping runs as before; traceroute needs an agent with diagnostics support.
+// A CSRF token (field "csrf") is required like for every diagnostic request.
+function util_legacy_text($result)
+{
+	if (!$result['ok']) {
+		return $result['message'];
+	}
+	if (isset($result['output'])) {
+		return $result['output'];
+	}
+	$lines = array($result['summary']);
+	foreach ((array)(isset($result['hops']) ? $result['hops'] : array()) as $hop) {
+		$probe = $hop['probes'][0];
+		$lines[] = $hop['hop'] . '  ' . ($probe['ip'] !== '' ? $probe['ip'] : '*') . '  ' . ($probe['rtt_ms'] !== null ? $probe['rtt_ms'] . ' ms' : '');
+	}
+	return implode("\n", $lines);
+}
+
 function exec_module()
 {
 	global $db;
-	include 'modules/util/util_config.php';
-	$userInfo = $db->getUserById($_SESSION['user_id']);
-	$userRole = $userInfo['users_role'];
-
-	$command = trim($_POST['command']);
-	$target = trim($_POST['remote_target']);
-
-	// Check if the specified agent exists. If it does, assign it to $servers. Otherwise, return that it's an invalid agent.
-	if(($server = $db->getRemoteServerById($_POST['agent'])) === false){
-		die(get_lang('agent_invalid'));
+	if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !diag_csrf_valid(diag_csrf_from_request())) {
+		echo 'The page expired. Reload it and try again.';
+		return;
 	}
-
-	$remote = new RemoteLibrary($server['agent_ip'], $server['agent_port'], $server['encryption_key'], 60);
-
-	if($remote->status_chk() === 0){
-		echo get_lang('networktools_agent_offline');
-	}elseif(empty($target)){
-		echo get_lang('target_empty');
-	}elseif(empty($command)){
+	$tools = array('ping' => 'ping', 'traceroute' => 'traceroute');
+	$command = isset($_POST['command']) ? trim($_POST['command']) : '';
+	if (!isset($tools[$command])) {
 		echo get_lang('command_empty');
-	}else{
-		$os = preg_match("/CYGWIN/", $remote->what_os()) ? 'windows' : 'linux';
-
-		// Loop over $availableCommands from util_config.php
-		// Assign a variable, $allowAccess based on the current user's role and if the config file states the user's role is allowed access to this command.
-		for($x = 0; $x < count((array)$availableCommands); ++$x){
-			if($availableCommands[$x]['title'] == $command){
-				$command = $availableCommands[$x][$os];
-				$allowAccess  = $availableCommands[$x][$userRole];
-			}
-		}
-
-		if(isset($allowAccess) && $allowAccess === true){
-			// Check the command is available to us. If it's not, echo command_unavilable
-			$which = $remote->exec('which '.$command);
-			if(empty($which)){
-				echo get_lang('command_unavilable');
-			}else{
-				// Not completely necessary - gethostbyaddr(gethostbyname()) will return false if it's anything that's not valid.
-				// This is mostly for logging attempted arbitrary commands.
-				if(strpbrk($target, $blockedCharacters)){
-					if($logMaliciousUsage){
-						$db->logger(get_lang_f('command_bad_characters', $command, htmlentities($target)));
-					}
-					echo get_lang('command_hacking_attempt');
-				}else{
-					$target = gethostbyaddr(gethostbyname($target));
-					if(!$target){
-						echo get_lang('target_invalid');
-					}else{
-						$exec = $remote->exec($command.' '.$target);
-						echo ($exec === null) ? get_lang('exec_failed') : htmlentities(trim($exec));
-						if($logAllUsage){
-							$db->logger(get_lang_f('command_executed', $command, htmlentities($target)));
-						}
-					}
-				}
-			}
-		}else{
-			// If the user isn't allowed access but they've somehow got this far then they've changed the value="" attr.
-			// return with command_no_permissions and log the event.
-			echo get_lang('command_no_access');
-			if($logMaliciousUsage){
-				$db->logger(get_lang_f('command_no_permissions', $command, htmlentities($target)));
-			}
-		}	//else allowAccess
+		return;
 	}
+	$input = array('agent' => isset($_POST['agent']) ? $_POST['agent'] : 0, 'host' => isset($_POST['remote_target']) ? $_POST['remote_target'] : '');
+	$result = diag_execute($tools[$command], $input, util_diag_env($db));
+	echo htmlentities(util_legacy_text($result));
 }
 ?>

@@ -1,91 +1,247 @@
 $(function(){
-	$("#tabs").tabs();
-	$("#loading").removeClass('hide').addClass('show');
-	var select_agent = $('#translation').attr('data-select_agent'),
-		target_empty = $('#translation').attr('data-target_empty'),
-		command_empty = $('#translation').attr('data-command_empty'),
-		agent_invalid = $('#translation').attr('data-agent_invalid'),
-		post_failed = $('#translation').attr('data-post_failed'),
-		select_server = $('#translation').attr('data-select_server'),
-		select_server_option = $('#translation').attr('data-select_server_option');
-	
-	// Load the agents via an external script so the user isn't waiting an eternity if they have several agents and multiple are offline
-	$.getJSON("home.php?m=util&p=agents&type=cleared", function(data){
-		var agents = "";
-		var agentsOnline = 0;
-		
-		$("#loading_agents").removeClass('show').addClass('hide');
-		$("#loading").removeClass('show').addClass('hide');
-		$("#options").removeClass('hide').addClass('show');
-		
-		agents += "<label for=\"agent\">" + select_agent + "</label>\r\n"
-		agents += "<select id=\"agent\" name=\"agent\">\r\n"
-		
-		for(var i = 0; i<data.length; ++i){
-			agents += "\t<option value=\"" + data[i]['id'] + "\"" + (data[i]['status']===0?" disabled":"") + ">" + data[i]['name'] +"</option>\r\n";
-			
-			if(data[i]['status'] == 1){
+	var tr = $('#translation'),
+		post_failed = tr.attr('data-post_failed'),
+		select_server = tr.attr('data-select_server'),
+		select_server_option = tr.attr('data-select_server_option'),
+		BASE = 'home.php?m=util&type=cleared',
+		csrfToken = '',
+		config = null,
+		agentsOnline = 0;
+
+	// ----- Navigation: category list + one visible tool. Links also work without JavaScript. -----
+	var oldTabs = {'#tabs-1': 'ping', '#tabs-2': 'sourcemod', '#tabs-3': 'amx', '#tabs-4': 'steamid'};
+
+	function showTool(tool, push){
+		if($('#tool-' + tool).length === 0){
+			return;
+		}
+		$('.util-tool').attr('hidden', 'hidden');
+		$('#tool-' + tool).removeAttr('hidden');
+		$('.util-nav a').removeClass('active').removeAttr('aria-current');
+		$('.util-nav a[data-tool="' + tool + '"]').addClass('active').attr('aria-current', 'page');
+		if(push && window.history && history.pushState){
+			history.pushState({tool: tool}, '', '?m=util&tool=' + tool);
+		}
+	}
+
+	$('.util-nav a').on('click', function(e){
+		e.preventDefault();
+		showTool($(this).attr('data-tool'), true);
+	});
+	window.addEventListener('popstate', function(){
+		var m = /[?&]tool=([a-z_]+)/.exec(location.search);
+		showTool(m ? m[1] : 'ping', false);
+	});
+	if(oldTabs[location.hash]){
+		showTool(oldTabs[location.hash], false);
+	}
+
+	// ----- Agents: only the agents this user may use. Loaded separately so offline agents do not slow the page. -----
+	function fillAgents(data){
+		var $selects = $('.util-agent');
+		$selects.empty();
+		for(var i = 0; i < data.length; ++i){
+			var opt = $('<option>').val(data[i]['id']).text(data[i]['name']);
+			if(data[i]['status'] !== 1){
+				opt.prop('disabled', true);
+			}else{
 				++agentsOnline;
 			}
+			$selects.append(opt);
 		}
-		
-		agents += "</select>";
-		
-		if(agentsOnline == 0){
-			$("#options").removeClass('show').addClass('hide');
-			$("#agents_offline").removeClass('hide').addClass('show');
-			
-			// Hide the sourcemod add admin form if all agents are offline.
+		$selects.each(function(){
+			var firstOnline = $(this).find('option:not(:disabled)').first();
+			$(this).val(firstOnline.length ? firstOnline.val() : '');
+		});
+	}
+
+	$.getJSON(BASE + '&p=agents', function(data){
+		$('#loading_agents').removeClass('show').addClass('hide');
+		fillAgents(data);
+		if(agentsOnline === 0){
+			$('#agents_offline').removeClass('hide').addClass('show');
+			// Hide the add admin forms if all agents are offline.
 			$("#addadmin_form").addClass('hide');
 			$("#all_servers_offline").removeClass('hide').addClass('show');
-		}else if($("#command option").length == 0){
-			$("#options").removeClass('show').addClass('hide');
-			$("#no_commands").removeClass('hide').addClass('show');
-		}else{
-			$("#select_agent").html(agents);
 		}
 	}).fail(function(){
-		$("#loading_agents").removeClass('show').addClass('hide');
-		$("#loading").removeClass('show').addClass('hide');
-		$("#loading_failed").removeClass('hide').addClass('show');
+		$('#loading_agents').removeClass('show').addClass('hide');
+		$('#loading_failed').removeClass('hide').addClass('show');
 	});
-	
-	// Handle the network_tools form.
-	$("#network_tools").on("submit", function(e){
-		var target = $("#remote_target").val();
-		var agent = $("#agent").val();
-		var command = $("#command").val();
-		
-		// Some validation browser-side. Still need to do the same server-side.
-		if(target.length === 0){
-			// target input is empty.
-			$("#output").removeClass('hide').addClass('show').html("<pre>" + target_empty + "</pre>");
-		}else if(agent.length === 0){
-			// We'll only get to this point if there's no agents, or all agents are offline but the form was still submitted.
-			$("#output").removeClass('hide').addClass('show').html("<pre>" + agent_invalid + "</pre>");
-		}else if(command.length === 0){
-			// We'll only get to this point if there's no command specified.
-			$("#output").removeClass('hide').addClass('show').html("<pre>" + command_empty + "</pre>");
-		}else{
-			$("#loading").removeClass('hide').addClass('show');
-			$("#output").removeClass('show').addClass('hide');
-			
-			$("#network_tools button").prop({disabled:true}); // Disable the submit button if we're about to post - preventing stuff being ran several times via spamming the button and/or enter.
-			$.post("home.php?m=util&p=network_tools&type=cleared", $("#network_tools").serialize(), function(postCommand){
-				$("#loading").removeClass('show').addClass('hide');
-				$("#output").removeClass('hide').addClass('show').html("<pre>" + postCommand + "</pre>");
-				
-				$("#network_tools button").prop({disabled:false});
-			}).fail(function(){
-				$("#loading").removeClass('show').addClass('hide');
-				$("#output").removeClass('hide').addClass('show').html("<pre>" + post_failed + "</pre>");
-				
-				$("#network_tools button").prop({disabled:false});
-			});
+
+	// ----- Config: CSRF token, presets, own game servers, speed endpoints -----
+	function fillServers(){
+		$('.util-servers').each(function(){
+			var $s = $(this);
+			for(var i = 0; i < config.servers.length; ++i){
+				$s.append($('<option>').val(i).text(config.servers[i].label));
+			}
+		});
+	}
+
+	function fillEndpoints(){
+		var $form = $('#tool-speed_test');
+		var $ep = $form.find('.util-endpoints');
+		for(var i = 0; i < config.speed_endpoints.length; ++i){
+			$ep.append($('<option>').val(config.speed_endpoints[i].id).text(config.speed_endpoints[i].label));
 		}
+		$ep.on('change', function(){ fillSizes($form); });
+		fillSizes($form);
+		if(config.speed_endpoints.length === 0){
+			$form.find('.util-run').prop('disabled', true);
+			$form.find('.util-result').text(tr.attr('data-no_endpoints'));
+		}
+	}
+
+	function fillSizes($form){
+		var $size = $form.find('select[name="size"]').empty();
+		var id = $form.find('.util-endpoints').val();
+		for(var i = 0; i < config.speed_endpoints.length; ++i){
+			if(config.speed_endpoints[i].id === id){
+				$.each(config.speed_endpoints[i].sizes, function(_, s){ $size.append($('<option>').val(s.id).text(s.label)); });
+			}
+		}
+	}
+
+	$.getJSON(BASE + '&p=diag&action=config', function(data){
+		config = data;
+		csrfToken = data.csrf;
+		fillServers();
+		fillEndpoints();
+	});
+
+	// Picking a preset fills the port and the protocol.
+	$('.util-preset').on('change', function(){
+		var $form = $(this).closest('form');
+		var $opt = $(this).find('option:selected');
+		if(!$opt.val()){
+			return;
+		}
+		$form.find('input[name="port"]').val($opt.attr('data-port'));
+		if($opt.attr('data-adapter')){
+			$form.find('select[name="adapter"]').val($opt.attr('data-adapter'));
+		}else{
+			$form.find('select[name="protocol"]').val('tcp');
+		}
+	});
+
+	// Picking one of the user's own game servers fills host, port, agent and preset.
+	$('.util-servers').on('change', function(){
+		var $form = $(this).closest('form');
+		if(!config || $(this).val() === ''){
+			return;
+		}
+		var srv = config.servers[parseInt($(this).val(), 10)];
+		$form.find('input[name="host"]').val(srv.ip);
+		$form.find('input[name="port"]').val(srv.port);
+		$form.find('.util-agent').val(String(srv.agent));
+		for(var i = 0; i < config.presets.length; ++i){
+			if(config.presets[i].game_key && config.presets[i].game_key === srv.game_key){
+				$form.find('.util-preset').val(config.presets[i].key).trigger('change');
+				$form.find('input[name="port"]').val(srv.port);
+			}
+		}
+	});
+
+	// ----- Running a tool -----
+	// The theme already styles div.success, div.warning and div.failure as message boxes.
+	function box(kind, text, role){
+		var theme = {good: 'success', warn: 'warning', bad: 'failure'};
+		return $('<div>').addClass(theme[kind]).attr('role', role || null).text(text);
+	}
+
+	// Which colour a result gets. Anything not listed counts as a problem.
+	function outcomeKind(outcome){
+		var good = ['connected', 'online', 'ok', 'completed', 'done'];
+		var warn = ['refused', 'timeout', 'no_response', 'port_unreachable', 'max_hops', 'unreachable'];
+		return good.indexOf(outcome) >= 0 ? 'good' : (warn.indexOf(outcome) >= 0 ? 'warn' : 'bad');
+	}
+
+	function table(headers, rows){
+		var $t = $('<table class="util-table">');
+		var $h = $('<tr>');
+		$.each(headers, function(_, h){ $h.append($('<th scope="col">').text(h)); });
+		$t.append($('<thead>').append($h));
+		var $b = $('<tbody>');
+		$.each(rows, function(_, r){
+			var $r = $('<tr>');
+			$.each(r, function(_, c){ $r.append($('<td>').text(c)); });
+			$b.append($r);
+		});
+		return $t.append($b);
+	}
+
+	function hopCell(p){
+		if(p.timeout){ return '*'; }
+		return (p.host || p.ip || '?') + (p.rtt_ms !== null ? '  ' + p.rtt_ms + ' ms' : '');
+	}
+
+	function renderDetails($out, res){
+		if(res.rows && res.rows.length){
+			var $dl = $('<dl class="util-rows">');
+			$.each(res.rows, function(_, r){ $dl.append($('<dt>').text(r[0])).append($('<dd>').text(r[1])); });
+			$out.append($dl);
+		}
+		if(res.hops){
+			$out.append(table(['Hop', 'Address / latency'], $.map(res.hops, function(h){
+				return [[h.hop, $.map(h.probes, hopCell).join('   ')]];
+			})));
+		}
+		if(res.players && res.players.length){
+			$out.append(table(['Player', 'Score', 'Time (s)'], $.map(res.players, function(p){ return [[p.name, p.score, p.seconds]]; })));
+		}
+		if(res.output){
+			$out.append($('<pre>').text(res.output));
+		}
+		if(res.note){
+			$out.append($('<p class="util-hint">').text(res.note));
+		}
+	}
+
+	function renderResult($out, res, agentName){
+		$out.empty().removeClass('util-busy');
+		if(!res.ok){
+			$out.append(box('bad', res.message, 'alert'));
+			return;
+		}
+		$out.append(box(outcomeKind(res.outcome), res.summary));
+		renderDetails($out, res);
+		var s = res.source;
+		$out.append($('<p class="util-source">').text('Source agent: ' + agentName + ' | Target: ' + s.target + (s.ip && s.ip !== s.target ? ' (' + s.ip + ')' : '')
+			+ (s.port ? ' | Port: ' + s.port : '') + ' | Protocol: ' + s.protocol + ' | Duration: ' + s.duration_ms + ' ms'));
+	}
+
+	// Checks in the browser. The server checks everything again.
+	function formError($form){
+		var host = $form.find('input[name="host"]');
+		var port = $form.find('input[name="port"]');
+		if(!$form.find('.util-agent').val()){ return tr.attr('data-agent_invalid'); }
+		if(host.length && $.trim(host.val()) === ''){ return tr.attr('data-target_empty'); }
+		if(port.length && !/^[0-9]{1,5}$/.test($.trim(port.val()))){ return 'Port must be a number from 1 to 65535.'; }
+		return '';
+	}
+
+	$('.util-diag-form').on('submit', function(e){
 		e.preventDefault();
-	});// ./end network_tools form handling.
-	
+		var $form = $(this);
+		var $out = $('#' + $form.attr('data-tool') + '-result');
+		var error = formError($form);
+		if(error !== ''){
+			$out.empty().append(box('bad', error, 'alert')).focus();
+			return;
+		}
+		var agentName = $form.find('.util-agent option:selected').text();
+		var $button = $form.find('.util-run').prop('disabled', true);
+		$out.empty().addClass('util-busy').append($('<p>').text('Running...')).attr('aria-busy', 'true');
+		$.ajax({url: BASE + '&p=diag&action=run', method: 'POST', data: $form.serialize(), headers: {'X-CSRF-Token': csrfToken}, dataType: 'json'})
+			.done(function(res){ renderResult($out, res, agentName); })
+			.fail(function(xhr){
+				var res = xhr.responseJSON || {ok: false, message: post_failed};
+				renderResult($out, res, agentName);
+			})
+			.always(function(){ $button.prop('disabled', false); $out.attr('aria-busy', 'false').focus(); });
+	});
+
 	// ----- Sourcemod Admins -----
 	$.getJSON("home.php?m=util&p=addadmin_helper&type=cleared", function(gs){
 		if(gs.length === 0){
@@ -358,6 +514,6 @@ $(function(){
 	}); // ./end steam_converter form handling.
 	
 	$("#your-address").click(function(){
-		$("#remote_target").val($("#your-address").text());
+		$(".util-tool:not([hidden]) input[name='host']").val($("#your-address").text());
 	});
 });
