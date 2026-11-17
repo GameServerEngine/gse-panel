@@ -556,7 +556,7 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 				else
 				{
 					$status = $agent_state === "UNKNOWN" ? "unknown" : "offline";
-					$address .= "<span class='note'>".($agent_state === "UNKNOWN" ? "UNKNOWN" : "STOPPED")."</span>";
+					$address .= "<span class='".($agent_state === "UNKNOWN" ? "log-warn" : "log-bad")."'>".($agent_state === "UNKNOWN" ? "UNKNOWN" : "STOPPED")."</span>";
 					if ($reason !== '' && in_array($agent_state, array('CRASHED', 'FAILED'), true)) $address .= "<br><span class='failure' style='display:inline-block;position:static;float:none;clear:both;white-space:normal;max-width:100%;'>".htmlentities($reason)."</span>";
 					if (isset($server_home['ip']) and isset($server_home['mod_id']))
 					{
@@ -634,7 +634,7 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 					$second .= "<td class='owner' >$other_owners$groupsus</td>";
 
 				if( $server_xml->protocol != "teamspeak3" OR ($startup_file_exists and $server_xml->protocol == "teamspeak3") OR ($status == "offline" and $server_xml->protocol == "teamspeak3") )
-					@$second .= "<td class='operations'><div class='inline-block monitorButtonContainer'>" . trim($btns) . trim($ts3opt) . "<b class='failure' style='float:left; color:yellow; ' ></b></div></td>";
+					@$second .= "<td class='operations'><div class='inline-block monitorButtonContainer'>" . trim($btns) . trim($ts3opt) . "<b class='log-warn' style='float:left;'></b></div></td>";
 				else
 					$second .= "<td class='operations' >$ts3opt</td>";
 			$second .= "</tr>";

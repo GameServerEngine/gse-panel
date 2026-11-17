@@ -814,19 +814,19 @@ function get_server_billing_expiration_html(int $home_id): string
 	// resultQuery returns FALSE both on error and when 0 rows are found.
 	// Either way, there is no billing order for this server.
 	if ($rows === false) {
-		return "<span style='color:red;'>No expiration date found</span>";
+		return "<span class='log-bad'>No expiration date found</span>";
 	}
 
 	// end_date may be NULL (e.g. order created but payment not yet captured).
 	if (empty($rows[0]['end_date'])) {
-		return "<span style='color:red;'>No expiration date found</span>";
+		return "<span class='log-bad'>No expiration date found</span>";
 	}
 
 	// Parse end_date using DateTime for PHP 8.3+ compatibility.
 	try {
 		$end_dt = new DateTime($rows[0]['end_date']);
 	} catch (\Exception $e) {
-		return "<span style='color:red;'>No expiration date found</span>";
+		return "<span class='log-bad'>No expiration date found</span>";
 	}
 
 	// Compare dates only (strip time) so a server expiring on today's date is
@@ -837,7 +837,7 @@ function get_server_billing_expiration_html(int $home_id): string
 
 	if ($end_midnight < $today_midnight) {
 		// Expiration date is before today — treat as suspended.
-		return "<span style='color:red;'>Suspended</span>";
+		return "<span class='log-bad'>Suspended</span>";
 	}
 
 	// $diff->days is the total number of whole days between today and end date.
@@ -849,13 +849,13 @@ function get_server_billing_expiration_html(int $home_id): string
 		return "<span style='color:green;'>" . $display_date . "</span>";
 	} elseif ($days_remaining >= 4) {
 		// 4–10 days: yellow warning (darkgoldenrod for WCAG contrast).
-		return "<span style='color:#B8860B;'>" . htmlentities($days_remaining, ENT_QUOTES, 'UTF-8') . " days remaining</span>";
+		return "<span class='log-warn'>" . htmlentities($days_remaining, ENT_QUOTES, 'UTF-8') . " days remaining</span>";
 	} elseif ($days_remaining >= 1) {
 		// 1–3 days: urgent red warning.
-		return "<span style='color:red;'>" . htmlentities($days_remaining, ENT_QUOTES, 'UTF-8') . " days remaining</span>";
+		return "<span class='log-bad'>" . htmlentities($days_remaining, ENT_QUOTES, 'UTF-8') . " days remaining</span>";
 	} else {
 		// Less than one full day but not yet expired.
-		return "<span style='color:red;'>Less than 1 day remaining</span>";
+		return "<span class='log-bad'>Less than 1 day remaining</span>";
 	}
 }
 

@@ -1,3 +1,21 @@
+/* Status palette (netdiag report, dark). Used by the "Status colors" rules below. */
+:root {
+	--gse-bad: #f85149;
+	--gse-bad-bg: rgba(248,81,73,0.12);
+	--gse-bad-border: rgba(248,81,73,0.4);
+	--gse-good: #3fb950;
+	--gse-good-bg: rgba(63,185,80,0.12);
+	--gse-good-border: rgba(63,185,80,0.4);
+	--gse-info: #58a6ff;
+	--gse-info-bg: rgba(88,166,255,0.12);
+	--gse-info-border: rgba(88,166,255,0.4);
+	--gse-warn: #d29922;
+	--gse-warn-bg: rgba(210,153,34,0.12);
+	--gse-warn-border: rgba(210,153,34,0.4);
+	--gse-text: #e6edf3;
+	--gse-muted: #8b949e;
+}
+
 html {
 	background:$bottomWrapper.bg.color;
 	margin:0 0 0 -1px;
@@ -798,15 +816,81 @@ table.tablesorter tfoot td {
 	font-size:1.1em;
 }
 
-.failure {
-	color:red;
-	text-align:center;
+/* *** Status colors: one palette (netdiag report) for every message box and status word. */
+p.failure,
+div.failure {
+	background: var(--gse-bad-bg);
+	border: 1px solid var(--gse-bad-border);
+	border-left: 4px solid var(--gse-bad);
+	color: var(--gse-bad);
+	font-weight: normal;
+	padding: 10px 14px;
+	border-radius: 6px;
+	text-shadow: none;
+	text-align: left;
 }
-
-.success {
-	color:#fff;
-	text-align:center;
+p.failure a,
+div.failure a {
+	color: inherit;
+	text-decoration: underline;
 }
+span.failure,
+li.failure,
+b.failure {
+	color: var(--gse-bad);
+}
+p.success,
+div.success {
+	background: var(--gse-good-bg);
+	border: 1px solid var(--gse-good-border);
+	border-left: 4px solid var(--gse-good);
+	color: var(--gse-good);
+	font-weight: normal;
+	padding: 10px 14px;
+	border-radius: 6px;
+	text-shadow: none;
+	text-align: left;
+}
+p.success a,
+div.success a {
+	color: inherit;
+	text-decoration: underline;
+}
+span.success,
+li.success {
+	color: var(--gse-good);
+}
+.note {
+	color: var(--gse-info);
+}
+p.warning,
+div.warning {
+	background: var(--gse-warn-bg);
+	border: 1px solid var(--gse-warn-border);
+	border-left: 4px solid var(--gse-warn);
+	color: var(--gse-warn);
+	font-weight: normal;
+	padding: 10px 14px;
+	border-radius: 6px;
+	text-shadow: none;
+	text-align: left;
+}
+p.warning a,
+div.warning a {
+	color: inherit;
+	text-decoration: underline;
+}
+span.warning,
+li.warning {
+	color: var(--gse-warn);
+}
+.failure, .success, .warning, .note {
+	text-align: center;
+}
+.log-bad { color: var(--gse-bad); }
+.log-good { color: var(--gse-good); }
+.log-info { color: var(--gse-info); }
+.log-warn { color: var(--gse-warn); }
 
 pre {
    text-decoration:none;
