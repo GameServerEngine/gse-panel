@@ -1102,12 +1102,45 @@ class RemoteLibrary
 		return $data;
 	}
 
+	// Windows agents run Pure-FTPd under Cygwin, which needs /cygdrive/c/GSE/... paths, but the panel stores
+	// Windows paths (C:\GSE\...). Linux paths come back unchanged. Used for FTP home directories.
+	public static function ftp_agent_path($path)
+	{
+		$path = trim((string)$path);
+		if ($path === '')
+			return $path;
+		if (preg_match('#^([A-Za-z]):[\\/]*(.*)$#', $path, $match))
+			$path = '/cygdrive/' . strtolower($match[1]) . '/' . $match[2];
+		$path = str_replace('\\', '/', $path);
+		$path = preg_replace('#/+#', '/', $path);
+		return ($path === '/') ? $path : rtrim($path, '/');
+	}
+
+	// The reason the agent gave for the last ftp_mgr() call that returned 0.
+	public $ftp_error = '';
+
 	public function ftp_mgr($action, $login = "", $password = "", $home_path = "")
 	{
+		if ($action === "useradd" or $action === "usermod")
+			$home_path = self::ftp_agent_path($home_path);
+		$this->ftp_error = '';
 		$params_array = $this->encrypt_params($action, $login, $password, $home_path);
 		$this->add_enc_chk($params_array);
 		$request = xmlrpc_encode_request("ftp_mgr", $params_array);
 		$status = $this->sendRequest($request);
+
+		// The Windows agent answers with the plain Pure-FTPd text ("ERROR: ..." when it failed).
+		// The Linux agent answers "1;<base64 lines>". Accept both forms.
+		if (is_string($status) and !preg_match('/^\s*-?\d+(;|\s*$)/', $status))
+		{
+			if (preg_match('/^\s*(ERROR:|Bad Encryption Key)/', $status))
+			{
+				$this->ftp_error = trim(preg_replace('/^\s*ERROR:\s*/', '', $status));
+				return 0;
+			}
+			return $status;
+		}
+
 		@list($retval,$data_tmp) = @explode(";",$status);
 
 		$data = '';
@@ -1125,6 +1158,27 @@ class RemoteLibrary
 			return $data;
 		}
 		return 0;
+	}
+
+	// Does this FTP login exist on the agent? Asks for the one account. The agent's full account list
+	// does not work on Windows agents, so it is only used as a fallback.
+	public function ftp_login_exists($login)
+	{
+		$details = $this->ftp_mgr("show", $login);
+		if (is_string($details) and preg_match('/^\s*Login\s*:/mi', $details))
+			return TRUE;
+
+		$list = $this->ftp_mgr("list");
+		if (is_string($list))
+		{
+			foreach (explode("\n", $list) as $line)
+			{
+				$parts = preg_split('/\s+/', trim($line));
+				if (isset($parts[0]) and $parts[0] === (string)$login)
+					return TRUE;
+			}
+		}
+		return FALSE;
 	}
 
 	public function compress_files($files,$destination,$archive_name,$archive_type)

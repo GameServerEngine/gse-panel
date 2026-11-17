@@ -2752,6 +2752,15 @@ class DatabaseMySQL extends Database
 		return $out;
 	}
 
+	// Game servers on one agent that have an FTP login: home_id, home_name, home_path, ftp_login.
+	public function getFtpHomesForRemoteServer($remote_server_id)
+	{
+		$query = sprintf("SELECT `home_id`, `home_name`, `home_path`, `ftp_login` FROM `%sserver_homes` WHERE `remote_server_id` = %d AND `ftp_login` IS NOT NULL AND `ftp_login` <> '' ORDER BY `ftp_login`",
+			$this->table_prefix,
+			intval($remote_server_id));
+		return $this->listQuery($query);
+	}
+
 	public function setHomeExpertMode($home_id, $on)
 	{
 		$query = sprintf('UPDATE `%sserver_homes` SET `expert_mode` = %d WHERE `home_id` = %d', $this->table_prefix, intval($on) ? 1 : 0, intval($home_id));
