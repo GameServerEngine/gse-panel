@@ -24,7 +24,7 @@
 
 $module_title = "Tickets";
 $module_version = "1.0a";
-$db_version = 3;
+$db_version = 4;
 $module_required = false;
 $module_menus = array(
 					array(
@@ -106,4 +106,13 @@ $install_queries[2] = array(
 
 $install_queries[3] = array(
 	"INSERT INTO `".DB_PREFIX."ticket_settings` (setting_name, setting_value) VALUES ('notifications_enabled', true) ON DUPLICATE KEY UPDATE `setting_name` = 'notifications_enabled', `setting_value` = true",
+);
+
+// Step 4: tickets and messages created by the panel itself (crash detection) are flagged.
+// Crash tickets made before this step came from the loopback address (0x7F000001), so mark those too.
+$install_queries[4] = array(
+	"ALTER TABLE `".DB_PREFIX."tickets` ADD COLUMN `is_automatic` tinyint(1) NOT NULL DEFAULT 0",
+	"ALTER TABLE `".DB_PREFIX."ticket_messages` ADD COLUMN `is_automatic` tinyint(1) NOT NULL DEFAULT 0",
+	"UPDATE `".DB_PREFIX."tickets` SET `is_automatic` = 1 WHERE `user_ip` = 0x7F000001 AND `subject` LIKE 'Server crash detected:%'",
+	"UPDATE `".DB_PREFIX."ticket_messages` SET `is_automatic` = 1 WHERE `user_ip` = 0x7F000001 AND (`message` LIKE 'A crash was detected by the agent%' OR `message` LIKE 'Another crash was detected%')",
 );

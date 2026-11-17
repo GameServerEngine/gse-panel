@@ -69,7 +69,7 @@ class Ticket
 
     public function getTicket($tid, $uid)
     {
-        $query = "SELECT a.tid, a.uid, a.user_id, a.user_ip, a.subject, a.status, a.service_id, a.created_at, a.last_updated,
+        $query = "SELECT a.tid, a.uid, a.user_id, a.user_ip, a.subject, a.status, a.service_id, a.created_at, a.last_updated, a.is_automatic,
                             b.users_login, b.users_fname, b.users_lname, b.users_role, b.users_email
                     FROM DB_PREFIXtickets a
                         JOIN DB_PREFIXusers b
@@ -94,7 +94,7 @@ class Ticket
 
     private function getMessages($tid)
     {
-        $query = "SELECT a.reply_id, a.ticket_id, a.user_id, a.user_ip, a.message, a.date, a.rating, a.is_admin,
+        $query = "SELECT a.reply_id, a.ticket_id, a.user_id, a.user_ip, a.message, a.date, a.rating, a.is_admin, a.is_automatic,
                             b.user_id, b.users_login, b.users_role, b.users_fname, b.users_lname, b.users_email, b.users_parent
                         FROM DB_PREFIXticket_messages a
                             JOIN DB_PREFIXusers b
@@ -140,7 +140,7 @@ class Ticket
         return $messages;
     }
 
-    public function open($user_id, $user_ip, $subject, $message, $service_id, $is_admin)
+    public function open($user_id, $user_ip, $subject, $message, $service_id, $is_admin, $is_automatic = false)
     {
         $parent_id = $user_id;
         if ($this->db->isSubUser($user_id)) {
@@ -158,12 +158,13 @@ class Ticket
             'user_ip'       =>  inet_pton($user_ip),
             'subject'       =>  $subject,
             'service_id'    =>  ($service_id === 0 ? null : (int)$service_id),
-            'status'        =>  1
+            'status'        =>  1,
+            'is_automatic'  =>  ($is_automatic ? '1' : '0')
         );
 
         $insertId = $this->db->resultInsertId('tickets', $fields);
         if ($insertId !== false) {
-            $this->message($insertId, $user_id, $user_ip, $message, $is_admin, $uid);
+            $this->message($insertId, $user_id, $user_ip, $message, $is_admin, $uid, $is_automatic);
             $this->updateTimestamp($insertId, $uid);
 
             return array('uid' => $uid, 'tid' => $insertId);
@@ -172,14 +173,15 @@ class Ticket
         return false;
     }
 
-    public function message($tid, $user_id, $user_ip, $message, $is_admin, $uid)
+    public function message($tid, $user_id, $user_ip, $message, $is_admin, $uid, $is_automatic = false)
     {
         $fields = array(
             'ticket_id'     =>  $tid,
             'user_id'       =>  $user_id,
             'user_ip'       =>  inet_pton($user_ip),
             'message'       =>  $message,
-            'is_admin'      =>  ($is_admin ? '1' : '0')
+            'is_admin'      =>  ($is_admin ? '1' : '0'),
+            'is_automatic'  =>  ($is_automatic ? '1' : '0')
         );
 
         $insertId = $this->db->resultInsertId('ticket_messages', $fields);

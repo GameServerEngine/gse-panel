@@ -113,3 +113,9 @@ define('LANG_invalid_extensions', "No attachment extensions have been specified.
 define('LANG_update_settings', "Update Settings");
 define('LANG_notifications_enabled', "Notifications");
 define('LANG_notifications_enabled_info', "Allow the user/admin to see if they have got a ticket awaiting reply.");
+define('LANG_ticket_submitted_by', "Submitted By");
+define('LANG_ticket_automatic', "Automatically created ticket");
+define('LANG_ticket_automatic_source', "Agent crash detection");
+define('LANG_ticket_created_for', "Created For");
+define('LANG_ticket_created_for_note', "included so the owner can see the issue");
+

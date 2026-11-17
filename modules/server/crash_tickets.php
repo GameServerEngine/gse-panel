@@ -86,11 +86,11 @@ function open_crash_ticket($db, array $incident, $log_tail = '')
     if (is_array($existing) && isset($existing[0]['tid'])) {
         $tid = (int)$existing[0]['tid'];
         $uid = (string)$existing[0]['uid'];
-        $ticket->message($tid, $user_id, '127.0.0.1', "Another crash was detected.\n\n" . $body, true, $uid);
+        $ticket->message($tid, $user_id, '127.0.0.1', "Another crash was detected.\n\n" . $body, true, $uid, true);
         return array('action' => 'updated', 'tid' => $tid);
     }
 
-    $result = $ticket->open($user_id, '127.0.0.1', $subject, $body, 0, true);
+    $result = $ticket->open($user_id, '127.0.0.1', $subject, $body, 0, true, true);
     if (!$result) {
         return array('action' => 'skipped');
     }

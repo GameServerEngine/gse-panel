@@ -521,10 +521,18 @@ div.failure {
 	border-left: 4px solid var(--gse-bad);
 	color: var(--gse-bad);
 	font-weight: normal;
-	padding: 10px 14px;
 	border-radius: 6px;
 	text-shadow: none;
 	text-align: left;
+}
+/* Plain message boxes have no icon, so they get simple padding. The .alert boxes get theirs from .alert above. */
+p.failure,
+div.failure,
+p.success,
+div.success,
+p.warning,
+div.warning {
+	padding: 10px 14px;
 }
 .alert-danger a,
 p.failure a,
@@ -554,7 +562,6 @@ div.success {
 	border-left: 4px solid var(--gse-good);
 	color: var(--gse-good);
 	font-weight: normal;
-	padding: 10px 14px;
 	border-radius: 6px;
 	text-shadow: none;
 	text-align: left;
@@ -583,7 +590,6 @@ span.success {
 	border-left: 4px solid var(--gse-info);
 	color: var(--gse-info);
 	font-weight: normal;
-	padding: 10px 14px;
 	border-radius: 6px;
 	text-shadow: none;
 	text-align: left;
@@ -612,7 +618,6 @@ div.warning {
 	border-left: 4px solid var(--gse-warn);
 	color: var(--gse-warn);
 	font-weight: normal;
-	padding: 10px 14px;
 	border-radius: 6px;
 	text-shadow: none;
 	text-align: left;

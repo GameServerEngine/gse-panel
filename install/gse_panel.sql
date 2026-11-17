@@ -827,7 +827,7 @@ INSERT INTO `DB_PREFIXmodules` (`id`, `title`, `folder`, `version`, `db_version`
 (30,'subusers','subusers','1.0',0,1),
 (31,'Support','support','1.0',0,0),
 (32,'Teamspeak 3 Web Interface','teamspeak3','Beta 3.4.2',0,1),
-(33,'Tickets','tickets','1.0a',3,1),
+(33,'Tickets','tickets','1.0a',4,1),
 (34,'tshock','tshock','Alpha',0,1),
 (35,'Update','update','1.0',4,1),
 (36,'User admin','user_admin','1.0',7,1),
@@ -1385,6 +1385,7 @@ CREATE TABLE `DB_PREFIXticket_messages` (
   `date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `rating` tinyint DEFAULT '0',
   `is_admin` int DEFAULT '0',
+  `is_automatic` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`reply_id`),
   KEY `ticket_messages_fk0` (`ticket_id`),
   CONSTRAINT `ticket_messages_fk0` FOREIGN KEY (`ticket_id`) REFERENCES `tickets` (`tid`)
@@ -1421,6 +1422,7 @@ CREATE TABLE `DB_PREFIXtickets` (
   `last_updated` varchar(22) DEFAULT NULL,
   `status` tinyint NOT NULL,
   `assigned_to` tinyint DEFAULT NULL,
+  `is_automatic` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`tid`),
   UNIQUE KEY `uid` (`uid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

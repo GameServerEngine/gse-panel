@@ -2,6 +2,10 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.12.1 (2026-11-17)
+- **Message box icons covered the first word:** The info, success, warning and error boxes reserve room on the left for their icon, but the new status color rules reset the padding and put the icon on top of the text. The color rules no longer set padding on those boxes, so the room for the icon stays.
+- **Crash tickets looked like the owner wrote them:** A ticket opened by crash detection showed the server owner as the author, with the owner's role, even though the panel wrote it. Tickets and posts now have an automatic flag. Automatic ones are headed "Submitted By: Agent crash detection (Automatically created ticket)", and the owner is shown as "Created For" so they can see the issue. Crash tickets that already exist are marked too. This adds a database step to the Tickets module (version 4).
+
 ## 2.10.6 (2026-11-15)
 - **Remote Servers list: online/offline was too small to read:** The status word was shown in the same tiny 11px text as the CPU and RAM notes, so a server being online or offline was easy to miss. The status word is now larger (16px); the resource notes stay small.
 
