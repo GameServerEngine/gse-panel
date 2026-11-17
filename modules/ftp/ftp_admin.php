@@ -96,7 +96,7 @@ function exec_module()
 		$server_row = $db->getRemoteServer($_POST['remote_server_id']);
 		$remote = new RemoteLibrary($server_row['agent_ip'],$server_row['agent_port'],$server_row['encryption_key'],$server_row['timeout']);
 		$ftp_login = strip_real_escape_string($_POST['ftp_login']);
-		$settings = "";
+		$account_settings = "";
 		foreach ((array)$_POST as $key => $value)
 		{
 			if ($key != "edit_ftp_user" and $key != "ftp_login" and $key != "remote_server_id")
@@ -164,7 +164,7 @@ function exec_module()
 						list($ftp_login, $ftp_path) = explode("\t", $ftp_account);
 						$ftp_login = trim($ftp_login);
 						$home_info = $db->getHomeByFtpLogin($server_row['remote_server_id'], $ftp_login);
-						$expandme = ( ( isset($_POST['ftp_login']) and $ftp_login == strip_real_escape_string($_POST['ftp_login']) ) AND ( isset($_POST['remote_server_id']) and $home_info['remote_server_id'] == $_POST['remote_server_id'] ) ) ? "expandme" : "";
+						$expandme = ( ( isset($_POST['ftp_login']) and $ftp_login == strip_real_escape_string($_POST['ftp_login']) ) AND ( isset($_POST['remote_server_id']) and isset($home_info['remote_server_id']) and $home_info['remote_server_id'] == $_POST['remote_server_id'] ) ) ? "expandme" : "";
 						$home_name = isset( $home_info['home_name'] ) ? $home_info['home_name'] : $ftp_path;
 						echo "<tr class='maintr $expandme'><td class='collapsible' ></td><td>".$server_row['remote_server_name']." (".$display_ip.")</td><td><b class='failure' >$ftp_login</td><td>" . htmlentities($home_name) . "</td><td>$ftp_path</td></tr>
 							  <tr class='expand-child' ><td colspan='4' >
