@@ -2,6 +2,8 @@
 
 | Type | Item | Status | Owner | GitLab |
 | --- | --- | --- | --- | --- |
+| need | Release 2.14.0 is on `testing` (tag testing-2.14.0). Test it on a rebuilt dev panel, then decide on the `stable` release (`v2.14.0`); this needs approval. The live panel is still on 2.13.x. | open | Claude | |
+| done | CHANGELOG now has entries for 2.13.0, 2.13.1 and 2.13.2; BRANCHING.md describes the working, testing and stable flow in use. Entries for 2.12.2 and earlier 2.12.x/2.13.x fixes made without a version note may still be missing. | done | Claude | |
 | todo | Assistant module (modules/assistant): customers ask in plain words about their own game servers (status, error/login log reading, start/stop/restart as buttons they press). Claude Haiku 5.5 at medium effort through the Messages API, key only on the panel server (settings assistant_key_file), off by default (assistant_enabled), per-user monthly token cap, rate limit, audit table. Unit tests pass and a live check against the real API passed (tools, log reading, off-topic refusal, log-injection ignored, about $0.0004 per question). Still to do: deploy on the dev panel and test with a real agent and real logs. | done (code), dev panel test open | Claude | |
 | need | Assistant tables (assistant_usage, assistant_log) are created on first use. Move them into a migration and install/gse_panel.sql, add language strings, and decide per-customer metering and billing before any production rollout. | open | Claude | |
 | need | The documented dev panel (/var/www/html/GSE/Panel) and its MySQL 8 container (gse-mysql8) no longer exist on devops; /var/www/html/panel is an old non-git copy (2.5.7). Rebuild the dev panel from git. | open | Claude | |
