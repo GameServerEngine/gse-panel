@@ -138,7 +138,7 @@ function assistant_tool_propose_reset($db, $user_id, $home_id, $what, $db_id)
 		if ($db_id === 0 && count($rows) === 1) {
 			$db_id = (int)$rows[0]['db_id'];
 		}
-		foreach ($rows as $row) {
+		foreach (is_array($rows) ? $rows : array() as $row) {
 			if ((int)$row['db_id'] === $db_id) {
 				return array(
 					'data' => array('ok' => true, 'note' => 'A "New password for database ' . $row['db_name'] . '" button is shown to the customer. Nothing has changed yet.'),

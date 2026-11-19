@@ -2,6 +2,9 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.16.5 (2026-11-19)
+- **Admin Assistant page showed PHP warnings** when nothing had been used yet (a query with no rows was read as a row). Empty results are now treated as an empty list on the usage tables, the proposals list, the log and the patch queue.
+
 ## 2.16.4 (2026-11-19)
 - **Assistant still missing in Module Manager:** the module list only showed modules that already had a row, and the sync that adds new ones only ran as part of the update. Opening Module Manager now adds every module that is on disk but not in the modules table, so the Assistant appears and can be enabled.
 - **Admin assistant has no limits on what it can fix:** a fix is now one change set with any number of steps. A step changes a file on the panel or on any agent (the whole machine, the panel config included), runs an SQL statement on the panel database or any MySQL server, or runs a command on the panel or an agent. The administrator sees every step as a diff, presses Apply, and the steps run in order and stop at the first failure. Undo puts file changes back. The assistant can also read any file on the panel or an agent and run read-only queries on the panel database and every MySQL server. Nothing is hidden from it, so what it reads is sent to the AI provider. The admin switches for files, edits and resets, and the folder lists, no longer apply to the admin assistant. PHP files must still pass a syntax check before they are written.

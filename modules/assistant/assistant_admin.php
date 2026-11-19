@@ -143,7 +143,7 @@ function assistant_admin_game_databases($db)
 	$rows = $db->resultQuery('SELECT d.db_id, d.home_id, d.db_name, d.db_user, d.enabled, d.mysql_server_id, s.mysql_name, h.home_name FROM ' . assistant_tn('mysql_databases')
 		. ' d LEFT JOIN ' . assistant_tn('mysql_servers') . ' s ON s.mysql_server_id = d.mysql_server_id LEFT JOIN ' . assistant_tn('server_homes') . ' h ON h.home_id = d.home_id ORDER BY d.db_id LIMIT 100');
 	$out = array();
-	foreach ((array)$rows as $r) {
+	foreach (is_array($rows) ? $rows : array() as $r) {
 		$size = isset($sizes[$r['mysql_server_id']][$r['db_name']]) ? $sizes[$r['mysql_server_id']][$r['db_name']] : null;
 		$out[] = array(
 			'db_id' => (int)$r['db_id'], 'game_server' => $r['home_name'], 'home_id' => (int)$r['home_id'], 'database' => $r['db_name'],

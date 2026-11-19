@@ -65,8 +65,9 @@ function assistant_admin_usage($db, $cfg)
 
 	$users = $db->resultQuery('SELECT u.users_login AS name, a.input_tokens AS i, a.output_tokens AS o, a.requests AS r FROM ' . assistant_table('usage')
 		. ' a LEFT JOIN ' . assistant_tn('users') . " u ON u.user_id = a.user_id WHERE a.month = '" . date('Y-m') . "' ORDER BY a.input_tokens + a.output_tokens DESC LIMIT 20");
+	$users = is_array($users) ? $users : array();
 	echo '<table class="center"><tr><th>Customer</th><th>Questions</th><th>Tokens</th><th>Cap</th></tr>';
-	foreach ((array)$users as $row) {
+	foreach ($users as $row) {
 		echo '<tr><td>' . assistant_h($row['name']) . '</td><td>' . (int)$row['r'] . '</td><td>' . number_format($row['i'] + $row['o']) . '</td><td>' . number_format($cfg['assistant_user_monthly_tokens']) . '</td></tr>';
 	}
 	if (!$users) {
@@ -76,8 +77,9 @@ function assistant_admin_usage($db, $cfg)
 
 	$servers = $db->resultQuery('SELECT a.home_id AS id, h.home_name AS name, a.input_tokens + a.output_tokens AS t, a.requests AS r FROM ' . assistant_table('server_usage')
 		. ' a LEFT JOIN ' . assistant_tn('server_homes') . " h ON h.home_id = a.home_id WHERE a.month = '" . date('Y-m') . "' ORDER BY t DESC LIMIT 20");
+	$servers = is_array($servers) ? $servers : array();
 	echo '<table class="center" style="margin-top:8px"><tr><th>Server</th><th>Id</th><th>Questions</th><th>Tokens</th><th>Cap</th></tr>';
-	foreach ((array)$servers as $row) {
+	foreach ($servers as $row) {
 		$cap = assistant_server_cap($cfg, $row['id']);
 		echo '<tr><td>' . assistant_h($row['name']) . '</td><td>' . (int)$row['id'] . '</td><td>' . (int)$row['r'] . '</td><td>' . number_format($row['t']) . '</td><td>' . number_format($cap) . '</td></tr>';
 	}
@@ -121,7 +123,7 @@ function assistant_admin_patches($db, $csrf)
 	}
 	echo '<p><a href="modules/assistant/patch.php?all=1">Download all waiting patches</a></p>';
 	echo '<table class="center"><tr><th>#</th><th>File</th><th>What it does</th><th>When</th><th>Status</th><th></th></tr>';
-	foreach ($rows as $row) {
+	foreach (is_array($rows) ? $rows : array() as $row) {
 		echo '<tr><td>' . (int)$row['id'] . '</td><td>' . assistant_h($row['target']) . '</td><td>' . assistant_h($row['note']) . '</td><td>' . assistant_h(assistant_central($row['created'])) . '</td><td>' . assistant_h($row['status']) . '</td><td>';
 		echo '<a href="modules/assistant/patch.php?id=' . (int)$row['id'] . '">Download</a>';
 		if ($row['status'] === 'pending') {
@@ -142,7 +144,7 @@ function assistant_admin_activity($db)
 	$rows = $db->resultQuery('SELECT l.created AS created, l.question AS question, l.tools AS tools, l.input_tokens + l.output_tokens AS t, u.users_login AS name FROM ' . assistant_table('log')
 		. ' l LEFT JOIN ' . assistant_tn('users') . ' u ON u.user_id = l.user_id ORDER BY l.id DESC LIMIT 25');
 	echo '<table class="center"><tr><th>When</th><th>Who</th><th>Question or button</th><th>Tools</th><th>Tokens</th></tr>';
-	foreach ((array)$rows as $row) {
+	foreach (is_array($rows) ? $rows : array() as $row) {
 		// Button presses are stored with a 1970 time; they show as "button".
 		$when = strpos((string)$row['created'], '1970-') === 0 ? 'button' : assistant_central($row['created']);
 		echo '<tr><td>' . assistant_h($when) . '</td><td>' . assistant_h($row['name']) . '</td><td>' . assistant_h(mb_substr((string)$row['question'], 0, 120)) . '</td><td>' . assistant_h($row['tools']) . '</td><td>' . (int)$row['t'] . '</td></tr>';

@@ -25,7 +25,7 @@ function assistant_patch_main()
 	if (isset($_GET['all'])) {
 		$rows = $db->resultQuery('SELECT id FROM ' . assistant_table('proposals') . " WHERE kind = 'patch' AND status = 'pending' ORDER BY id");
 		$ids = array();
-		foreach ((array)$rows as $row) {
+		foreach (is_array($rows) ? $rows : array() as $row) {
 			$ids[] = (int)$row['id'];
 		}
 		$name = 'assistant-patches.patch';
