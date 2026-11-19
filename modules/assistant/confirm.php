@@ -22,6 +22,7 @@ function assistant_confirm_main()
 	require_once(__DIR__ . '/assistant_usage.php');
 	require_once(__DIR__ . '/assistant_manage.php');
 	require_once(__DIR__ . '/assistant_files.php');
+	require_once(__DIR__ . '/assistant_admin_fix.php');
 	require_once(__DIR__ . '/assistant_settings.php');
 
 	$scope = assistant_scope_resolve($db, $user_id, isset($_POST['scope']) ? (string)$_POST['scope'] : '');

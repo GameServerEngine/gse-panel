@@ -26,6 +26,8 @@ check('size is capped', strlen(assistant_filter_log($big, 'errors')) <= ASSISTAN
 $names = function ($scope) { return array_map(function ($t) { return $t['name']; }, assistant_tool_definitions($scope)); };
 check('server tools', $names('server') === array('server_status', 'server_log', 'database_info', 'ftp_info', 'propose_action', 'propose_reset', 'list_files', 'read_file', 'db_query', 'propose_file_edit'));
 check('admin has the panel diagnostics and the patch tool', count(array_diff(array('list_servers', 'panel_health', 'mysql_health', 'game_databases', 'agents_health', 'panel_list', 'panel_read', 'panel_search', 'agent_list', 'agent_read', 'propose_patch'), $names('admin'))) === 0);
+check('admin has the repair proposals', count(array_diff(array('propose_sql', 'propose_panel_edit'), $names('admin'))) === 0);
+check('customers never get repair proposals', count(array_intersect($names('server'), array('propose_sql', 'propose_panel_edit'))) === 0);
 check('customers never get admin tools', count(array_intersect($names('server'), array('list_servers', 'panel_health', 'panel_read', 'panel_search', 'agent_read', 'propose_patch'))) === 0);
 $admin_server_log = array();
 foreach (assistant_tool_definitions('admin') as $t) {

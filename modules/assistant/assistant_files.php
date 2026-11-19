@@ -345,6 +345,12 @@ function assistant_proposal_visible($db, $user_id, $scope, $p)
 function assistant_proposal_apply($db, $user_id, $scope, $id, $panel_root)
 {
 	$p = assistant_load_proposal($db, $id);
+	if ($p !== null && in_array($p['kind'], array('sql', 'panel_file'), true)) {
+		if (!assistant_proposal_visible($db, $user_id, $scope, $p)) {
+			return array('ok' => false, 'message' => 'That change was not found.');
+		}
+		return assistant_admin_fix_apply($db, $p, $panel_root);
+	}
 	if ($p === null || $p['kind'] !== 'file' || !assistant_proposal_visible($db, $user_id, $scope, $p)) {
 		return array('ok' => false, 'message' => 'That change was not found.');
 	}
@@ -394,6 +400,12 @@ function assistant_proposal_discard($db, $user_id, $scope, $id)
 function assistant_proposal_undo($db, $user_id, $scope, $id, $panel_root)
 {
 	$p = assistant_load_proposal($db, $id);
+	if ($p !== null && in_array($p['kind'], array('sql', 'panel_file'), true)) {
+		if (!assistant_proposal_visible($db, $user_id, $scope, $p)) {
+			return array('ok' => false, 'message' => 'That change was not found.');
+		}
+		return assistant_admin_fix_undo($db, $p, $panel_root);
+	}
 	if ($p === null || $p['kind'] !== 'file' || !assistant_proposal_visible($db, $user_id, $scope, $p)) {
 		return array('ok' => false, 'message' => 'That change was not found.');
 	}

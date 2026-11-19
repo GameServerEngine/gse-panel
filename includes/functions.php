@@ -983,7 +983,35 @@ function updateAllPanelModules(){
 				continue;
 			update_module($db, $row['id'], $row['folder']);
 		}
+		panel_install_new_modules($db);
 	}
+}
+
+// Installs modules that ship with the panel but have no row yet (for example Assistant after an update).
+// A folder seen before is never installed again, so a module an admin removed stays removed.
+function panel_install_new_modules($db)
+{
+    if (!function_exists('install_module') || !function_exists('list_available_modules')) {
+        return;
+    }
+    $settings = $db->getSettings();
+    $installed = array();
+    foreach ((array)$db->getInstalledModules() as $row) {
+        $installed[] = $row['folder'];
+    }
+    $seen = isset($settings['modules_seen']) && $settings['modules_seen'] !== ''
+        ? explode(',', $settings['modules_seen'])
+        : $installed;
+    foreach ((array)list_available_modules() as $folder) {
+        if (preg_match('/\.bak/i', $folder) || !is_file('modules/' . $folder . '/module.php')) {
+            continue;
+        }
+        if (in_array($folder, $seen, true) || in_array($folder, $installed, true)) {
+            continue;
+        }
+        install_module($db, $folder, TRUE);
+    }
+    $db->setSettings(array('modules_seen' => implode(',', array_values(array_unique(array_merge($seen, $installed))))));
 }
 
 function getRemoteContent($url, $timeout = 5, $referrer = ""){

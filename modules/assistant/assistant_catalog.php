@@ -50,6 +50,12 @@ function assistant_catalog()
 			'description' => 'Propose a change to a text file in the server\'s files, or a new file (a script, a mod, a config). It is only saved as a proposal. The person reviews the exact change and presses Apply. Use small, exact edits. Never put passwords or keys in a file.',
 			'props' => array('path' => $path, 'summary' => $summary, 'edits' => $edits, 'content' => array('type' => 'string', 'description' => 'For a NEW file only: its full text.')), 'required' => array('path', 'summary')),
 
+		array('name' => 'propose_sql', 'group' => 'admin', 'per_server' => false, 'scopes' => array('admin'),
+			'description' => 'Save ONE SQL statement as a proposal. It is NOT run now: the administrator reviews the exact statement and presses Apply. Use it for a database fix, such as a missing account, a grant or a wrong value. No DROP, TRUNCATE or RENAME. UPDATE and DELETE need a WHERE clause.',
+			'props' => array('database' => array('type' => 'string', 'enum' => array('panel', 'mysql'), 'description' => 'panel = the panel database; mysql = one of the MySQL servers.'), 'mysql_server_id' => array('type' => 'integer', 'description' => 'Only when database is mysql: the id from mysql_health.'), 'sql' => array('type' => 'string', 'description' => 'One statement. No semicolon inside, no comments.'), 'summary' => $summary), 'required' => array('database', 'sql', 'summary')),
+		array('name' => 'propose_panel_edit', 'group' => 'admin', 'per_server' => false, 'scopes' => array('admin'),
+			'description' => 'Save a change to ONE text file in the panel folder as a proposal. It is NOT written now: the administrator presses Apply, and the panel keeps a backup and checks PHP syntax first. Use small exact edits. The panel config file and secrets can never be changed.',
+			'props' => array('path' => array('type' => 'string', 'description' => 'Path relative to the panel folder, like includes/functions.php.'), 'summary' => $summary, 'edits' => $edits, 'content' => array('type' => 'string', 'description' => 'For a NEW file only: its full text.')), 'required' => array('path', 'summary')),
 		array('name' => 'list_servers', 'group' => 'admin', 'per_server' => false, 'scopes' => array('admin'),
 			'description' => 'List every game server with its id, name, owner and address.', 'props' => array(), 'required' => array()),
 		array('name' => 'panel_health', 'group' => 'admin', 'per_server' => false, 'scopes' => array('admin'),

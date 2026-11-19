@@ -2,6 +2,11 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.16.3 (2026-11-19)
+- **Assistant module missing after an update:** the panel only refreshed modules it already had, so a module added in a new release (the AI Assistant) never got its row. It did not show in Module Manager, the Admin menu or the Game Monitor button. Updating the panel now installs any module that is new since the last update. A module an admin removed is not brought back.
+- **Admin assistant can now propose repairs, not only read:** it can propose one SQL statement (for example a missing grant or account) and a change to one file in the panel folder. Nothing runs until the administrator presses Apply. SQL is limited to one statement with no DROP, TRUNCATE or RENAME. A panel file gets a backup and a PHP syntax check before it is written. The panel config, keys and secrets are never changed.
+- **LiteFM menu entry is now called LiteFM:** the Admin menu entry was LiteFM Settings. The LiteFM page has a button that opens a file browser of the panel's own files, where an administrator can open, edit and save files. Each save keeps a backup next to the file.
+
 ## Unreleased
 - **New: type the AI Assistant API key on the Admin > Assistant page:** no need to edit a file on the server. The key is saved in the panel database and only its last 4 characters are ever shown. A key file, if present, is still used first.
 

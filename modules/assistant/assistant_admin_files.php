@@ -3,7 +3,7 @@
  * Admin-only tools for reading the panel's own files, the files on agent machines (in folders the
  * admin allowed), and for saving PATCHES. A patch is never written anywhere by the assistant:
  * it is stored, shown on the Assistant page and downloaded, then applied through git and the
- * normal working -> testing -> stable flow. Live panel files are never edited.
+ * normal working -> testing -> stable flow. Panel file changes are a separate proposal with an Apply button (assistant_admin_fix.php).
  */
 
 require_once(__DIR__ . '/assistant_files.php');

@@ -4,5 +4,6 @@
   <page key="analyze_log" file="analyze_log.php" access="user,admin,subuser" />
   <page key="default" file="fm_dir.php" access="user,admin,subuser" />
   <page key="litefm_settings" file="settings.php" access="admin" />
+  <page key="litefm_panel" file="panel_browser.php" access="admin" />
   <page key="get" file="get_file.php" access="user,admin,subuser" />
 </navigation>

@@ -114,7 +114,7 @@ function assistant_admin_mysql_health($db)
 	}
 	$report['mysql_servers'] = array();
 	foreach (assistant_admin_mysql_servers($db) as $s) {
-		$entry = array('name' => $s['mysql_name'], 'address' => $s['mysql_ip'] . ':' . $s['mysql_port']);
+		$entry = array('mysql_server_id' => (int)$s['mysql_server_id'], 'name' => $s['mysql_name'], 'address' => $s['mysql_ip'] . ':' . $s['mysql_port']);
 		$link = assistant_mysql_connect($s['mysql_ip'], !empty($s['mysql_admin_user']) ? $s['mysql_admin_user'] : 'root', $s['mysql_root_passwd'], '', $s['mysql_port']);
 		if ($link) {
 			$entry['reachable'] = true;
