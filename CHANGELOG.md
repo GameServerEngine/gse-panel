@@ -3,7 +3,7 @@
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
 ## 2.16.6 (2026-11-19)
-- **Message box icons covered the text (SimpleBootstrap theme):** the green, red and yellow message boxes get an icon, but a padding rule meant for icon-less boxes removed the room reserved for it, so the icon sat on top of the first letters. The rule now skips boxes that carry an icon.
+- **Message box icons covered the text (SimpleBootstrap theme):** the green, red and yellow message boxes get an icon, but a padding rule meant for icon-less boxes removed the room reserved for it, so the icon sat on top of the first letters. That rule now only applies to warning boxes, which have no icon.
 
 ## 2.16.5 (2026-11-19)
 - **Admin Assistant page showed PHP warnings** when nothing had been used yet (a query with no rows was read as a row). Empty results are now treated as an empty list on the usage tables, the proposals list, the log and the patch queue.

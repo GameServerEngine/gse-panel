@@ -525,13 +525,9 @@ div.failure {
 	text-shadow: none;
 	text-align: left;
 }
-/* Plain message boxes have no icon, so they get simple padding. The .alert boxes get theirs from .alert above. */
-p.failure:not(.alert),
-div.failure:not(.alert),
-p.success:not(.alert),
-div.success:not(.alert),
-p.warning:not(.alert),
-div.warning:not(.alert) {
+/* Success and failure boxes get .alert (and its icon room) from main.js. Warning boxes get no icon, so they get simple padding. */
+p.warning,
+div.warning {
 	padding: 10px 14px;
 }
 .alert-danger a,
