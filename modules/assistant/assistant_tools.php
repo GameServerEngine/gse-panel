@@ -79,6 +79,9 @@ function assistant_tool_server_log($db, $user_id, $home_id, $filter, $panel_root
 	if ($home === null) {
 		return array('data' => array('error' => $why));
 	}
+	if (!defined('GET_SERVER_LOG_SKIP_MAIN')) {
+		define('GET_SERVER_LOG_SKIP_MAIN', true);
+	}
 	require_once($panel_root . '/modules/gamemanager/get_server_log.php');
 	$mod_id = (int)key($home['mods']);
 	$response = get_server_log_response($db, $home['home_id'], $mod_id, $user_id, $panel_root);
