@@ -28,6 +28,7 @@ function assistant_main()
 	if (!defined('CONFIG_FILE')) {
 		define('CONFIG_FILE', $panel_root . '/includes/config.inc.php');
 	}
+	global $db, $db_type, $db_host, $db_user, $db_pass, $db_name, $table_prefix, $db_port;
 	require_once(CONFIG_FILE);
 
 	if (empty($_SESSION['users_login']) || empty($_SESSION['user_id'])) {
@@ -40,7 +41,6 @@ function assistant_main()
 		return assistant_json(403, array('text' => 'The page expired. Reload it and try again.'));
 	}
 
-	global $db, $db_type, $db_host, $db_user, $db_pass, $db_name, $table_prefix, $db_port;
 	if (!isset($db) || !is_object($db)) {
 		$db = createDatabaseConnection($db_type, $db_host, $db_user, $db_pass, $db_name, $table_prefix, isset($db_port) ? $db_port : null);
 	}
