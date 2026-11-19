@@ -1606,3 +1606,29 @@ CREATE TABLE IF NOT EXISTS `DB_PREFIXassistant_log` (
   PRIMARY KEY (`id`),
   KEY `user_time` (`user_id`,`created`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE IF NOT EXISTS `DB_PREFIXassistant_server_usage` (
+  `home_id` int NOT NULL,
+  `month` char(7) NOT NULL,
+  `input_tokens` bigint NOT NULL DEFAULT 0,
+  `output_tokens` bigint NOT NULL DEFAULT 0,
+  `requests` int NOT NULL DEFAULT 0,
+  PRIMARY KEY (`home_id`,`month`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE IF NOT EXISTS `DB_PREFIXassistant_proposals` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `home_id` int NOT NULL DEFAULT 0,
+  `kind` varchar(12) NOT NULL,
+  `target` varchar(300) NOT NULL,
+  `old_content` mediumblob,
+  `new_content` mediumblob,
+  `note` varchar(300) DEFAULT NULL,
+  `status` varchar(10) NOT NULL DEFAULT 'pending',
+  `created` datetime NOT NULL,
+  `decided` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `home_status` (`home_id`,`status`),
+  KEY `kind_status` (`kind`,`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;

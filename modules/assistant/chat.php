@@ -16,12 +16,16 @@ function exec_module()
 		echo '<p>The assistant is not switched on for this panel.</p>';
 		return 0;
 	}
+	$user_id = (int)$_SESSION['user_id'];
+	if (isset($settings['assistant_customer_enabled']) && $settings['assistant_customer_enabled'] !== '1' && !$db->isAdmin($user_id)) {
+		echo '<p>The assistant is only open to administrators right now.</p>';
+		return 0;
+	}
 	$home_id = isset($_GET['home_id']) ? (int)$_GET['home_id'] : 0;
 	if ($home_id < 1) {
 		echo '<p>Open the assistant from a server in Game Monitor.</p>';
 		return 0;
 	}
-	$user_id = (int)$_SESSION['user_id'];
 	$token = assistant_scope_open_server($db, $user_id, $home_id);
 	if ($token === '') {
 		echo '<p>That server is not on this account.</p>';
@@ -31,8 +35,8 @@ function exec_module()
 	assistant_render_chat(
 		$token,
 		'Assistant: ' . $home['home_name'],
-		'Ask about this server: is it running, any errors in the log, who joined, its database or FTP login. '
-			. 'It can show a Start, Stop or Restart button or a new-password button, but it never presses one for you.',
+		'Ask about this server: is it running, errors, logins or attacks in its logs, its files and scripts, its database or FTP login. '
+			. 'It can offer a Start, Stop or Restart button, a new-password button, or a change to a file or a new script that you review and apply (and can undo). It never does any of these for you.',
 		'For example: why did my server stop?'
 	);
 	echo '<p><a href="?m=gamemanager&amp;p=game_monitor&amp;home_id=' . (int)$home_id . '">Back to the server</a></p>';

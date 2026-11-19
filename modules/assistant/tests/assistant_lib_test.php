@@ -24,8 +24,16 @@ check('size is capped', strlen(assistant_filter_log($big, 'errors')) <= ASSISTAN
 
 // Tool lists: customers get server-bound tools with no server id to choose; admins get read-only diagnostics
 $names = function ($scope) { return array_map(function ($t) { return $t['name']; }, assistant_tool_definitions($scope)); };
-check('server tools', $names('server') === array('server_status', 'server_log', 'database_info', 'ftp_info', 'propose_action', 'propose_reset'));
-check('admin tools are read-only', $names('admin') === array('list_servers', 'server_status', 'server_log', 'panel_health', 'mysql_health', 'game_databases', 'agents_health'));
+check('server tools', $names('server') === array('server_status', 'server_log', 'database_info', 'ftp_info', 'propose_action', 'propose_reset', 'list_files', 'read_file', 'db_query', 'propose_file_edit'));
+check('admin has the panel diagnostics and the patch tool', count(array_diff(array('list_servers', 'panel_health', 'mysql_health', 'game_databases', 'agents_health', 'panel_list', 'panel_read', 'panel_search', 'agent_list', 'agent_read', 'propose_patch'), $names('admin'))) === 0);
+check('customers never get admin tools', count(array_intersect($names('server'), array('list_servers', 'panel_health', 'panel_read', 'panel_search', 'agent_read', 'propose_patch'))) === 0);
+$admin_server_log = array();
+foreach (assistant_tool_definitions('admin') as $t) {
+	if ($t['name'] === 'server_log') {
+		$admin_server_log = $t['input_schema'];
+	}
+}
+check('admin server tools take a server id', isset($admin_server_log['properties']['home_id']) && in_array('home_id', $admin_server_log['required'], true));
 $leak = false;
 foreach (assistant_tool_definitions('server') as $t) {
 	if (isset($t['input_schema']['properties']) && is_array($t['input_schema']['properties']) && isset($t['input_schema']['properties']['home_id'])) {
@@ -34,7 +42,7 @@ foreach (assistant_tool_definitions('server') as $t) {
 }
 check('customer tools never take a server id', !$leak);
 check('customer prompt is limited to one server', strpos(assistant_system_prompt('server'), 'ONE game server') !== false);
-check('admin prompt says it cannot change anything', strpos(assistant_system_prompt('admin'), 'cannot change anything') !== false);
+check('admin prompt says it only proposes', strpos(assistant_system_prompt('admin'), 'cannot change anything yourself') !== false && strpos(assistant_system_prompt('admin'), 'never changes live files') !== false);
 
 // Generated passwords: three plain words, one capital, symbols, easy to type
 $ok = true;

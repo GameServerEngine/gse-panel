@@ -91,7 +91,8 @@ function assistant_tool_server_log($db, $user_id, $home_id, $filter, $panel_root
 	// The panel wraps the log in a <pre> block. Take the text back out.
 	$text = html_entity_decode(strip_tags($response['body']), ENT_QUOTES, 'UTF-8');
 	$lines = assistant_filter_log($text, $filter);
-	return array('data' => array('filter' => $filter, 'log' => '<log_data>' . $lines . '</log_data>'));
+	require_once(__DIR__ . '/assistant_diff.php');
+	return array('data' => array('filter' => $filter, 'log' => assistant_wrap('log_data', assistant_redact($lines))));
 }
 
 function assistant_tool_propose_action($db, $user_id, $home_id, $action)
@@ -114,21 +115,13 @@ function assistant_tool_propose_action($db, $user_id, $home_id, $action)
 	);
 }
 
-// What each scope may call. Anything else is refused before it reaches a function.
-function assistant_allowed_tools($scope_type)
-{
-	if ($scope_type === 'admin') {
-		return array('list_servers', 'server_status', 'server_log', 'panel_health', 'mysql_health', 'game_databases', 'agents_health');
-	}
-	return array('server_status', 'server_log', 'database_info', 'ftp_info', 'propose_action', 'propose_reset');
-}
-
 // $scope is array('type' => 'server', 'home_id' => n) or array('type' => 'admin').
 // In a server scope the server id comes from the scope, never from the model.
-function assistant_run_tool($db, $user_id, $panel_root, $name, $input, $scope)
+// $cfg (assistant_config) switches groups of tools off; the allowed list is built from the catalog.
+function assistant_run_tool($db, $user_id, $panel_root, $name, $input, $scope, $cfg = null)
 {
 	$type = isset($scope['type']) ? $scope['type'] : 'server';
-	if (!in_array($name, assistant_allowed_tools($type), true)) {
+	if (!in_array($name, assistant_allowed_tools($type, $cfg), true)) {
 		return array('data' => array('error' => 'Unknown tool.'));
 	}
 	if ($type === 'admin' && !$db->isAdmin($user_id)) {
@@ -136,7 +129,16 @@ function assistant_run_tool($db, $user_id, $panel_root, $name, $input, $scope)
 	}
 	$home_id = $type === 'server' ? (int)$scope['home_id'] : (isset($input['home_id']) ? (int)$input['home_id'] : 0);
 	$filter = isset($input['filter']) ? (string)$input['filter'] : 'recent';
+	$result = assistant_dispatch_tool($db, $user_id, $panel_root, $name, $input, $home_id, $filter, $cfg);
+	// In the admin chat a button must say which server it is for (a customer's scope already knows).
+	if ($type === 'admin' && $home_id > 0 && isset($result['button']['type']) && $result['button']['type'] === 'reset') {
+		$result['button']['home_id'] = $home_id;
+	}
+	return $result;
+}
 
+function assistant_dispatch_tool($db, $user_id, $panel_root, $name, $input, $home_id, $filter, $cfg)
+{
 	switch ($name) {
 		case 'list_servers':
 			return assistant_tool_list_servers($db, $user_id);
@@ -157,6 +159,45 @@ function assistant_run_tool($db, $user_id, $panel_root, $name, $input, $scope)
 				return assistant_tool_ftp_info($db, $user_id, $home_id, $panel_root);
 			}
 			return assistant_tool_propose_reset($db, $user_id, $home_id, isset($input['what']) ? (string)$input['what'] : '', isset($input['db_id']) ? (int)$input['db_id'] : 0);
+		case 'list_files':
+		case 'read_file':
+		case 'db_query':
+		case 'propose_file_edit':
+			require_once(__DIR__ . '/assistant_files.php');
+			if ($name === 'list_files') {
+				return assistant_tool_list_files($db, $user_id, $home_id, isset($input['path']) ? (string)$input['path'] : '', $panel_root);
+			}
+			if ($name === 'read_file') {
+				return assistant_tool_read_file($db, $user_id, $home_id, $input, $panel_root);
+			}
+			if ($name === 'db_query') {
+				return assistant_tool_db_query($db, $user_id, $home_id, $input, $panel_root);
+			}
+			return assistant_tool_propose_file_edit($db, $user_id, $home_id, $input, $panel_root);
+		case 'panel_list':
+		case 'panel_read':
+		case 'panel_search':
+		case 'agent_list':
+		case 'agent_read':
+		case 'propose_patch':
+			require_once(__DIR__ . '/assistant_admin_files.php');
+			$cfg = $cfg === null ? assistant_config($db->getSettings()) : $cfg;
+			if ($name === 'panel_list') {
+				return assistant_tool_panel_list($panel_root, $cfg, $input);
+			}
+			if ($name === 'panel_read') {
+				return assistant_tool_panel_read($panel_root, $cfg, $input);
+			}
+			if ($name === 'panel_search') {
+				return assistant_tool_panel_search($panel_root, $cfg, $input);
+			}
+			if ($name === 'agent_list') {
+				return assistant_tool_agent_list($db, $panel_root, $cfg, $input);
+			}
+			if ($name === 'agent_read') {
+				return assistant_tool_agent_read($db, $panel_root, $cfg, $input);
+			}
+			return assistant_tool_propose_patch($db, $user_id, $panel_root, $cfg, $input);
 		default:
 			require_once(__DIR__ . '/assistant_admin.php');
 			return assistant_admin_tool($db, $name, $panel_root);

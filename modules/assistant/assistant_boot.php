@@ -12,12 +12,14 @@ function assistant_json($status, $data)
 {
 	http_response_code($status);
 	header('Content-Type: application/json; charset=UTF-8');
-	echo json_encode($data);
+	header('X-Content-Type-Options: nosniff');
+	// File and log text can hold bytes that are not UTF-8; swap them instead of losing the whole reply.
+	echo json_encode($data, JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR);
 }
 
 // Starts the panel the same way modules/gamemanager/get_server_log.php does, checks the login
-// and the page's CSRF token. Returns array(panel_root, user_id) or null after answering the error.
-function assistant_boot()
+// and (unless $need_csrf is false, for read-only downloads) the page's CSRF token. Returns array(panel_root, user_id) or null after answering the error.
+function assistant_boot($need_csrf = true)
 {
 	global $db, $db_type, $db_host, $db_user, $db_pass, $db_name, $table_prefix, $db_port;
 
@@ -44,7 +46,7 @@ function assistant_boot()
 	}
 	$sent_token = isset($_POST['csrf']) ? (string)$_POST['csrf'] : '';
 	$real_token = isset($_SESSION['assistant_csrf']) ? (string)$_SESSION['assistant_csrf'] : '';
-	if ($real_token === '' || !hash_equals($real_token, $sent_token)) {
+	if ($need_csrf && ($real_token === '' || !hash_equals($real_token, $sent_token))) {
 		assistant_json(403, array('text' => 'The page expired. Reload it and try again.'));
 		return null;
 	}
