@@ -2,6 +2,11 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.15.0 (2026-11-18)
+- **New: AI Assistant inside Game Monitor (off by default):** Each server in Game Monitor has an AI Assistant button. It opens a chat for that one server and nothing else, so a customer can only ever talk about a server they own. It reads the server's status and log, checks the server's MySQL database and FTP login, and can offer buttons: Start, Stop, Restart, a new database password, or a new FTP password. The assistant never presses a button. Passwords are made by the panel, are easy to type (three plain words), are shown once on the customer's screen, and never go to the AI or into the log. Turn it on with the assistant_enabled setting and the key file described in docs/ASSISTANT.md.
+- **New: Assistant page in the Admin menu:** Administrators get a read-only assistant that checks the panel (version, disk, errors), MySQL (version, uptime, connections, database sizes), the game databases, every agent (online, version, response time) and any server's status and log. It cannot change anything.
+- **Customers no longer have an Assistant menu entry:** the old general chat page is replaced by the per-server chat. Update the Assistant module in Module Manager after upgrading; it creates the usage tables and moves the menu entry to Admin.
+
 ## 2.14.0 (2026-11-18)
 - **New: Assistant (off by default):** Customers can ask in plain words about their own game servers, such as whether a server is running, what errors are in the log, or who joined, and the assistant can offer Start, Stop and Restart buttons that the customer presses. It uses the Claude Haiku model through the Claude API, so it needs an API key stored on the panel server. An admin turns it on in settings (assistant_enabled), and until then nothing changes and no data leaves the panel. It can only see servers the signed-in user owns, cannot act by itself, ignores instructions found inside log files, refuses unrelated questions, and has a monthly usage cap and a per-minute limit per user. Every question is recorded in an audit table. The per-server chat in Game Monitor and the admin diagnostics are the next steps.
 

@@ -131,3 +131,5 @@
 | need | The live panel was 2.12.0 while working is 2.13.0, so includes/lib_remote.php on core was patched by hand for the FTP fix (the other three files matched the repo). The next panel update brings the same change. | open | Claude | |
 
 | Assistant dev test | Done 2026-11-18: tested on dev panel (alice/bob/admin) incl. log reading, ownership refusal, restart button. Fixed ask.php globals + log reader entry point (d9242414 and next). Next: per-server chat in Game Monitor, Admin AI page, DB/FTP tools |
+
+| Assistant 2.15.0 | Done: per-server chat in Game Monitor, Admin assistant (read-only), database and FTP tools with password-reset buttons, schema in install/gse_panel.sql + module migration, docs/ASSISTANT.md. Left before production: translate strings (hardcoded English now), per-customer billing/metering beyond the token cap, try the FTP reset against a real pure-ftpd agent, set the Anthropic spend limit |
