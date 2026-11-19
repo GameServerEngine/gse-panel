@@ -1,9 +1,9 @@
 <?php
 /*
- * The four tools the assistant can use. Each one first checks that the logged-in
- * customer owns the server (admins may use any server). Nothing here changes a server:
- * propose_action only returns a link to the panel's own Start / Stop / Restart page,
- * and the customer has to press it.
+ * The tools the assistant can use. A customer's chat is tied to one server (the scope), and every
+ * tool checks again that the logged-in customer owns it (admins may use any server). Nothing here
+ * changes anything: propose_action returns a link to the panel's own Start / Stop / Restart page and
+ * propose_reset returns a button; the customer has to press it (see confirm.php).
  */
 
 require_once(__DIR__ . '/assistant_lib.php');
@@ -33,7 +33,7 @@ function assistant_open_home($db, $user_id, $home_id)
 
 function assistant_tool_list_servers($db, $user_id)
 {
-	$rows = $db->getIpPortsForUser($user_id);
+	$rows = $db->isAdmin($user_id) ? $db->getIpPorts() : $db->getIpPortsForUser($user_id);
 	$servers = array();
 	foreach ((array)$rows as $row) {
 		$servers[$row['home_id']] = array(
@@ -114,24 +114,52 @@ function assistant_tool_propose_action($db, $user_id, $home_id, $action)
 	);
 }
 
-// The only way the model reaches the tools. Unknown names are refused.
-function assistant_run_tool($db, $user_id, $panel_root, $name, $input)
+// What each scope may call. Anything else is refused before it reaches a function.
+function assistant_allowed_tools($scope_type)
 {
-	$home_id = isset($input['home_id']) ? (int)$input['home_id'] : 0;
-	if ($name === 'list_servers') {
-		return assistant_tool_list_servers($db, $user_id);
+	if ($scope_type === 'admin') {
+		return array('list_servers', 'server_status', 'server_log', 'panel_health', 'mysql_health', 'game_databases', 'agents_health');
 	}
-	if ($name === 'server_status') {
-		return assistant_tool_server_status($db, $user_id, $home_id, $panel_root);
+	return array('server_status', 'server_log', 'database_info', 'ftp_info', 'propose_action', 'propose_reset');
+}
+
+// $scope is array('type' => 'server', 'home_id' => n) or array('type' => 'admin').
+// In a server scope the server id comes from the scope, never from the model.
+function assistant_run_tool($db, $user_id, $panel_root, $name, $input, $scope)
+{
+	$type = isset($scope['type']) ? $scope['type'] : 'server';
+	if (!in_array($name, assistant_allowed_tools($type), true)) {
+		return array('data' => array('error' => 'Unknown tool.'));
 	}
-	if ($name === 'server_log') {
-		$filter = isset($input['filter']) ? (string)$input['filter'] : 'recent';
-		return assistant_tool_server_log($db, $user_id, $home_id, $filter, $panel_root);
+	if ($type === 'admin' && !$db->isAdmin($user_id)) {
+		return array('data' => array('error' => 'Not allowed.'));
 	}
-	if ($name === 'propose_action') {
-		$action = isset($input['action']) ? (string)$input['action'] : '';
-		return assistant_tool_propose_action($db, $user_id, $home_id, $action);
+	$home_id = $type === 'server' ? (int)$scope['home_id'] : (isset($input['home_id']) ? (int)$input['home_id'] : 0);
+	$filter = isset($input['filter']) ? (string)$input['filter'] : 'recent';
+
+	switch ($name) {
+		case 'list_servers':
+			return assistant_tool_list_servers($db, $user_id);
+		case 'server_status':
+			return assistant_tool_server_status($db, $user_id, $home_id, $panel_root);
+		case 'server_log':
+			return assistant_tool_server_log($db, $user_id, $home_id, $filter, $panel_root);
+		case 'propose_action':
+			return assistant_tool_propose_action($db, $user_id, $home_id, isset($input['action']) ? (string)$input['action'] : '');
+		case 'database_info':
+		case 'ftp_info':
+		case 'propose_reset':
+			require_once(__DIR__ . '/assistant_manage.php');
+			if ($name === 'database_info') {
+				return assistant_tool_database_info($db, $user_id, $home_id);
+			}
+			if ($name === 'ftp_info') {
+				return assistant_tool_ftp_info($db, $user_id, $home_id, $panel_root);
+			}
+			return assistant_tool_propose_reset($db, $user_id, $home_id, isset($input['what']) ? (string)$input['what'] : '', isset($input['db_id']) ? (int)$input['db_id'] : 0);
+		default:
+			require_once(__DIR__ . '/assistant_admin.php');
+			return assistant_admin_tool($db, $name, $panel_root);
 	}
-	return array('data' => array('error' => 'Unknown tool.'));
 }
 ?>

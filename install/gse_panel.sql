@@ -1583,3 +1583,26 @@ CREATE TABLE `DB_PREFIXwidgets_users` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- Assistant module (usage limits and audit log)
+CREATE TABLE IF NOT EXISTS `DB_PREFIXassistant_usage` (
+  `user_id` int NOT NULL,
+  `month` char(7) NOT NULL,
+  `input_tokens` bigint NOT NULL DEFAULT 0,
+  `output_tokens` bigint NOT NULL DEFAULT 0,
+  `requests` int NOT NULL DEFAULT 0,
+  PRIMARY KEY (`user_id`,`month`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE IF NOT EXISTS `DB_PREFIXassistant_log` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `created` datetime NOT NULL,
+  `question` text,
+  `tools` varchar(255) DEFAULT NULL,
+  `answer` text,
+  `input_tokens` int NOT NULL DEFAULT 0,
+  `output_tokens` int NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `user_time` (`user_id`,`created`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;

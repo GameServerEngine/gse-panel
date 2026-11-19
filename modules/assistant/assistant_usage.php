@@ -37,7 +37,7 @@ function assistant_requests_last_minute($db, $user_id)
 	return isset($rows[0]['n']) ? (int)$rows[0]['n'] : 0;
 }
 
-function assistant_record($db, $user_id, $question, $result)
+function assistant_record($db, $user_id, $question, $result, $scope_key = '')
 {
 	$month = date('Y-m');
 	$db->query('INSERT INTO ' . assistant_table('usage') . ' (user_id, month, input_tokens, output_tokens, requests) VALUES ('
@@ -45,8 +45,15 @@ function assistant_record($db, $user_id, $question, $result)
 		. ' ON DUPLICATE KEY UPDATE input_tokens = input_tokens + VALUES(input_tokens), '
 		. 'output_tokens = output_tokens + VALUES(output_tokens), requests = requests + 1');
 	$db->query('INSERT INTO ' . assistant_table('log') . ' (user_id, created, question, tools, answer, input_tokens, output_tokens) VALUES ('
-		. (int)$user_id . ', NOW(), ' . "'" . $db->real_escape_string($question) . "', '"
+		. (int)$user_id . ', NOW(), ' . "'" . $db->real_escape_string(($scope_key !== '' ? '[' . $scope_key . '] ' : '') . $question) . "', '"
 		. $db->real_escape_string(implode(',', $result['tools'])) . "', '" . $db->real_escape_string($result['text']) . "', "
 		. (int)$result['input_tokens'] . ', ' . (int)$result['output_tokens'] . ')');
+}
+
+// A log line for something that is not a model answer (a button press). Not counted as a chat request.
+function assistant_audit($db, $user_id, $what, $tools, $note)
+{
+	$db->query('INSERT INTO ' . assistant_table('log') . ' (user_id, created, question, tools, answer, input_tokens, output_tokens) VALUES ('
+		. (int)$user_id . ", '1970-01-01 00:00:00', '" . $db->real_escape_string($what) . "', '" . $db->real_escape_string($tools) . "', '" . $db->real_escape_string($note) . "', 0, 0)");
 }
 ?>

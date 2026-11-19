@@ -1,52 +1,28 @@
 <?php
 /*
- * Endpoint for the Assistant chat box. Receives one question (POST), asks the model,
- * and answers with JSON. Needs a logged-in panel session and the page's CSRF token.
- * Mirrors the way modules/gamemanager/get_server_log.php starts up.
+ * Endpoint for the Assistant chat box. Receives one question (POST) and the chat's scope token,
+ * asks the model, and answers with JSON. Needs a logged-in panel session and the page's CSRF token.
  */
 
-function assistant_json($status, $data)
-{
-	http_response_code($status);
-	header('Content-Type: application/json; charset=UTF-8');
-	echo json_encode($data);
-}
+require_once(__DIR__ . '/assistant_boot.php');
 
 function assistant_main()
 {
-	$panel_root = realpath(__DIR__ . '/../..');
-	chdir($panel_root);
-	require_once($panel_root . '/includes/functions.php');
-	require_once($panel_root . '/includes/helpers.php');
-	startSession();
+	global $db;
+	$ctx = assistant_boot();
+	if ($ctx === null) {
+		return;
+	}
+	list($panel_root, $user_id) = $ctx;
 
-	foreach (array('IMAGES' => 'images/', 'INCLUDES' => 'includes/', 'MODULES' => 'modules/') as $name => $value) {
-		if (!defined($name)) {
-			define($name, $value);
-		}
-	}
-	if (!defined('CONFIG_FILE')) {
-		define('CONFIG_FILE', $panel_root . '/includes/config.inc.php');
-	}
-	global $db, $db_type, $db_host, $db_user, $db_pass, $db_name, $table_prefix, $db_port;
-	require_once(CONFIG_FILE);
-
-	if (empty($_SESSION['users_login']) || empty($_SESSION['user_id'])) {
-		return assistant_json(401, array('text' => 'Please sign in again.'));
-	}
-	$user_id = (int)$_SESSION['user_id'];
-	$sent_token = isset($_POST['csrf']) ? (string)$_POST['csrf'] : '';
-	$real_token = isset($_SESSION['assistant_csrf']) ? (string)$_SESSION['assistant_csrf'] : '';
-	if ($real_token === '' || !hash_equals($real_token, $sent_token)) {
-		return assistant_json(403, array('text' => 'The page expired. Reload it and try again.'));
-	}
-
-	if (!isset($db) || !is_object($db)) {
-		$db = createDatabaseConnection($db_type, $db_host, $db_user, $db_pass, $db_name, $table_prefix, isset($db_port) ? $db_port : null);
-	}
 	require_once(__DIR__ . '/assistant_lib.php');
 	require_once(__DIR__ . '/assistant_tools.php');
 	require_once(__DIR__ . '/assistant_usage.php');
+
+	$scope = assistant_scope_resolve($db, $user_id, isset($_POST['scope']) ? (string)$_POST['scope'] : '');
+	if ($scope === null) {
+		return assistant_json(403, array('text' => 'Open the assistant from your server page in Game Monitor.'));
+	}
 
 	$settings = $db->getSettings();
 	if (!isset($settings['assistant_enabled']) || $settings['assistant_enabled'] !== '1') {
@@ -76,18 +52,21 @@ function assistant_main()
 		return assistant_json(429, array('text' => 'You have used this month\'s assistant allowance.'));
 	}
 
-	$history = isset($_SESSION['assistant_history']) && is_array($_SESSION['assistant_history']) ? $_SESSION['assistant_history'] : array();
-	$run_tool = function ($name, $input) use ($db, $user_id, $panel_root) {
-		return assistant_run_tool($db, $user_id, $panel_root, $name, $input);
+	// Each chat (each server, and the admin chat) keeps its own short history.
+	$all_history = isset($_SESSION['assistant_history']) && is_array($_SESSION['assistant_history']) ? $_SESSION['assistant_history'] : array();
+	$history = isset($all_history[$scope['key']]) ? $all_history[$scope['key']] : array();
+	$run_tool = function ($name, $input) use ($db, $user_id, $panel_root, $scope) {
+		return assistant_run_tool($db, $user_id, $panel_root, $name, $input, $scope);
 	};
-	$result = assistant_ask($key, $model, $effort, $history, $question, $run_tool);
+	$result = assistant_ask($key, $model, $effort, $history, $question, $run_tool, $scope['type']);
 
-	assistant_record($db, $user_id, $question, $result);
+	assistant_record($db, $user_id, $question, $result, $scope['key']);
 	if (!$result['error']) {
 		// Keep only the plain words of each turn, not the tool blocks.
 		$history[] = array('role' => 'user', 'content' => $question);
 		$history[] = array('role' => 'assistant', 'content' => $result['text']);
-		$_SESSION['assistant_history'] = array_slice($history, -ASSISTANT_MAX_HISTORY);
+		$all_history[$scope['key']] = array_slice($history, -ASSISTANT_MAX_HISTORY);
+		$_SESSION['assistant_history'] = $all_history;
 	}
 	assistant_json(200, array('text' => $result['text'], 'buttons' => $result['buttons']));
 }
