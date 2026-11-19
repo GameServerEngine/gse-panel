@@ -1,11 +1,13 @@
 <?php
 /*
- * Repairs the Admin assistant may PROPOSE, and that run only when the administrator presses Apply:
- *  - one SQL statement, on the panel database or on a MySQL server in the panel's list;
- *  - one text file inside the panel folder (a new file, or small exact edits to an existing one).
- * The model never runs anything. The panel checks the rights again when Apply is pressed. A panel
- * file gets a backup first, and a PHP file must pass php -l before it is written. The panel config,
- * secrets and the .git folder can never be changed from here.
+ * The Admin assistant is the support team's tool: it reads anything in the GSE ecosystem (panel files,
+ * agent machines, the panel database and every MySQL server) and proposes the fix. A fix is a CHANGE
+ * SET: any number of steps, each one a file change on the panel or on an agent, an SQL statement on
+ * the panel database or a MySQL server, or a command on the panel or an agent. There are no limits
+ * on what a change set may touch. The administrator sees the whole thing as a diff and presses
+ * Apply; the steps then run in order and stop at the first one that fails. File changes are
+ * remembered so the whole set can be undone. PHP files must pass php -l before they are written
+ * (a broken panel file would take the panel down, and then nothing could be repaired).
  */
 
 require_once(__DIR__ . '/assistant_files.php');
@@ -13,41 +15,25 @@ require_once(__DIR__ . '/assistant_diff.php');
 require_once(__DIR__ . '/assistant_admin.php');
 require_once(__DIR__ . '/assistant_admin_files.php');
 
-// ---------------------------------------------------------------------------------------------
-// SQL
+if (!defined('ASSISTANT_CHANGESET_MAX_STEPS')) define('ASSISTANT_CHANGESET_MAX_STEPS', 40);
+if (!defined('ASSISTANT_CHANGESET_MAX_BYTES')) define('ASSISTANT_CHANGESET_MAX_BYTES', 4194304);
 
-// Returns '' when the statement may be proposed, otherwise the reason.
-function assistant_admin_sql_problem($sql)
-{
-	$sql = rtrim(trim((string)$sql), "; \t\r\n");
-	if ($sql === '') {
-		return 'Give one SQL statement.';
-	}
-	if (strlen($sql) > 20000) {
-		return 'The statement is too long.';
-	}
-	if (strpos($sql, ';') !== false) {
-		return 'Only one statement at a time. Remove the semicolon.';
-	}
-	if (preg_match('/(--|#|\/\*)/', $sql)) {
-		return 'Comments are not allowed in the statement.';
-	}
-	if (preg_match('/\b(DROP|TRUNCATE|RENAME)\b/i', $sql)) {
-		return 'DROP, TRUNCATE and RENAME are not allowed here. Do those by hand.';
-	}
-	$parts = preg_split('/\s+/', $sql);
-	$first = strtoupper($parts[0]);
-	$allowed = array('UPDATE', 'INSERT', 'DELETE', 'REPLACE', 'CREATE', 'ALTER', 'GRANT', 'REVOKE', 'FLUSH');
-	if (!in_array($first, $allowed, true)) {
-		return 'Only UPDATE, INSERT, DELETE, REPLACE, CREATE, ALTER, GRANT, REVOKE or FLUSH can be proposed.';
-	}
-	if (($first === 'UPDATE' || $first === 'DELETE') && !preg_match('/\bWHERE\b/i', $sql)) {
-		return 'UPDATE and DELETE need a WHERE clause.';
-	}
-	return '';
-}
+// ---------------------------------------------------------------------------------------------
+// Databases
 
 // A target is 'panel' or 'mysql:<mysql_server_id>' from the panel's MySQL server list.
+function assistant_admin_sql_target($input)
+{
+	$which = isset($input['database']) ? (string)$input['database'] : '';
+	if ($which === 'panel') {
+		return 'panel';
+	}
+	if ($which === 'mysql') {
+		return 'mysql:' . (int)(isset($input['mysql_server_id']) ? $input['mysql_server_id'] : 0);
+	}
+	return null;
+}
+
 function assistant_admin_sql_target_ok($db, $target)
 {
 	if ($target === 'panel') {
@@ -79,108 +65,60 @@ function assistant_admin_sql_connect($db, $target)
 	return false;
 }
 
-function assistant_tool_propose_sql($db, $user_id, $input)
+// Read a database as the administrator: any SELECT, SHOW, DESCRIBE or EXPLAIN, on the panel database or any
+// MySQL server (use schema.table to reach other databases there). Up to 100 rows.
+function assistant_tool_db_read($db, $input)
 {
-	assistant_expire_proposals($db);
-	$which = isset($input['database']) ? (string)$input['database'] : '';
-	if ($which === 'panel') {
-		$target = 'panel';
-	} elseif ($which === 'mysql') {
-		$target = 'mysql:' . (int)(isset($input['mysql_server_id']) ? $input['mysql_server_id'] : 0);
-	} else {
-		return array('data' => array('error' => 'database must be panel or mysql.'));
+	$target = assistant_admin_sql_target($input);
+	if ($target === null || !assistant_admin_sql_target_ok($db, $target)) {
+		return array('data' => array('error' => 'database must be panel, or mysql with a mysql_server_id from mysql_health.'));
 	}
-	if (!assistant_admin_sql_target_ok($db, $target)) {
-		return array('data' => array('error' => 'No MySQL server has that id. mysql_health lists them with their id.'));
-	}
-	$sql = rtrim(trim((string)(isset($input['sql']) ? $input['sql'] : '')), "; \t\r\n");
-	$problem = assistant_admin_sql_problem($sql);
-	if ($problem !== '') {
-		return array('data' => array('error' => $problem));
-	}
-	$note = isset($input['summary']) ? (string)$input['summary'] : '';
-	$id = assistant_save_proposal($db, $user_id, 0, 'sql', $target, '', $sql, $note);
-	if ($id < 1) {
-		return array('data' => array('error' => 'The statement could not be saved.'));
-	}
-	return array(
-		'data' => array('ok' => true, 'note' => 'Saved as proposal #' . $id . '. It is NOT run. The administrator reviews the exact statement and presses Apply. Say what it changes and what it does not.'),
-		'button' => array('type' => 'proposal', 'id' => $id, 'label' => 'Review SQL on ' . ($target === 'panel' ? 'the panel database' : 'MySQL server ' . (int)substr($target, 6))),
-	);
-}
-
-function assistant_admin_sql_apply($db, $p)
-{
-	$sql = (string)$p['new_content'];
-	$problem = assistant_admin_sql_problem($sql);
-	if ($problem !== '') {
-		return array('ok' => false, 'message' => $problem);
-	}
-	$target = (string)$p['target'];
-	if (!assistant_admin_sql_target_ok($db, $target)) {
-		return array('ok' => false, 'message' => 'That MySQL server is no longer in the panel. Nothing was changed.');
+	$sql = trim((string)(isset($input['sql']) ? $input['sql'] : ''));
+	if (!preg_match('/^\s*(SELECT|SHOW|DESCRIBE|DESC|EXPLAIN)\b/i', $sql)) {
+		return array('data' => array('error' => 'db_read runs SELECT, SHOW, DESCRIBE or EXPLAIN. Changes go in propose_changes.'));
 	}
 	$link = assistant_admin_sql_connect($db, $target);
 	if (!$link) {
-		return array('ok' => false, 'message' => 'Could not log in to that database server. Nothing was changed.');
+		return array('data' => array('error' => 'Could not log in to that database server.'));
 	}
 	mysqli_report(MYSQLI_REPORT_OFF);
-	$ok = mysqli_query($link, $sql);
-	if ($ok === false) {
+	$result = mysqli_query($link, $sql);
+	if ($result === false) {
 		$error = mysqli_error($link);
 		mysqli_close($link);
-		return array('ok' => false, 'message' => 'MySQL refused the statement: ' . $error);
+		return array('data' => array('error' => 'MySQL said: ' . $error));
 	}
-	$rows = (int)mysqli_affected_rows($link);
+	$lines = array();
+	$count = 0;
+	if ($result instanceof mysqli_result) {
+		while (($row = mysqli_fetch_assoc($result)) !== null) {
+			if (++$count > 100) {
+				break;
+			}
+			$lines[] = json_encode($row, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+		}
+		mysqli_free_result($result);
+	}
 	mysqli_close($link);
-	$db->query('UPDATE ' . assistant_table('proposals') . " SET status = 'applied', decided = NOW() WHERE id = " . (int)$p['id'] . " AND status = 'pending'");
-	return array('ok' => true, 'message' => 'Ran it on ' . ($target === 'panel' ? 'the panel database' : 'MySQL server ' . (int)substr($target, 6)) . '. Rows changed: ' . $rows . '.');
+	$text = implode("\n", $lines);
+	if (strlen($text) > 14000) {
+		$text = substr($text, 0, 14000) . "\n(more not shown)";
+	}
+	return array('data' => array('rows_shown' => min($count, 100), 'more_rows' => $count > 100, 'rows' => assistant_wrap('db_data', $text === '' ? '(no rows)' : $text)));
 }
 
 // ---------------------------------------------------------------------------------------------
-// Panel files
+// Where a file lives
 
-// A path relative to the panel folder, cleaned. Returns the string, or false when it is not allowed.
-function assistant_admin_panel_rel($path)
+// Absolute path for a panel file; a relative one is inside the panel folder. Returns the path or null.
+function assistant_admin_panel_full($panel_root, $path)
 {
 	$path = trim((string)$path);
-	if ($path === '' || $path[0] === '/') {
-		return false;
-	}
-	return assistant_clean_rel($path);
-}
-
-// The real path of a file or folder inside the panel folder, or null (outside, a symlink, or missing parent).
-function assistant_admin_panel_full($panel_root, $rel)
-{
-	$root = realpath($panel_root);
-	if ($root === false || $rel === false || $rel === '') {
+	$clean = assistant_clean_rel($path);
+	if ($path === '' || $clean === false) {
 		return null;
 	}
-	$full = $root . '/' . $rel;
-	if (is_link($full)) {
-		return null;
-	}
-	$parent = realpath(dirname($full));
-	if ($parent === false || ($parent !== $root && strpos($parent, $root . '/') !== 0)) {
-		return null;
-	}
-	if (is_file($full)) {
-		$real = realpath($full);
-		if ($real === false || strpos($real, $root . '/') !== 0) {
-			return null;
-		}
-	}
-	return $full;
-}
-
-// '' when the file may be changed from here, otherwise the reason.
-function assistant_admin_panel_forbidden($rel)
-{
-	if (assistant_secret_filename('/' . $rel)) {
-		return 'That file holds secrets or the panel configuration and cannot be changed from here.';
-	}
-	return '';
+	return (isset($path[0]) && $path[0] === '/') ? '/' . $clean : rtrim(realpath($panel_root), '/') . '/' . $clean;
 }
 
 // Runs php -l on the text. Returns '' when it passes, otherwise the reason.
@@ -188,11 +126,11 @@ function assistant_admin_php_lint($source)
 {
 	$disabled = array_map('trim', explode(',', (string)ini_get('disable_functions')));
 	if (!function_exists('exec') || in_array('exec', $disabled, true)) {
-		return 'PHP files cannot be syntax-checked on this server, so they cannot be changed from here.';
+		return '';
 	}
 	$tmp = tempnam(sys_get_temp_dir(), 'gselint');
 	if ($tmp === false) {
-		return 'The syntax check could not start.';
+		return '';
 	}
 	file_put_contents($tmp, (string)$source);
 	$bin = (defined('PHP_BINARY') && basename(PHP_BINARY) === 'php') ? PHP_BINARY : 'php';
@@ -200,170 +138,319 @@ function assistant_admin_php_lint($source)
 	$status = 1;
 	exec(escapeshellarg($bin) . ' -l ' . escapeshellarg($tmp) . ' 2>&1', $out, $status);
 	unlink($tmp);
-	if ($status !== 0) {
-		return 'PHP syntax check failed: ' . substr(implode(' ', $out), 0, 300);
-	}
-	return '';
+	return $status !== 0 ? 'PHP syntax check failed: ' . substr(implode(' ', $out), 0, 300) : '';
 }
 
-function assistant_tool_propose_panel_edit($db, $user_id, $panel_root, $cfg, $input)
+// Read a file for a step. Returns array(exists, text, error).
+function assistant_admin_step_read($db, $panel_root, $where, $server_id, $path)
 {
-	assistant_expire_proposals($db);
-	$rel = assistant_admin_panel_rel(isset($input['path']) ? $input['path'] : '');
-	if ($rel === false || $rel === '') {
-		return array('data' => array('error' => 'Give a path relative to the panel folder, like includes/functions.php.'));
-	}
-	$full = assistant_admin_panel_full($panel_root, $rel);
-	if ($full === null) {
-		return array('data' => array('error' => 'That path is outside the panel folder, or its folder does not exist.'));
-	}
-	$why = assistant_admin_panel_forbidden($rel);
-	if ($why !== '') {
-		return array('data' => array('error' => $why));
-	}
-	if (is_dir($full)) {
-		return array('data' => array('error' => 'That is a folder.'));
-	}
-	if (assistant_binary_extension($rel)) {
-		return array('data' => array('error' => 'Only text files can be changed.'));
-	}
-	$note = isset($input['summary']) ? (string)$input['summary'] : '';
-	$has_content = isset($input['content']) && is_string($input['content']);
-	$old = '';
-	if (is_file($full)) {
-		if ($has_content) {
-			return array('data' => array('error' => 'That file exists. Change it with edits (old_text and new_text), not content.'));
+	if ($where === 'panel') {
+		$full = assistant_admin_panel_full($panel_root, $path);
+		if ($full === null) {
+			return array(false, '', 'That path is not valid.');
+		}
+		if (is_dir($full)) {
+			return array(false, '', 'That is a folder.');
+		}
+		if (!is_file($full)) {
+			return array(false, '', '');
 		}
 		if (filesize($full) > ASSISTANT_FILE_EDIT_MAX) {
-			return array('data' => array('error' => 'That file is too big to edit here.'));
+			return array(true, '', 'That file is too big to edit here.');
 		}
-		$old = (string)file_get_contents($full);
-		if (assistant_looks_binary($old)) {
-			return array('data' => array('error' => 'That is a binary file.'));
-		}
-		list($new, $why) = assistant_apply_edits($old, isset($input['edits']) ? $input['edits'] : array());
-		if ($new === null) {
-			return array('data' => array('error' => $why));
-		}
-	} else {
-		if (!$has_content || $input['content'] === '') {
-			return array('data' => array('error' => 'That file does not exist. To create it, give its full text in content.'));
-		}
-		if (assistant_looks_binary($input['content'])) {
-			return array('data' => array('error' => 'Only text files can be created.'));
-		}
-		$new = $input['content'];
+		return array(true, (string)file_get_contents($full), '');
 	}
-	if (strlen($new) > ASSISTANT_FILE_EDIT_MAX) {
-		return array('data' => array('error' => 'The result would be too big.'));
+	list($clean, $why) = assistant_agent_path(null, $path);
+	if ($clean === null) {
+		return array(false, '', $why);
 	}
-	if ($new === $old) {
-		return array('data' => array('error' => 'That change would not alter the file.'));
+	list($remote, $why) = assistant_agent_open($db, $panel_root, $server_id);
+	if ($remote === null) {
+		return array(false, '', $why);
 	}
-	$id = assistant_save_proposal($db, $user_id, 0, 'panel_file', 'panel:' . $rel, $old, $new, $note);
+	$size = assistant_file_size(array('remote' => $remote), $clean);
+	if ($size === null) {
+		return array(false, '', '');
+	}
+	if ($size > ASSISTANT_FILE_EDIT_MAX) {
+		return array(true, '', 'That file is too big to edit here.');
+	}
+	$text = '';
+	if ($remote->remote_readfile($clean, $text) !== 1) {
+		return array(true, '', 'The file could not be read.');
+	}
+	return array(true, $text, '');
+}
+
+// ---------------------------------------------------------------------------------------------
+// Building a change set
+
+function assistant_changeset_build($db, $panel_root, $steps)
+{
+	if (!is_array($steps) || count($steps) < 1) {
+		return array(null, 'Give at least one step.');
+	}
+	if (count($steps) > ASSISTANT_CHANGESET_MAX_STEPS) {
+		return array(null, 'At most ' . ASSISTANT_CHANGESET_MAX_STEPS . ' steps in one change set. Split it.');
+	}
+	$built = array();
+	$bytes = 0;
+	foreach (array_values($steps) as $i => $s) {
+		$n = $i + 1;
+		$kind = is_array($s) && isset($s['kind']) ? (string)$s['kind'] : '';
+		$where = isset($s['where']) ? (string)$s['where'] : 'panel';
+		$server_id = isset($s['server_id']) ? (int)$s['server_id'] : 0;
+		if ($kind === 'file') {
+			$path = isset($s['path']) ? trim((string)$s['path']) : '';
+			if ($path === '' || !in_array($where, array('panel', 'agent'), true)) {
+				return array(null, 'Step ' . $n . ': a file step needs where (panel or agent) and a path.');
+			}
+			list($exists, $old, $error) = assistant_admin_step_read($db, $panel_root, $where, $server_id, $path);
+			if ($error !== '') {
+				return array(null, 'Step ' . $n . ': ' . $error);
+			}
+			if ($exists && assistant_looks_binary($old)) {
+				return array(null, 'Step ' . $n . ': that is a binary file.');
+			}
+			$has_content = isset($s['content']) && is_string($s['content']);
+			if ($has_content) {
+				$new = $s['content'];
+			} elseif ($exists) {
+				list($new, $why) = assistant_apply_edits($old, isset($s['edits']) ? $s['edits'] : array());
+				if ($new === null) {
+					return array(null, 'Step ' . $n . ': ' . $why);
+				}
+			} else {
+				return array(null, 'Step ' . $n . ': that file does not exist. To create it, give its full text in content.');
+			}
+			if (assistant_looks_binary($new)) {
+				return array(null, 'Step ' . $n . ': only text can be written.');
+			}
+			if ($new === $old && $exists) {
+				return array(null, 'Step ' . $n . ': that would not change the file.');
+			}
+			$bytes += strlen($new) + strlen($old);
+			$built[] = array('kind' => 'file', 'where' => $where, 'server_id' => $server_id,
+				'path' => $where === 'panel' ? assistant_admin_panel_full($panel_root, $path) : $path,
+				'exists' => $exists, 'old' => base64_encode($old), 'new' => base64_encode($new));
+		} elseif ($kind === 'sql') {
+			$target = assistant_admin_sql_target($s);
+			$sql = isset($s['sql']) ? rtrim(trim((string)$s['sql']), ';') : '';
+			if ($target === null || !assistant_admin_sql_target_ok($db, $target) || $sql === '') {
+				return array(null, 'Step ' . $n . ': an SQL step needs database (panel or mysql), the mysql_server_id from mysql_health when it is mysql, and one statement in sql.');
+			}
+			$bytes += strlen($sql);
+			$built[] = array('kind' => 'sql', 'target' => $target, 'sql' => $sql);
+		} elseif ($kind === 'command') {
+			$command = isset($s['command']) ? trim((string)$s['command']) : '';
+			if ($command === '' || !in_array($where, array('panel', 'agent'), true) || ($where === 'agent' && $server_id < 1)) {
+				return array(null, 'Step ' . $n . ': a command step needs where (panel or agent), a server_id for an agent, and the command.');
+			}
+			$bytes += strlen($command);
+			$built[] = array('kind' => 'command', 'where' => $where, 'server_id' => $server_id, 'command' => $command);
+		} else {
+			return array(null, 'Step ' . $n . ': kind must be file, sql or command.');
+		}
+	}
+	if ($bytes > ASSISTANT_CHANGESET_MAX_BYTES) {
+		return array(null, 'The change set is too big. Split it.');
+	}
+	return array($built, '');
+}
+
+function assistant_changeset_where($step)
+{
+	if ($step['kind'] === 'sql') {
+		return $step['target'] === 'panel' ? 'the panel database' : 'MySQL server ' . (int)substr($step['target'], 6);
+	}
+	return $step['where'] === 'panel' ? 'the panel' : 'agent ' . (int)$step['server_id'];
+}
+
+// The text the administrator reviews: file changes as diffs, SQL and commands as written.
+function assistant_changeset_text($p)
+{
+	$steps = json_decode((string)$p['new_content'], true);
+	if (!is_array($steps)) {
+		return '(unreadable change set)';
+	}
+	$out = '';
+	foreach ($steps as $i => $s) {
+		$out .= '=== Step ' . ($i + 1) . ': ';
+		if ($s['kind'] === 'file') {
+			$out .= ($s['exists'] ? 'change ' : 'create ') . $s['path'] . ' on ' . assistant_changeset_where($s) . "\n";
+			$out .= assistant_unified_diff(base64_decode($s['old']), base64_decode($s['new']), $s['path']) . "\n";
+		} elseif ($s['kind'] === 'sql') {
+			$out .= 'run SQL on ' . assistant_changeset_where($s) . "\n" . $s['sql'] . "\n\n";
+		} else {
+			$out .= 'run a command on ' . assistant_changeset_where($s) . "\n$ " . $s['command'] . "\n\n";
+		}
+	}
+	return $out;
+}
+
+function assistant_tool_propose_changes($db, $user_id, $panel_root, $input)
+{
+	assistant_expire_proposals($db);
+	list($steps, $why) = assistant_changeset_build($db, $panel_root, isset($input['steps']) ? $input['steps'] : array());
+	if ($steps === null) {
+		return array('data' => array('error' => $why));
+	}
+	$json = json_encode($steps);
+	$note = isset($input['summary']) ? (string)$input['summary'] : '';
+	$id = assistant_save_proposal($db, $user_id, 0, 'changeset', count($steps) . ' step(s)', '', $json, $note);
 	if ($id < 1) {
-		return array('data' => array('error' => 'The change could not be saved.'));
+		return array('data' => array('error' => 'The change set could not be saved.'));
 	}
-	$diff = assistant_redact(assistant_unified_diff($old, $new, $rel));
-	if (strlen($diff) > 3000) {
-		$diff = substr($diff, 0, 3000) . "\n(more not shown)";
+	$text = assistant_changeset_text(array('new_content' => $json));
+	if (strlen($text) > 6000) {
+		$text = substr($text, 0, 6000) . "\n(more not shown)";
 	}
 	return array(
 		'data' => array(
 			'ok' => true,
-			'note' => 'Saved as proposal #' . $id . '. Nothing has been written yet. The administrator presses Apply; the panel keeps a backup and checks PHP syntax first. Tell them what the change does in plain words.',
-			'diff_preview' => assistant_wrap('file_data', $diff),
+			'note' => 'Saved as change set #' . $id . ' with ' . count($steps) . ' step(s). NOTHING has run yet. The administrator reviews the diff and presses Apply; the steps then run in order and stop at the first failure. Explain in plain words what each step does and why.',
+			'preview' => assistant_wrap('file_data', $text),
 		),
-		'button' => array('type' => 'proposal', 'id' => $id, 'label' => ($old === '' ? 'Review new panel file ' : 'Review change to panel file ') . $rel),
+		'button' => array('type' => 'proposal', 'id' => $id, 'label' => 'Review change set #' . $id . ' (' . count($steps) . ' step' . (count($steps) === 1 ? '' : 's') . ')'),
 	);
 }
 
-// Applies a panel file proposal. Called only after the caller checked the proposal is visible to the admin.
-function assistant_admin_panel_apply($db, $p, $panel_root)
+// ---------------------------------------------------------------------------------------------
+// Applying and undoing
+
+function assistant_changeset_write($db, $panel_root, $step, $text)
 {
-	$rel = substr((string)$p['target'], 6);
-	$full = assistant_admin_panel_full($panel_root, $rel);
-	if ($full === null || assistant_admin_panel_forbidden($rel) !== '') {
-		return array('ok' => false, 'message' => 'That path is not allowed. Nothing was changed.');
-	}
-	$is_new = (string)$p['old_content'] === '';
-	$exists = is_file($full);
-	if ($is_new && $exists) {
-		return array('ok' => false, 'message' => 'The file exists now. Nothing was changed. Ask the assistant again.');
-	}
-	if (!$is_new) {
-		$current = $exists ? file_get_contents($full) : false;
-		if ($current === false || sha1($current) !== sha1((string)$p['old_content'])) {
-			return array('ok' => false, 'message' => 'The file changed since this was proposed. Nothing was changed. Ask the assistant again.');
+	if ($step['where'] === 'panel') {
+		$dir = dirname($step['path']);
+		if (!is_dir($dir) && !@mkdir($dir, 0775, true)) {
+			return 'could not create the folder ' . $dir;
 		}
+		return file_put_contents($step['path'], $text, LOCK_EX) === strlen($text) ? '' : 'the write failed';
 	}
-	$new = (string)$p['new_content'];
-	if (substr($rel, -4) === '.php') {
-		$lint = assistant_admin_php_lint($new);
-		if ($lint !== '') {
-			return array('ok' => false, 'message' => $lint . ' Nothing was changed.');
-		}
+	list($remote, $why) = assistant_agent_open($db, $panel_root, $step['server_id']);
+	if ($remote === null) {
+		return $why;
 	}
-	$backup = '';
-	if (!$is_new) {
-		$backup = $full . '.bak-' . date('Ymd-His');
-		if (!copy($full, $backup)) {
-			return array('ok' => false, 'message' => 'The backup copy could not be made. Nothing was changed.');
-		}
-	}
-	if (file_put_contents($full, $new, LOCK_EX) !== strlen($new)) {
-		if ($backup !== '') {
-			copy($backup, $full);
-		}
-		return array('ok' => false, 'message' => 'The write failed. The file was put back from its backup where one was made.');
-	}
-	$db->query('UPDATE ' . assistant_table('proposals') . " SET status = 'applied', decided = NOW() WHERE id = " . (int)$p['id'] . " AND status = 'pending'");
-	return array(
-		'ok' => true,
-		'message' => ($is_new ? 'Created ' : 'Changed ') . $rel . '.' . ($backup !== '' ? ' The old version is saved as ' . basename($backup) . '.' : ''),
-		'undo' => !$is_new,
-		'id' => (int)$p['id'],
-	);
+	return $remote->remote_writefile($step['path'], $text) === 1 ? '' : 'the agent refused the write';
 }
 
-function assistant_admin_panel_undo($db, $p, $panel_root)
+// Runs one step. Returns array(ok, message).
+function assistant_changeset_run_step($db, $panel_root, $step)
 {
-	if ($p['status'] !== 'applied' || (string)$p['old_content'] === '') {
-		return array('ok' => false, 'message' => 'Only a change to an existing file that was applied can be undone.');
+	if ($step['kind'] === 'file') {
+		$old = base64_decode($step['old']);
+		$new = base64_decode($step['new']);
+		list($exists, $current, $error) = assistant_admin_step_read($db, $panel_root, $step['where'], $step['server_id'], $step['path']);
+		if ($error !== '') {
+			return array(false, $error);
+		}
+		if ($step['exists'] ? (!$exists || sha1($current) !== sha1($old)) : $exists) {
+			return array(false, $step['path'] . ' changed since this was proposed. Ask the assistant again.');
+		}
+		if (substr($step['path'], -4) === '.php' && ($lint = assistant_admin_php_lint($new)) !== '') {
+			return array(false, $step['path'] . ': ' . $lint);
+		}
+		$error = assistant_changeset_write($db, $panel_root, $step, $new);
+		return $error === '' ? array(true, ($step['exists'] ? 'changed ' : 'created ') . $step['path']) : array(false, $step['path'] . ': ' . $error);
 	}
-	$rel = substr((string)$p['target'], 6);
-	$full = assistant_admin_panel_full($panel_root, $rel);
-	if ($full === null || !is_file($full)) {
-		return array('ok' => false, 'message' => 'That path is not allowed.');
+	if ($step['kind'] === 'sql') {
+		if (!assistant_admin_sql_target_ok($db, $step['target'])) {
+			return array(false, 'that MySQL server is not in the panel any more');
+		}
+		$link = assistant_admin_sql_connect($db, $step['target']);
+		if (!$link) {
+			return array(false, 'could not log in to ' . assistant_changeset_where($step));
+		}
+		mysqli_report(MYSQLI_REPORT_OFF);
+		if (mysqli_query($link, $step['sql']) === false) {
+			$error = mysqli_error($link);
+			mysqli_close($link);
+			return array(false, 'MySQL refused the statement: ' . $error);
+		}
+		$rows = (int)mysqli_affected_rows($link);
+		mysqli_close($link);
+		return array(true, 'ran SQL on ' . assistant_changeset_where($step) . ' (rows changed: ' . $rows . ')');
 	}
-	$current = file_get_contents($full);
-	if ($current === false || sha1($current) !== sha1((string)$p['new_content'])) {
-		return array('ok' => false, 'message' => 'The file has changed since. It was not touched.');
+	if ($step['where'] === 'panel') {
+		$out = array();
+		$status = 1;
+		@exec('timeout 120 bash -c ' . escapeshellarg($step['command']) . ' 2>&1', $out, $status);
+		return array($status === 0, 'command on the panel exited ' . $status . ': ' . substr(implode("\n", $out), -1500));
 	}
-	if (file_put_contents($full, (string)$p['old_content'], LOCK_EX) !== strlen((string)$p['old_content'])) {
-		return array('ok' => false, 'message' => 'The machine refused the write. Nothing was changed.');
+	list($remote, $why) = assistant_agent_open($db, $panel_root, $step['server_id']);
+	if ($remote === null) {
+		return array(false, $why);
 	}
-	$db->query('UPDATE ' . assistant_table('proposals') . " SET status = 'undone', decided = NOW() WHERE id = " . (int)$p['id']);
-	return array('ok' => true, 'message' => 'Put ' . $rel . ' back the way it was.');
+	$result = $remote->exec($step['command']);
+	return array(true, 'command on agent ' . (int)$step['server_id'] . ': ' . substr(is_array($result) ? json_encode($result) : (string)$result, -1500));
 }
 
-// Entry points used by confirm.php and assistant_files.php for the two admin kinds.
 function assistant_admin_fix_apply($db, $p, $panel_root)
 {
 	if ($p['status'] !== 'pending') {
-		return array('ok' => false, 'message' => 'That change is not waiting any more (' . $p['status'] . ').');
+		return array('ok' => false, 'message' => 'That change set is not waiting any more (' . $p['status'] . ').');
 	}
-	if ($p['kind'] === 'sql') {
-		return assistant_admin_sql_apply($db, $p);
+	$steps = json_decode((string)$p['new_content'], true);
+	if (!is_array($steps)) {
+		return array('ok' => false, 'message' => 'The change set is unreadable. Nothing was changed.');
 	}
-	return assistant_admin_panel_apply($db, $p, $panel_root);
+	set_time_limit(0);
+	$lines = array();
+	$done = 0;
+	$failed = false;
+	foreach ($steps as $i => $step) {
+		list($ok, $message) = assistant_changeset_run_step($db, $panel_root, $step);
+		if (!$ok) {
+			$lines[] = 'Step ' . ($i + 1) . ' FAILED: ' . $message . '. The steps after it did not run.';
+			$failed = true;
+			break;
+		}
+		$steps[$i]['applied'] = true;
+		$done++;
+		$lines[] = 'Step ' . ($i + 1) . ': ' . $message;
+	}
+	if ($done > 0) {
+		$db->query('UPDATE ' . assistant_table('proposals') . ' SET new_content = 0x' . bin2hex(json_encode($steps)) . ", status = '" . ($failed ? 'partial' : 'applied') . "', decided = NOW() WHERE id = " . (int)$p['id']);
+	}
+	return array('ok' => !$failed, 'message' => ($failed ? ($done > 0 ? 'Stopped part way. ' : 'Nothing was changed. ') : 'Done. ') . implode("\n", $lines) . ($done > 0 ? "\nYou can undo the file changes with the Undo button." : ''), 'undo' => $done > 0, 'id' => (int)$p['id']);
 }
 
 function assistant_admin_fix_undo($db, $p, $panel_root)
 {
-	if ($p['kind'] !== 'panel_file') {
-		return array('ok' => false, 'message' => 'That change cannot be undone. Run a corrective statement instead.');
+	if ($p['status'] !== 'applied' && $p['status'] !== 'partial') {
+		return array('ok' => false, 'message' => 'Only a change set that was applied can be undone.');
 	}
-	return assistant_admin_panel_undo($db, $p, $panel_root);
+	$steps = json_decode((string)$p['new_content'], true);
+	if (!is_array($steps)) {
+		return array('ok' => false, 'message' => 'The change set is unreadable.');
+	}
+	$lines = array();
+	foreach (array_reverse(array_keys($steps)) as $i) {
+		$step = $steps[$i];
+		if (empty($step['applied'])) {
+			continue;
+		}
+		if ($step['kind'] !== 'file') {
+			$lines[] = 'Step ' . ($i + 1) . ' (' . $step['kind'] . ') cannot be undone automatically.';
+			continue;
+		}
+		list($exists, $current, $error) = assistant_admin_step_read($db, $panel_root, $step['where'], $step['server_id'], $step['path']);
+		if ($error !== '' || !$exists || sha1($current) !== sha1(base64_decode($step['new']))) {
+			$lines[] = 'Step ' . ($i + 1) . ': ' . $step['path'] . ' has changed since, so it was not touched.';
+			continue;
+		}
+		if (!$step['exists']) {
+			if ($step['where'] === 'panel' && @unlink($step['path'])) {
+				$lines[] = 'Step ' . ($i + 1) . ': removed the file ' . $step['path'] . ' that was created.';
+			} else {
+				$lines[] = 'Step ' . ($i + 1) . ': the new file ' . $step['path'] . ' was left in place.';
+			}
+			continue;
+		}
+		$error = assistant_changeset_write($db, $panel_root, $step, base64_decode($step['old']));
+		$lines[] = 'Step ' . ($i + 1) . ': ' . ($error === '' ? 'put ' . $step['path'] . ' back the way it was.' : $step['path'] . ': ' . $error);
+	}
+	$db->query('UPDATE ' . assistant_table('proposals') . " SET status = 'undone', decided = NOW() WHERE id = " . (int)$p['id']);
+	return array('ok' => true, 'message' => implode("\n", $lines));
 }
 ?>

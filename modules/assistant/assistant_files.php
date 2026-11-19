@@ -321,6 +321,14 @@ function assistant_proposal_view($db, $user_id, $scope, $id)
 	if ($p === null || !assistant_proposal_visible($db, $user_id, $scope, $p)) {
 		return array('ok' => false, 'message' => 'That change was not found.');
 	}
+	if ($p['kind'] === 'changeset') {
+		require_once(__DIR__ . '/assistant_admin_fix.php');
+		$text = assistant_changeset_text($p);
+		if (strlen($text) > 200000) {
+			$text = substr($text, 0, 200000) . "\n(more not shown)";
+		}
+		return array('ok' => true, 'id' => (int)$p['id'], 'target' => $p['target'], 'status' => $p['status'], 'is_new' => false, 'note' => (string)$p['note'], 'diff' => $text);
+	}
 	$diff = assistant_unified_diff((string)$p['old_content'], (string)$p['new_content'], $p['target']);
 	if (strlen($diff) > 40000) {
 		$diff = substr($diff, 0, 40000) . "\n(more not shown)";
@@ -345,7 +353,7 @@ function assistant_proposal_visible($db, $user_id, $scope, $p)
 function assistant_proposal_apply($db, $user_id, $scope, $id, $panel_root)
 {
 	$p = assistant_load_proposal($db, $id);
-	if ($p !== null && in_array($p['kind'], array('sql', 'panel_file'), true)) {
+	if ($p !== null && $p['kind'] === 'changeset') {
 		if (!assistant_proposal_visible($db, $user_id, $scope, $p)) {
 			return array('ok' => false, 'message' => 'That change was not found.');
 		}
@@ -400,7 +408,7 @@ function assistant_proposal_discard($db, $user_id, $scope, $id)
 function assistant_proposal_undo($db, $user_id, $scope, $id, $panel_root)
 {
 	$p = assistant_load_proposal($db, $id);
-	if ($p !== null && in_array($p['kind'], array('sql', 'panel_file'), true)) {
+	if ($p !== null && $p['kind'] === 'changeset') {
 		if (!assistant_proposal_visible($db, $user_id, $scope, $p)) {
 			return array('ok' => false, 'message' => 'That change was not found.');
 		}

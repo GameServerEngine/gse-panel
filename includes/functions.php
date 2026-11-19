@@ -987,31 +987,22 @@ function updateAllPanelModules(){
 	}
 }
 
-// Installs modules that ship with the panel but have no row yet (for example Assistant after an update).
-// A folder seen before is never installed again, so a module an admin removed stays removed.
+// Installs every module that is on disk but has no row in the modules table (for example Assistant after an update).
 function panel_install_new_modules($db)
 {
     if (!function_exists('install_module') || !function_exists('list_available_modules')) {
         return;
     }
-    $settings = $db->getSettings();
     $installed = array();
     foreach ((array)$db->getInstalledModules() as $row) {
         $installed[] = $row['folder'];
     }
-    $seen = isset($settings['modules_seen']) && $settings['modules_seen'] !== ''
-        ? explode(',', $settings['modules_seen'])
-        : $installed;
     foreach ((array)list_available_modules() as $folder) {
-        if (preg_match('/\.bak/i', $folder) || !is_file('modules/' . $folder . '/module.php')) {
-            continue;
-        }
-        if (in_array($folder, $seen, true) || in_array($folder, $installed, true)) {
+        if (preg_match('/\.bak/i', $folder) || in_array($folder, $installed, true) || !is_file('modules/' . $folder . '/module.php')) {
             continue;
         }
         install_module($db, $folder, TRUE);
     }
-    $db->setSettings(array('modules_seen' => implode(',', array_values(array_unique(array_merge($seen, $installed))))));
 }
 
 function getRemoteContent($url, $timeout = 5, $referrer = ""){

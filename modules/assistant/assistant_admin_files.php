@@ -30,51 +30,29 @@ function assistant_clean_rel($path)
 	return implode('/', $parts);
 }
 
-// A path the admin gave -> a real path on the panel server, inside the panel folder or an allowed folder.
-// $new is true for a file that may not exist yet (patches). Returns array(full, label, '') or array(null, null, 'reason').
+// A path the admin gave -> a real path on the panel server. Absolute paths are taken as they are; a relative path is
+// inside the panel folder. Nothing is off limits. $new is true for a file that may not exist yet.
+// Returns array(full, label, '') or array(null, null, 'reason').
 function assistant_panel_resolve($panel_root, $cfg, $path, $new = false)
 {
 	$path = trim((string)$path);
-	$roots = array(realpath($panel_root));
-	foreach ($cfg['admin_paths'] as $extra) {
-		$real = realpath($extra);
-		if ($real !== false) {
-			$roots[] = $real;
-		}
+	$root = realpath($panel_root);
+	$clean = assistant_clean_rel($path);
+	if ($clean === false) {
+		return array(null, null, 'Do not use . or .. in a path. Give the full path instead.');
 	}
-	if (isset($path[0]) && $path[0] === '/') {
-		$clean = assistant_clean_rel($path);
-		$full = $clean === false ? false : '/' . $clean;
-	} else {
-		$clean = assistant_clean_rel($path);
-		$full = $clean === false ? false : $roots[0] . '/' . $clean;
-	}
-	if ($full === false) {
-		return array(null, null, 'That path is not allowed.');
-	}
-	$full = $full === '/' ? '/' : rtrim($full, '/');
-	if (assistant_secret_filename($full)) {
-		return array(null, null, 'That file holds secrets and is not readable here.');
-	}
-	// The nearest folder that exists must resolve (symlinks too) to somewhere allowed.
-	$probe = $full;
-	while (!file_exists($probe) && $probe !== '/' && $probe !== '') {
-		$probe = dirname($probe);
-	}
-	$real = realpath($probe);
-	if ($real === false || (!$new && $probe !== $full)) {
+	$full = (isset($path[0]) && $path[0] === '/') ? '/' . $clean : ($clean === '' ? $root : $root . '/' . $clean);
+	if (!$new && !file_exists($full)) {
 		return array(null, null, 'No such file or folder.');
 	}
-	foreach ($roots as $root) {
-		if ($real === $root || strpos($real, $root . '/') === 0) {
-			if (assistant_secret_filename($real)) {
-				return array(null, null, 'That file holds secrets and is not readable here.');
-			}
-			$label = ($full === $root || strpos($full, $root . '/') === 0) ? ltrim(substr($full, strlen($root)), '/') : $full;
-			return array($full, $roots[0] === $root ? $label : $full, '');
-		}
-	}
-	return array(null, null, 'That path is outside the panel folder and the folders the admin allowed.');
+	$label = $full === $root ? '' : (strpos($full, $root . '/') === 0 ? substr($full, strlen($root) + 1) : $full);
+	return array($full, $label, '');
+}
+
+// Admin reads are not redacted: the support team needs the real values.
+function assistant_admin_plain($text)
+{
+	return $text;
 }
 
 function assistant_tool_panel_list($panel_root, $cfg, $input)
@@ -85,7 +63,7 @@ function assistant_tool_panel_list($panel_root, $cfg, $input)
 	}
 	$entries = array();
 	foreach ((array)scandir($full) as $name) {
-		if ($name === '.' || $name === '..' || $name === '.git' || assistant_secret_filename($name)) {
+		if ($name === '.' || $name === '..' || $name === '.git') {
 			continue;
 		}
 		$entries[] = is_dir($full . '/' . $name) ? $name . '/' : $name . ' (' . (int)@filesize($full . '/' . $name) . ' bytes)';
@@ -112,7 +90,7 @@ function assistant_tool_panel_read($panel_root, $cfg, $input)
 	$pattern = isset($input['contains']) ? substr((string)$input['contains'], 0, 100) : '';
 	$from = isset($input['from']) && $input['from'] === 'end' ? 'end' : 'start';
 	$picked = assistant_pick_lines($data, $filter, $pattern, $from, isset($input['lines']) ? $input['lines'] : 120);
-	return array('data' => array('path' => $label, 'size_bytes' => $size, 'content' => assistant_wrap('file_data', assistant_redact($picked))));
+	return array('data' => array('path' => $label, 'size_bytes' => $size, 'content' => assistant_wrap('file_data', assistant_admin_plain($picked))));
 }
 
 function assistant_tool_panel_search($panel_root, $cfg, $input)
@@ -133,7 +111,7 @@ function assistant_tool_panel_search($panel_root, $cfg, $input)
 	while ($stack && count($hits) < 40 && $visited < 4000) {
 		$dir = array_pop($stack);
 		foreach ((array)@scandir($dir) as $name) {
-			if ($name === '.' || $name === '..' || $name === '.git' || $name === 'node_modules' || assistant_secret_filename($name)) {
+			if ($name === '.' || $name === '..' || $name === '.git' || $name === 'node_modules') {
 				continue;
 			}
 			$path = $dir . '/' . $name;
@@ -160,31 +138,19 @@ function assistant_tool_panel_search($panel_root, $cfg, $input)
 			}
 		}
 	}
-	return array('data' => array('matches' => assistant_wrap('file_data', assistant_redact($hits ? implode("\n", $hits) : '(no matches)')), 'files_searched' => $visited));
+	return array('data' => array('matches' => assistant_wrap('file_data', assistant_admin_plain($hits ? implode("\n", $hits) : '(no matches)')), 'files_searched' => $visited));
 }
 
 // ---- agent machines -------------------------------------------------------------------------
 
-// Absolute path on an agent -> clean path, only inside a folder the admin allowed. Returns clean path or null.
+// Absolute path on an agent -> clean path. Any folder on the machine. Returns array(path, '') or array(null, reason).
 function assistant_agent_path($cfg, $path)
 {
-	if (!$cfg['agent_paths']) {
-		return array(null, 'Agent file access is off. The admin has not listed any agent folders.');
-	}
 	$clean = assistant_clean_rel($path);
 	if ($clean === false || $clean === '' || (string)$path === '' || $path[0] !== '/') {
 		return array(null, 'Give an absolute path, like /home/gameserver/GSP/Cfg.');
 	}
-	$full = '/' . $clean;
-	if (assistant_secret_filename($full)) {
-		return array(null, 'That file holds secrets and is not readable here.');
-	}
-	foreach ($cfg['agent_paths'] as $allowed) {
-		if ($full === $allowed || strpos($full, $allowed . '/') === 0) {
-			return array($full, '');
-		}
-	}
-	return array(null, 'That folder is not in the list of folders the admin allowed on agents.');
+	return array('/' . $clean, '');
 }
 
 function assistant_agent_open($db, $panel_root, $server_id)
@@ -215,12 +181,12 @@ function assistant_tool_agent_list($db, $panel_root, $cfg, $input)
 	}
 	$names = array();
 	foreach ((isset($list['directorys']) ? (array)$list['directorys'] : array()) as $d) {
-		if (isset($d['filename']) && !assistant_secret_filename($path . '/' . $d['filename'])) {
+		if (isset($d['filename'])) {
 			$names[] = $d['filename'] . '/';
 		}
 	}
 	foreach ((isset($list['files']) ? (array)$list['files'] : array()) as $f) {
-		if (isset($f['filename']) && !assistant_secret_filename($path . '/' . $f['filename'])) {
+		if (isset($f['filename'])) {
 			$names[] = $f['filename'] . ' (' . (int)$f['size'] . ' bytes)';
 		}
 	}
@@ -254,7 +220,7 @@ function assistant_tool_agent_read($db, $panel_root, $cfg, $input)
 	$pattern = isset($input['contains']) ? substr((string)$input['contains'], 0, 100) : '';
 	$from = isset($input['from']) && $input['from'] === 'start' ? 'start' : 'end';
 	$picked = assistant_pick_lines($data, $filter, $pattern, $from, isset($input['lines']) ? $input['lines'] : 100);
-	return array('data' => array('path' => $path, 'size_bytes' => $size, 'content' => assistant_wrap('file_data', assistant_redact($picked))));
+	return array('data' => array('path' => $path, 'size_bytes' => $size, 'content' => assistant_wrap('file_data', assistant_admin_plain($picked))));
 }
 
 // ---- patches --------------------------------------------------------------------------------

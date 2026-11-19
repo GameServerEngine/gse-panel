@@ -19,7 +19,7 @@ function analyze_log_home($home_id)
 		print_failure(get_lang('home_id_missing'));
 		return null;
 	}
-	$home_cfg = $db->isAdmin($_SESSION['user_id']) ? $db->getGameHome($home_id) : $db->getUserGameHome($_SESSION['user_id'], $home_id);
+	$home_cfg = $db->isAdmin($_SESSION['user_id']) ? litefm_get_home($db, $home_id, true) : litefm_get_home($db, $home_id, false);
 	$path_error = '';
 	$home_cfg = is_array($home_cfg) ? litefm_attach_game_root($home_cfg, $path_error) : false;
 	if ($home_cfg === false) {
@@ -123,7 +123,7 @@ function exec_module()
 		print_failure('This file type cannot be analyzed. Supported: .log, .txt, .out, .err, .crash, .rpt');
 		return;
 	}
-	$remote = new RemoteLibrary($home_cfg['agent_ip'], $home_cfg['agent_port'], $home_cfg['encryption_key'], $home_cfg['timeout']);
+	$remote = litefm_open_remote($home_cfg);
 	$read = log_read_tail($remote, $filepath);
 	if (!$read['ok']) {
 		print_failure(litefm_escape_html($read['message']));

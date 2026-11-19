@@ -38,9 +38,9 @@ function exec_module()
 	$isAdmin = $db->isAdmin( $_SESSION['user_id'] );
 
 	if($isAdmin)
-		$home_cfg = $db->getGameHome($home_id);
+		$home_cfg = litefm_get_home($db, $home_id, true);
 	else
-		$home_cfg = $db->getUserGameHome($_SESSION['user_id'],$home_id);
+		$home_cfg = litefm_get_home($db, $home_id, false);
 	$path_error = '';
 	$home_cfg = is_array($home_cfg) ? litefm_attach_game_root($home_cfg, $path_error) : false;
 	if ($home_cfg === false) {
@@ -57,7 +57,7 @@ function exec_module()
 	if ( preg_match("/f/",$home_cfg['access_rights']) != 1 )
 	{
 		print_failure( get_lang("no_rights") );
-		echo "<table class='center'><tr><td><a href='?m=gamemanager&amp;p=game_monitor&amp;home_id=".$home_cfg['home_id']."'><< ". get_lang("back") ."</a></td></tr></table>";
+		echo "<table class='center'><tr><td><a href='".litefm_back_url($home_cfg)."'><< ". get_lang("back") ."</a></td></tr></table>";
 		return;
 	}
 
@@ -86,7 +86,7 @@ function exec_module()
 		 "<td colspan='3' ><h3>$show_path</h3></td>".
 		 "</tr></table>\n";
 	//Logic to open the file we're editing
-	$remote = new RemoteLibrary($home_cfg['agent_ip'], $home_cfg['agent_port'], $home_cfg['encryption_key'], $home_cfg['timeout']);
+	$remote = litefm_open_remote($home_cfg);
 	$data = "";
 	$rel_path = isset($_SESSION[$cwd_session_key]) ? $_SESSION[$cwd_session_key]:'';
 	$filepath = litefm_safe_join_home_path(litefm_payload_root($home_cfg), $rel_path);

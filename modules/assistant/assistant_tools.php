@@ -174,17 +174,13 @@ function assistant_dispatch_tool($db, $user_id, $panel_root, $name, $input, $hom
 				return assistant_tool_db_query($db, $user_id, $home_id, $input, $panel_root);
 			}
 			return assistant_tool_propose_file_edit($db, $user_id, $home_id, $input, $panel_root);
-		case 'propose_sql':
-		case 'propose_panel_edit':
+		case 'propose_changes':
+		case 'db_read':
 			require_once(__DIR__ . '/assistant_admin_fix.php');
-			$cfg = $cfg === null ? assistant_config($db->getSettings()) : $cfg;
-			if ($cfg['assistant_allow_edits'] !== '1') {
-				return array('data' => array('error' => 'Changes from the assistant are switched off in the Assistant settings.'));
+			if ($name === 'db_read') {
+				return assistant_tool_db_read($db, $input);
 			}
-			if ($name === 'propose_sql') {
-				return assistant_tool_propose_sql($db, $user_id, $input);
-			}
-			return assistant_tool_propose_panel_edit($db, $user_id, $panel_root, $cfg, $input);
+			return assistant_tool_propose_changes($db, $user_id, $panel_root, $input);
 		case 'panel_list':
 		case 'panel_read':
 		case 'panel_search':

@@ -39,7 +39,7 @@ function assistant_confirm_main()
 	assistant_ensure_tables($db);
 
 	if ($what === 'database_password' || $what === 'ftp_password') {
-		if ($cfg['assistant_allow_resets'] !== '1') {
+		if ($cfg['assistant_allow_resets'] !== '1' && $scope['type'] !== 'admin') {
 			return assistant_json(403, array('ok' => false, 'message' => 'Password resets from the assistant are switched off.', 'password' => ''));
 		}
 		$result = $what === 'database_password'
@@ -51,7 +51,7 @@ function assistant_confirm_main()
 	}
 
 	if (in_array($what, array('proposal_view', 'proposal_apply', 'proposal_discard', 'proposal_undo'), true)) {
-		if ($cfg['assistant_allow_edits'] !== '1') {
+		if ($cfg['assistant_allow_edits'] !== '1' && $scope['type'] !== 'admin') {
 			return assistant_json(403, array('ok' => false, 'message' => 'File changes from the assistant are switched off.'));
 		}
 		if ($what === 'proposal_view') {

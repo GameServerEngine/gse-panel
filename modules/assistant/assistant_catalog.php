@@ -50,12 +50,22 @@ function assistant_catalog()
 			'description' => 'Propose a change to a text file in the server\'s files, or a new file (a script, a mod, a config). It is only saved as a proposal. The person reviews the exact change and presses Apply. Use small, exact edits. Never put passwords or keys in a file.',
 			'props' => array('path' => $path, 'summary' => $summary, 'edits' => $edits, 'content' => array('type' => 'string', 'description' => 'For a NEW file only: its full text.')), 'required' => array('path', 'summary')),
 
-		array('name' => 'propose_sql', 'group' => 'admin', 'per_server' => false, 'scopes' => array('admin'),
-			'description' => 'Save ONE SQL statement as a proposal. It is NOT run now: the administrator reviews the exact statement and presses Apply. Use it for a database fix, such as a missing account, a grant or a wrong value. No DROP, TRUNCATE or RENAME. UPDATE and DELETE need a WHERE clause.',
-			'props' => array('database' => array('type' => 'string', 'enum' => array('panel', 'mysql'), 'description' => 'panel = the panel database; mysql = one of the MySQL servers.'), 'mysql_server_id' => array('type' => 'integer', 'description' => 'Only when database is mysql: the id from mysql_health.'), 'sql' => array('type' => 'string', 'description' => 'One statement. No semicolon inside, no comments.'), 'summary' => $summary), 'required' => array('database', 'sql', 'summary')),
-		array('name' => 'propose_panel_edit', 'group' => 'admin', 'per_server' => false, 'scopes' => array('admin'),
-			'description' => 'Save a change to ONE text file in the panel folder as a proposal. It is NOT written now: the administrator presses Apply, and the panel keeps a backup and checks PHP syntax first. Use small exact edits. The panel config file and secrets can never be changed.',
-			'props' => array('path' => array('type' => 'string', 'description' => 'Path relative to the panel folder, like includes/functions.php.'), 'summary' => $summary, 'edits' => $edits, 'content' => array('type' => 'string', 'description' => 'For a NEW file only: its full text.')), 'required' => array('path', 'summary')),
+		array('name' => 'propose_changes', 'group' => 'admin', 'per_server' => false, 'scopes' => array('admin'),
+			'description' => 'Propose a fix as ONE change set with as many steps as it needs. Each step is a file change on the panel or on an agent, an SQL statement on the panel database or any MySQL server, or a command on the panel or an agent. NOTHING runs now: the administrator sees every step as a diff and presses Apply, and the steps then run in order. There is no limit on what a step may touch.',
+			'props' => array('summary' => $summary, 'steps' => array('type' => 'array', 'maxItems' => 40, 'description' => 'The steps, in the order they must run.', 'items' => array('type' => 'object', 'properties' => array(
+				'kind' => array('type' => 'string', 'enum' => array('file', 'sql', 'command')),
+				'where' => array('type' => 'string', 'enum' => array('panel', 'agent'), 'description' => 'For file and command steps.'),
+				'server_id' => array('type' => 'integer', 'description' => 'The agent id from agents_health, when where is agent.'),
+				'path' => array('type' => 'string', 'description' => 'File steps: absolute path, or relative to the panel folder for the panel.'),
+				'edits' => $edits,
+				'content' => array('type' => 'string', 'description' => 'File steps: the full text of a NEW file, or to replace a whole existing file.'),
+				'database' => array('type' => 'string', 'enum' => array('panel', 'mysql'), 'description' => 'SQL steps.'),
+				'mysql_server_id' => array('type' => 'integer', 'description' => 'SQL steps on mysql: the id from mysql_health.'),
+				'sql' => array('type' => 'string', 'description' => 'SQL steps: one statement.'),
+				'command' => array('type' => 'string', 'description' => 'Command steps: the shell command.')), 'required' => array('kind')))), 'required' => array('summary', 'steps')),
+		array('name' => 'db_read', 'group' => 'admin', 'per_server' => false, 'scopes' => array('admin'),
+			'description' => 'Read-only. Run one SELECT, SHOW, DESCRIBE or EXPLAIN on the panel database or on any MySQL server (use schema.table to reach any database there). Up to 100 rows.',
+			'props' => array('database' => array('type' => 'string', 'enum' => array('panel', 'mysql')), 'mysql_server_id' => array('type' => 'integer', 'description' => 'Only for mysql: the id from mysql_health.'), 'sql' => array('type' => 'string')), 'required' => array('database', 'sql')),
 		array('name' => 'list_servers', 'group' => 'admin', 'per_server' => false, 'scopes' => array('admin'),
 			'description' => 'List every game server with its id, name, owner and address.', 'props' => array(), 'required' => array()),
 		array('name' => 'panel_health', 'group' => 'admin', 'per_server' => false, 'scopes' => array('admin'),
@@ -105,7 +115,7 @@ function assistant_allowed_tools($scope_type, $cfg = null)
 {
 	$names = array();
 	foreach (assistant_catalog() as $tool) {
-		if (in_array($scope_type, $tool['scopes'], true) && assistant_group_allowed($tool['group'], $cfg)) {
+		if (in_array($scope_type, $tool['scopes'], true) && assistant_group_allowed($tool['group'], $scope_type === 'admin' ? null : $cfg)) {
 			$names[] = $tool['name'];
 		}
 	}
@@ -116,7 +126,7 @@ function assistant_tool_definitions($scope_type = 'server', $cfg = null)
 {
 	$defs = array();
 	foreach (assistant_catalog() as $tool) {
-		if (!in_array($scope_type, $tool['scopes'], true) || !assistant_group_allowed($tool['group'], $cfg)) {
+		if (!in_array($scope_type, $tool['scopes'], true) || !assistant_group_allowed($tool['group'], $scope_type === 'admin' ? null : $cfg)) {
 			continue;
 		}
 		$props = $tool['props'];

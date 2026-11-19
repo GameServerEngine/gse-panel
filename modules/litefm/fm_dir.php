@@ -39,9 +39,9 @@ function exec_module()
 
 	$isAdmin = $db->isAdmin( $_SESSION['user_id'] );
 	if($isAdmin)
-		$home_cfg = $db->getGameHome($home_id);
+		$home_cfg = litefm_get_home($db, $home_id, true);
 	else
-		$home_cfg = $db->getUserGameHome($_SESSION['user_id'],$home_id);
+		$home_cfg = litefm_get_home($db, $home_id, false);
 	$path_error = '';
 	$home_cfg = is_array($home_cfg) ? litefm_attach_game_root($home_cfg, $path_error) : false;
 	if ($home_cfg === false) {
@@ -58,13 +58,13 @@ function exec_module()
 	if ( preg_match("/f/",$home_cfg['access_rights']) != 1 )
 	{
 		print_failure( get_lang("no_rights") );
-		echo "<table class='center'><tr><td><a href='?m=gamemanager&amp;p=game_monitor&amp;home_id=".$home_cfg['home_id']."'><< ". get_lang("back") ."</a></td></tr></table>";
+		echo "<table class='center'><tr><td><a href='".litefm_back_url($home_cfg)."'><< ". get_lang("back") ."</a></td></tr></table>";
 		return;
 	}
 
 	litefm_check($home_id);
 
-	$remote = new RemoteLibrary($home_cfg['agent_ip'], $home_cfg['agent_port'], $home_cfg['encryption_key'], $home_cfg['timeout']);
+	$remote = litefm_open_remote($home_cfg);
 
 	$os_string = $remote->what_os();
 	$os = preg_match("/Linux/i", $os_string) ? "linux" : "windows";
@@ -90,7 +90,7 @@ function exec_module()
 			if ($path === false)
 			{
 				print_failure("Could not access server home directory");
-				echo "<table class='center'><tr><td><a href='?m=gamemanager&amp;p=game_monitor&amp;home_id=".$home_cfg['home_id']."'><< ".get_lang('back')."</a></td></tr></table>";
+				echo "<table class='center'><tr><td><a href='".litefm_back_url($home_cfg)."'><< ".get_lang('back')."</a></td></tr></table>";
 				return;
 			}
 		}
@@ -98,7 +98,7 @@ function exec_module()
 		{
 			// Empty path but still invalid - real error
 			print_failure(get_lang("unallowed_char"));
-			echo "<table class='center'><tr><td><a href='?m=gamemanager&amp;p=game_monitor&amp;home_id=".$home_cfg['home_id']."'><< ".get_lang('back')."</a></td></tr></table>";
+			echo "<table class='center'><tr><td><a href='".litefm_back_url($home_cfg)."'><< ".get_lang('back')."</a></td></tr></table>";
 			return;
 		}
 	}
@@ -107,7 +107,7 @@ function exec_module()
 	if (!$remote->rfile_exists($home_root))
 	{
 		print_failure("Server files have not been installed yet.");
-		echo "<table class='center'><tr><td><a href='?m=gamemanager&amp;p=game_monitor&amp;home_id=".$home_cfg['home_id']."'><< ".get_lang('back')."</a></td></tr></table>";
+		echo "<table class='center'><tr><td><a href='".litefm_back_url($home_cfg)."'><< ".get_lang('back')."</a></td></tr></table>";
 		return;
 	}
 
@@ -116,7 +116,7 @@ function exec_module()
 		$requested_rel_path = isset($_SESSION[$cwd_session_key]) ? trim((string)$_SESSION[$cwd_session_key], '/') : '';
 		$requested_rel_path = $requested_rel_path === '' ? '/' : $requested_rel_path;
 		print_failure("Directory not found: " . litefm_escape_html($requested_rel_path));
-		echo "<table class='center'><tr><td><a href='?m=gamemanager&amp;p=game_monitor&amp;home_id=".$home_cfg['home_id']."'><< ".get_lang('back')."</a></td></tr></table>";
+		echo "<table class='center'><tr><td><a href='".litefm_back_url($home_cfg)."'><< ".get_lang('back')."</a></td></tr></table>";
 		return;
 	}
 
@@ -511,7 +511,7 @@ function exec_module()
 		$show_path = litefm_display_home_path(litefm_payload_root($home_cfg), isset($_SESSION['fm_cwd_'.$home_id]) ? $_SESSION['fm_cwd_'.$home_id] : '');
 		if ($show_path === false)
 			$show_path = clean_path(litefm_payload_root($home_cfg));
-		echo "<table class='center'><tr><td><a href='?m=gamemanager&amp;p=game_monitor&amp;home_id=".$home_cfg['home_id']."'><< ". get_lang("back") ."</a></td></tr></table>";
+		echo "<table class='center'><tr><td><a href='".litefm_back_url($home_cfg)."'><< ". get_lang("back") ."</a></td></tr></table>";
 		if ($remote->rfile_exists($path))
 		{
 			echo "<table class='center' style='width:100%;' ><tr>\n".
@@ -694,7 +694,7 @@ function exec_module()
 				echo "</table>\n";
 			}
 		}
-		echo "<table class='center'><tr><td><a href='?m=gamemanager&amp;p=game_monitor&amp;home_id=".$home_cfg['home_id']."'><< ". get_lang("back") ."</a></td></tr></table>";
+		echo "<table class='center'><tr><td><a href='".litefm_back_url($home_cfg)."'><< ". get_lang("back") ."</a></td></tr></table>";
 		// Dialog translation && info
 		$user = $db->getUserById($_SESSION['user_id']);
 		echo "<div id='dialog' ".
