@@ -20,7 +20,7 @@ Help from the Claude API inside the panel. It finds problems in logs and files, 
 
 ## Settings (all on the Admin > Assistant page)
 
-On/off; customers allowed; model and thinking effort; answer length; tool steps per question; questions per minute; **monthly budget in USD (default $5, stops everyone including admins)** with the token prices used to estimate the cost; most tokens per question; cap per customer per month; **cap per server per month** with per-server overrides (`12=400000, 15=0`); switches for reading files, proposing edits, database queries and password buttons; folders the admin assistant may read on the panel server and on agents; the key file path. The key itself is never shown or stored in the database.
+On/off; customers allowed; model and thinking effort; answer length; tool steps per question; questions per minute; **monthly budget in USD (default $5, stops everyone including admins)** with the token prices used to estimate the cost; most tokens per question; cap per customer per month; **cap per server per month** with per-server overrides (`12=400000, 15=0`); switches for reading files, proposing edits, database queries and password buttons; folders the admin assistant may read on the panel server and on agents; the key file path. The key can be typed into the API key box on the same page; it is never shown again.
 
 The same page shows this month's use and estimated cost, use per customer and per server, the patches waiting, and the recent activity log (times in US Central).
 
@@ -41,7 +41,7 @@ The same page shows this month's use and estimated cost, use per customer and pe
 
 ## Turning it on
 
-1. Put the key on the panel server only: `/etc/gse-panel/assistant.env` containing `ANTHROPIC_API_KEY=...`, owner root, group = the web user, mode 640.
+1. Either type the key into the **API key** box on Admin > Assistant (saved in the panel database, never shown again, only the last 4 characters), or put it in a file on the panel server (safer, and used first if both exist): `/etc/gse-panel/assistant.env` containing `ANTHROPIC_API_KEY=...`, owner root, group = the web user, mode 640.
 2. Module Manager: update **Assistant** (adds `assistant_server_usage` and `assistant_proposals`; fresh installs get them from `install/gse_panel.sql`). The tables are also created on first use as a safety net.
 3. Admin > Assistant: tick **Assistant switched on**, check the budget and caps, save.
 4. Set a spend limit for the key in the Anthropic console as well. The panel's cost figure is an estimate from the prices in the settings.

@@ -37,7 +37,7 @@ function assistant_setting_defs()
 		'assistant_allow_resets' => array('bool', '1', 'Offer new database / FTP passwords', 'Buttons only. The panel makes the password and shows it once.'),
 		'assistant_admin_paths' => array('text', '', 'Extra folders the admin assistant may read', 'Absolute folders on the panel server, separated by commas, for example /var/log/apache2. Only list log folders. The panel folder is always readable; the panel config and key files never are.'),
 		'assistant_agent_paths' => array('text', '', 'Folders it may read on agents', 'Absolute folders on the agent machines, separated by commas, for example /home/gameserver/GSP. Empty turns agent file access off.'),
-		'assistant_key_file' => array('path', '/etc/gse-panel/assistant.env', 'API key file on the panel server', 'The key is never shown or stored in the database.'),
+		'assistant_key_file' => array('path', '/etc/gse-panel/assistant.env', 'API key file on the panel server', 'Used first if it holds a key. Otherwise the key saved on this page is used.'),
 	);
 }
 
@@ -118,6 +118,26 @@ function assistant_save_settings($db, $post)
 	}
 	$db->setSettings($store);
 	return $store;
+}
+
+// The API key can come from the key file (preferred) or from the box on the admin page.
+function assistant_resolve_key($cfg, $settings)
+{
+	$key = assistant_read_key($cfg['assistant_key_file']);
+	if ($key === '' && !empty($settings['assistant_api_key'])) {
+		$key = trim((string)$settings['assistant_api_key']);
+	}
+	return $key;
+}
+
+function assistant_key_valid($key)
+{
+	return (bool)preg_match('/^sk-ant-[A-Za-z0-9_\-]{20,300}$/', $key);
+}
+
+function assistant_key_hint($key)
+{
+	return $key === '' ? '' : 'ends in ' . substr($key, -4);
 }
 
 function assistant_server_cap($cfg, $home_id)

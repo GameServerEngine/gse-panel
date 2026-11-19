@@ -2,6 +2,9 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## Unreleased
+- **New: type the AI Assistant API key on the Admin > Assistant page:** no need to edit a file on the server. The key is saved in the panel database and only its last 4 characters are ever shown. A key file, if present, is still used first.
+
 ## 2.16.0 (2026-11-18)
 - **AI Assistant can find problems in logs and files, and prepare fixes:** The assistant for a server now reads the log for errors, attacks (failed logins, bans, kicks, rcon and injection attempts) and logins, reads and searches the server's own config and script files, and runs read-only queries on the server's database. It reports what it found with counts and times. To fix something it can propose a change to a file or write a new script or config. You see the exact difference, press Apply, and can Undo a change to an existing file. Nothing is written until you press Apply. Passwords and keys are blanked in everything the AI sees.
 - **AI Assistant for administrators can look at the whole system:** The Admin assistant can read the panel's own code and logs (never the config file or keys), files on agent machines in folders you allow, and any game server's logs, files and database. It can offer start / stop / restart and new-password buttons and file changes for any server. For the panel or an agent it saves a patch for you to download and apply through git; it never edits live panel files.

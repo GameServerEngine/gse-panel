@@ -87,6 +87,29 @@ function assistant_admin_usage($db, $cfg)
 	echo '</table>';
 }
 
+function assistant_admin_key_form($db, $cfg, $csrf)
+{
+	$settings = $db->getSettings();
+	$file_key = assistant_read_key($cfg['assistant_key_file']);
+	$saved = isset($settings['assistant_api_key']) ? trim((string)$settings['assistant_api_key']) : '';
+	echo '<h3>API key</h3>';
+	if ($file_key !== '') {
+		echo '<p>Using the key in ' . assistant_h($cfg['assistant_key_file']) . ' (' . assistant_h(assistant_key_hint($file_key)) . '). A key saved here is ignored while the file has one.</p>';
+	} elseif ($saved !== '') {
+		echo '<p>Using the key saved here (' . assistant_h(assistant_key_hint($saved)) . ').</p>';
+	} else {
+		echo '<p>No key yet.</p>';
+	}
+	echo '<form method="post" action="?m=assistant&amp;p=admin" autocomplete="off">';
+	echo '<input type="hidden" name="assistant_csrf" value="' . assistant_h($csrf) . '">';
+	echo '<input type="password" name="assistant_new_key" size="50" maxlength="400" placeholder="sk-ant-..." autocomplete="new-password"> ';
+	echo '<button type="submit" name="assistant_action" value="save_key">Save key</button>';
+	if ($saved !== '') {
+		echo ' <button type="submit" name="assistant_action" value="clear_key" onclick="return confirm(\'Remove the saved key?\')">Remove saved key</button>';
+	}
+	echo '</form><p style="font-size:90%;opacity:.8">The key is never shown again after saving. It is stored in the panel database, so a key file is safer if you can use one.</p>';
+}
+
 function assistant_admin_patches($db, $csrf)
 {
 	echo '<h3>Patches the assistant saved</h3>';
@@ -159,6 +182,19 @@ function exec_module()
 			assistant_save_settings($db, $_POST);
 			assistant_audit($db, (int)$_SESSION['user_id'], 'Settings saved', 'settings', 'saved by an administrator');
 			echo '<p class="success">Settings saved.</p>';
+		} elseif ($_POST['assistant_action'] === 'save_key') {
+			$new_key = isset($_POST['assistant_new_key']) ? trim((string)$_POST['assistant_new_key']) : '';
+			if (!assistant_key_valid($new_key)) {
+				echo '<p class="failure">That does not look like an Anthropic API key (it starts with sk-ant-). Nothing was saved.</p>';
+			} else {
+				$db->setSettings(array('assistant_api_key' => $new_key));
+				assistant_audit($db, (int)$_SESSION['user_id'], 'API key saved', 'settings', 'key replaced by an administrator');
+				echo '<p class="success">API key saved.</p>';
+			}
+		} elseif ($_POST['assistant_action'] === 'clear_key') {
+			$db->setSettings(array('assistant_api_key' => ''));
+			assistant_audit($db, (int)$_SESSION['user_id'], 'API key removed', 'settings', 'key removed by an administrator');
+			echo '<p class="success">Saved API key removed.</p>';
 		} elseif ($_POST['assistant_action'] === 'patch_status' && isset($_POST['patch_id'], $_POST['patch_status']) && in_array($_POST['patch_status'], array('applied', 'discarded'), true)) {
 			$db->query('UPDATE ' . assistant_table('proposals') . " SET status = '" . $db->real_escape_string($_POST['patch_status']) . "', decided = NOW() WHERE kind = 'patch' AND status = 'pending' AND id = " . (int)$_POST['patch_id']);
 			echo '<p class="success">Patch #' . (int)$_POST['patch_id'] . ' marked ' . assistant_h($_POST['patch_status']) . '.</p>';
@@ -168,9 +204,9 @@ function exec_module()
 	$cfg = assistant_config($db->getSettings());
 	echo '<h2>Admin assistant</h2>';
 	if ($cfg['assistant_enabled'] === '1') {
-		$key_ok = assistant_read_key($cfg['assistant_key_file']) !== '';
+		$key_ok = assistant_resolve_key($cfg, $db->getSettings()) !== '';
 		if (!$key_ok) {
-			echo '<p class="failure">The API key file ' . assistant_h($cfg['assistant_key_file']) . ' is missing or has no key. The assistant cannot answer until it does.</p>';
+			echo '<p class="failure">The API key file ' . assistant_h($cfg['assistant_key_file']) . ' is missing or has no key, and no key is saved below. The assistant cannot answer until one is.</p>';
 		}
 		assistant_render_chat(
 			'admin',
@@ -183,6 +219,7 @@ function exec_module()
 		echo '<p>The assistant is switched off. Tick "Assistant switched on" below and save.</p>';
 	}
 	assistant_admin_usage($db, $cfg);
+	assistant_admin_key_form($db, $cfg, $csrf);
 	assistant_admin_patches($db, $csrf);
 	assistant_admin_settings_form($cfg, $csrf);
 	assistant_admin_activity($db);

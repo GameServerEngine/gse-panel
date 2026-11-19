@@ -34,7 +34,7 @@ function assistant_main()
 	if (!$is_admin && $cfg['assistant_customer_enabled'] !== '1') {
 		return assistant_json(503, array('text' => 'The assistant is only open to administrators right now.'));
 	}
-	$key = assistant_read_key($cfg['assistant_key_file']);
+	$key = assistant_resolve_key($cfg, $settings);
 	if ($key === '') {
 		return assistant_json(503, array('text' => 'The assistant is not set up on this panel yet.'));
 	}
