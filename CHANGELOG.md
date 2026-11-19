@@ -8,6 +8,7 @@ Each fixed issue gets an entry under the version that shipped it: a one-line tit
 - **LiteFM menu entry is now called LiteFM:** the Admin menu entry was LiteFM Settings. The LiteFM page has a button that opens a file browser of the panel's own files, where an administrator can open, edit and save files. Each save keeps a backup next to the file.
 
 ## Unreleased
+- **testing always equals working:** a GitHub Action (sync-testing.yml) runs after every release build on working and makes testing identical to it, then builds the testing release. Changes are made on working only.
 - **New: type the AI Assistant API key on the Admin > Assistant page:** no need to edit a file on the server. The key is saved in the panel database and only its last 4 characters are ever shown. A key file, if present, is still used first.
 
 ## 2.16.0 (2026-11-18)

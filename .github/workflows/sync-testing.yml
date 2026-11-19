@@ -1,0 +1,52 @@
+name: Sync testing
+
+# Rule: testing is always identical to working. Changes are made on working; testing is what gets tested.
+# This runs after the Release workflow has finished on working, so the version bump commit it makes is
+# included. testing is fast-forwarded when possible and otherwise reset to working (nobody edits testing
+# directly). Then the Release workflow is started for testing, because a push made with GITHUB_TOKEN does
+# not start it by itself.
+on:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+    branches: [working]
+  workflow_dispatch:
+
+concurrency:
+  group: sync-testing
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  sync:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: working
+          fetch-depth: 0
+
+      - name: Make testing identical to working
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git fetch origin testing || true
+          WORKING=$(git rev-parse HEAD)
+          TESTING=$(git rev-parse -q --verify origin/testing || true)
+          if [ "$WORKING" = "$TESTING" ]; then
+            echo "testing already equals working ($WORKING)."
+            exit 0
+          fi
+          if [ -n "$TESTING" ] && git merge-base --is-ancestor "$TESTING" "$WORKING"; then
+            git push origin "$WORKING:refs/heads/testing"
+          else
+            echo "testing is not behind working; resetting it to working."
+            git push --force origin "$WORKING:refs/heads/testing"
+          fi
+          gh workflow run release.yml --ref testing --repo "$GITHUB_REPOSITORY"
