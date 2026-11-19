@@ -24,10 +24,13 @@
 
 // Module general information
 $module_title = "Administration";
-$module_version = "1.0";
-$db_version = 1;
+$module_version = "1.1";
+$db_version = 2;
 $module_required = TRUE;
-$module_menus = array( array( 'subpage' => 'watch_logger', 'name'=>'Watch Logger', 'group'=>'admin' ) );
+$module_menus = array(
+	array( 'subpage' => 'watch_logger', 'name'=>'Watch Logger', 'group'=>'admin' ),
+	array( 'subpage' => 'resource_planner', 'name'=>'Resource Planner', 'group'=>'admin' ),
+);
 $install_queries = array();
 $install_queries[0] = array(
 "DROP TABLE IF EXISTS `".DB_PREFIX."adminExternalLinks`;",
@@ -62,4 +65,10 @@ $install_queries[1] = array(
   KEY `idx_logger_source_category` (`source_type`,`category`,`severity`),
   KEY `idx_logger_home` (`home_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;");
+
+// db_version 2 - Resource Planner menu entry for existing installs (fresh installs get it from $module_menus).
+$install_queries[2] = array(
+"INSERT INTO `".DB_PREFIX."module_menus` (`module_id`, `subpage`, `group`, `menu_name`, `pos`)
+ SELECT m.id, 'resource_planner', 'admin', 'Resource Planner', 1 FROM `".DB_PREFIX."modules` m
+ WHERE m.folder = 'administration' AND NOT EXISTS (SELECT 1 FROM `".DB_PREFIX."module_menus` mm WHERE mm.module_id = m.id AND mm.subpage = 'resource_planner' AND mm.group = 'admin')");
 ?>

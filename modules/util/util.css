@@ -1,101 +1,114 @@
-input[type=text], input[type=number], select {
-    width:100%;
-    padding:6px 10px;
-    margin:8px 0;
-    display:inline-block;
-    border:1px solid #ccc;
-    border-radius:4px;
-    box-sizing:border-box;
-}
-
+/* Utilities page. Colours come from the theme's --gse-* properties; the fallbacks are the same dark palette. */
 .main-content{
 	text-align:left;
 }
 
 .show{display:block;}
 .hide{display:none;}
+[hidden]{display:none !important;}
 
-#tabs {
-	background:transparent;
-	border:none;
+.util-layout{
+	display:grid;
+	grid-template-columns:minmax(200px, 260px) minmax(0, 1fr);
+	gap:24px;
+	align-items:start;
 }
 
-#tabs .ui-widget-header{
-	background:transparent;
-	border:none;
-	border-bottom:1px solid #c0c0c0;
-	-moz-border-radius:0px;
-	-webkit-border-radius:0px;
-	border-radius:0px;
+/* Small screens: the category list goes on top and its tools wrap in a row. */
+@media (max-width:800px){
+	.util-layout{grid-template-columns:minmax(0, 1fr);}
+	.util-category ul{display:flex; flex-wrap:wrap; gap:8px;}
 }
 
-#tabs .ui-tabs-nav .ui-state-default{
-	background:transparent;
-	border:none;
+.util-category h3{
+	margin:0 0 8px 0;
+	font-size:0.85em;
+	text-transform:uppercase;
+	letter-spacing:0.05em;
+	color:var(--gse-muted, #8b949e);
 }
 
-#tabs .ui-tabs-nav .ui-state-active{
-	background:transparent url('img/uiTabsArrow.png') no-repeat bottom center;
-	border:none;
+.util-category ul{
+	list-style:none;
+	margin:0 0 20px 0;
+	padding:0;
 }
 
-#tabs .ui-tabs-nav .ui-state-default a{
-	color:#c0c0c0;
+.util-category a{
+	display:block;
+	padding:10px 14px;
+	min-height:24px;
+	border:1px solid transparent;
+	border-radius:6px;
+	text-decoration:none;
+	color:var(--gse-text, #e6edf3);
 }
 
-#tabs .ui-tabs-nav .ui-state-active a{
-	color:#459e00;
+.util-category a:hover,
+.util-category a:focus-visible{
+	border-color:var(--gse-info-border, rgba(88,166,255,0.4));
+	background:var(--gse-info-bg, rgba(88,166,255,0.12));
+	outline:none;
 }
 
-#your-address{
-	cursor:pointer;
-	color:#2780e3;
+.util-category a.active{
+	border-color:var(--gse-good-border, rgba(63,185,80,0.4));
+	background:var(--gse-good-bg, rgba(63,185,80,0.12));
 	font-weight:bold;
 }
 
-#select_agent{
-	margin-top:10px;
-	margin-bottom:10px;
+.util-intro{color:var(--gse-muted, #8b949e);}
+
+.util-field{margin-bottom:14px;}
+.util-field label{display:block; font-weight:bold; margin-bottom:4px;}
+.util-tool input[type=text],
+.util-tool input[type=number],
+.util-tool select,
+.util-form input[type=text],
+.util-form input[type=password],
+.util-form textarea{
+	width:100%;
+	max-width:520px;
+	padding:8px 10px;
+	box-sizing:border-box;
+	border:1px solid #888;
+	border-radius:4px;
+}
+.util-form textarea{max-width:100%; font-family:monospace;}
+.util-form label{display:block; font-weight:bold; margin:12px 0 4px;}
+.util-form input[type=number]{width:140px;}
+
+.util-hint{display:block; margin-top:4px; color:var(--gse-muted, #8b949e); font-size:0.9em;}
+
+.util-run{padding:9px 20px; min-height:40px; cursor:pointer;}
+.util-run:disabled{cursor:progress; opacity:0.6;}
+
+.util-result{margin-top:20px; outline:none;}
+.util-result:focus-visible{outline:2px solid var(--gse-info, #58a6ff);}
+
+.util-rows{display:grid; grid-template-columns:max-content minmax(0, 1fr); gap:4px 16px; margin:0 0 14px 0;}
+.util-rows dt{font-weight:bold;}
+.util-rows dd{margin:0; overflow-wrap:anywhere;}
+
+.util-table{border-collapse:collapse; margin-bottom:14px; max-width:100%;}
+.util-table th,
+.util-table td{padding:6px 12px; text-align:left; border-bottom:1px solid var(--gse-muted, #8b949e);}
+
+.util-source{color:var(--gse-muted, #8b949e); font-size:0.9em; overflow-wrap:anywhere;}
+.util-note{margin-bottom:10px;}
+
+#your-address{
+	cursor:pointer;
+	color:var(--gse-info, #58a6ff);
+	font-weight:bold;
 }
 
-#loading{
-	border:16px solid #f3f3f3;
-	border-radius:50%;
-	border-top:16px solid #3498db;
-	width:64px;
-	height:64px;
-	-webkit-animation:spin 2s linear infinite;
-	animation:spin 2s linear infinite;
-	margin:auto;
+.util-result pre{white-space:pre-wrap; overflow-wrap:anywhere;}
+
+@media (prefers-reduced-motion:no-preference){
+	.util-busy{animation:util-pulse 1.4s ease-in-out infinite;}
 }
-
-@-webkit-keyframes spin{
-	0%{-webkit-transform: rotate(0deg);}
-	100%{-webkit-transform: rotate(360deg);}
+@keyframes util-pulse{
+	0%, 100%{opacity:1;}
+	50%{opacity:0.5;}
 }
-
-@keyframes spin{
-	0%{transform:rotate(0deg);}
-	100%{transform:rotate(360deg);}
-}
-
-/* IDs for messages. Customize their style output here. */
-#loading_agents{}
-#loading_failed{}
-#no_commands{}
-#agents_offline{}
-
-#no_servers{}
-#invalid_server{}
-#invalid_steamid_admin{}
-#invalid_response_admin{}
-#invalid_immunity{}
-#all_servers_offline{}
-#addadmin_response{}
-
-#invalid_steamid{}
-#invalid_response{}
-
-/* IDs for the command output and network tools tab here. Customize their style here. */
-#options{}
-#output{}

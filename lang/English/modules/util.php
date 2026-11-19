@@ -122,4 +122,26 @@ define('LANG_amx_mod_flag_r', "custom level F");
 define('LANG_amx_mod_flag_s', "custom level G");
 define('LANG_amx_mod_flag_t', "custom level H");
 define('LANG_amx_mod_flag_u', "menu access");
-?>
+define('LANG_game_tools', "Game Tools");
+define('LANG_steam_admins', "Steam & Admins");
+define('LANG_port_checker', "Port Checker");
+define('LANG_tcp_test', "TCP Connection Test");
+define('LANG_speed_test', "Download Speed Test");
+define('LANG_server_query', "Server Query");
+define('LANG_custom_endpoint', "Custom endpoint");
+define('LANG_my_servers', "My game servers");
+define('LANG_run_test', "Run test");
+define('LANG_game_preset', "Game preset");
+define('LANG_port', "Port");
+define('LANG_protocol', "Protocol");
+define('LANG_query_protocol', "Query protocol");
+define('LANG_timeout_ms', "Timeout (ms)");
+define('LANG_max_hops', "Maximum hops");
+define('LANG_query_port', "Query port");
+define('LANG_show_players', "Also list players");
+define('LANG_speed_endpoint', "Test endpoint");
+define('LANG_test_size', "Test size");
+define('LANG_diag_policy', "Diagnostics policy and audit log");
+define('LANG_no_endpoints', "No speed test endpoint is configured. An administrator can add one under Utilities > Diagnostics policy.");
+define('LANG_running', "Running...");
+

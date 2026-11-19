@@ -1,0 +1,45 @@
+/* Live server log box (log.php). Layout only; colors for the line classes come from the theme. */
+#live-server-log.gsp-live-log-panel {
+	display: block;
+	width: 100%;
+	max-width: 1600px;
+	min-height: 500px;
+	height: 55vh;
+	max-height: 75vh;
+	box-sizing: border-box;
+	font-family: Consolas, Monaco, "Courier New", monospace;
+	font-size: 13px;
+	line-height: 1.35;
+	margin: 0 0 12px 0;
+	padding: 12px;
+	background: #0d1117;
+	color: #e6edf3;
+	border: 1px solid #30363d;
+	border-radius: 4px;
+	white-space: pre-wrap;
+	overflow-y: auto;
+	overflow-x: auto;
+	overflow-wrap: anywhere;
+	tab-size: 4;
+}
+@media (max-width: 700px) {
+	#live-server-log.gsp-live-log-panel {
+		min-height: 45vh;
+		height: 45vh;
+		font-size: 12px;
+	}
+}
+.gse-log-caption {
+	margin: 0 0 6px 0;
+	font-size: 12px;
+	opacity: 0.8;
+}
+.gse-badge {
+	display: inline-block;
+	margin: 0 0 8px 0;
+	padding: 3px 10px;
+	border-radius: 12px;
+	font-size: 12px;
+	font-weight: 700;
+	border: 1px solid currentColor;
+}

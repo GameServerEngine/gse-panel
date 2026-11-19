@@ -5,4 +5,6 @@
   <page key="amx_addadmin_helper" file="amx_addadmin_helper.php" access="user,admin,subuser" />
   <page key="steamid_converter" file="steamid_converter.php" access="user,admin,subuser" />
   <page key="network_tools" file="network_tools.php" access="user,admin,subuser" />
+  <page key="diag" file="diag.php" access="user,admin,subuser" />
+  <page key="diag_settings" file="diag_settings.php" access="admin" />
 </navigation>

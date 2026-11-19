@@ -474,6 +474,7 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 			if( $host_stat === 1)
 			{
 				$ip = $server_home['ip'];
+				$port = $server_home['port'];
 				$query_ip = checkDisplayPublicIP($server_home['display_public_ip'], ($server_home['use_nat'] == 1 ? $server_home['agent_ip'] : $ip));
 				$displayIP =  checkDisplayPublicIP($server_home['display_public_ip'], $ip);
 				$address = "";
@@ -555,8 +556,8 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 				else
 				{
 					$status = $agent_state === "UNKNOWN" ? "unknown" : "offline";
-					$address .= "<span class='note'>".($agent_state === "UNKNOWN" ? "UNKNOWN" : "STOPPED")."</span>";
-					if ($reason !== '' && in_array($agent_state, array('CRASHED', 'FAILED'), true)) $address .= " <span class='failure'>".htmlentities($reason)."</span>";
+					$address .= "<span class='".($agent_state === "UNKNOWN" ? "log-warn" : "log-bad")."'>".($agent_state === "UNKNOWN" ? "UNKNOWN" : "STOPPED")."</span>";
+					if ($reason !== '' && in_array($agent_state, array('CRASHED', 'FAILED'), true)) $address .= "<br><span class='failure' style='display:inline-block;position:static;float:none;clear:both;white-space:normal;max-width:100%;'>".htmlentities($reason)."</span>";
 					if (isset($server_home['ip']) and isset($server_home['mod_id']))
 					{
 						if(!$single_server_monitor)
@@ -616,7 +617,7 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 					$ftp_info = "<div class='ftp-info' style='font-size:12px;margin-top:4px;line-height:1.8'><b>FTP</b>&nbsp;&nbsp;<b>IP:Port</b> " . htmlentities($server_home['ip']) . ":21&nbsp;&nbsp;<b>User ID:</b> " . htmlentities($server_home['ftp_login']) . "&nbsp;&nbsp;<b>Password:</b> " . htmlentities($server_home['ftp_password']) . "</div>";
 				}
 				$first .= "<td class='collapsible' data-status='$status' data-pos='$pos'><b>" . htmlentities($server_home['home_name']) . "</b>$mod_name$ftp_info</td>";
-				$first .= "<td>" . $server_home['ip'] . ":" .  $server_home['port'] ." " . $address . "</td>";
+				$first .= "<td style='white-space:normal;word-break:break-word;overflow:visible;'>" . $server_home['ip'] . ":" .  $server_home['port'] ." " . $address . "</td>";
 				//$first .= "<td class='collapsible serverIPAddress ignoreSortable' data-status='$status' data-pos='$pos'>" . $address . "</td>";
 				//$first .= "<td class='collapsible serverIPAddress ignoreSortable' data-status='$status' data-pos='$pos'>" . $server_home['ip'] . ":" .  $server_home['port'] . "</td>";
 				$first .= "<td class='owner collapsible serverOwner ignoreSortable'>" . $user['users_login'] . "</td>";
@@ -633,7 +634,7 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 					$second .= "<td class='owner' >$other_owners$groupsus</td>";
 
 				if( $server_xml->protocol != "teamspeak3" OR ($startup_file_exists and $server_xml->protocol == "teamspeak3") OR ($status == "offline" and $server_xml->protocol == "teamspeak3") )
-					@$second .= "<td class='operations'><div class='inline-block monitorButtonContainer'>" . trim($btns) . trim($ts3opt) . "<b class='failure' style='float:left; color:yellow; ' ></b></div></td>";
+					@$second .= "<td class='operations'><div class='inline-block monitorButtonContainer'>" . trim($btns) . trim($ts3opt) . "<b class='log-warn' style='float:left;'></b></div></td>";
 				else
 					$second .= "<td class='operations' >$ts3opt</td>";
 			$second .= "</tr>";

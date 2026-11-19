@@ -54,4 +54,4 @@ define('LANG_cutting_edge_warning', "Warning: The cutting edge version may be un
 define('LANG_revert_panel_update', "Revert Panel Update");
 define('LANG_installed_version', "Installed Version");
 define('LANG_latest_release', "Latest Release on GitHub");
-?>
+define('LANG_resource_planner', "Resource Planner");

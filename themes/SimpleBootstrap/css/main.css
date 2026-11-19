@@ -1,6 +1,24 @@
 @import url('https://fonts.googleapis.com/css?family=Roboto:300,400');
 @import url("font-awesome.min.css");
 
+/* Status palette (netdiag report). Rules that use it are in "Status colors" below. */
+:root {
+	--gse-bad: #f85149;
+	--gse-bad-bg: rgba(248,81,73,0.12);
+	--gse-bad-border: rgba(248,81,73,0.4);
+	--gse-good: #3fb950;
+	--gse-good-bg: rgba(63,185,80,0.12);
+	--gse-good-border: rgba(63,185,80,0.4);
+	--gse-info: #58a6ff;
+	--gse-info-bg: rgba(88,166,255,0.12);
+	--gse-info-border: rgba(88,166,255,0.4);
+	--gse-warn: #d29922;
+	--gse-warn-bg: rgba(210,153,34,0.12);
+	--gse-warn-border: rgba(210,153,34,0.4);
+	--gse-text: #e6edf3;
+	--gse-muted: #8b949e;
+}
+
 body {
 	-webkit-background-size: cover !important;
 	-moz-background-size: cover !important;
@@ -343,8 +361,8 @@ th {
 	padding: 0px;
 }
 
-.online { color: #5cb85c; }
-.offline { color: #d9534f; }
+.online { color: var(--gse-good); }
+.offline { color: var(--gse-bad); }
 
 input[type="checkbox"] {
 	-moz-appearance: none;
@@ -469,7 +487,7 @@ button.mfp-close:focus {
 
 /* *** Alert Styling *** */
 .alert {
-	padding-left: 50px;
+	padding: 10px 14px 10px 50px; /* left room for the icon */
 	position: relative;
 }
 .alert:before {
@@ -491,11 +509,144 @@ button.mfp-close:focus {
 .alert.alert-danger:before {
 	content: "\f057";
 }
-.alert-success,
-.alert-danger {
-	text-shadow: 0 1px 3px rgba(0,0,0,.2);
-}
 
+
+/* *** Status colors: one palette (netdiag report), used by every message box and status word.
+   Change a color here only. Boxes: tinted background, 1px border, 4px left accent. */
+.alert-danger,
+p.failure,
+div.failure {
+	background: var(--gse-bad-bg);
+	border: 1px solid var(--gse-bad-border);
+	border-left: 4px solid var(--gse-bad);
+	color: var(--gse-bad);
+	font-weight: normal;
+	border-radius: 6px;
+	text-shadow: none;
+	text-align: left;
+}
+/* Plain message boxes have no icon, so they get simple padding. The .alert boxes get theirs from .alert above. */
+p.failure,
+div.failure,
+p.success,
+div.success,
+p.warning,
+div.warning {
+	padding: 10px 14px;
+}
+.alert-danger a,
+p.failure a,
+div.failure a {
+	color: inherit;
+	text-decoration: underline;
+}
+.text-danger,
+span.failure,
+li.failure,
+b.failure {
+	color: var(--gse-bad);
+}
+.label-danger {
+	background: var(--gse-bad-bg);
+	border: 1px solid var(--gse-bad-border);
+	color: var(--gse-bad);
+	border-radius: 10px;
+	font-weight: normal;
+	text-shadow: none;
+}
+.alert-success,
+p.success,
+div.success {
+	background: var(--gse-good-bg);
+	border: 1px solid var(--gse-good-border);
+	border-left: 4px solid var(--gse-good);
+	color: var(--gse-good);
+	font-weight: normal;
+	border-radius: 6px;
+	text-shadow: none;
+	text-align: left;
+}
+.alert-success a,
+p.success a,
+div.success a {
+	color: inherit;
+	text-decoration: underline;
+}
+.text-success,
+span.success {
+	color: var(--gse-good);
+}
+.label-success {
+	background: var(--gse-good-bg);
+	border: 1px solid var(--gse-good-border);
+	color: var(--gse-good);
+	border-radius: 10px;
+	font-weight: normal;
+	text-shadow: none;
+}
+.alert-info {
+	background: var(--gse-info-bg);
+	border: 1px solid var(--gse-info-border);
+	border-left: 4px solid var(--gse-info);
+	color: var(--gse-info);
+	font-weight: normal;
+	border-radius: 6px;
+	text-shadow: none;
+	text-align: left;
+}
+.alert-info a {
+	color: inherit;
+	text-decoration: underline;
+}
+.text-info,
+p.note {
+	color: var(--gse-info);
+}
+.label-info {
+	background: var(--gse-info-bg);
+	border: 1px solid var(--gse-info-border);
+	color: var(--gse-info);
+	border-radius: 10px;
+	font-weight: normal;
+	text-shadow: none;
+}
+.alert-warning,
+p.warning,
+div.warning {
+	background: var(--gse-warn-bg);
+	border: 1px solid var(--gse-warn-border);
+	border-left: 4px solid var(--gse-warn);
+	color: var(--gse-warn);
+	font-weight: normal;
+	border-radius: 6px;
+	text-shadow: none;
+	text-align: left;
+}
+.alert-warning a,
+p.warning a,
+div.warning a {
+	color: inherit;
+	text-decoration: underline;
+}
+.text-warning,
+span.warning {
+	color: var(--gse-warn);
+}
+.label-warning {
+	background: var(--gse-warn-bg);
+	border: 1px solid var(--gse-warn-border);
+	color: var(--gse-warn);
+	border-radius: 10px;
+	font-weight: normal;
+	text-shadow: none;
+}
+.log-bad { color: var(--gse-bad); }
+.log-good { color: var(--gse-good); }
+.log-info { color: var(--gse-info); }
+.log-warn { color: var(--gse-warn); }
+.gse-badge-good { color: var(--gse-good); background: var(--gse-good-bg); }
+.gse-badge-warn { color: var(--gse-warn); background: var(--gse-warn-bg); }
+.gse-badge-bad { color: var(--gse-bad); background: var(--gse-bad-bg); }
 
 /* *** UI-Dialog Restyling *** */
 .ui-widget-content {

@@ -181,12 +181,12 @@ function agent_level($metric, $value)
 	return 'ok';
 }
 
-function agent_badge($label, $level)
+function agent_badge($label, $level, $size = 11)
 {
 	// Small inline status text, not the theme's large success/note boxes.
 	$colors = array('ok' => '#5cb85c', 'warning' => '#f0ad4e', 'critical' => '#d9534f');
 	$color = isset($colors[$level]) ? $colors[$level] : '#999999';
-	return "<span class='agent-badge' style='display:inline-block;font-size:11px;line-height:1.4;padding:0 4px;margin:0 2px;color:" . $color . ";background:none;border:0;box-shadow:none;'>" . agent_html($label) . "</span>";
+	return "<span class='agent-badge' style='display:inline-block;font-size:" . (int)$size . "px;line-height:1.4;padding:0 4px;margin:0 2px;color:" . $color . ";background:none;border:0;box-shadow:none;'>" . agent_html($label) . "</span>";
 }
 
 function agent_resource_badges($snapshot)
@@ -375,10 +375,10 @@ function agent_perform_release_update($db, array $remote_server_row, $archive_ur
 
 function agent_status_label($status)
 {
-	if ($status === 1) return agent_badge('online', 'ok');
-	if ($status === -1) return agent_badge('encryption mismatch', 'critical');
-	if ($status === 0) return agent_badge('offline', 'critical');
-	return agent_badge('unknown', 'warning');
+	if ($status === 1) return agent_badge('online', 'ok', 16);
+	if ($status === -1) return agent_badge('encryption mismatch', 'critical', 16);
+	if ($status === 0) return agent_badge('offline', 'critical', 16);
+	return agent_badge('unknown', 'warning', 16);
 }
 
 ?>

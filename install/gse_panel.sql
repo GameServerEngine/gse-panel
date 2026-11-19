@@ -392,7 +392,7 @@ CREATE TABLE `DB_PREFIXbilling_service_requests` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 INSERT INTO `DB_PREFIXbilling_service_types` (`slug`,`name`,`kind`,`summary`,`price_mode`,`price`,`stages`,`fields`,`enabled`,`sort_order`) VALUES
 ('support','Support Request','support','Help with your server, billing or an account question.','fixed',0.00,'[{"label":"Payment","percent":100}]','[]',1,1),
-('server-setup','Server Setup','paid','We install and configure your game, mods and settings for you. Placeholder price: set yours in Administration.','fixed',25.00,'[{"label":"Payment","percent":100}]','[{"label":"Game","type":"text","required":true},{"label":"Mods or plugins to install","type":"textarea","required":false},{"label":"Settings you want (slots, difficulty, rules)","type":"textarea","required":false}]',1,2),
+('server-setup','Server Setup','paid','We install and configure your game, mods and settings for you.','fixed',25.00,'[{"label":"Payment","percent":100}]','[{"label":"Game","type":"text","required":true},{"label":"Mods or plugins to install","type":"textarea","required":false},{"label":"Settings you want (slots, difficulty, rules)","type":"textarea","required":false}]',1,2),
 ('custom-development','Custom Development','paid','We build a mod, script or feature for your server. We quote after we read your idea.','quote',0.00,'[{"label":"Deposit to start","percent":50},{"label":"Payment on delivery","percent":50}]','[{"label":"Game","type":"text","required":true},{"label":"What should it do?","type":"textarea","required":true},{"label":"Deadline, if any","type":"text","required":false}]',1,3);
 CREATE TABLE `DB_PREFIXbilling_service_tiers` (
   `service_id` int NOT NULL,
@@ -560,6 +560,27 @@ CREATE TABLE `DB_PREFIXcrash_ticket_marks` (
   `incident_key` varchar(32) NOT NULL,
   `created_at` int NOT NULL,
   PRIMARY KEY (`home_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `DB_PREFIXdiag_audit` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `created_at` int unsigned NOT NULL,
+  `user_id` int NOT NULL DEFAULT 0,
+  `remote_server_id` int NOT NULL DEFAULT 0,
+  `tool` varchar(32) NOT NULL DEFAULT '',
+  `target` varchar(255) NOT NULL DEFAULT '',
+  `port` int NOT NULL DEFAULT 0,
+  `protocol` varchar(16) NOT NULL DEFAULT '',
+  `status` varchar(16) NOT NULL DEFAULT 'running',
+  `outcome` varchar(40) NOT NULL DEFAULT '',
+  `duration_ms` int NOT NULL DEFAULT 0,
+  `detail` varchar(255) NOT NULL DEFAULT '',
+  `client_ip` varchar(64) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`),
+  KEY `idx_diag_user_time` (`user_id`,`created_at`),
+  KEY `idx_diag_agent_time` (`remote_server_id`,`created_at`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -806,7 +827,7 @@ INSERT INTO `DB_PREFIXmodules` (`id`, `title`, `folder`, `version`, `db_version`
 (30,'subusers','subusers','1.0',0,1),
 (31,'Support','support','1.0',0,0),
 (32,'Teamspeak 3 Web Interface','teamspeak3','Beta 3.4.2',0,1),
-(33,'Tickets','tickets','1.0a',3,1),
+(33,'Tickets','tickets','1.0a',4,1),
 (34,'tshock','tshock','Alpha',0,1),
 (35,'Update','update','1.0',4,1),
 (36,'User admin','user_admin','1.0',7,1),
@@ -1364,6 +1385,7 @@ CREATE TABLE `DB_PREFIXticket_messages` (
   `date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `rating` tinyint DEFAULT '0',
   `is_admin` int DEFAULT '0',
+  `is_automatic` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`reply_id`),
   KEY `ticket_messages_fk0` (`ticket_id`),
   CONSTRAINT `ticket_messages_fk0` FOREIGN KEY (`ticket_id`) REFERENCES `tickets` (`tid`)
@@ -1400,6 +1422,7 @@ CREATE TABLE `DB_PREFIXtickets` (
   `last_updated` varchar(22) DEFAULT NULL,
   `status` tinyint NOT NULL,
   `assigned_to` tinyint DEFAULT NULL,
+  `is_automatic` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`tid`),
   UNIQUE KEY `uid` (`uid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

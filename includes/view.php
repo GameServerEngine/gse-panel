@@ -27,6 +27,7 @@ define("DEFAULT_REFRESH_TIME","2");
 class View {
 
     private string $meta = '';
+    private string $noscriptRefresh = '';
     private string $title = 'Gameserver Engine Panel';
     private string $header_code = '';
 
@@ -296,7 +297,7 @@ class View {
 		}
 		else
 		{
-			$page = str_replace("%meta%",$this->meta,$page);
+			$page = str_replace("%meta%",$this->meta.$this->noscriptRefresh,$page);
 			$top = str_replace("%logo%",$this->logo,$top);
 			$topbody = str_replace("%bg_wrapper%",$this->bg_wrapper,$topbody);
 			if ( !empty($_SESSION['users_theme']) )
@@ -333,6 +334,13 @@ class View {
         if ( !empty($time) || $time === 0 )
             $this->refreshTime = $time;
         $this->refreshUrl = $url;
+    }
+
+    // Page reload only for browsers without JavaScript. Pages that poll with
+    // JavaScript call this instead of refresh().
+    function refreshNoscript($url,$time)
+    {
+        $this->noscriptRefresh = "<noscript><meta http-equiv='refresh' content='".(int)$time.";url=".$url."' /></noscript>";
     }
 
     function setTitle($title)

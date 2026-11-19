@@ -351,7 +351,8 @@ function cat_render_list(mysqli $db, string $prefix, string $csrf, ?array $previ
     ?>
     <h2>Game Catalog</h2>
     <p>Choose which games customers can rent, what they cost, and which agents they run on.
-       Open a game to edit it. Only published games appear on the storefront.</p>
+       Open a game to edit it. Only published games appear on the storefront.
+       To size an agent, use the <a href="?m=administration&amp;p=resource_planner">bandwidth and storage calculators</a>.</p>
     <?php
     cat_render_import($db, $prefix, $csrf, catalog_admin_agents($db, $prefix), $preview);
     cat_render_headroom($db, $prefix, $csrf);

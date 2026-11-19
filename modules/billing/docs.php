@@ -136,8 +136,13 @@ foreach ((array)$categories as $cat) {
 $categories = $nonGameCategories;
 
 // Build game cards from the parsed game reference, enriched with any matching docs folder.
+// Helper XMLs that are not games are left out of the public list.
+$notGameKeys = ['testing_app', 'vbox', 'windev_proof_listener'];
 $gameCards = [];
 foreach ($gamesByKey as $key => $entry) {
+    if (in_array($key, $notGameKeys, true)) {
+        continue;
+    }
     $docFolder = $gameDocFoldersByKey[$key] ?? null;
     $gameCards[] = [
         'folder' => $key,

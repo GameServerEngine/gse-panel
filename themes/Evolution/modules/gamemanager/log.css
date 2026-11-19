@@ -39,7 +39,6 @@ table.center > tbody > tr > td > input[value="Send command"] {
 }
 
 .failure {
-    color:#fff !important;
     text-align:center;
 }
 

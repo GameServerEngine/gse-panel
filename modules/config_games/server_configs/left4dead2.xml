@@ -27,7 +27,10 @@
     </windows>
     <linux arch="x86">
       <exe>srcds_run</exe>
-      <cli_template>%GAME_TYPE% %PID_FILE% %MAP% %IP% %PORT% %PLAYERS%</cli_template>
+      <reserve_ports>
+        <port type="subtract" id="CLIENTPORT" cli_string="+clientport" options="s">10</port>
+      </reserve_ports>
+      <cli_template>%GAME_TYPE% %PID_FILE% %MAP% %IP% %PORT% %PLAYERS% -strictportbind -norestart %CLIENTPORT%</cli_template>
       <server_params>
         <param key="-autoupdate -steam_dir {GSP_STEAM_CMD_DIR} -steamcmd_script {STEAMCMD_INSTALL_FILE}" type="checkbox_key_value">
           <caption>Auto-Update</caption>

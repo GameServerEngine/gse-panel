@@ -22,43 +22,7 @@
  *
  */
 
-// Define commands, user permissions (via *role* => true/false), and what they're referred to on each OS.
-// Include arguements here. They cannot be passed in the text input field.
-$availableCommands	=	array(
-	// 'title' also needs to be specified in the translation files with the same values - as this is what shows on the select list. ex:
-	array(
-		'title'		=>	'ping',
-		'linux'		=>	'ping -c 4',	// By default, ping runs indefinitely on Linux - so set the count to 4; same as Windows default.
-		'windows'	=>	'ping',
-
-		// Default: Ping is available to all user roles.
-		'subuser'	=>	true,
-		'user'		=>	true,
-		'admin'		=>	true,
-	),
-
-	array(
-		'title'		=>	'traceroute',
-		'linux'		=>	'traceroute',
-		'windows'	=>	'tracert',
-
-		// Default: Traceroute is only available to admins.
-		'subuser'	=>	false,
-		'user'		=>	false,
-		'admin'		=>	true,
-	),
-);
-
-// An array of characters which should never be passed to exec()
-$blockedCharacters	= '"#$%^&*()+=[]\';,\\/{}|:<>?~';
-
-// Should we log attempted form manipulation (ie, editing the form to execute a command the user doesn't have access to) ...
-// ... and attempted multi-command input? (ie, ;cd /;ls)
-$logMaliciousUsage = true;
-
-// Should we log successfully executed commands...?
-// Could spam the logs - so probably set this to false.
-$logAllUsage = false;
+// Which roles may use which network tool is set in includes/diagnostics/runner.php (diag_default_tool_access()).
 
 // Games which Sourcemod supports.
 // Needs to be exactly what GSP reports as the game_name.

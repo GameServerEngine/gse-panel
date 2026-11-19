@@ -5,8 +5,22 @@ function ticketHeader($info)
     $created = new DateTime($info['created_at']);
     $updated = new DateTime($info['last_updated']);
 
+    // Tickets opened by the panel itself (crash detection) say so. The owner is shown as "Created For".
+    $automatic = !empty($info['is_automatic']);
+    if ($automatic) {
+        $submittedBy = '<b>'.get_lang('ticket_automatic').'</b> ('.get_lang('ticket_automatic_source').')';
+    } else {
+        $submittedBy = '<a href="?m=user_admin&p=edit_user&user_id='.$info['user_id'].'">'.htmlentities($info['users_login']).'</a>';
+    }
+    $ownerIp = $automatic ? '' : get_lang('ip').': '.inet_ntop($info['user_ip']).' - ';
+    $ownerNote = $automatic ? ' ('.get_lang('ticket_created_for_note').')' : '';
+
     return '<div class="divTable">
     <div class="divTableBody">
+        <div class="divTableRow">
+            <div class="divTableCell infoblock_ticket">'.get_lang('ticket_submitted_by').'</div>
+            <div class="divTableCell contentblock_ticket">'.$submittedBy.'</div>
+        </div>
         <div class="divTableRow">
             <div class="divTableCell infoblock_ticket">'.get_lang('ticket_id').'</div>
             <div class="divTableCell contentblock_ticket">#'.$info['tid'].' - '.$info['uid'] .'</div>
@@ -33,10 +47,10 @@ function ticketHeader($info)
             <div class="divTableCell contentblock_ticket">'.ticketCodeToName($info['status']).'</div>
         </div>
         <div class="divTableRow">
-            <div class="divTableCell infoblock_ticket">'.get_lang('submitter_info').'</div>
+            <div class="divTableCell infoblock_ticket">'.($automatic ? get_lang('ticket_created_for') : get_lang('submitter_info')).'</div>
             <div class="divTableCell contentblock_ticket">'.get_lang('username').': <a href="?m=user_admin&p=edit_user&user_id='. $info['user_id'] .'">'. $info['users_login'] .'</a> - 
             '. (!empty($info['users_fname']) ? get_lang('name') . ': ' . htmlentities($info['users_fname']) . (!empty($info['users_lname']) ? ' '.htmlentities($info['users_lname']).' - ' : '') : '') .
-            get_lang('ip') . ': '. inet_ntop($info['user_ip']) .' - '.get_lang('role') .': '. ucfirst($info['users_role']).'
+            $ownerIp . get_lang('role') .': '. ucfirst($info['users_role']) . $ownerNote .'
             </div>
         </div>
     </div>
@@ -55,17 +69,27 @@ function ticketMessage($messageData, $uid, $loggedInAdmin = false, $ratingsEnabl
         $class = $messageData['is_admin'] == 1 ? 'admin' : 'user';
     }
 
+    // A post added by the panel itself (crash detection) is labelled as automatic. The owner is named, not shown as the author.
+    $automatic = !empty($messageData['is_automatic']);
+    if ($automatic) {
+        $nameHtml = get_lang('ticket_automatic_source');
+        $typeText = get_lang('ticket_automatic').' - '.get_lang('ticket_created_for').': '.htmlentities($messageData['users_login']);
+    } else {
+        $nameHtml = '<a href="?m=user_admin&p=edit_user&user_id='.$messageData['user_id'].'">'. htmlentities($messageData['users_login']) .'</a> ' .
+                    (!empty($messageData['users_fname']) ? htmlentities($messageData['users_fname']) . (!empty($messageData['users_lname']) ? ' '.htmlentities($messageData['users_lname']) : '') : '');
+        $typeText = ucfirst($messageData['users_role']);
+    }
+
     $replyBox = '<div class="ticket_reply '. $class .'">
     <div class="date">
         '.$date->format('jS M Y (H:i)').'
     </div>
     <div class="'. $class .'">
         <span class="name">
-            <a href="?m=user_admin&p=edit_user&user_id='.$messageData['user_id'].'">'. htmlentities($messageData['users_login']) .'</a> ' .
-                    (!empty($messageData['users_fname']) ? htmlentities($messageData['users_fname']) . (!empty($messageData['users_lname']) ? ' '.htmlentities($messageData['users_lname']) : '') : '') .'
+            '. $nameHtml .'
         </span>
         <span class="type">
-            '.ucfirst($messageData['users_role']).'
+            '. $typeText .'
         </span>
     </div>
     <div class="message">'.nl2br(htmlentities($messageData['message'])).'</div>';
@@ -74,7 +98,7 @@ function ticketMessage($messageData, $uid, $loggedInAdmin = false, $ratingsEnabl
 
     $replyBox .= '<div class="footer_row">';
 
-    if ($messageData['users_role'] !== 'admin' || $loggedInAdmin) {
+    if (!$automatic && ($messageData['users_role'] !== 'admin' || $loggedInAdmin)) {
         $replyBox .= '<div class="left">'.get_lang('ip').': '.inet_ntop($messageData['user_ip']).'</div>';
     }
 

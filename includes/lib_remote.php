@@ -23,6 +23,7 @@
  */
 
 require_once(__DIR__ . "/../Crypt/XXTEA.php");
+require_once(__DIR__ . "/diagnostics/contract.php");
 
 if (!defined('XMLRPC_READY')) {
 	if (!function_exists('xmlrpc_encode_request') || !function_exists('xmlrpc_decode')) {
@@ -1101,12 +1102,45 @@ class RemoteLibrary
 		return $data;
 	}
 
+	// Windows agents run Pure-FTPd under Cygwin, which needs /cygdrive/c/GSE/... paths, but the panel stores
+	// Windows paths (C:\GSE\...). Linux paths come back unchanged. Used for FTP home directories.
+	public static function ftp_agent_path($path)
+	{
+		$path = trim((string)$path);
+		if ($path === '')
+			return $path;
+		if (preg_match('#^([A-Za-z]):[\\/]*(.*)$#', $path, $match))
+			$path = '/cygdrive/' . strtolower($match[1]) . '/' . $match[2];
+		$path = str_replace('\\', '/', $path);
+		$path = preg_replace('#/+#', '/', $path);
+		return ($path === '/') ? $path : rtrim($path, '/');
+	}
+
+	// The reason the agent gave for the last ftp_mgr() call that returned 0.
+	public $ftp_error = '';
+
 	public function ftp_mgr($action, $login = "", $password = "", $home_path = "")
 	{
+		if ($action === "useradd" or $action === "usermod")
+			$home_path = self::ftp_agent_path($home_path);
+		$this->ftp_error = '';
 		$params_array = $this->encrypt_params($action, $login, $password, $home_path);
 		$this->add_enc_chk($params_array);
 		$request = xmlrpc_encode_request("ftp_mgr", $params_array);
 		$status = $this->sendRequest($request);
+
+		// The Windows agent answers with the plain Pure-FTPd text ("ERROR: ..." when it failed).
+		// The Linux agent answers "1;<base64 lines>". Accept both forms.
+		if (is_string($status) and !preg_match('/^\s*-?\d+(;|\s*$)/', $status))
+		{
+			if (preg_match('/^\s*(ERROR:|Bad Encryption Key)/', $status))
+			{
+				$this->ftp_error = trim(preg_replace('/^\s*ERROR:\s*/', '', $status));
+				return 0;
+			}
+			return $status;
+		}
+
 		@list($retval,$data_tmp) = @explode(";",$status);
 
 		$data = '';
@@ -1124,6 +1158,27 @@ class RemoteLibrary
 			return $data;
 		}
 		return 0;
+	}
+
+	// Does this FTP login exist on the agent? Asks for the one account. The agent's full account list
+	// does not work on Windows agents, so it is only used as a fallback.
+	public function ftp_login_exists($login)
+	{
+		$details = $this->ftp_mgr("show", $login);
+		if (is_string($details) and preg_match('/^\s*Login\s*:/mi', $details))
+			return TRUE;
+
+		$list = $this->ftp_mgr("list");
+		if (is_string($list))
+		{
+			foreach (explode("\n", $list) as $line)
+			{
+				$parts = preg_split('/\s+/', trim($line));
+				if (isset($parts[0]) and $parts[0] === (string)$login)
+					return TRUE;
+			}
+		}
+		return FALSE;
 	}
 
 	public function compress_files($files,$destination,$archive_name,$archive_type)
@@ -1291,6 +1346,41 @@ class RemoteLibrary
 		$this->add_enc_chk($args);
 		$request = xmlrpc_encode_request("agent_resource_snapshot", $args);
 		return $this->decode_component_response($this->sendRequest($request));
+	}
+
+	/// Capability probe for the diagnostics contract (docs/agent-diagnostics-protocol.md).
+	/// Returns array('state' => 'offline'|'unsupported'|'ok', 'caps' => array|null).
+	/// An agent that is online but has no diag_capabilities method answers with an XML-RPC fault.
+	/// That is "unsupported", not an error, so the fault is not written to the log here.
+	public function diag_probe()
+	{
+		if ($this->status_chk() !== 1) {
+			return array('state' => 'offline', 'caps' => null);
+		}
+		$args = NULL;
+		$this->add_enc_chk($args);
+		$reply = $this->postRequest(xmlrpc_encode_request("diag_capabilities", $args));
+		if (!is_array($reply) || remote_reply_is_fault($reply)) {
+			return array('state' => 'unsupported', 'caps' => null);
+		}
+		$caps = diag_parse_capabilities($this->decode_component_response($reply));
+		return array('state' => $caps === null ? 'unsupported' : 'ok', 'caps' => $caps);
+	}
+
+	/// Runs one diagnostic tool on the agent. $params is an array, sent as JSON.
+	/// Always returns the array from diag_parse_run_reply().
+	public function diag_run($tool, $params)
+	{
+		$params_array = $this->encrypt_params($tool, json_encode($params));
+		$this->add_enc_chk($params_array);
+		$request = xmlrpc_encode_request("diag_run", $params_array);
+		$response = $this->sendRequest($request);
+		if ($response === NULL) {
+			$text = $this->last_fault_text !== '' ? $this->last_fault_text : 'No response from agent.';
+			return array('success' => false, 'status' => 'agent_unreachable', 'message' => $text,
+				'result' => array(), 'duration_ms' => 0, 'truncated' => false);
+		}
+		return diag_parse_run_reply($this->decode_component_response($response));
 	}
 
 	private function decode_component_response($response)

@@ -526,6 +526,30 @@ p {
     background: var(--page);
 }
 
+/* Lead card on the Services page: orange accent, larger heading. */
+.gsw-featured-card {
+    border-left: 4px solid var(--orange);
+}
+
+.gsw-featured-card h2 {
+    margin: 0 0 8px;
+    font-size: 1.7rem;
+}
+
+.gsw-featured-points {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    margin: 12px 0;
+    padding-left: 18px;
+}
+
+.gsw-featured-card .gsw-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
 .gsw-powered {
     max-width: 880px;
 }

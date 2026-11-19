@@ -479,6 +479,14 @@ function exec_operation( $action, $home_id, $mod_id, $ip, $port, $override = fal
 	{
 		if( $server_xml->replace_texts )
 		{
+			// Same per-mod merge the start/restart branches do below. This is the only place
+			// cfg_text_replace.php actually runs (require_once skips it there), so without this
+			// merge $server_home['mod_cfg_id'] is unset and incrementalNumByHomeId() breaks the SQL.
+			if (isset($home_info['mods'][$mod_id]) && is_array($home_info['mods'][$mod_id])) {
+				foreach ($home_info['mods'][$mod_id] as $key => $value) {
+					$home_info[$key] = $value;
+				}
+			}
 			$server_home = $home_info;
 			if(	isset($server_xml->lgsl_query_name) )
 				require_once('protocol/lgsl/lgsl_protocol.php');
@@ -806,19 +814,19 @@ function get_server_billing_expiration_html(int $home_id): string
 	// resultQuery returns FALSE both on error and when 0 rows are found.
 	// Either way, there is no billing order for this server.
 	if ($rows === false) {
-		return "<span style='color:red;'>No expiration date found</span>";
+		return "<span class='log-bad'>No expiration date found</span>";
 	}
 
 	// end_date may be NULL (e.g. order created but payment not yet captured).
 	if (empty($rows[0]['end_date'])) {
-		return "<span style='color:red;'>No expiration date found</span>";
+		return "<span class='log-bad'>No expiration date found</span>";
 	}
 
 	// Parse end_date using DateTime for PHP 8.3+ compatibility.
 	try {
 		$end_dt = new DateTime($rows[0]['end_date']);
 	} catch (\Exception $e) {
-		return "<span style='color:red;'>No expiration date found</span>";
+		return "<span class='log-bad'>No expiration date found</span>";
 	}
 
 	// Compare dates only (strip time) so a server expiring on today's date is
@@ -829,7 +837,7 @@ function get_server_billing_expiration_html(int $home_id): string
 
 	if ($end_midnight < $today_midnight) {
 		// Expiration date is before today — treat as suspended.
-		return "<span style='color:red;'>Suspended</span>";
+		return "<span class='log-bad'>Suspended</span>";
 	}
 
 	// $diff->days is the total number of whole days between today and end date.
@@ -841,13 +849,39 @@ function get_server_billing_expiration_html(int $home_id): string
 		return "<span style='color:green;'>" . $display_date . "</span>";
 	} elseif ($days_remaining >= 4) {
 		// 4–10 days: yellow warning (darkgoldenrod for WCAG contrast).
-		return "<span style='color:#B8860B;'>" . htmlentities($days_remaining, ENT_QUOTES, 'UTF-8') . " days remaining</span>";
+		return "<span class='log-warn'>" . htmlentities($days_remaining, ENT_QUOTES, 'UTF-8') . " days remaining</span>";
 	} elseif ($days_remaining >= 1) {
 		// 1–3 days: urgent red warning.
-		return "<span style='color:red;'>" . htmlentities($days_remaining, ENT_QUOTES, 'UTF-8') . " days remaining</span>";
+		return "<span class='log-bad'>" . htmlentities($days_remaining, ENT_QUOTES, 'UTF-8') . " days remaining</span>";
 	} else {
 		// Less than one full day but not yet expired.
-		return "<span style='color:red;'>Less than 1 day remaining</span>";
+		return "<span class='log-bad'>Less than 1 day remaining</span>";
 	}
+}
+
+// Starts the in-page status script of the start page (js/gse_live.js).
+// Waiting states keep polling poll_url; other states leave once for leave_url.
+function gse_status_poll_script($answer, $poll_url, $leave_url, $retry)
+{
+	$options = array(
+		'url' => $poll_url,
+		'leaveUrl' => $leave_url,
+		'retry' => $retry + 1,
+		'state' => $answer['state'],
+		'delay' => $answer['delay'],
+	);
+	$json = json_encode($options, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	echo "<script type='text/javascript' src='js/gse_live.js'></script>\n";
+	echo "<script type='text/javascript'>(function(){ var o = ".$json."; o.el = document.getElementById('gse-status-line'); GseStatusPoll(o); })();</script>\n";
+}
+
+// Leaves the page once after some seconds without a page reload loop.
+// Browsers without JavaScript get the old meta refresh through $view.
+function gse_js_redirect($plain_url, $seconds)
+{
+	global $view;
+	$json = json_encode($plain_url, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	echo "<script type='text/javascript'>window.setTimeout(function(){ window.location.href = ".$json."; }, ".((int)$seconds * 1000).");</script>\n";
+	$view->refreshNoscript(htmlspecialchars($plain_url), $seconds);
 }
 ?>

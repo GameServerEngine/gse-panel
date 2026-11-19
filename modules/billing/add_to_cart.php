@@ -143,6 +143,13 @@ if (!empty($resolve_username_for_user_id) && $db) {
     }
 }
 
+// An order needs a signed-in customer. Without one the invoice would belong to nobody and never show in a cart.
+if ($user_id <= 0) {
+    $return = rawurlencode('/order.php?home_cfg_id=' . (isset($_POST['home_cfg_id']) ? intval($_POST['home_cfg_id']) : 0));
+    header('Location: ' . billing_url('login.php') . '?return_to=' . $return);
+    exit;
+}
+
 $durationInfo = billing_normalize_duration('month');
 
 if ($offer_id <= 0) {
@@ -152,6 +159,21 @@ if ($offer_id <= 0) {
 $offer = catalog_load_offer_by_id($db, $table_prefix, $offer_id);
 if (!$offer || (int)$offer['home_cfg_id'] !== $home_cfg_id) {
     billing_fail_add_to_cart('Selected offer is not available', ['offer_id' => $offer_id, 'home_cfg_id' => $home_cfg_id], '/serverlist.php');
+}
+
+// Optional free subdomain: make sure the chosen name is still available before the invoice is created.
+require_once(__DIR__ . '/includes/subdomain_bridge.php');
+$sd_name = isset($_POST['sd_name']) ? strtolower(trim((string)$_POST['sd_name'])) : '';
+$sd_domain = isset($_POST['sd_domain']) ? strtolower(trim((string)$_POST['sd_domain'])) : '';
+$sd_ctx = null;
+if ($sd_name !== '') {
+    $sd_ctx = billing_sd_load($db, $table_prefix);
+    if ($sd_ctx) {
+        list($sd_ok, $sd_msg) = sd_check_available($sd_ctx[0], $sd_ctx[2], $sd_ctx[1], $sd_name, $sd_domain, 0, 0, (int)$offer['remote_server_id']);
+        if (!$sd_ok) {
+            billing_fail_add_to_cart('Subdomain not available', ['name' => $sd_name], '/order.php?home_cfg_id=' . intval($home_cfg_id) . '&sd_name=' . rawurlencode($sd_name) . '&error_message=' . rawurlencode('Server address: ' . $sd_msg));
+        }
+    }
 }
 
 if (!storefront_offer_is_orderable($db, $table_prefix, $offer_id)) {
@@ -410,6 +432,13 @@ if (!$res || $err_no > 0) {
     $affected = mysqli_affected_rows($db);
     site_log_info('add_to_cart_insert', ['invoice_id'=>$insert_id, 'affected_rows'=>$affected]);
     file_put_contents($logfile, date('c') . " - Invoice created: invoice_id={$insert_id}\n", FILE_APPEND);
+    if ($sd_ctx && $sd_name !== '' && $insert_id > 0) {
+        if (!sd_reserve($sd_ctx[0], $sd_name, $sd_domain, $insert_id, $user_id)) {
+            // Someone took the name in the last moment: remove this invoice and send the person back.
+            mysqli_query($db, "DELETE FROM {$table_prefix}billing_invoices WHERE invoice_id=" . (int)$insert_id);
+            billing_fail_add_to_cart('Subdomain reservation failed', ['name' => $sd_name], '/order.php?home_cfg_id=' . intval($home_cfg_id) . '&sd_name=' . rawurlencode($sd_name) . '&error_message=' . rawurlencode('Server address: that name was just taken. Please pick another.'));
+        }
+    }
 }
 
 if ($stmt instanceof mysqli_stmt) {

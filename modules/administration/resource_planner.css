@@ -1,0 +1,12 @@
+/* Resource Planner. Message boxes (.success .warning .failure) come from the theme. */
+.planner-section{margin:24px 0; max-width:900px; text-align:left;}
+.planner-form{display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px 20px; align-items:end;}
+.planner-form p{grid-column:1 / -1; margin:0;}
+.planner-field label{display:block; font-weight:bold; margin-bottom:4px;}
+.planner-field input,
+.planner-field select{width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #888; border-radius:4px;}
+.planner-field small{display:block; margin-top:4px; color:var(--gse-muted, #8b949e);}
+.planner-table{border-collapse:collapse; margin-top:8px;}
+.planner-table th,
+.planner-table td{padding:4px 16px 4px 0; text-align:left;}
+.planner-section code{white-space:normal; overflow-wrap:anywhere;}

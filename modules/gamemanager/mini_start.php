@@ -767,8 +767,7 @@ elseif($server_home['home_id'] == $_POST['home_id'])
 	echo "</table>";
 
 	print("<p class='note'>". get_lang("starting_server") ."</p>");
-	global $view;
-	$view->refresh("?m=gamemanager&amp;p=start&amp;refresh&amp;home_id=".$server_home['home_id']."&amp;ip=".$ip."&amp;port=".$port."&amp;mod_id=".$server_home['mod_id'],3);
+	gse_js_redirect("?m=gamemanager&p=start&refresh&home_id=".$server_home['home_id']."&ip=".$ip."&port=".$port."&mod_id=".$server_home['mod_id'], 3);
 	return;
 }
 ?>

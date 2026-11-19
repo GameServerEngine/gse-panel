@@ -153,13 +153,16 @@ if (!function_exists('gamemanager_trigger_update_install')) {
 			return $resultBase + array('ok' => true, 'started' => true, 'message' => 'Update started.', 'output' => $steam_out);
 		}
 
+		// Install scripts expect to run in the game folder, the same as after a SteamCMD
+		// install. The agent's exec runs in the agent's own folder, so change folder first.
+		$in_game_folder = "cd " . escapeshellarg($home_info['game_root']) . " || exit 1\n";
 		$ran_scripts = false;
 		if (!empty((string)$precmd)) {
-			$remote->exec((string)$precmd);
+			$remote->exec($in_game_folder . (string)$precmd);
 			$ran_scripts = true;
 		}
 		if (!empty((string)$postcmd)) {
-			$remote->exec((string)$postcmd);
+			$remote->exec($in_game_folder . (string)$postcmd);
 			$ran_scripts = true;
 		}
 		return array(

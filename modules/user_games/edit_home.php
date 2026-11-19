@@ -157,22 +157,8 @@ function exec_module()
 				if( $host_stat === 1 )
 				{
 					$host_online = TRUE;
-					$ftp_accounts_list = $remote->ftp_mgr("list");
-					$ftp_accounts = explode("\n",$ftp_accounts_list);
-
-					foreach ((array)$ftp_accounts as $ftp_account)
-					{
-						if( $ftp_account != "" )
-						{
-							list($ftp_login, $ftp_path) = explode("\t",$ftp_account);
-							$ftp_login = trim($ftp_login);
-
-							if ($ftp_login == $old_login)
-								$old_login_exists = TRUE;
-							if ($ftp_login == $post_ftp_login)
-								$user_exists = TRUE;
-						}
-					}
+					$old_login_exists = $remote->ftp_login_exists($old_login);
+					$user_exists = $remote->ftp_login_exists($post_ftp_login);
 				}
 				if( $host_online and ! $user_exists )
 				{
@@ -253,21 +239,7 @@ function exec_module()
 				if( $host_stat === 1 )
 				{
 					$host_online = TRUE;
-					$ftp_accounts_list = $remote->ftp_mgr("list");
-					$ftp_accounts = explode("\n",$ftp_accounts_list);
-					foreach ((array)$ftp_accounts as $ftp_account)
-					{
-						if( $ftp_account != "" )
-						{
-							list($ftp_login, $ftp_path) = explode("\t",$ftp_account);
-							$ftp_login = trim($ftp_login);
-							if ($ftp_login == $current_login)
-							{
-								$login_exists = TRUE;
-								break;
-							}
-						}
-					}
+					$login_exists = $remote->ftp_login_exists($current_login);
 				}
 
 				if($host_online)
@@ -276,6 +248,7 @@ function exec_module()
 					{
 						if($remote->ftp_mgr("useradd", $current_login, $ftp_password, $home_info['home_path']) !== 0)
 						{
+							$db->changeFtpPassword($home_id,clean_path($ftp_password));
 							echo json_encode(array('result' => 'success', 'info' => get_lang("successfully_changed_game_server")));
 							$db->logger( get_lang("successfully_changed_game_server") ." HOME ID:$home_id - ". get_lang("server_ftp_password") .":$ftp_password");
 						}
@@ -365,25 +338,10 @@ function exec_module()
 			if( $host_stat === 1 )
 			{
 				$host_online = TRUE;
-				$ftp_accounts_list = $remote->ftp_mgr("list");
-				$ftp_accounts = explode("\n",$ftp_accounts_list);
-				foreach ((array)$ftp_accounts as $ftp_account)
-				{
-					if( $ftp_account != "" )
-					{
-						list($ftp_login, $ftp_path) = explode("\t",$ftp_account);
-						$ftp_login = trim($ftp_login);
-
-						if ($ftp_login == $login)
-						{
-							$user_exists = TRUE;
-							break;
-						}
-					}
-				}
+				$user_exists = $remote->ftp_login_exists($login);
 			}
 
-			if($host_online and $ftp_accounts_list !== 0)
+			if($host_online)
 			{
 				if( $user_exists )
 				{
@@ -723,6 +681,13 @@ function exec_module()
 	echo "<input type='submit' name='change_control_password' value='". get_lang("change_control_password") ."' />";
 	echo "</form></td></tr>";
 	echo "<tr><td colspan='2' class='info'>". get_lang("change_control_password_info") ."</td></tr>";
+	}
+	// Free server address (subdomains module), only shown when the module is set up
+	$sdLib = dirname(__DIR__) . '/subdomains/includes/subdomain_lib.php';
+	if ( is_file($sdLib) )
+	{
+		require_once $sdLib;
+		sd_render_edit_rows($db, DB_PREFIX, $home_id, $isAdmin, $_SESSION['user_id']);
 	}
 	if ( $isAdmin && $ftp_installed )
 	{

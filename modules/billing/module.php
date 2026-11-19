@@ -676,7 +676,7 @@ $install_queries[15] = array(
         ));
         $rows = array(
             array('support', 'Support Request', 'support', 'Help with your server, billing or an account question.', 'fixed', 0, $one, '[]', 1),
-            array('server-setup', 'Server Setup', 'paid', 'We install and configure your game, mods and settings for you. Placeholder price: set yours in Administration.', 'fixed', 25, $one, $setup, 2),
+            array('server-setup', 'Server Setup', 'paid', 'We install and configure your game, mods and settings for you.', 'fixed', 25, $one, $setup, 2),
             array('custom-development', 'Custom Development', 'paid', 'We build a mod, script or feature for your server. We quote after we read your idea.', 'quote', 0, $two, $dev, 3),
         );
         foreach ($rows as $x) {
