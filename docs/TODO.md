@@ -129,3 +129,5 @@
 | need | Windows agent (gse-agent-windows, agent_core.pl ftp_mgr): answer in the panel's form (1;base64 lines, -1 on error), convert Windows paths itself, and fix list (pure-pw list -f fails there with Unable to open the passwd file). The panel works around all three, so the agent change needs a redeploy that restarts the agent: schedule it. | open | Claude | |
 | need | Decide the FTP root for panel-created accounts: add_home.php gives the game folder (gamefiles) but edit_home.php, billing provisioning and the API give the whole server folder. | open: owner decision needed | Claude | |
 | need | The live panel was 2.12.0 while working is 2.13.0, so includes/lib_remote.php on core was patched by hand for the FTP fix (the other three files matched the repo). The next panel update brings the same change. | open | Claude | |
+
+| Assistant dev test | Done 2026-11-18: tested on dev panel (alice/bob/admin) incl. log reading, ownership refusal, restart button. Fixed ask.php globals + log reader entry point (d9242414 and next). Next: per-server chat in Game Monitor, Admin AI page, DB/FTP tools |
