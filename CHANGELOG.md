@@ -2,6 +2,9 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.14.0 (2026-11-18)
+- **New: Assistant (off by default):** Customers can ask in plain words about their own game servers, such as whether a server is running, what errors are in the log, or who joined, and the assistant can offer Start, Stop and Restart buttons that the customer presses. It uses the Claude Haiku model through the Claude API, so it needs an API key stored on the panel server. An admin turns it on in settings (assistant_enabled), and until then nothing changes and no data leaves the panel. It can only see servers the signed-in user owns, cannot act by itself, ignores instructions found inside log files, refuses unrelated questions, and has a monthly usage cap and a per-minute limit per user. Every question is recorded in an audit table. The per-server chat in Game Monitor and the admin diagnostics are the next steps.
+
 ## 2.12.1 (2026-11-17)
 - **Message box icons covered the first word:** The info, success, warning and error boxes reserve room on the left for their icon, but the new status color rules reset the padding and put the icon on top of the text. The color rules no longer set padding on those boxes, so the room for the icon stays.
 - **Crash tickets looked like the owner wrote them:** A ticket opened by crash detection showed the server owner as the author, with the owner's role, even though the panel wrote it. Tickets and posts now have an automatic flag. Automatic ones are headed "Submitted By: Agent crash detection (Automatically created ticket)", and the owner is shown as "Created For" so they can see the issue. Crash tickets that already exist are marked too. This adds a database step to the Tickets module (version 4).
