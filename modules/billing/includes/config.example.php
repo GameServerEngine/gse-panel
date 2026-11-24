@@ -23,7 +23,7 @@ $db_type = "mysql";
 
 # --- Site base URL ---
 # Full base URL WITHOUT trailing slash. Leave empty to use relative paths.
-# Example: "https://gameservers.world" or "https://your-domain.com"
+# Example: "https://order.gameserverengine.com" or "https://your-domain.com"
 $SITE_BASE_URL = '';
 
 # --- Background image ---
@@ -51,5 +51,5 @@ $paypal_live_webhook_id    = '';
 
 # Webhook path (relative to billing site root, must start with /)
 # Full public URL = $SITE_BASE_URL + $paypal_webhook_path
-# Example full URL: https://gameservers.world/paypal/webhook.php
+# Example full URL: https://order.gameserverengine.com/paypal/webhook.php
 $paypal_webhook_path = '/paypal/webhook.php';

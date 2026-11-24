@@ -216,8 +216,8 @@ td > h3 {
         padding: 20px;
 }
 .logo .panel-logo {
-	height: 56px;
-	width: 56px;
+	height: 112px;
+	width: auto;
 	vertical-align: middle;
 }
 .logo .panel-name {

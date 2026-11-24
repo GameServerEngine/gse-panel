@@ -29,7 +29,7 @@ class View {
     private string $meta = '';
     private string $noscriptRefresh = '';
     private string $title = 'GameServer Engine';
-    private string $panel_name = 'GameServer Engine';
+    private string $panel_name = '';
     private string $header_code = '';
 
     private $refreshTime;

@@ -142,4 +142,5 @@
 | todo | Rename the assistant to AI Assist (button, Admin menu, headings, chat label, switch label). | done | Claude | |
 | todo | Setting for the AI's name: button and chat say "Ask AI" by default, "Ask <name>" when named (Admin page too). | done | Claude | |
 | todo | One GameServer Engine logo and name for the panel and billing website (panel header, favicons, defaults). | done | Claude | |
+| todo | Logo at one set size (panel header 112px high, storefront 112/88/72px) from one value; storefront stylesheet cache-busted; storefront and panel moved to order. and panel.gameserverengine.com. | done | Claude | |
 | todo | Every backup reference uses backup.vpn.isaserver.net (Proxmox storage, VPS backup scripts, panel setting and module default). | done | Claude | |
