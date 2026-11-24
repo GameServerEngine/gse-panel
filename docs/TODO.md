@@ -140,3 +140,4 @@
 | todo | Steam Workshop module removed from the panel and kept in _reference/ (not shipped). Backup/Restore button icon changed. | done | Claude | |
 | todo | Theme CSS/JS carry the panel version in their URL so a release is never shown from stale browser cache (alert icon overlap). | done | Claude | |
 | todo | Rename the assistant to AI Assist (button, Admin menu, headings, chat label, switch label). | done | Claude | |
+| todo | Every backup reference uses backup.vpn.isaserver.net (Proxmox storage, VPS backup scripts, panel setting and module default). | done | Claude | |
