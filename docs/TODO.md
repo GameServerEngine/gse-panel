@@ -139,3 +139,4 @@
 | todo | Assistant limits: 30 seconds between questions, 60 per hour, 2000000 tokens per server per month, per-customer cap at maximum. Replaces the per-minute limit. | done | Claude | |
 | todo | Steam Workshop module removed from the panel and kept in _reference/ (not shipped). Backup/Restore button icon changed. | done | Claude | |
 | todo | Theme CSS/JS carry the panel version in their URL so a release is never shown from stale browser cache (alert icon overlap). | done | Claude | |
+| todo | Rename the assistant to AI Assist (button, Admin menu, headings, chat label, switch label). | done | Claude | |

@@ -34,7 +34,7 @@ function exec_module()
 	list($home, $why) = assistant_open_home($db, $user_id, $home_id);
 	assistant_render_chat(
 		$token,
-		'Assistant: ' . $home['home_name'],
+		'AI Assist: ' . $home['home_name'],
 		'Ask about this server: is it running, errors, logins or attacks in its logs, its files and scripts, its database or FTP login. '
 			. 'It can offer a Start, Stop or Restart button, a new-password button, or a change to a file or a new script that you review and apply (and can undo). It never does any of these for you.',
 		'For example: why did my server stop?'

@@ -2,6 +2,9 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.18.2 (2026-11-24)
+- **The assistant is now called "AI Assist":** the server button, the Admin menu entry, the page headings, the chat label and the settings switch all use the new name.
+
 ## 2.18.1 (2026-11-24)
 - **Message boxes keep their icon beside the text after an update:** the theme's stylesheets and scripts now carry the panel version in their address, so a browser can no longer keep showing the old copy after a release (the icon sat on top of the text when it did).
 

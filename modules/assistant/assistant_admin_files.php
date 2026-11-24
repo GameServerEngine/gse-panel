@@ -231,7 +231,7 @@ function assistant_tool_propose_patch($db, $user_id, $panel_root, $cfg, $input)
 	assistant_expire_proposals($db);
 	$rows = $db->resultQuery('SELECT COUNT(*) AS n FROM ' . assistant_table('proposals') . " WHERE kind = 'patch' AND status = 'pending'");
 	if (isset($rows[0]['n']) && (int)$rows[0]['n'] >= ASSISTANT_PATCH_PENDING_MAX) {
-		return array('data' => array('error' => 'There are ' . ASSISTANT_PATCH_PENDING_MAX . ' patches waiting on the Assistant page. Ask the admin to review or discard some first.'));
+		return array('data' => array('error' => 'There are ' . ASSISTANT_PATCH_PENDING_MAX . ' patches waiting on the AI Assist page. Ask the admin to review or discard some first.'));
 	}
 	$target = isset($input['target']) ? (string)$input['target'] : 'panel';
 	$has_content = isset($input['content']) && is_string($input['content']);
@@ -302,7 +302,7 @@ function assistant_tool_propose_patch($db, $user_id, $panel_root, $cfg, $input)
 		return array('data' => array('error' => 'The patch could not be saved.'));
 	}
 	return array(
-		'data' => array('ok' => true, 'patch_id' => $id, 'note' => 'Saved as patch #' . $id . '. It is NOT applied. The admin downloads it from the Assistant page and applies it through git (working, then testing). Say which files a change touches and why.'),
+		'data' => array('ok' => true, 'patch_id' => $id, 'note' => 'Saved as patch #' . $id . '. It is NOT applied. The admin downloads it from the AI Assist page and applies it through git (working, then testing). Say which files a change touches and why.'),
 		'button' => array('type' => 'patch', 'id' => $id, 'label' => 'Download patch #' . $id . ' (' . $store_target . ')'),
 	);
 }

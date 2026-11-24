@@ -8,7 +8,7 @@ $assistant_settings = $db->getSettings();
 $assistant_customers_ok = !isset($assistant_settings['assistant_customer_enabled']) || $assistant_settings['assistant_customer_enabled'] === '1' || $db->isAdmin((int)$_SESSION['user_id']);
 if (isset($assistant_settings['assistant_enabled']) && $assistant_settings['assistant_enabled'] === '1' && $assistant_customers_ok) {
 	$module_buttons = array(
-		"<a class='monitorbutton' href='?m=assistant&amp;p=chat&amp;home_id=" . (int)$server_home['home_id'] . "'><span>AI Assistant</span></a>"
+		"<a class='monitorbutton' href='?m=assistant&amp;p=chat&amp;home_id=" . (int)$server_home['home_id'] . "'><span>AI Assist</span></a>"
 	);
 } else {
 	$module_buttons = array();

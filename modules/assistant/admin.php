@@ -204,7 +204,7 @@ function exec_module()
 	}
 
 	$cfg = assistant_config($db->getSettings());
-	echo '<h2>Admin assistant</h2>';
+	echo '<h2>Admin AI Assist</h2>';
 	if ($cfg['assistant_enabled'] === '1') {
 		$key_ok = assistant_resolve_key($cfg, $db->getSettings()) !== '';
 		if (!$key_ok) {
@@ -212,13 +212,13 @@ function exec_module()
 		}
 		assistant_render_chat(
 			'admin',
-			'Ask the assistant',
+			'Ask AI Assist',
 			'It can read the panel, the agents, their logs and files, and any game server. It looks for errors, logins and attacks and tells you what it found. '
 				. 'It can prepare fixes: changes to a game server\'s files that you review and apply, buttons for start / stop / restart and new passwords, and patches for the panel or an agent that you apply through git. It never changes live panel files.',
 			'For example: check the logs of server 3 for failed logins in the last day'
 		);
 	} else {
-		echo '<p>The assistant is switched off. Tick "Assistant switched on" below and save.</p>';
+		echo '<p>The assistant is switched off. Tick "AI Assist switched on" below and save.</p>';
 	}
 	assistant_admin_usage($db, $cfg);
 	assistant_admin_key_form($db, $cfg, $csrf);

@@ -17,7 +17,7 @@ function assistant_models()
 function assistant_setting_defs()
 {
 	return array(
-		'assistant_enabled' => array('bool', '0', 'Assistant switched on', 'Master switch. Off hides the buttons and stops every request.'),
+		'assistant_enabled' => array('bool', '0', 'AI Assist switched on', 'Master switch. Off hides the buttons and stops every request.'),
 		'assistant_customer_enabled' => array('bool', '1', 'Customers may use it', 'Off leaves the assistant to administrators only.'),
 		'assistant_model' => array('select', 'claude-haiku-5-5', 'Model', 'Change the prices below too when you change the model.', 'options' => assistant_models()),
 		'assistant_effort' => array('select', 'medium', 'Thinking effort', 'Higher is slower and costs more.', 'options' => array('low' => 'low', 'medium' => 'medium', 'high' => 'high')),

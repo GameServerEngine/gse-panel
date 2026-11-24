@@ -181,7 +181,7 @@ function assistant_render_chat($scope_token, $heading, $intro, $placeholder)
 		addLine('You', question);
 		input.value = '';
 		send.disabled = true;
-		var waiting = addLine('Assistant', '...');
+		var waiting = addLine('AI Assist', '...');
 		post('modules/assistant/ask.php', { question: question })
 			.then(function (reply) {
 				waiting.lastChild.textContent = reply.text || '';

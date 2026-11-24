@@ -3,21 +3,21 @@
  * GSE - GameServer Engine
  *
  * Assistant: help from the Claude API inside the panel, for one server at a time.
- *  - Customers open it from a server in Game Monitor (the "AI Assistant" button). It answers about that
+ *  - Customers open it from a server in Game Monitor (the "AI Assist" button). It answers about that
  *    server (status, errors in the log, who joined, its MySQL database and FTP login) and offers buttons:
  *    Start / Stop / Restart or a new database / FTP password. The customer presses the button.
- *  - Administrators have an "Assistant" page in the Admin menu with read-only diagnostics for the panel,
+ *  - Administrators have an "AI Assist" page in the Admin menu with read-only diagnostics for the panel,
  *    MySQL, the game databases, the agents and every server.
  * The API key lives only on the panel server. Agents never see it.
  */
 
 // Module general information
-$module_title = "Assistant";
+$module_title = "AI Assist";
 $module_version = "1.1";
 $db_version = 2;
 $module_required = FALSE;
 // Customers do not get a menu entry: the chat is opened from a server in Game Monitor.
-$module_menus = array( array( 'subpage' => 'admin', 'name'=>'Assistant', 'group'=>'admin' ) );
+$module_menus = array( array( 'subpage' => 'admin', 'name'=>'AI Assist', 'group'=>'admin' ) );
 
 // Existing installs get these when the module upgrades from db_version 0.
 // Fresh installs also get them from install/gse_panel.sql. Both use IF NOT EXISTS, so running them again is safe.
