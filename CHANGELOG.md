@@ -3,6 +3,7 @@
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
 ## Unreleased
+- **Group restart reports success:** restarting servers from a group action reported every restart as failed, because the restart code never returned its success. It now does.
 - **Urban Terror installs without our file server:** the Urban Terror 4 game configuration downloaded the game from files.iaregamer.com, which no longer serves it, so an install left a web page where the game should be. It now downloads the official Urban Terror 4.3.4 zip from the game's own site and checks it against the published checksum before unpacking.
 
 ## 2.21.0 (2026-11-24)
