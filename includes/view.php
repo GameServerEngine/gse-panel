@@ -66,6 +66,13 @@ class View {
 		}
 
 		$page = file_get_contents($path.'layout.html');
+		// The theme's own stylesheets and scripts carry the panel version, so a new release is never shown with old copies from the browser cache.
+		if (!defined('PANEL_VERSION') && is_file(dirname(__FILE__) . '/panel_version.php')) {
+			require_once(dirname(__FILE__) . '/panel_version.php');
+		}
+		if (defined('PANEL_VERSION')) {
+			$page = preg_replace('#((?:href|src)="themes/[^"?]+\.(?:css|js))"#', '$1?v=' . PANEL_VERSION . '"', $page);
+		}
 		@$top = file_get_contents($path.'top.html');
 		@$bottom = file_get_contents($path.'bottom.html');
 		@$topbody = file_get_contents($path.'topbody.html');

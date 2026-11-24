@@ -2,7 +2,10 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
-## 2.17.5 (2026-11-24)
+## 2.18.1 (2026-11-24)
+- **Message boxes keep their icon beside the text after an update:** the theme's stylesheets and scripts now carry the panel version in their address, so a browser can no longer keep showing the old copy after a release (the icon sat on top of the text when it did).
+
+## 2.18.0 (2026-11-24)
 - **Steam Workshop module removed from the panel:** Steam Workshop is handled by Server Content only. The module, its API endpoint, menu entry, per-server button and theme rules are gone; the server list page no longer needs any module (it shows a module's buttons only if the module exists). The old code is kept for reference in `_reference/`, which is left out of release archives.
 - **Backup/Restore button icon:** shows a cloud-upload icon in the SimpleBootstrap theme instead of the default target.
 
