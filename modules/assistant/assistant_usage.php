@@ -37,11 +37,11 @@ function assistant_tokens_this_month($db, $user_id)
 	return isset($rows[0]['used']) ? (int)$rows[0]['used'] : 0;
 }
 
-// Requests this user made in the last 60 seconds.
-function assistant_requests_last_minute($db, $user_id)
+// Requests this user made in the last N seconds (the gap between questions and the hourly limit both use it).
+function assistant_requests_since($db, $user_id, $seconds)
 {
 	$rows = $db->resultQuery('SELECT COUNT(*) AS n FROM ' . assistant_table('log')
-		. ' WHERE user_id = ' . (int)$user_id . ' AND created > (NOW() - INTERVAL 60 SECOND)');
+		. ' WHERE user_id = ' . (int)$user_id . ' AND created > (NOW() - INTERVAL ' . (int)$seconds . ' SECOND)');
 	return isset($rows[0]['n']) ? (int)$rows[0]['n'] : 0;
 }
 

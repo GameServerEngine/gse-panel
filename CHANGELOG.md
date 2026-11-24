@@ -2,6 +2,10 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.17.4 (2026-11-24)
+- **Assistant limits match how people type:** one question per 30 seconds and 60 per hour for each user (was 6 a minute, which a person cannot reach). Each server may use 2,000,000 tokens a month (about $1 at Haiku prices); the per-customer cap is left at its maximum so a customer with several servers gets each server's allowance.
+- **Assistant answers could come back empty:** the assistant thinks before it answers, and thinking shares the same length limit as the answer. A low limit (1200) could be used up by thinking alone, so no answer was written, yet the request was still billed. The default limit is now 16000 (up to 32000 can be set; only tokens actually written are charged), and if a reply still runs out of room the assistant now says so instead of showing nothing.
+
 ## 2.16.6 (2026-11-19)
 - **Message box icons covered the text (SimpleBootstrap theme):** the green, red and yellow message boxes get an icon, but a padding rule meant for icon-less boxes removed the room reserved for it, so the icon sat on top of the first letters. That rule now only applies to warning boxes, which have no icon.
 

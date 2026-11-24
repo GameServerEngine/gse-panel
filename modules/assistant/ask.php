@@ -47,8 +47,11 @@ function assistant_main()
 
 	// Limits, cheapest check first. The budget stops everyone; the other caps are for customers.
 	assistant_ensure_tables($db);
-	if (assistant_requests_last_minute($db, $user_id) >= (int)$cfg['assistant_per_minute']) {
-		return assistant_json(429, array('text' => 'Slow down a little. Try again in a minute.'));
+	if (assistant_requests_since($db, $user_id, (int)$cfg['assistant_seconds_between']) >= 1) {
+		return assistant_json(429, array('text' => 'Please wait a few seconds before asking again.'));
+	}
+	if (assistant_requests_since($db, $user_id, 3600) >= (int)$cfg['assistant_per_hour']) {
+		return assistant_json(429, array('text' => 'You have reached the limit of questions for this hour. Please try again later.'));
 	}
 	list($month_in, $month_out, $month_requests) = assistant_month_totals($db);
 	if (assistant_cost_usd($month_in, $month_out, $cfg) >= (float)$cfg['assistant_monthly_budget_usd']) {

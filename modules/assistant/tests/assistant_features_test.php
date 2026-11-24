@@ -21,8 +21,8 @@ check('defaults: budget is $5', (float)$cfg['assistant_monthly_budget_usd'] === 
 check('defaults: off until the admin switches it on', $cfg['assistant_enabled'] === '0');
 $cfg = assistant_config(array('assistant_monthly_tokens' => '12345'));
 check('the pre-2.16 customer token setting still counts', (int)$cfg['assistant_user_monthly_tokens'] === 12345);
-$cfg = assistant_config(array('assistant_max_tool_steps' => '999', 'assistant_per_minute' => '-4', 'assistant_model' => 'not-a-model', 'assistant_key_file' => '../../etc/passwd'));
-check('numbers are clamped', (int)$cfg['assistant_max_tool_steps'] === 15 && (int)$cfg['assistant_per_minute'] === 1);
+$cfg = assistant_config(array('assistant_max_tool_steps' => '999', 'assistant_seconds_between' => '-4', 'assistant_model' => 'not-a-model', 'assistant_key_file' => '../../etc/passwd'));
+check('numbers are clamped', (int)$cfg['assistant_max_tool_steps'] === 15 && (int)$cfg['assistant_seconds_between'] === 1);
 check('unknown model falls back', $cfg['assistant_model'] === 'claude-haiku-5-5');
 check('bad key file path falls back', $cfg['assistant_key_file'] === '/etc/gse-panel/assistant.env');
 check('server caps parse', assistant_parse_server_caps('12=400000, 15=0; x=5 99') === array(12 => 400000, 15 => 0));
@@ -147,6 +147,15 @@ $result = assistant_ask('k', 'm', '', array(), 'hi', $run, 'server', $loop_api, 
 check('one question cannot use unlimited tokens', $result['input_tokens'] + $result['output_tokens'] <= 1500 && strpos($result['text'], 'narrower') !== false);
 $result = assistant_ask('k', 'm', '', array(), 'hi', $run, 'server', $loop_api, array('max_steps' => 2));
 check('step limit comes from the settings', count($result['tools']) <= 3);
+// A reply that used all its room on thinking must not come back empty.
+$empty_api = function ($key, $body) {
+	return array(200, array('stop_reason' => 'max_tokens', 'usage' => array('input_tokens' => 10, 'output_tokens' => 16000), 'content' => array(array('type' => 'thinking', 'thinking' => 'x'))));
+};
+$result = assistant_ask('k', 'm', '', array(), 'hi', $run, 'server', $empty_api, array());
+check('a reply that ran out of room says so', $result['error'] === true && strpos($result['text'], 'ran out of room') !== false);
+$defaults = assistant_config(array());
+check('limits: one question per 30 seconds, 60 per hour, 2000000 tokens per server', $defaults['assistant_seconds_between'] === '30' && $defaults['assistant_per_hour'] === '60' && $defaults['assistant_server_monthly_tokens'] === '2000000');
+check('longest answer allows 16000', assistant_config(array('assistant_max_output_tokens' => '16000'))['assistant_max_output_tokens'] === '16000' && assistant_config(array())['assistant_max_output_tokens'] === '16000');
 $seen_tools = null;
 $spy_api = function ($key, $body) use (&$seen_tools) {
 	$seen_tools = array_map(function ($t) { return $t['name']; }, $body['tools']);

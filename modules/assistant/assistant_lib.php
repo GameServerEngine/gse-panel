@@ -10,7 +10,7 @@
 if (!defined('ASSISTANT_DEFAULT_MODEL'))      define('ASSISTANT_DEFAULT_MODEL', 'claude-haiku-5-5');
 if (!defined('ASSISTANT_API_URL'))            define('ASSISTANT_API_URL', 'https://api.anthropic.com/v1/messages');
 if (!defined('ASSISTANT_MAX_TOOL_STEPS'))     define('ASSISTANT_MAX_TOOL_STEPS', 5);      // tool rounds for one question
-if (!defined('ASSISTANT_MAX_OUTPUT_TOKENS'))  define('ASSISTANT_MAX_OUTPUT_TOKENS', 700); // longest reply
+if (!defined('ASSISTANT_MAX_OUTPUT_TOKENS'))  define('ASSISTANT_MAX_OUTPUT_TOKENS', 16000); // longest reply (thinking and answer share it)
 if (!defined('ASSISTANT_MAX_HISTORY'))        define('ASSISTANT_MAX_HISTORY', 8);         // earlier messages sent along
 if (!defined('ASSISTANT_MAX_QUESTION_CHARS')) define('ASSISTANT_MAX_QUESTION_CHARS', 600);
 if (!defined('ASSISTANT_LOG_LINES'))          define('ASSISTANT_LOG_LINES', 60);          // most log lines given to the model
@@ -185,6 +185,11 @@ function assistant_ask($key, $model, $effort, $history, $question, $run_tool, $s
 				if ($block['type'] === 'text') {
 					$out['text'] .= $block['text'];
 				}
+			}
+			// Thinking can use the whole limit before any answer is written. Say so instead of showing an empty reply.
+			if (trim($out['text']) === '' && $data['stop_reason'] === 'max_tokens') {
+				$out['error'] = true;
+				$out['text'] = 'The assistant ran out of room before it wrote an answer. Please ask again, or ask for one smaller thing.';
 			}
 			return $out;
 		}
