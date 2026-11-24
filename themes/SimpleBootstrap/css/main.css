@@ -215,8 +215,16 @@ td > h3 {
 .logo{
         padding: 20px;
 }
-.logo h2 {
-	margin-top: 0px;
+.logo .panel-logo {
+	height: 56px;
+	width: 56px;
+	vertical-align: middle;
+}
+.logo .panel-name {
+	margin-left: 12px;
+	font-size: 28px;
+	font-weight: bold;
+	vertical-align: middle;
 }
 
 .login-container {

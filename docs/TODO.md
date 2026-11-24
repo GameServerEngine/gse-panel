@@ -141,4 +141,5 @@
 | todo | Theme CSS/JS carry the panel version in their URL so a release is never shown from stale browser cache (alert icon overlap). | done | Claude | |
 | todo | Rename the assistant to AI Assist (button, Admin menu, headings, chat label, switch label). | done | Claude | |
 | todo | Setting for the AI's name: button and chat say "Ask AI" by default, "Ask <name>" when named (Admin page too). | done | Claude | |
+| todo | One GameServer Engine logo and name for the panel and billing website (panel header, favicons, defaults). | done | Claude | |
 | todo | Every backup reference uses backup.vpn.isaserver.net (Proxmox storage, VPS backup scripts, panel setting and module default). | done | Claude | |

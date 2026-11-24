@@ -1320,7 +1320,8 @@ CREATE TABLE `DB_PREFIXsettings` (
   PRIMARY KEY (`setting`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `DB_PREFIXsettings` (`setting`, `value`) VALUES ('title','Gameserver Engine Panel'),
+INSERT INTO `DB_PREFIXsettings` (`setting`, `value`) VALUES ('title','GameServer Engine'),
+('panel_name','GameServer Engine'),
 ('slogan','The Open-Source one!'),
 ('panel_version','0'),
 ('version_type','GSP'),

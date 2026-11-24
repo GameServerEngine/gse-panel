@@ -74,7 +74,7 @@ function exec_module() {
 // Post to Discord support webhook (configured in Admin > Settings)
 $webhook = !empty($settings['discord_webhook_main']) ? $settings['discord_webhook_main'] : '';
 if (!empty($webhook)) {
-	$panel_name = !empty($settings['panel_name']) ? $settings['panel_name'] : 'GSP';
+	$panel_name = !empty($settings['panel_name']) ? $settings['panel_name'] : 'GameServer Engine';
 	$msg = array(
 		'username' => $panel_name,
 		'content'  => 'SUPPORT TICKET: [' . htmlspecialchars($subject, ENT_QUOTES) . '] from ' . htmlspecialchars($_SESSION['users_login'] ?? '', ENT_QUOTES),

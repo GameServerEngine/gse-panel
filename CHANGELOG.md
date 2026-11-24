@@ -2,6 +2,9 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.20.0 (2026-11-24)
+- **One GameServer Engine logo and name:** the panel header (SimpleBootstrap theme) now shows the GameServer Engine mark from Settings > Panel logo with the Panel name beside it, instead of a fixed GameServers World picture. The browser-tab icon, favicon files, app manifest and the panel's default name ("GameServer Engine") use the same mark. The storefront (modules/billing) already uses the mark and the Panel name setting. Removed the unused old logo pictures. Change the name or logo any time under Settings; they apply to the panel and the storefront.
+
 ## 2.19.0 (2026-11-24)
 - **Give the AI a name:** AI Assist has a new "AI name" setting. Empty, the server button and chat say "Ask AI". Enter a name such as Dave and the button, the chat heading, the chat label and the Admin page say "Ask Dave", and the assistant answers to that name. The module and its Admin menu entry stay "AI Assist".
 

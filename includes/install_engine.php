@@ -908,7 +908,7 @@ function install_drop_existing_tables($db, $db_name, $table_prefix, $allow_drop_
 function install_default_settings()
 {
     return array(
-        'title' => 'Gameserver Engine Panel',
+        'title' => 'GameServer Engine',
         'slogan' => function_exists('get_lang') ? get_lang('slogan') : 'Gameserver Engine',
         'panel_version' => '0',
         'version_type' => 'GSP',
