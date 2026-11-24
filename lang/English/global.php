@@ -85,7 +85,6 @@ define('LANG_xml_file_not_valid', "XML file '%s' could not be validated with sch
 define('LANG_unable_to_load_xml', "Unable to load XML file '%s'. Permission issue?");
 define('LANG_gamemanager', "Game Manager");
 define('LANG_game_monitor', "Game Monitor");
-define('LANG_steam_workshop', "Steam Workshop");
 define('LANG_dashboard', "Dashboard");
 define('LANG_user_addons', "Server Content");
 define('LANG_ftp', "FTP");

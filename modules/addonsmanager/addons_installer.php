@@ -108,9 +108,6 @@ require_once("protocol/lgsl/lgsl_protocol.php");
 // Central category map — all valid addon_type values and their labels.
 require_once(dirname(__FILE__) . '/server_content_categories.php');
 require_once(dirname(__FILE__) . '/server_content_helpers.php');
-if (file_exists(dirname(__FILE__) . '/../steam_workshop/includes/functions.php')) {
-	require_once(dirname(__FILE__) . '/../steam_workshop/includes/functions.php');
-}
 
 function exec_module() {
 
@@ -564,9 +561,9 @@ function exec_module() {
     		return;
     	}
 
-		// Workshop items are not installed from Server Content. The Steam Workshop module does that.
+		// Server Content has no installer for workshop items.
 		if ($addon_type === 'workshop_item') {
-			print_failure('Steam Workshop has been removed from Server Content. Use the Steam Workshop module instead.');
+			print_failure('Workshop items cannot be installed from here.');
 			return;
 		}
 		?>

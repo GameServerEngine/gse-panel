@@ -2,6 +2,10 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.17.5 (2026-11-24)
+- **Steam Workshop module removed from the panel:** Steam Workshop is handled by Server Content only. The module, its API endpoint, menu entry, per-server button and theme rules are gone; the server list page no longer needs any module (it shows a module's buttons only if the module exists). The old code is kept for reference in `_reference/`, which is left out of release archives.
+- **Backup/Restore button icon:** shows a cloud-upload icon in the SimpleBootstrap theme instead of the default target.
+
 ## 2.17.4 (2026-11-24)
 - **Assistant limits match how people type:** one question per 30 seconds and 60 per hour for each user (was 6 a minute, which a person cannot reach). Each server may use 2,000,000 tokens a month (about $1 at Haiku prices); the per-customer cap is left at its maximum so a customer with several servers gets each server's allowance.
 - **Assistant answers could come back empty:** the assistant thinks before it answers, and thinking shares the same length limit as the answer. A low limit (1200) could be used up by thinking alone, so no answer was written, yet the request was still billed. The default limit is now 16000 (up to 32000 can be set; only tokens actually written are charged), and if a reply still runs out of room the assistant now says so instead of showing nothing.
