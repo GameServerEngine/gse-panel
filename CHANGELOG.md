@@ -2,6 +2,9 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## 2.19.0 (2026-11-24)
+- **Give the AI a name:** AI Assist has a new "AI name" setting. Empty, the server button and chat say "Ask AI". Enter a name such as Dave and the button, the chat heading, the chat label and the Admin page say "Ask Dave", and the assistant answers to that name. The module and its Admin menu entry stay "AI Assist".
+
 ## 2.18.3 (2026-11-24)
 - **Backup target name:** the Backup/Restore module's default backup server is now `backup.vpn.isaserver.net` (the old `dr.isaserver.net` name no longer exists).
 

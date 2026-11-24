@@ -18,6 +18,7 @@ function assistant_setting_defs()
 {
 	return array(
 		'assistant_enabled' => array('bool', '0', 'AI Assist switched on', 'Master switch. Off hides the buttons and stops every request.'),
+		'assistant_name' => array('name', '', 'AI name', 'What your customers call it. Empty gives "Ask AI". Enter a name such as Dave and the button, the chat and the admin page say "Ask Dave".'),
 		'assistant_customer_enabled' => array('bool', '1', 'Customers may use it', 'Off leaves the assistant to administrators only.'),
 		'assistant_model' => array('select', 'claude-haiku-5-5', 'Model', 'Change the prices below too when you change the model.', 'options' => assistant_models()),
 		'assistant_effort' => array('select', 'medium', 'Thinking effort', 'Higher is slower and costs more.', 'options' => array('low' => 'low', 'medium' => 'medium', 'high' => 'high')),
@@ -40,6 +41,18 @@ function assistant_setting_defs()
 		'assistant_agent_paths' => array('text', '', 'Folders it may read on agents', 'Absolute folders on the agent machines, separated by commas, for example /home/gameserver/GSP. Empty turns agent file access off.'),
 		'assistant_key_file' => array('path', '/etc/gse-panel/assistant.env', 'API key file on the panel server', 'Used first if it holds a key. Otherwise the key saved on this page is used.'),
 	);
+}
+
+// What people call the assistant: the name the admin chose, or "AI". Takes the raw settings or the cleaned config.
+function assistant_display_name($settings)
+{
+	$name = isset($settings['assistant_name']) ? trim((string)$settings['assistant_name']) : '';
+	return $name === '' ? 'AI' : $name;
+}
+
+function assistant_ask_label($settings)
+{
+	return 'Ask ' . assistant_display_name($settings);
 }
 
 // Reads the settings table values into a clean array. Missing or bad values fall back to the default.
@@ -73,6 +86,9 @@ function assistant_clean_value($def, $value)
 	}
 	if ($type === 'select') {
 		return isset($def['options'][$value]) ? $value : $def[1];
+	}
+	if ($type === 'name') {
+		return trim(substr(preg_replace("/[^A-Za-z0-9 .'-]/", '', strip_tags($value)), 0, 24));
 	}
 	if ($type === 'path') {
 		return preg_match('#^/[A-Za-z0-9_./-]+$#', $value) && strpos($value, '..') === false ? $value : $def[1];

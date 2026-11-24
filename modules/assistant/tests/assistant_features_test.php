@@ -163,6 +163,10 @@ $spy_api = function ($key, $body) use (&$seen_tools) {
 };
 assistant_ask('k', 'm', '', array(), 'hi', $run, 'server', $spy_api, array('cfg' => assistant_config(array('assistant_allow_files' => '0', 'assistant_allow_edits' => '0', 'assistant_allow_db' => '0'))));
 check('disabled tools are not offered to the model', !in_array('read_file', $seen_tools, true) && !in_array('db_query', $seen_tools, true) && in_array('server_log', $seen_tools, true));
+check('button says Ask AI with no name', assistant_ask_label(assistant_config(array())) === 'Ask AI');
+check('button uses the chosen name', assistant_ask_label(assistant_config(array('assistant_name' => 'Dave'))) === 'Ask Dave');
+check('the name is cleaned of markup and cut short', assistant_display_name(assistant_config(array('assistant_name' => '<b>Dave</b> the Great and Powerful Helper'))) === 'Dave the Great and Powe');
+check('the model is told its name', strpos(assistant_system_prompt('server', 'Dave'), 'Your name is Dave') === 0 && strpos(assistant_system_prompt('server'), 'Your name is') === false);
 $tool_results = null;
 $bytes_api = function ($key, $body) use (&$tool_results) {
 	$last = end($body['messages']);

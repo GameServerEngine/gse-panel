@@ -45,7 +45,7 @@ function assistant_admin_settings_form($cfg, $csrf)
 		} elseif ($type === 'text') {
 			echo '<input type="text" id="' . assistant_h($key) . '" name="' . assistant_h($key) . '" value="' . assistant_h($value) . '" size="50" maxlength="1000">';
 		} else {
-			echo '<input type="text" id="' . assistant_h($key) . '" name="' . assistant_h($key) . '" value="' . assistant_h($value) . '" size="' . ($type === 'path' ? 40 : 12) . '">';
+			echo '<input type="text" id="' . assistant_h($key) . '" name="' . assistant_h($key) . '" value="' . assistant_h($value) . '" size="' . ($type === 'path' ? 40 : ($type === 'name' ? 24 : 12)) . '"' . ($type === 'name' ? ' maxlength="24"' : '') . '>';
 		}
 		echo '<div style="font-size:90%;opacity:.8">' . assistant_h($help) . '</div></td></tr>';
 	}
@@ -204,7 +204,7 @@ function exec_module()
 	}
 
 	$cfg = assistant_config($db->getSettings());
-	echo '<h2>Admin AI Assist</h2>';
+	$ai_label = assistant_ask_label($cfg);
 	if ($cfg['assistant_enabled'] === '1') {
 		$key_ok = assistant_resolve_key($cfg, $db->getSettings()) !== '';
 		if (!$key_ok) {
@@ -212,13 +212,15 @@ function exec_module()
 		}
 		assistant_render_chat(
 			'admin',
-			'Ask AI Assist',
+			$ai_label,
 			'It can read the panel, the agents, their logs and files, and any game server. It looks for errors, logins and attacks and tells you what it found. '
 				. 'It can prepare fixes: changes to a game server\'s files that you review and apply, buttons for start / stop / restart and new passwords, and patches for the panel or an agent that you apply through git. It never changes live panel files.',
-			'For example: check the logs of server 3 for failed logins in the last day'
+			'For example: check the logs of server 3 for failed logins in the last day',
+			assistant_display_name($cfg)
 		);
 	} else {
-		echo '<p>The assistant is switched off. Tick "AI Assist switched on" below and save.</p>';
+		echo '<h2>' . assistant_h($ai_label) . '</h2>';
+		echo '<p>It is switched off. Tick "AI Assist switched on" below and save.</p>';
 	}
 	assistant_admin_usage($db, $cfg);
 	assistant_admin_key_form($db, $cfg, $csrf);

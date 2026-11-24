@@ -32,12 +32,14 @@ function exec_module()
 		return 0;
 	}
 	list($home, $why) = assistant_open_home($db, $user_id, $home_id);
+	require_once(__DIR__ . '/assistant_settings.php');
 	assistant_render_chat(
 		$token,
-		'AI Assist: ' . $home['home_name'],
+		assistant_ask_label($settings) . ': ' . $home['home_name'],
 		'Ask about this server: is it running, errors, logins or attacks in its logs, its files and scripts, its database or FTP login. '
 			. 'It can offer a Start, Stop or Restart button, a new-password button, or a change to a file or a new script that you review and apply (and can undo). It never does any of these for you.',
-		'For example: why did my server stop?'
+		'For example: why did my server stop?',
+		assistant_display_name($settings)
 	);
 	echo '<p><a href="?m=gamemanager&amp;p=game_monitor&amp;home_id=' . (int)$home_id . '">Back to the server</a></p>';
 	return 1;

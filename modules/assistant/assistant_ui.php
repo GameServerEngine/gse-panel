@@ -6,7 +6,7 @@
  * file change (both ask the person to confirm first), or a patch download for administrators.
  */
 
-function assistant_render_chat($scope_token, $heading, $intro, $placeholder)
+function assistant_render_chat($scope_token, $heading, $intro, $placeholder, $ai_name = 'AI')
 {
 	if (empty($_SESSION['assistant_csrf'])) {
 		$_SESSION['assistant_csrf'] = bin2hex(random_bytes(16));
@@ -24,6 +24,7 @@ function assistant_render_chat($scope_token, $heading, $intro, $placeholder)
 	?>
 <script>
 (function () {
+	var aiName = <?php echo json_encode((string)$ai_name, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 	var log = document.getElementById('assistant-log');
 	var form = document.getElementById('assistant-form');
 	var input = document.getElementById('assistant-input');
@@ -181,7 +182,7 @@ function assistant_render_chat($scope_token, $heading, $intro, $placeholder)
 		addLine('You', question);
 		input.value = '';
 		send.disabled = true;
-		var waiting = addLine('AI Assist', '...');
+		var waiting = addLine(aiName, '...');
 		post('modules/assistant/ask.php', { question: question })
 			.then(function (reply) {
 				waiting.lastChild.textContent = reply.text || '';
