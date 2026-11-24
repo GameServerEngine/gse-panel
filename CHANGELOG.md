@@ -2,6 +2,9 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## Unreleased
+- **Urban Terror installs without our file server:** the Urban Terror 4 game configuration downloaded the game from files.iaregamer.com, which no longer serves it, so an install left a web page where the game should be. It now downloads the official Urban Terror 4.3.4 zip from the game's own site and checks it against the published checksum before unpacking.
+
 ## 2.21.0 (2026-11-24)
 - **Logo shown at one set size:** the logo in the panel header is now 112 pixels high, twice the old size, and its width follows the picture. A long logo with your name inside it fits as well as a square mark. Clear the Panel name setting and no text is written beside the logo. On the storefront the logo mark is now 112 pixels high on a computer, 88 on a tablet and 72 on a phone (before: 62, 52 and 42). The size comes from one value, the header height, so it is changed in one place.
 - **Storefront stylesheet updates at once:** the storefront's stylesheet address now carries its change time, so a changed stylesheet is loaded immediately instead of a copy kept by the browser or the offline cache.
