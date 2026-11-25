@@ -6,6 +6,7 @@
  * stores the server in the PHP session under a random token after checking the customer owns it,
  * and the browser only ever sends the token back. The model never chooses the server.
  * The admin chat uses the fixed token 'admin' and is accepted only for administrators.
+ * The product chat (questions about GameServer Engine, no tools) uses the fixed token 'product'.
  */
 
 function assistant_json($status, $data)
@@ -79,6 +80,10 @@ function assistant_scope_resolve($db, $user_id, $token)
 {
 	if ($token === 'admin') {
 		return $db->isAdmin($user_id) ? array('type' => 'admin', 'key' => 'admin') : null;
+	}
+	// Questions about GameServer Engine itself. No tools, so it sees no server and no file.
+	if ($token === 'product') {
+		return array('type' => 'product', 'key' => 'product');
 	}
 	if (empty($_SESSION['assistant_scopes'][$token])) {
 		return null;

@@ -26,6 +26,16 @@ function assistant_system_prompt($scope_type = 'server', $name = '')
 		. "- Keep answers short and plain. Lead with what you found, then what it probably means, then one thing to do.\n"
 		. "- Never ask for, show or guess a password or key. Values shown as [hidden] are secrets; leave them alone.\n"
 		. "- You cannot change anything yourself. You can only offer: a button, or a saved proposal that the person reviews and applies.\n";
+	if ($scope_type === 'product') {
+		$facts = @file_get_contents(__DIR__ . '/product_facts.txt');
+		return $called . "You answer questions about GameServer Engine, free software for running game servers. You cannot see any server, file or account.\n"
+			. "Rules:\n"
+			. "- Answer only from the facts below. If they do not cover the question, say you do not know and point to the documentation at https://gameserverengine.com/documentation.html or the contact page at https://gameserverengine.com/contact.html.\n"
+			. "- If the question is not about GameServer Engine or running game servers with it, reply with one short sentence saying you only answer questions about GameServer Engine.\n"
+			. "- Keep answers short and plain: a few sentences, or a short list when there are steps.\n"
+			. "- To see it work on a real server, the visitor can open the demo server's AI Assist from the Game Monitor.\n"
+			. "Facts:\n<product_facts>\n" . (is_string($facts) ? trim($facts) : '') . "\n</product_facts>\n";
+	}
 	if ($scope_type === 'admin') {
 		return $called . "You are the assistant for the support team of a game server hosting platform (GameServer Engine). You work like a senior engineer on the platform: you find the cause of a problem anywhere in it and you prepare the fix. You can read the panel's files (the config too), the files on any agent machine, the panel database, every MySQL server (their logins are in the panel database), and every server's logs, files and databases.\n"
 			. "How to work:\n"
@@ -165,9 +175,13 @@ function assistant_ask($key, $model, $effort, $history, $question, $run_tool, $s
 			'model' => $model,
 			'max_tokens' => $max_tokens,
 			'system' => assistant_system_prompt($scope_type, is_array($cfg) && isset($cfg['assistant_name']) ? (string)$cfg['assistant_name'] : ''),
-			'tools' => assistant_tool_definitions($scope_type, $cfg),
 			'messages' => $messages,
 		);
+		// The product chat has no tools; the API refuses an empty tools list.
+		$tools = assistant_tool_definitions($scope_type, $cfg);
+		if (!empty($tools)) {
+			$body['tools'] = $tools;
+		}
 		if ($effort !== '') {
 			$body['output_config'] = array('effort' => $effort);
 		}

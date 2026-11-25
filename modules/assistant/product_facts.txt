@@ -1,0 +1,62 @@
+GameServer Engine (GSE) - product facts for AI Assist. Taken from gameserverengine.com. Keep this file in step with the website.
+
+What it is
+- Free game server software from Run Level Systems: a web Control Panel and an agent for Windows and one for Linux. The panel is where you manage game servers; an agent on each host starts, stops and watches the games on that host.
+- Free: no license fee and no paid tier. If you rent game servers to your own customers, you set the price you charge them.
+- It began as a fork of OpenGamePanel (open source, GNU General Public License). Source for the panel and both agents is on GitHub.
+- Terms: Control Panel = the web front end. Agent = the program on each host. Host = a Windows or Linux machine (dedicated, virtual machine or VPS) running an agent. Game server = one game instance, such as one Valheim or Minecraft server. Game home = the folder where a game server keeps its files.
+
+Running servers
+- Start, stop and restart from the Game Monitor, with a clear status: stopped, starting, running or crashed. Group start, stop and restart.
+- A game server counts as running only when its game process is alive and its game port answers.
+- A stop really stops: the game itself is ended, so the next start never fails with the port still in use. One action at a time: a start cannot collide with a stop or an update.
+- Crashes are reported with a reason and restarted automatically, up to a limit, so a broken game stops instead of looping forever. Games keep running when the agent stops or restarts.
+- Bots such as BattlEye (BEC) start once the game is running and stop when it stops.
+- Scheduled tasks start, stop, restart and update game servers on a timetable.
+- Unlimited hosts in unlimited locations, all managed from one panel. Each agent can run several game servers, as its resources allow. The panel and the agents each install from a single file.
+
+Games
+- The panel ships with game files for more than 200 games (233 at the last count), on Windows and Linux. Recent additions include Counter-Strike 2, Palworld, Satisfactory, Project Zomboid, ARK: Survival Ascended, Enshrouded and V Rising. The full list is at https://gameserverengine.com/supported-games.html.
+- Server files come from SteamCMD, a download from the game's own site, or an upload, depending on the game.
+- Each game is one definition file, so adding a game needs no new code. Ports are managed so servers do not take each other's ports.
+
+AI Assist
+- An assistant built into the panel. The owner chooses its name, so customers see "Ask AI" or, for example, "Ask Dave".
+- For a customer's server it reads the logs (errors, crashes, failed logins, attacks, who joined), the server's config and script files, and runs read-only queries on the server's database. It sees only that one server.
+- It proposes, the person approves: a file change or new script is shown as the exact difference, nothing is written until the person presses Apply, a backup is kept and Apply can be undone. It can also offer Start, Stop and Restart buttons and new database or FTP passwords. It never acts on its own.
+- For administrators it looks across the panel, the agents, their logs and files, and prepares repairs.
+- The owner sets the limits: questions per hour, monthly token caps per server and per customer, a monthly budget that stops all use, and the model. It is off until switched on and uses the owner's own API key (Claude).
+
+Tools and files
+- Analyze Log lists likely problems in a log (crashes, missing libraries, plugin and config errors, failed connections) with how often each happened and what to try.
+- Utilities: port checker, TCP test, server query, traceroute, download speed test. Resource Planner for bandwidth and storage. Hardware pages show what a machine can run.
+- Expert mode edits a game's config files directly; otherwise common options are set in the panel and written to the config at start.
+- File manager in the browser, and an FTP login per game server, limited to its own folder.
+- Server Content installs, updates and removes add-ons, including Server Bot.
+- Free server addresses such as myserver.yourdomain.com; each location can have its own domain.
+- Backups and restores with restic; customers can restore their own backups.
+- Push alerts through ntfy, support tickets (opened automatically when a server fails to start or keeps crashing) and notifications.
+- Optional modules: resellers, sub-users, news, FAQ, RCON, LGSL, DSi status images, TeamSpeak 3 and TShock for Terraria (alpha).
+
+Selling game servers: the storefront
+- A public ordering website comes with the panel. Customers order, pay with PayPal and get a game server with no manual work. Live example: https://order.gameserverengine.com.
+- Plans, prices, coupons, accounts, invoices and a status page. Services besides game servers (setup, custom work) with a fixed price or a quote and payments in steps.
+- The games enabled in the panel are the games on the storefront.
+
+Branding and updates
+- Your own name and logo on the panel and the storefront, your assistant's name, 11 themes and 22 languages, and your own wording on every storefront page.
+- Choose the stable or the testing release on the update page. It lists the files you have edited before an update runs, and you choose which to keep.
+
+What you need
+- Panel: Ubuntu 22.04 or Debian 12 or newer, PHP 8.1 or newer (8.3 recommended) with mysqli, curl, mbstring, gd and xmlrpc, and MySQL 5.7.8 or newer (8.0 supported).
+- Linux agent: Ubuntu 22.04 or newer, or Debian 12 or newer.
+- Windows agent: Windows Server 2016 or newer, or Windows 10/11 version 1607 or newer, 64-bit. Tested on Windows Server 2022. Its installer needs Administrator rights; Cygwin is bundled.
+
+Getting started
+1. Install the agent on each Windows or Linux host where games will run.
+2. Install the panel on a web server and sign in.
+3. Add a game server, choose its game and press Start.
+To sell servers, set up the storefront (domain, web server, payment and accounts). Downloads: https://gameserverengine.com/installation.html. Documentation: https://gameserverengine.com/documentation.html. Contact: https://gameserverengine.com/contact.html.
+
+The demo
+- The demo panel is a shared account with one Urban Terror game server. Visitors can start, stop and restart it and ask AI Assist about it. They cannot change the account or apply file changes.

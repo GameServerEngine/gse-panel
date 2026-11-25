@@ -56,7 +56,7 @@ $returnTo = (string)($_SERVER['REQUEST_URI'] ?? '/');
 <header class="gsw-header">
   <div class="gsw-header-inner">
     <a href="<?php echo billing_nav_escape(billing_url('index.php')); ?>" class="gsw-brand" aria-label="<?php echo billing_brand_e('name'); ?> home">
-      <img src="<?php echo billing_nav_escape(billing_url('images/brand/gse-icon-mark.png')); ?>" alt="" class="gsw-brand-mark" width="64" height="64">
+      <?php echo billing_logo_html('gsw-brand-mark', 64, 64); ?>
       <span class="gsw-brand-text"><strong><?php echo billing_nav_escape($brandFirst); ?></strong><?php if ($brandLast !== ''): ?> <span><?php echo billing_nav_escape($brandLast); ?></span><?php endif; ?></span>
     </a>
     <button class="gsw-nav-toggle" type="button" aria-controls="gsw-primary-nav" aria-expanded="false" aria-label="Open primary navigation">

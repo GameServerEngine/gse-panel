@@ -75,7 +75,9 @@ class View {
 			$page = preg_replace('#((?:href|src)="themes/[^"?]+\.(?:css|js))"#', '$1?v=' . PANEL_VERSION . '"', $page);
 		}
 		if (is_file('images/logo.png')) {
-			$page = str_replace('src="images/logo.png"', 'src="images/logo.png?v=' . filemtime('images/logo.png') . '"', $page);
+			$logoSize = isset($panel_settings['panel_logo_size']) ? (int)$panel_settings['panel_logo_size'] : 100;
+			$logoZoom = max(10, min(300, $logoSize)) / 100;
+			$page = str_replace('src="images/logo.png"', 'src="images/logo.png?v=' . filemtime('images/logo.png') . '" style="zoom:' . $logoZoom . '"', $page);
 		}
 		@$top = file_get_contents($path.'top.html');
 		@$bottom = file_get_contents($path.'bottom.html');

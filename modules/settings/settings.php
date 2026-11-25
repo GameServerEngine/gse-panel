@@ -52,6 +52,18 @@ function settings_save_panel_logo()
 	echo "<div class='success'>Logo saved.</div>";
 }
 
+/*
+ * Logo size as a percentage of the logo's normal size. 100 is the default.
+ * Kept between 10 and 300 so the logo cannot vanish or fill the page.
+ */
+function settings_logo_size($value)
+{
+	if (!is_numeric($value)) {
+		return 100;
+	}
+	return max(10, min(300, (int)round((float)$value)));
+}
+
 function exec_module()
 {
 	require_once('includes/form_table_class.php');
@@ -108,10 +120,12 @@ function exec_module()
 			"show_server_id_game_monitor" => $_REQUEST['show_server_id_game_monitor'],
 			"default_game_server_home_path_prefix" => $_REQUEST['default_game_server_home_path_prefix'],
 			"port_block_size" => settings_port_block_size($_REQUEST['port_block_size'] ?? 10),
+			"panel_logo_size" => settings_logo_size($_REQUEST['panel_logo_size'] ?? 100),
 			"use_authorized_hosts" => $_REQUEST['use_authorized_hosts'],
 			"allow_setting_cpu_affinity" => $_REQUEST['allow_setting_cpu_affinity'],
 			"regex_invalid_file_name_chars" => addslashes($_REQUEST['regex_invalid_file_name_chars']),
 			"login_ban_time" => $_REQUEST['login_ban_time'],
+			"demo_login_user" => trim((string)($_REQUEST['demo_login_user'] ?? '')),
 			// Discord Integration
 			"discord_invite_url"     => $_REQUEST['discord_invite_url'],
 			"discord_webhook_main"   => $_REQUEST['discord_webhook_main'],
@@ -172,6 +186,7 @@ function exec_module()
 	$ft->add_field('string','panel_name',@$row['panel_name']);
 	$logo_preview = is_file('images/logo.png') ? "<img src='images/logo.png?v=" . filemtime('images/logo.png') . "' style='max-height:64px;background:#222;padding:4px;'>" : '';
 	$ft->add_custom_field('panel_logo', "<input type='file' name='panel_logo' id='panel_logo' accept='image/png'> " . $logo_preview);
+	$ft->add_field('string','panel_logo_size',settings_logo_size($row['panel_logo_size'] ?? 100), 8, "inputmode='numeric'");
 	$locale_files = makefilelist("lang/", ".|..|.svn", true, "folders");
 	$locale_files = array('' => "-") + $locale_files;
 	$ft->add_custom_field('panel_language',
@@ -224,6 +239,7 @@ function exec_module()
 	$login_attempts_before_banned = (isset($row['login_attempts_before_banned']) and $row['login_attempts_before_banned'] != "" and is_numeric($row['login_attempts_before_banned']))? $row['login_attempts_before_banned'] : "6";
 	$ft->add_field('string','login_attempts_before_banned',$login_attempts_before_banned);
 	$ft->add_field('string','login_ban_time', array_key_exists("login_ban_time", (array)$row) && !empty($row["login_ban_time"]) && is_numeric($row["login_ban_time"]) ? $row["login_ban_time"] : '');
+	$ft->add_field('string','demo_login_user',@$row['demo_login_user']);
 
 	$ft->add_field('string','custom_github_update_username',@$row['custom_github_update_username']);
 
