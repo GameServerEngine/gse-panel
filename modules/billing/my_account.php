@@ -31,6 +31,7 @@ if (!$is_logged_in) {
 
 // Include database configuration
 require_once(__DIR__ . '/bootstrap.php');
+require_once(__DIR__ . '/includes/invoice_state.php');
 require_once(__DIR__ . '/includes/action_security.php');
 
 // Variables from config.inc.php (helps IDEs understand scope)
@@ -157,19 +158,7 @@ if ($user_id > 0) {
     $inv_result = mysqli_query($db, "SELECT invoice_id, amount, currency, status, payment_status, invoice_date, paid_date FROM {$table_prefix}billing_invoices WHERE user_id = $user_id ORDER BY invoice_id DESC");
     if ($inv_result) {
         while ($row = mysqli_fetch_assoc($inv_result)) {
-            $pay = strtolower((string)$row['payment_status']);
-            $state = strtolower((string)$row['status']);
-            if ($pay === 'paid' || $state === 'paid') {
-                $status = 'paid';
-            } elseif ($state === 'cancelled' || $pay === 'cancelled') {
-                $status = 'cancelled';
-            } elseif ($state === 'expired') {
-                $status = 'expired';
-            } elseif ($state === 'in-cart' || $state === 'in_cart') {
-                $status = 'in-cart';
-            } else {
-                $status = 'pending';
-            }
+            $status = billing_invoice_state($row);
             $invoices[] = array(
                 'invoice' => $row['invoice_id'],
                 'ts' => ($status === 'paid' && !empty($row['paid_date'])) ? $row['paid_date'] : $row['invoice_date'],
@@ -197,6 +186,9 @@ $status_config = [
     'paid' => ['label' => 'Paid Invoices', 'class' => 'paid'],
     'completed' => ['label' => 'Completed Invoices', 'class' => 'paid'],
     'in-cart' => ['label' => 'In Cart', 'class' => 'pending'],
+    'cancelled' => ['label' => 'Cancelled Invoices', 'class' => 'pending'],
+    'expired' => ['label' => 'Expired Invoices', 'class' => 'pending'],
+    'refunded' => ['label' => 'Refunded Invoices', 'class' => 'paid'],
     'installed' => ['label' => 'Active', 'class' => 'paid'],
     'expired' => ['label' => 'Expired Invoices', 'class' => 'expired'],
     'cancelled' => ['label' => 'Cancelled Invoices', 'class' => 'expired'],
@@ -374,7 +366,7 @@ $status_config = [
                     <?php foreach ((array)$invoices_by_status[$status_key] as $invoice): ?>
                         <div class="invoice-item">
                             <div>
-                                <div class="invoice-id">Invoice #<?php echo htmlspecialchars($invoice['invoice'] ?? $invoice['custom'] ?? 'N/A'); ?></div>
+                                <div class="invoice-id"><a href="invoice_view.php?id=<?php echo (int)$invoice['invoice']; ?>">Invoice #<?php echo (int)$invoice['invoice']; ?></a></div>
                                 <div class="invoice-date"><?php echo htmlspecialchars($invoice['ts'] ?? 'N/A'); ?></div>
                             </div>
                             <div>
