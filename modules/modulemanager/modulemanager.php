@@ -42,70 +42,59 @@ function exec_module()
 
     print "<p class='note'>".get_lang("not_complete")."</p>";
 
-	$coreHTML = "<h3>" . get_lang("core_mods_installed") . "</h3>"; // Core Modules Installed:
-	$nonCoreHTML = "<h3>" . get_lang("custom_mods_installed") . "</h3>"; // Custom Modules Installed:
-
-    $coreHTML .= "<table class='center'><tr class='first_row'><td>".get_lang('module_id')."</td>
-        <td>".get_lang('module_name')."</td><td>".get_lang('module_folder')."</td>
-        <td>".get_lang('module_version')."</td><td>".get_lang('db_version')."</td>
-        <td></td><td></td></tr>";
-
-    $nonCoreHTML .= "<table class='center'><tr class='first_row'><td>".get_lang('module_id')."</td>
-        <td>".get_lang('module_name')."</td><td>".get_lang('module_folder')."</td>
-        <td>".get_lang('module_version')."</td><td>".get_lang('db_version')."</td>
-        <td></td><td></td></tr>";
-
-    require_once('modules/modulemanager/module_handling.php');
-
-    $installed_modules = array();
-
-    $i = 0;
-    foreach ((array)$modules as $row)
-    {
-		$html = "";
-		$coreModule = true;
+	// Three groups in this order: Required, Enabled, Disabled. Each group is sorted by module name.
+	$groups = array('required' => array(), 'enabled' => array(), 'disabled' => array());
+	foreach ((array)$modules as $row)
+	{
 		$enabled = !isset($row['enabled']) || (int)$row['enabled'] === 1;
-        $html .= "<tr class='tr".($i++%2)."'><td>".$row['id']."</td>";
-        $html .= "<td>".$row['title']."</td><td>".$row['folder']."</td><td>".$row['version']."</td><td>".$row['db_version']."</td>";
-        $html .= "<td>";
+		if (module_cannot_be_disabled($row['folder']))
+			$groups['required'][] = $row;
+		elseif ($enabled)
+			$groups['enabled'][] = $row;
+		else
+			$groups['disabled'][] = $row;
+	}
 
-        // Don't allow the deletion of core modules
-        		$html .= "</td>";
-		$html .= "<td>";
+	$headings = array(
+		'required' => get_lang('group_required'),
+		'enabled' => get_lang('group_enabled'),
+		'disabled' => get_lang('group_disabled'),
+	);
+	$i = 0;
+	foreach ($headings as $key => $heading)
+	{
+		$rows = $groups[$key];
+		usort($rows, function ($a, $b) { return strcasecmp($a['title'], $b['title']); });
 
-		// Enable/disable toggle. Modules that can never be disabled
-		// (modulemanager, settings, user_admin) show a status note instead.
-		if (module_cannot_be_disabled($row['folder'])) {
-			$html .= "<span class='note'>".get_lang('module_cannot_be_disabled_short')."</span>";
-		} elseif ($enabled) {
-			$html .= "<a href='?m=modulemanager&amp;p=toggle&amp;id=".$row['id']."&amp;module=".$row['folder']."&amp;enable=0'>";
-			$html .= get_lang('disable');
-			$html .= "</a>";
-		} else {
-			$html .= "<a href='?m=modulemanager&amp;p=toggle&amp;id=".$row['id']."&amp;module=".$row['folder']."&amp;enable=1'>";
-			$html .= get_lang('enable');
-			$html .= "</a> <span class='note'>(".get_lang('module_disabled_status').")</span>";
+		echo "<h3>" . $heading . "</h3>";
+		if (count($rows) === 0)
+			continue;
+
+		echo "<table class='center'><tr class='first_row'><td>".get_lang('module_id')."</td>"
+			. "<td>".get_lang('module_name')."</td><td>".get_lang('module_folder')."</td>"
+			. "<td>".get_lang('module_version')."</td><td>".get_lang('db_version')."</td>"
+			. "<td></td><td></td></tr>\n";
+
+		foreach ($rows as $row)
+		{
+			$enabled = !isset($row['enabled']) || (int)$row['enabled'] === 1;
+			$html = "<tr class='tr".($i++%2)."'><td>".$row['id']."</td>";
+			$html .= "<td>".$row['title']."</td><td>".$row['folder']."</td><td>".$row['version']."</td><td>".$row['db_version']."</td>";
+			$html .= "<td></td><td>";
+
+			// Enable/disable toggle. Modules that can never be disabled show a status note instead.
+			if (module_cannot_be_disabled($row['folder'])) {
+				$html .= "<span class='note'>".get_lang('module_cannot_be_disabled_short')."</span>";
+			} elseif ($enabled) {
+				$html .= "<a href='?m=modulemanager&amp;p=toggle&amp;id=".$row['id']."&amp;module=".$row['folder']."&amp;enable=0'>".get_lang('disable')."</a>";
+			} else {
+				$html .= "<a href='?m=modulemanager&amp;p=toggle&amp;id=".$row['id']."&amp;module=".$row['folder']."&amp;enable=1'>".get_lang('enable')."</a> <span class='note'>(".get_lang('module_disabled_status').")</span>";
+			}
+			$html .= "</td></tr>\n";
+			echo $html;
 		}
-		$html .= "</td>";
-		$html .= "</tr>\n";
-
-		// Append HTML to correct table
-		if($coreModule){
-			$coreHTML .= $html;
-		}else{
-			$nonCoreHTML .= $html;
-		}
-
-        array_push( $installed_modules, $row['folder'] );
-    }
-
-    // End the table
-    $coreHTML .= "</table>";
-    $nonCoreHTML .= "</table>";
-
-    // Print out installed modules tables
-    echo $coreHTML . "\n";
-    echo $nonCoreHTML . "\n";
+		echo "</table>\n";
+	}
 
 	// Modules are built into the panel. They are only enabled or disabled, never installed or removed here.
 

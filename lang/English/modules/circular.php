@@ -28,7 +28,6 @@ define('LANG_subject', "Subject");
 define('LANG_users_not_red_circular', "Not Seen by");
 define('LANG_date', "Date");
 define('LANG_remove_selected_circulars', "Remove Selected");
-define('LANG_back', "Back");
 define('LANG_Circular', "Notification");
 define('LANG_send_to', "Send To");
 define('LANG_admins', "Admins");
