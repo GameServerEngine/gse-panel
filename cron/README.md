@@ -14,7 +14,7 @@ these files cannot be triggered from a web page.
 
 | Script | Job | Suggested cron line | Status |
 |---|---|---|---|
-| `cron-shop.php` | Billing lifecycle: renewal invoices, expiry, suspension, deletion after grace. | `0 3 * * *` | Scheduled (required for billing) |
+| `cron-shop.php` | Billing lifecycle: renewal invoices, auto-renew charges, suspension at the due date, deletion. Timings come from Billing > Settings. Add `--dry-run` to see what it would do without changing anything. | `0 3 * * *` | Scheduled (required for billing) |
 | `cron-purge.php` | Removes customer restic backup repos of deleted game servers after 7 days. | `30 3 * * *` | Scheduled when restic backups are enabled |
 | `cron-reseller.php` | Removes expired reseller game homes. | `0 4 * * *` | Work in progress, not scheduled. |
 

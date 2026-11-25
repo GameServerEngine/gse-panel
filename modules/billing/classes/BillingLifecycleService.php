@@ -409,7 +409,7 @@ class BillingLifecycleService
                 'payment_status' => 'unpaid',
                 'status' => 'due',
                 'billing_status' => 'Invoiced',
-                'due_date' => $periodEnd,
+                'due_date' => $periodStart,  // a renewal is due when the current term ends
                 'description' => (string)($context['description'] ?? 'Server renewal'),
                 'invoice_duration' => (string)($context['invoice_duration'] ?? 'month'),
                 'rate_type' => (string)($context['rate_type'] ?? 'monthly'),

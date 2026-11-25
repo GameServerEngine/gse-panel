@@ -1,108 +1,67 @@
-# Stripe integration: remaining setup
+# Stripe card payments: setup and how it works
 
-This file is the single source of truth for what is left to do before Stripe card payments go live
-on the ordering site (`modules/billing`, https://order.gameserverengine.com).
+Card payments come built in. A site owner only needs a Stripe account and two keys; nothing is edited by hand.
+
+## Setup (Billing > Settings)
+
+1. Create a Stripe account and fill in the business details in the Stripe dashboard.
+2. In **Stripe (card payments)**, paste the **publishable key** and the **secret key** (Stripe dashboard > Developers > API keys) and press **Save Stripe settings**.
+   The panel checks the key with Stripe, stores it encrypted, and registers the payment notification webhook
+   (`<site>/stripe/webhook.php`) with Stripe automatically. "Payment notifications: connected" confirms it.
+3. Set the **Billing schedule**: renewal invoice days (default 7), auto-renew charge days (default 3), delete days (default 7).
+4. Schedule the daily billing job (`cron/cron-shop.php`, see `cron/README.md`).
+
+Test keys (`pk_test_` / `sk_test_`) take only test cards. Switch to live keys when ready; roll any key that was ever shared.
+If the database login changes, the saved secret key can no longer be read: enter it again.
 
 ## Values to Replace
 
-There are no placeholder values in the code. `mode` and `line_items` are built from each panel invoice:
+None. `mode` and `line_items` are built from the panel's invoices:
 
-**Files containing these values:**
-- [includes/stripe_billing.php](includes/stripe_billing.php) (`stripe_checkout_params()`)
+| Field | Value | What to Set |
+|-------|-------|-------------|
+| mode | `payment` (Pay Now), `setup` (auto-renew card saving) | Nothing |
+| line_items | One line per invoice in the cart, with the panel's amount | Nothing |
 
-| Field | Current Value | What to Set |
-|-------|--------------|-------------|
-| mode | `subscription` for game server rentals (renew automatically), `payment` for service invoices and terms longer than one year | Nothing to change. |
-| line_items[].price_data | Built from the invoice: its description, price per billing period and term (1 day to 1 year) | Nothing to change. Prices come from Billing > Game Catalog. |
+## Configured Parameters (Checkout Studio, used when "Card form on our cart page" is chosen)
 
-## Configured Parameters
-
-These parameters were configured in Stripe Checkout Studio and are set for the embedded payment form.
-
-**Files containing these parameters:**
-- [includes/stripe_billing.php](includes/stripe_billing.php)
+**File:** [includes/stripe_billing.php](includes/stripe_billing.php)
 
 | Parameter | Value |
 |-----------|-------|
-| ui_mode | `form` (needs Stripe API version `2026-03-25.dahlia`, sent only on the session create call) |
-| billing_address_collection | `auto` (`required` when Stripe Tax is switched on) |
+| ui_mode | `form` (API version `2026-03-25.dahlia` on that one call) |
+| billing_address_collection | `auto` (`required` with Stripe Tax on) |
 | phone_number_collection | `{ enabled: false }` |
-| automatic_tax | `{ enabled: false }` by default; follows the "Charge sales tax with Stripe Tax" setting |
-| payment_method_collection | `always` (subscriptions only) |
+| automatic_tax | follows the Stripe Tax setting (off by default) |
 | submit_type | `auto` |
 | integration_identifier | `custom_embedded_web_0001` |
 
-Parameters kept on purpose (not Studio settings): `customer`, `client_reference_id`, `metadata`,
-`subscription_data` / `payment_intent_data`, `invoice_creation`, `discounts` and `return_url`. They tie each
-payment to its panel invoice, order and server, so provisioning and renewals work.
-
-## Setup
-
-1. **Keys.** Production has no billing key file, so put the keys in a root-owned env file the web server can read:
-   ```
-   sudo install -d -m 750 -o root -g www-data /etc/gse-billing
-   sudo install -m 640 -o root -g www-data /dev/stdin /etc/gse-billing/stripe.env <<'EOF'
-   STRIPE_PUBLISHABLE_KEY=pk_test_...
-   STRIPE_SECRET_KEY=sk_test_...
-   STRIPE_WEBHOOK_SECRET=whsec_...
-   EOF
-   ```
-   (With a billing key file set up, the keys can be saved in Billing > Settings > Stripe instead. Never put keys in code or in the repository.)
-2. **Database.** Run the billing module update to database version 16 (adds the Stripe tables and columns).
-3. **Webhook.** In the Stripe dashboard (Developers > Webhooks), add the endpoint
-   `https://order.gameserverengine.com/stripe/webhook.php`, **pinned to API version `2024-06-20`**, with these events:
-   `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `invoice.paid`,
-   `invoice.payment_failed`, `customer.subscription.deleted`, `charge.refunded`.
-   Copy its signing secret into `STRIPE_WEBHOOK_SECRET`.
-4. **Check.** Billing > Settings > Stripe should say "Ready (test mode)"; press "Check Stripe connection".
-
-## Files
-
-| File | What it does |
-|------|--------------|
-| `classes/StripeClient.php` | Stripe API calls (no SDK), webhook signature check |
-| `classes/StripeGateway.php` | Refunds through Stripe |
-| `includes/stripe_config.php` | Loads the keys (settings or env file), saves the settings |
-| `includes/stripe_billing.php` | Checkout Session parameters, Stripe customers, webhook event handlers |
-| `api/stripe_checkout.php` | Starts checkout for an invoice (embedded form or hosted page) |
-| `stripe/webhook.php` | Webhook endpoint |
-| `stripe/return.php` | Where the customer lands after paying |
-| `cart.php` | "Pay by card" with the embedded form (falls back to Stripe's hosted page) |
-| `admin_config.php` | Billing > Settings > Stripe section |
-| `module.php` | Database version 16 |
+The default card page is Stripe's own hosted page.
 
 ## How it works
 
-1. The customer presses **Pay by card** in the cart. `api/stripe_checkout.php` creates a Checkout Session for that invoice
-   (a subscription for a game server) and the embedded form appears on the page.
-2. After paying, Stripe sends the customer to `stripe/return.php`, which confirms the payment straight away. Stripe also
-   sends `checkout.session.completed` to the webhook. Either one marks the invoice paid (only once), creates the order,
-   links the Stripe subscription and starts building the server.
-3. Each renewal, Stripe charges the saved card and sends `invoice.paid`; the panel records a paid renewal invoice and
-   moves the server's expiry date forward. If a charge fails, Stripe retries; if it never succeeds the server is
-   suspended at expiry by the daily billing job.
-4. Cancelling in Billing > Cancellations stops the Stripe subscription (at the end of the term or straight away);
-   refunds go back through Stripe and `charge.refunded` updates the invoice.
+- **The panel owns invoices and receipts.** Stripe only takes payments. Customers never need a Stripe account.
+- **Pay Now:** the cart's invoices go to Stripe as one payment, one line per invoice. After paying, the customer
+  returns to "Paid, thank you"; the panel marks each invoice paid with Stripe's payment id and builds new servers.
+- **Auto-renew (per server, optional):** "Turn on auto-renew" in My Servers sends the customer to Stripe to save a
+  card; nothing is charged. The panel keeps only Stripe's references (customer and saved payment method ids), never
+  card details. The daily job creates the renewal invoice N days before the due date (the invoice says when it will
+  be charged), charges the saved card from M days before, once a day until it is paid, and never on or after the due
+  date. Unpaid on the due date: the server is suspended and auto-renew is turned off; it is deleted after the delete days.
+- **Refunds** go back through Stripe; a full refund cancels the invoices it paid.
+- **Webhook events used:** `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+  `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded` (pinned to API version `2024-06-20`).
 
 ## Testing
 
-In test mode use these cards with any future date and any CVC:
-
 | Card | Result |
 |------|--------|
-| 4242 4242 4242 4242 | Payment succeeds |
-| 4000 0025 0000 3155 | Asks for 3D Secure authentication |
-| 4000 0000 0000 9995 | Declined (insufficient funds) |
+| 4242 4242 4242 4242 | Succeeds |
+| 4000 0025 0000 3155 | Asks for 3D Secure |
+| 4000 0000 0000 0341 | Saves, then declines when charged (tests a failed auto-renew) |
 
-Stripe test clocks (Billing > Subscriptions in the dashboard) can move time forward to see a renewal.
-The automated checks are in `tests/StripeBillingTest.php`.
-
-## Next steps
-
-- Switch on Stripe Tax after adding your tax registrations in the Stripe dashboard.
-- Customize Stripe's receipt and invoice emails (Settings > Emails) and Smart Retries (Settings > Billing).
-- Going live: replace the keys with live ones (roll the test secret key first, it was shared in chat), add a live
-  webhook endpoint, and set the mode to live.
+`php cron/cron-shop.php --dry-run` shows what the daily job would do without changing anything.
+Automated checks: `tests/StripeBillingTest.php`, `tests/BillingScheduleTest.php`.
 
 ## Resources
 

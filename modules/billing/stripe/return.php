@@ -32,17 +32,25 @@ if (preg_match('/^cs_(test|live)_[A-Za-z0-9]+$/', $sessionId)) {
             $owner = (int)($session['metadata']['user_id'] ?? 0);
             if ($userId > 0 && $owner !== $userId) {
                 $message = 'This payment belongs to a different account.';
-            } elseif (in_array((string)($session['payment_status'] ?? ''), array('paid', 'no_payment_required'), true)) {
+            } elseif ((string)($session['mode'] ?? '') === 'setup') {
+                $r = array('status' => 'failed');
                 try {
-                    stripe_on_checkout_paid($db, $prefix, $session);
+                    $r = stripe_on_checkout_completed($db, $prefix, $session);
                 } catch (Throwable $e) {
                     // the webhook will apply it
                 }
                 $ok = true;
-                $title = 'Payment received';
-                $message = ((string)($session['mode'] ?? '') === 'subscription')
-                    ? 'Thank you! Your server is being set up now and will renew automatically. You can follow it under My Servers.'
-                    : 'Thank you! Your payment is complete. You can see it under My Orders.';
+                $title = 'Auto-renew is on';
+                $message = 'Thank you! Your card is saved with Stripe for this server. Each renewal invoice will be charged automatically a few days before it is due; you can turn auto-renew off any time in My Servers.';
+            } elseif (in_array((string)($session['payment_status'] ?? ''), array('paid', 'no_payment_required'), true)) {
+                try {
+                    stripe_on_checkout_completed($db, $prefix, $session);
+                } catch (Throwable $e) {
+                    // the webhook will apply it
+                }
+                $ok = true;
+                $title = 'Paid, thank you!';
+                $message = 'Your payment is complete and your invoice is marked paid. A new server is set up straight away; you can follow it under My Servers.';
             } else {
                 $title = 'Payment pending';
                 $message = 'Your payment is still being processed by the bank. We will set things up as soon as it clears.';

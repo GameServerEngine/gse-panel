@@ -38,6 +38,20 @@ include(__DIR__ . '/includes/menu.php');
 $user_id = intval($_SESSION['website_user_id']);
 $renew_csrf = billing_action_csrf_token('billing_renew_csrf');
 $cancel_csrf = billing_action_csrf_token('billing_cancel_csrf');
+// Auto-renew (card saved with Stripe; only Stripe's references are kept here)
+require_once(__DIR__ . '/includes/stripe_billing.php');
+$autorenew_csrf = billing_action_csrf_token('billing_stripe_checkout_csrf');
+$stripe_ready = !empty(billing_stripe_config($db, (string)$table_prefix)['configured']);
+$schedule = billing_schedule_settings($db, (string)$table_prefix);
+$autopay_by_home = array();
+try {
+    $ar = mysqli_query($db, "SELECT * FROM {$table_prefix}billing_autopay WHERE user_id = " . (int)$user_id);
+    while ($ar && ($arow = mysqli_fetch_assoc($ar))) {
+        $autopay_by_home[(int)$arow['home_id']] = $arow;
+    }
+} catch (Throwable $e) {
+    $autopay_by_home = array();
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'request_cancellation') {
     if (!billing_action_validate_csrf($_POST['csrf'] ?? '', 'billing_cancel_csrf') || empty($_POST['confirm'])) {
@@ -177,6 +191,21 @@ if ($pending_result) while ($pending = mysqli_fetch_assoc($pending_result)) $pen
                                     <button type="submit" class="gsw-btn">Submit cancellation</button>
                                 </form>
                             <?php endif; ?>
+                            <?php if ($server['order_id'] && in_array($billing_status, ['Active', 'Invoiced'], true)):
+                                $ap = $autopay_by_home[(int)$server['home_id']] ?? null; ?>
+                                <div style="margin-top:10px;padding-top:8px;border-top:1px solid #ddd">
+                                <?php if ($ap && (int)$ap['enabled'] === 1): ?>
+                                    <strong>Auto-renew: on</strong> <span class="muted">(card saved with Stripe)</span><br>
+                                    <?php if ($exp_date): ?><span class="muted">Each renewal is charged from <?php echo htmlspecialchars(date('M d, Y', strtotime(billing_autopay_charge_date($exp_date, (int)$schedule['autopay_days'])))); ?>, <?php echo (int)$schedule['autopay_days']; ?> days before it is due.</span><br><?php endif; ?>
+                                    <button type="button" class="gsw-btn autorenew-btn" data-action="autorenew_off" data-home="<?php echo (int)$server['home_id']; ?>">Turn off auto-renew</button>
+                                <?php elseif ($stripe_ready): ?>
+                                    <strong>Auto-renew: off</strong><br>
+                                    <span class="muted">Save a card with Stripe and each renewal is charged automatically <?php echo (int)$schedule['autopay_days']; ?> days before it is due.</span><br>
+                                    <button type="button" class="gsw-btn autorenew-btn" data-action="autorenew_on" data-home="<?php echo (int)$server['home_id']; ?>">Turn on auto-renew</button>
+                                <?php endif; ?>
+                                    <div class="autorenew-msg muted"></div>
+                                </div>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endwhile; ?>
@@ -190,6 +219,37 @@ if ($pending_result) while ($pending = mysqli_fetch_assoc($pending_result)) $pen
     <?php endif; ?>
 </div>
 
+<?php if (($_GET['autorenew'] ?? '') === 'cancelled'): ?>
+<script>alert('Auto-renew was not turned on. Nothing was charged.');</script>
+<?php endif; ?>
+<script>
+(function () {
+    var csrf = <?php echo json_encode($autorenew_csrf); ?>;
+    var endpoint = <?php echo json_encode(function_exists('billing_url') ? billing_url('api/stripe_checkout.php') : 'api/stripe_checkout.php'); ?>;
+    document.querySelectorAll('.autorenew-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var off = btn.getAttribute('data-action') === 'autorenew_off';
+            if (off && !confirm('Turn off auto-renew? Your saved card is removed from Stripe and you pay each invoice with Pay Now.')) { return; }
+            var msg = btn.parentNode.querySelector('.autorenew-msg');
+            btn.disabled = true;
+            msg.textContent = off ? 'Turning off...' : 'Opening Stripe...';
+            var body = new FormData();
+            body.append('action', btn.getAttribute('data-action'));
+            body.append('home_id', btn.getAttribute('data-home'));
+            body.append('csrf', csrf);
+            fetch(endpoint, { method: 'POST', body: body, credentials: 'same-origin' })
+                .then(function (r) { return r.json().catch(function () { return { error: 'Unexpected reply from the server.' }; }); })
+                .then(function (d) {
+                    if (d.url) { window.location.href = d.url; return; }
+                    if (d.ok) { window.location.reload(); return; }
+                    msg.textContent = d.error || 'Something went wrong.';
+                    btn.disabled = false;
+                })
+                .catch(function () { msg.textContent = 'Network problem. Please try again.'; btn.disabled = false; });
+        });
+    });
+})();
+</script>
 <?php
 // Close database connection
     billing_maybe_close_db($db);

@@ -297,7 +297,7 @@ $siteBase = $protocol . $host;
     <link rel="stylesheet" href="css/header.css">
     <!-- Favicon -->
     <link rel="icon" href="<?php echo htmlspecialchars(billing_url('images/brand/favicon-32x32.png'), ENT_QUOTES, 'UTF-8'); ?>" type="image/png">
-    <?php if (!$cart_empty && !empty($stripe_cfg['configured'])): ?>
+    <?php if (!$cart_empty && !empty($stripe_cfg['configured']) && ($stripe_cfg['checkout_ui'] ?? 'hosted') === 'form'): ?>
     <script src="https://js.stripe.com/dahlia/stripe.js"></script>
     <?php endif; ?>
     <?php if (!$cart_empty && !empty($client_id)): ?>
@@ -496,10 +496,9 @@ $siteBase = $protocol . $host;
                 <?php if (!empty($stripe_cfg['configured'])): ?>
                 <div class="stripe-checkout">
                     <h4>Pay by card</h4>
-                    <p>Secure checkout by Stripe. Game servers renew automatically at the end of each term; you can cancel any time from My Account.</p>
-                    <?php foreach ((array)$invoices as $inv): ?>
-                    <button type="button" class="btn stripe-pay-btn" data-invoice="<?php echo intval($inv['invoice_id']); ?>">Pay <?php echo count((array)$invoices) > 1 ? 'invoice #' . intval($inv['invoice_id']) . ' ' : ''; ?>by card</button>
-                    <?php endforeach; ?>
+                    <p>Secure payment on Stripe. You return here when it is done and your invoice is marked paid.</p>
+                    <?php $stripe_invoice_ids = implode(',', array_map('intval', array_column((array)$invoices, 'invoice_id'))); ?>
+                    <button type="button" class="btn stripe-pay-btn" data-invoices="<?php echo htmlspecialchars($stripe_invoice_ids, ENT_QUOTES, 'UTF-8'); ?>">Pay Now by card</button>
                     <div id="stripe-checkout-form" style="max-width:520px;margin-top:14px;"></div>
                     <div id="stripe-status" class="status-message"></div>
                 </div>
@@ -534,6 +533,7 @@ $siteBase = $protocol . $host;
                 (function () {
                     var csrf = <?php echo json_encode($stripe_csrf); ?>;
                     var publishableKey = <?php echo json_encode((string)$stripe_cfg['publishable_key']); ?>;
+                    var useForm = <?php echo json_encode(($stripe_cfg['checkout_ui'] ?? 'hosted') === 'form'); ?>;
                     var endpoint = <?php echo json_encode(billing_url('api/stripe_checkout.php')); ?>;
                     var status = document.getElementById('stripe-status');
                     var started = false;
@@ -544,7 +544,8 @@ $siteBase = $protocol . $host;
                     };
                     function startSession(invoiceId, ui) {
                         var body = new FormData();
-                        body.append('invoice_id', invoiceId);
+                        body.append('action', 'pay');
+                        body.append('invoice_ids', invoiceId);
                         body.append('csrf', csrf);
                         body.append('ui', ui);
                         return fetch(endpoint, { method: 'POST', body: body, credentials: 'same-origin' })
@@ -595,8 +596,8 @@ $siteBase = $protocol . $host;
                             if (started) { return; }
                             started = true;
                             document.querySelectorAll('.stripe-pay-btn').forEach(function (b) { b.disabled = true; });
-                            var invoiceId = btn.getAttribute('data-invoice');
-                            var formSupported = typeof window.Stripe === 'function' && publishableKey !== ''
+                            var invoiceId = btn.getAttribute('data-invoices');
+                            var formSupported = useForm && typeof window.Stripe === 'function' && publishableKey !== ''
                                 && typeof Stripe(publishableKey).initCheckoutFormSdk === 'function';
                             if (formSupported) {
                                 try { embeddedForm(invoiceId, btn); return; } catch (e) { /* fall through to the hosted page */ }

@@ -34,10 +34,26 @@ if (!function_exists('billing_paypal_decrypt_secret')) {
     }
 }
 
+/**
+ * The key that encrypts payment provider secrets in the database. A key file is used when one is
+ * configured; otherwise the key is derived from this install's database credentials, so the billing
+ * admin page works without anyone creating files. (If the database password changes, the saved
+ * provider secrets must be entered again.)
+ */
 function billing_paypal_read_key(): string
 {
     $path = billing_paypal_key_path();
-    return ($path !== '' && is_readable($path)) ? trim((string)file_get_contents($path)) : '';
+    if ($path !== '' && is_readable($path)) {
+        $fileKey = trim((string)file_get_contents($path));
+        if ($fileKey !== '') {
+            return $fileKey;
+        }
+    }
+    global $db_name, $db_user, $db_pass, $db_host;
+    if ((string)($db_name ?? '') === '') {
+        return '';
+    }
+    return hash('sha256', 'gse-billing-secrets|' . $db_host . '|' . $db_name . '|' . $db_user . '|' . $db_pass);
 }
 
 function billing_paypal_config(mysqli $db, string $prefix): array

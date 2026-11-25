@@ -1,18 +1,19 @@
 <?php
 /**
- * Stripe billing for the ordering site.
+ * Stripe for the ordering site. The panel owns every invoice and receipt; Stripe only takes payments.
  *
- * Checkout: one Stripe Checkout Session per panel invoice. A game server rental becomes a Stripe
- * subscription (one per server) so renewals are charged automatically. Service invoices, and terms
- * Stripe cannot repeat (longer than a year), are a one-time payment.
- *
- * Webhooks: each signed event is stored once in billing_stripe_events and applied to the panel's
- * invoices and orders through BillingLifecycleService, the same path PayPal payments take.
+ * Pay Now: the cart's invoices go to Stripe as one payment, one line per invoice with the amount the
+ * panel decided, on Stripe's own page (or the embedded form, if chosen in Billing > Settings).
+ * Auto-renew: the customer saves a card at Stripe (Checkout in setup mode, nothing is charged). The
+ * daily billing job then charges it for each renewal invoice on the panel's schedule
+ * (stripe_autopay_charge). The panel keeps only Stripe's references, never card data.
+ * Webhooks: each signed event is stored once in billing_stripe_events and then applied.
  */
 require_once __DIR__ . '/../classes/StripeClient.php';
 require_once __DIR__ . '/../classes/BillingRepository.php';
 require_once __DIR__ . '/../classes/BillingLifecycleService.php';
 require_once __DIR__ . '/stripe_config.php';
+require_once __DIR__ . '/billing_autopay.php';
 
 if (!function_exists('stripe_money_to_cents')) {
     function stripe_money_to_cents($amount): int
@@ -21,112 +22,105 @@ if (!function_exists('stripe_money_to_cents')) {
     }
 }
 
-/** Stripe's billing interval for a game invoice, or null when Stripe cannot repeat it (longer than a year). */
-function stripe_recurring_for_invoice(array $invoice): ?array
+/** What is due on an invoice, in cents, after an optional discount. */
+function stripe_invoice_due_cents(array $invoice, float $discount = 0.0): int
 {
-    $duration = strtolower((string)($invoice['invoice_duration'] ?? $invoice['rate_type'] ?? 'month'));
-    $map = array('daily' => 'day', 'monthly' => 'month', 'yearly' => 'year');
-    $duration = $map[$duration] ?? $duration;
-    $qty = max(1, (int)($invoice['qty'] ?? 1));
-    if (strpos($duration, 'day') !== false) {
-        $interval = 'day';
-        $max = 365;
-    } elseif (strpos($duration, 'year') !== false) {
-        $interval = 'year';
-        $max = 1;
-    } else {
-        $interval = 'month';
-        $max = 12;
+    $due = (float)($invoice['total_due'] ?? 0);
+    if ($due <= 0) {
+        $due = (float)($invoice['amount'] ?? 0);
     }
-    return $qty > $max ? null : array('interval' => $interval, 'interval_count' => $qty);
+    if ($due <= 0) {
+        $due = (float)($invoice['subtotal'] ?? 0);
+    }
+    return max(0, stripe_money_to_cents($due - max(0.0, $discount)));
 }
 
-/** The regular price of an invoice for one billing period, and what is charged now (after any discount). */
-function stripe_invoice_amounts(array $invoice, float $extraDiscount = 0.0): array
+function stripe_invoice_label(array $invoice): string
 {
-    $subtotal = (float)($invoice['subtotal'] ?? 0);
-    $amount = (float)($invoice['amount'] ?? 0);
-    $due = (float)($invoice['total_due'] ?? 0);
-    $regular = $subtotal > 0 ? $subtotal : ($amount > 0 ? $amount : $due);
-    $now = $due > 0 ? $due : ($amount > 0 ? $amount : $regular);
-    $now = max(0.0, $now - max(0.0, $extraDiscount));
-    return array('regular_cents' => stripe_money_to_cents($regular), 'now_cents' => stripe_money_to_cents(min($now, $regular)));
+    $id = (int)$invoice['invoice_id'];
+    $text = trim((string)($invoice['description'] ?? ''));
+    if ($text === '') {
+        $text = trim((string)($invoice['home_name'] ?? ''));
+    }
+    return mb_substr('Invoice #' . $id . ($text !== '' ? ' - ' . $text : ''), 0, 250);
 }
 
 /**
- * Checkout Session parameters for one invoice.
- * $urls: return (embedded form), success and cancel (hosted page).
- * $options: ui (form|hosted), automatic_tax (bool), coupon_id (Stripe coupon), product_name, extra_discount (float),
- * panel_coupon_id (the panel coupon behind the discount, recorded on the paid invoice).
+ * Checkout Session for paying invoices (Pay Now). $options: ui (hosted|form), discounts (invoice id =>
+ * amount), automatic_tax (bool), panel_coupon_id. $urls: success, cancel (hosted) or return (form).
  */
-function stripe_checkout_params(array $invoice, string $customerId, array $urls, array $options = array()): array
+function stripe_cart_checkout_params(array $invoices, string $customerId, array $urls, array $options = array()): array
 {
-    $id = (int)$invoice['invoice_id'];
-    $currency = strtolower(trim((string)($invoice['currency'] ?? '')) ?: 'usd');
-    $amounts = stripe_invoice_amounts($invoice, (float)($options['extra_discount'] ?? 0));
-    $name = trim((string)($options['product_name'] ?? ''));
-    if ($name === '') {
-        $name = trim((string)($invoice['description'] ?? '')) ?: (trim((string)($invoice['home_name'] ?? '')) ?: 'Invoice #' . $id);
+    $currency = 'usd';
+    $lines = array();
+    $ids = array();
+    $amounts = array();
+    $userId = 0;
+    foreach ($invoices as $inv) {
+        $id = (int)$inv['invoice_id'];
+        $cents = stripe_invoice_due_cents($inv, (float)($options['discounts'][$id] ?? 0));
+        if ($cents <= 0) {
+            continue;
+        }
+        if (!$ids) {
+            $currency = strtolower(trim((string)($inv['currency'] ?? '')) ?: 'usd');
+            $userId = (int)($inv['user_id'] ?? 0);
+        }
+        $lines[] = array('quantity' => 1, 'price_data' => array('currency' => $currency, 'unit_amount' => $cents,
+            'product_data' => array('name' => stripe_invoice_label($inv))));
+        $ids[] = $id;
+        $amounts[] = $id . ':' . $cents;
     }
-    $meta = array(
-        'invoice_id' => (string)$id,
-        'order_id' => (string)(int)($invoice['order_id'] ?? 0),
-        'user_id' => (string)(int)($invoice['user_id'] ?? 0),
-        'home_id' => (string)(int)($invoice['home_id'] ?? 0),
-        'source' => 'gse-billing',
-    );
+    $meta = array('purpose' => 'invoice', 'invoice_ids' => implode(',', $ids), 'invoice_amounts' => implode(',', $amounts),
+        'user_id' => (string)$userId, 'source' => 'gse-billing');
     if (!empty($options['panel_coupon_id'])) {
         $meta['panel_coupon_id'] = (string)(int)$options['panel_coupon_id'];
     }
-    $isGame = (string)($invoice['invoice_kind'] ?? 'game') === 'game';
-    $recurring = $isGame ? stripe_recurring_for_invoice($invoice) : null;
-
-    $price = array('currency' => $currency, 'unit_amount' => $amounts['regular_cents'], 'product_data' => array('name' => mb_substr($name, 0, 250)));
     $params = array(
+        'mode' => 'payment',
         'customer' => $customerId,
-        'client_reference_id' => (string)$id,
+        'client_reference_id' => mb_substr(implode('-', $ids), 0, 200),
+        'line_items' => $lines,
         'metadata' => $meta,
+        'payment_intent_data' => array('metadata' => $meta, 'description' => mb_substr('Invoice #' . implode(', #', $ids), 0, 300)),
         'customer_update' => array('address' => 'auto', 'name' => 'auto'),
         'billing_address_collection' => 'auto',
+        'automatic_tax' => array('enabled' => !empty($options['automatic_tax'])),
     );
-    $form = ($options['ui'] ?? 'hosted') === 'form';
-    if ($form) {
-        // Embedded payment form on the cart page, with the settings chosen in Stripe Checkout Studio.
+    if (!empty($options['automatic_tax'])) {
+        $params['billing_address_collection'] = 'required';
+    }
+    if (($options['ui'] ?? 'hosted') === 'form') {
+        // Embedded form on the cart page, with the settings chosen in Stripe Checkout Studio.
         $params['ui_mode'] = 'form';
         $params['return_url'] = $urls['return'];
         $params['phone_number_collection'] = array('enabled' => false);
         $params['submit_type'] = 'auto';
         $params['integration_identifier'] = 'custom_embedded_web_0001';
     } else {
-        // Stripe's hosted checkout page (used when the embedded form cannot load).
         $params['success_url'] = $urls['success'];
         $params['cancel_url'] = $urls['cancel'];
-    }
-    if ($recurring !== null) {
-        $price['recurring'] = $recurring;
-        $params['mode'] = 'subscription';
-        $params['subscription_data'] = array('metadata' => $meta);
-        if ($form) {
-            $params['payment_method_collection'] = 'always';
-        }
-    } else {
-        $params['mode'] = 'payment';
-        $params['payment_intent_data'] = array('metadata' => $meta);
-        $params['invoice_creation'] = array('enabled' => true, 'invoice_data' => array('metadata' => $meta));
-    }
-    $params['line_items'] = array(array('quantity' => 1, 'price_data' => $price));
-    if (!empty($options['coupon_id'])) {
-        $params['discounts'] = array(array('coupon' => (string)$options['coupon_id']));
-    }
-    // Stripe Tax follows the admin setting (off unless switched on in Billing > Settings).
-    $params['automatic_tax'] = array('enabled' => !empty($options['automatic_tax']));
-    if (!empty($options['automatic_tax'])) {
-        $params['billing_address_collection'] = 'required';
     }
     return $params;
 }
 
-/** The Stripe customer for a panel user, created on first use. Returns array(ok, id, error). */
+/** Checkout Session that saves a card at Stripe for a server's auto-renew. Nothing is charged. */
+function stripe_autorenew_checkout_params(array $home, string $customerId, string $currency, array $urls): array
+{
+    $meta = array('purpose' => 'autorenew', 'home_id' => (string)(int)$home['home_id'],
+        'user_id' => (string)(int)($home['user_id_main'] ?? 0), 'source' => 'gse-billing');
+    return array(
+        'mode' => 'setup',
+        'customer' => $customerId,
+        'currency' => strtolower($currency ?: 'usd'),
+        'metadata' => $meta,
+        'setup_intent_data' => array('metadata' => $meta, 'description' => mb_substr('Auto-renew for ' . (string)($home['home_name'] ?? ('server #' . $home['home_id'])), 0, 300)),
+        'success_url' => $urls['success'],
+        'cancel_url' => $urls['cancel'],
+    );
+}
+
+/** The Stripe customer for a panel user (a reference only), created on first use. Returns array(ok, id, error). */
 function stripe_customer_for_user(mysqli $db, string $prefix, StripeClient $client, int $userId, string $mode): array
 {
     $stmt = $db->prepare("SELECT customer_id FROM `{$prefix}billing_stripe_customers` WHERE user_id = ? AND mode = ? LIMIT 1");
@@ -171,6 +165,139 @@ function stripe_customer_for_user(mysqli $db, string $prefix, StripeClient $clie
     return array('ok' => true, 'id' => $customerId, 'error' => '');
 }
 
+/**
+ * Builds the server for a newly paid order through the panel bridge, as the PayPal webhook does.
+ * Non-fatal: returns a note. Tests switch it off by defining STRIPE_BILLING_NO_PROVISION.
+ */
+function stripe_try_provision(int $orderId, int $userId): string
+{
+    if (defined('STRIPE_BILLING_NO_PROVISION')) {
+        return 'provisioning skipped (test)';
+    }
+    $dir = dirname(__DIR__);
+    $bridge = $dir . '/includes/panel_bridge.php';
+    $create = $dir . '/create_servers.php';
+    if (!is_file($bridge) || !is_file($create)) {
+        return 'provisioning skipped: panel bridge not found';
+    }
+    try {
+        require_once $bridge;
+        if (!function_exists('billing_panel_bootstrap')) {
+            return 'provisioning skipped: no panel bootstrap';
+        }
+        $ctx = billing_panel_bootstrap();
+        if (!$ctx || empty($ctx['db'])) {
+            return 'provisioning skipped: panel bootstrap failed';
+        }
+        $GLOBALS['db'] = $ctx['db'];
+        $GLOBALS['settings'] = $ctx['settings'] ?? array();
+        require_once $create;
+        if (!function_exists('billing_invoke_provision')) {
+            return 'provisioning skipped: provisioning function missing';
+        }
+        $r = billing_invoke_provision(array('order_ids' => array($orderId), 'user_id' => $userId, 'is_admin' => true));
+        return 'provisioning: ' . (int)($r['provisioned_count'] ?? 0) . ' built, ' . (int)($r['failed_count'] ?? 0) . ' failed';
+    } catch (Throwable $e) {
+        return 'provisioning error: ' . $e->getMessage();
+    }
+}
+
+/**
+ * Marks one panel invoice paid by Stripe (only once) and builds the server for a new order.
+ * Returns array(ok, note).
+ */
+function stripe_apply_paid_invoice(mysqli $db, string $prefix, int $invoiceId, string $txid, int $cents, string $currency, int $couponId = 0): array
+{
+    $repo = new BillingRepository($db, $prefix);
+    $invoice = $repo->getInvoice($invoiceId);
+    if (!$invoice) {
+        return array(false, 'invoice ' . $invoiceId . ' not found');
+    }
+    $paid = round($cents / 100, 2);
+    $subtotal = (float)($invoice['subtotal'] ?? 0) > 0 ? (float)$invoice['subtotal'] : $paid;
+    $result = (new BillingLifecycleService($repo))->processPaidInvoice($invoiceId, array(
+        'transaction_external_id' => $txid,
+        'payment_method' => 'stripe',
+        'amount' => $paid,
+        'currency' => strtoupper($currency ?: 'usd'),
+        'paid_at' => date('Y-m-d H:i:s'),
+        'raw_response' => array('stripe' => $txid),
+    ), array(
+        'amount' => $paid,
+        'total_due' => $paid,
+        'subtotal' => $subtotal,
+        'discount_amount' => max(0, round($subtotal - $paid, 2)),
+        'invoice_duration' => (string)($invoice['invoice_duration'] ?? 'month'),
+        'rate_type' => (string)($invoice['rate_type'] ?? 'monthly'),
+        'coupon_id' => $couponId > 0 ? $couponId : null,
+    ));
+    if (empty($result['success'])) {
+        return array(false, 'invoice ' . $invoiceId . ': ' . ($result['error'] ?? 'unknown error'));
+    }
+    $note = 'invoice ' . $invoiceId . ' paid';
+    $orderId = (int)($result['order_id'] ?? 0);
+    if ($orderId > 0 && (int)($result['home_id'] ?? 0) <= 0 && !empty($result['became_paid'])
+        && (string)($invoice['invoice_kind'] ?? 'game') === 'game') {
+        $note .= ' (order ' . $orderId . '; ' . stripe_try_provision($orderId, (int)($invoice['user_id'] ?? 0)) . ')';
+    }
+    return array(true, $note);
+}
+
+/** Splits the invoice_amounts metadata ("12:800,13:1200") into invoice id => cents. */
+function stripe_metadata_amounts(array $meta): array
+{
+    $out = array();
+    foreach (explode(',', (string)($meta['invoice_amounts'] ?? '')) as $pair) {
+        $bits = explode(':', trim($pair));
+        if (count($bits) === 2 && (int)$bits[0] > 0) {
+            $out[(int)$bits[0]] = max(0, (int)$bits[1]);
+        }
+    }
+    return $out;
+}
+
+/**
+ * Charges a server's saved card for a renewal invoice (called by the daily billing job).
+ * Returns array(status => paid|failed|skipped, note, reference).
+ */
+function stripe_autopay_charge(mysqli $db, string $prefix, StripeClient $client, array $autopay, array $invoice): array
+{
+    $invoiceId = (int)$invoice['invoice_id'];
+    $cents = stripe_invoice_due_cents($invoice);
+    if ($cents <= 0) {
+        return array('status' => 'skipped', 'note' => 'nothing to charge', 'reference' => '');
+    }
+    if ((string)($autopay['customer_ref'] ?? '') === '' || (string)($autopay['method_ref'] ?? '') === '') {
+        return array('status' => 'failed', 'note' => 'no saved payment method', 'reference' => '');
+    }
+    $currency = strtolower(trim((string)($invoice['currency'] ?? '')) ?: 'usd');
+    $res = $client->request('POST', 'payment_intents', array(
+        'amount' => $cents,
+        'currency' => $currency,
+        'customer' => (string)$autopay['customer_ref'],
+        'payment_method' => (string)$autopay['method_ref'],
+        'off_session' => true,
+        'confirm' => true,
+        'description' => stripe_invoice_label($invoice) . ' (auto-renew)',
+        'metadata' => array('purpose' => 'autopay', 'invoice_id' => (string)$invoiceId, 'home_id' => (string)(int)($invoice['home_id'] ?? 0),
+            'user_id' => (string)(int)($invoice['user_id'] ?? 0), 'source' => 'gse-billing'),
+    ), 'gse-autopay-' . $invoiceId . '-' . date('Ymd'));
+    if ($res['ok'] && (string)($res['data']['status'] ?? '') === 'succeeded') {
+        $pi = (string)$res['data']['id'];
+        list($ok, $note) = stripe_apply_paid_invoice($db, $prefix, $invoiceId, $pi, (int)$res['data']['amount'], $currency);
+        return array('status' => $ok ? 'paid' : 'failed', 'note' => $note, 'reference' => $pi);
+    }
+    $reference = (string)($res['data']['id'] ?? ($res['data']['error']['payment_intent']['id'] ?? ''));
+    if ($res['ok']) {
+        $reason = (string)($res['data']['status'] ?? '') === 'requires_action'
+            ? 'the bank asked the customer to confirm this payment'
+            : 'payment status ' . (string)($res['data']['status'] ?? 'unknown');
+        return array('status' => 'failed', 'note' => $reason, 'reference' => $reference);
+    }
+    $code = (string)($res['data']['error']['decline_code'] ?? ($res['code'] ?? ''));
+    return array('status' => 'failed', 'note' => $res['error'] . ($code !== '' ? ' (' . $code . ')' : ''), 'reference' => $reference);
+}
+
 /* ---------------------------------------------------------------------------
    Webhook events
 --------------------------------------------------------------------------- */
@@ -209,37 +336,19 @@ function stripe_event_finish(mysqli $db, string $prefix, string $eventId, string
     $stmt->close();
 }
 
-/** The order that a Stripe subscription pays for, or null. */
-function stripe_order_for_subscription(mysqli $db, string $prefix, string $subscriptionId): ?array
-{
-    if ($subscriptionId === '') {
-        return null;
-    }
-    $stmt = $db->prepare("SELECT * FROM `{$prefix}billing_orders` WHERE stripe_subscription_id = ? ORDER BY order_id DESC LIMIT 1");
-    $stmt->bind_param('s', $subscriptionId);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-    return $row ?: null;
-}
-
-/**
- * Applies one verified Stripe event. Returns array(status => processed|ignored|failed, note).
- * 'failed' asks Stripe to send the event again later (the endpoint answers 500).
- */
+/** Applies one verified event. Returns array(status => processed|ignored|failed, note); failed makes Stripe resend. */
 function stripe_handle_event(mysqli $db, string $prefix, array $event): array
 {
     $object = (array)($event['data']['object'] ?? array());
     switch ((string)($event['type'] ?? '')) {
         case 'checkout.session.completed':
         case 'checkout.session.async_payment_succeeded':
-            return stripe_on_checkout_paid($db, $prefix, $object);
-        case 'invoice.paid':
-            return stripe_on_invoice_paid($db, $prefix, $object);
-        case 'invoice.payment_failed':
-            return stripe_on_invoice_failed($db, $prefix, $object);
-        case 'customer.subscription.deleted':
-            return stripe_on_subscription_deleted($db, $prefix, $object);
+            return stripe_on_checkout_completed($db, $prefix, $object);
+        case 'payment_intent.succeeded':
+            return stripe_on_payment_intent_succeeded($db, $prefix, $object);
+        case 'payment_intent.payment_failed':
+            return array('status' => 'processed', 'note' => 'payment failed: ' . (string)($object['last_payment_error']['message'] ?? 'unknown')
+                . ' (invoice ' . (string)($object['metadata']['invoice_id'] ?? '?') . ')');
         case 'charge.refunded':
             return stripe_on_charge_refunded($db, $prefix, $object);
         default:
@@ -247,246 +356,106 @@ function stripe_handle_event(mysqli $db, string $prefix, array $event): array
     }
 }
 
-/**
- * Builds the server for a newly paid order through the panel bridge, as the PayPal webhook does.
- * Non-fatal: returns a note, and the order can still be provisioned by hand. Tests switch it off
- * by defining STRIPE_BILLING_NO_PROVISION.
- */
-function stripe_try_provision(int $orderId, int $userId): string
+/** The customer finished Checkout: Pay Now (invoices paid) or auto-renew (card saved). */
+function stripe_on_checkout_completed(mysqli $db, string $prefix, array $session): array
 {
-    if (defined('STRIPE_BILLING_NO_PROVISION')) {
-        return 'provisioning skipped (test)';
+    if ((string)($session['mode'] ?? '') === 'setup') {
+        return stripe_on_autorenew_saved($db, $prefix, $session);
     }
-    $dir = dirname(__DIR__);
-    $bridge = $dir . '/includes/panel_bridge.php';
-    $create = $dir . '/create_servers.php';
-    if (!is_file($bridge) || !is_file($create)) {
-        return 'provisioning skipped: panel bridge not found';
-    }
-    try {
-        require_once $bridge;
-        if (!function_exists('billing_panel_bootstrap')) {
-            return 'provisioning skipped: no panel bootstrap';
-        }
-        $ctx = billing_panel_bootstrap();
-        if (!$ctx || empty($ctx['db'])) {
-            return 'provisioning skipped: panel bootstrap failed';
-        }
-        $GLOBALS['db'] = $ctx['db'];
-        $GLOBALS['settings'] = $ctx['settings'] ?? array();
-        require_once $create;
-        if (!function_exists('billing_invoke_provision')) {
-            return 'provisioning skipped: provisioning function missing';
-        }
-        $r = billing_invoke_provision(array('order_ids' => array($orderId), 'user_id' => $userId, 'is_admin' => true));
-        return 'provisioning: ' . (int)($r['provisioned_count'] ?? 0) . ' built, ' . (int)($r['failed_count'] ?? 0) . ' failed';
-    } catch (Throwable $e) {
-        return 'provisioning error: ' . $e->getMessage();
-    }
-}
-
-/** First payment: the customer finished Checkout. Marks the panel invoice paid, which creates the order and the server. */
-function stripe_on_checkout_paid(mysqli $db, string $prefix, array $session): array
-{
     $paymentStatus = (string)($session['payment_status'] ?? '');
     if (!in_array($paymentStatus, array('paid', 'no_payment_required'), true)) {
         return array('status' => 'ignored', 'note' => 'checkout not paid yet (' . $paymentStatus . ')');
     }
-    $invoiceId = (int)($session['metadata']['invoice_id'] ?? ($session['client_reference_id'] ?? 0));
-    if ($invoiceId <= 0) {
-        return array('status' => 'ignored', 'note' => 'no panel invoice on this checkout');
+    $meta = (array)($session['metadata'] ?? array());
+    $amounts = stripe_metadata_amounts($meta);
+    if (!$amounts) {
+        return array('status' => 'ignored', 'note' => 'no panel invoices on this checkout');
     }
-    $repo = new BillingRepository($db, $prefix);
-    $lifecycle = new BillingLifecycleService($repo);
-    $invoice = $repo->getInvoice($invoiceId);
-    if (!$invoice) {
-        return array('status' => 'failed', 'note' => 'panel invoice ' . $invoiceId . ' not found');
+    $txid = (string)($session['payment_intent'] ?? '') ?: (string)($session['id'] ?? '');
+    $currency = (string)($session['currency'] ?? 'usd');
+    $notes = array();
+    $failed = false;
+    foreach ($amounts as $invoiceId => $cents) {
+        list($ok, $note) = stripe_apply_paid_invoice($db, $prefix, $invoiceId, $txid, $cents, $currency, (int)($meta['panel_coupon_id'] ?? 0));
+        $notes[] = $note;
+        $failed = $failed || !$ok;
     }
-    $tax = (int)($session['total_details']['amount_tax'] ?? 0);
-    $paidCents = max(0, (int)($session['amount_total'] ?? 0) - $tax);
-    $paid = round($paidCents / 100, 2);
-    $txid = (string)($session['invoice'] ?? '');
-    if ($txid === '') {
-        $txid = (string)($session['payment_intent'] ?? '');
-    }
-    if ($txid === '') {
-        $txid = (string)($session['id'] ?? '');
-    }
-    $subtotal = (float)($invoice['subtotal'] ?? 0) > 0 ? (float)$invoice['subtotal'] : $paid;
-    $result = $lifecycle->processPaidInvoice($invoiceId, array(
-        'transaction_external_id' => $txid,
-        'payment_method' => 'stripe',
-        'amount' => $paid,
-        'currency' => strtoupper((string)($session['currency'] ?? 'usd')),
-        'paid_at' => date('Y-m-d H:i:s'),
-        'raw_response' => array('checkout_session' => (string)($session['id'] ?? ''), 'subscription' => (string)($session['subscription'] ?? ''),
-            'customer' => (string)($session['customer'] ?? ''), 'tax_cents' => $tax),
-    ), array(
-        'amount' => $paid,
-        'total_due' => $paid,
-        'subtotal' => $subtotal,
-        'discount_amount' => max(0, round($subtotal - $paid, 2)),
-        'invoice_duration' => (string)($invoice['invoice_duration'] ?? 'month'),
-        'rate_type' => (string)($invoice['rate_type'] ?? 'monthly'),
-        'coupon_id' => (int)($session['metadata']['panel_coupon_id'] ?? 0) ?: null,
-    ));
-    if (empty($result['success'])) {
-        return array('status' => 'failed', 'note' => 'could not mark invoice ' . $invoiceId . ' paid: ' . ($result['error'] ?? 'unknown'));
-    }
-    $orderId = (int)($result['order_id'] ?? 0);
-    $subscription = (string)($session['subscription'] ?? '');
-    if ($orderId > 0 && $subscription !== '') {
-        $customer = (string)($session['customer'] ?? '');
-        $stmt = $db->prepare("UPDATE `{$prefix}billing_orders` SET stripe_subscription_id = ?, stripe_customer_id = ? WHERE order_id = ?");
-        $stmt->bind_param('ssi', $subscription, $customer, $orderId);
-        $stmt->execute();
-        $stmt->close();
-    }
-    $provision = '';
-    if ($orderId > 0 && (int)($result['home_id'] ?? 0) <= 0 && (string)($invoice['invoice_kind'] ?? 'game') === 'game') {
-        $provision = '; ' . stripe_try_provision($orderId, (int)($invoice['user_id'] ?? 0));
-    }
-    return array('status' => 'processed', 'note' => 'invoice ' . $invoiceId . ' paid' . ($orderId ? ', order ' . $orderId : '')
-        . ($subscription !== '' ? ', subscription ' . $subscription : '') . $provision);
+    return array('status' => $failed ? 'failed' : 'processed', 'note' => implode('; ', $notes));
 }
 
-/** Automatic renewal: Stripe charged the next period. Records a paid renewal invoice, which extends the server. */
-function stripe_on_invoice_paid(mysqli $db, string $prefix, array $inv): array
+/** Auto-renew set up: keep Stripe's references to the saved card for that server. */
+function stripe_on_autorenew_saved(mysqli $db, string $prefix, array $session): array
 {
-    $reason = (string)($inv['billing_reason'] ?? '');
-    if ($reason !== 'subscription_cycle') {
-        return array('status' => 'ignored', 'note' => 'billing reason ' . $reason . ' (first payments are handled at checkout)');
+    $meta = (array)($session['metadata'] ?? array());
+    $homeId = (int)($meta['home_id'] ?? 0);
+    $userId = (int)($meta['user_id'] ?? 0);
+    if ($homeId <= 0 || ($meta['purpose'] ?? '') !== 'autorenew') {
+        return array('status' => 'ignored', 'note' => 'not an auto-renew setup');
     }
-    $stripeInvoiceId = (string)($inv['id'] ?? '');
-    $order = stripe_order_for_subscription($db, $prefix, (string)($inv['subscription'] ?? ''));
-    if (!$order) {
-        return array('status' => 'failed', 'note' => 'no order for subscription ' . (string)($inv['subscription'] ?? ''));
+    $stmt = $db->prepare("SELECT user_id_main FROM `{$prefix}server_homes` WHERE home_id = ? LIMIT 1");
+    $stmt->bind_param('i', $homeId);
+    $stmt->execute();
+    $home = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if (!$home || (int)$home['user_id_main'] !== $userId) {
+        return array('status' => 'ignored', 'note' => 'server ' . $homeId . ' does not belong to user ' . $userId);
     }
-    $repo = new BillingRepository($db, $prefix);
-    if ($repo->getInvoiceByPaymentTxid($stripeInvoiceId)) {
-        return array('status' => 'processed', 'note' => 'renewal ' . $stripeInvoiceId . ' already recorded');
+    $setupIntent = $session['setup_intent'] ?? '';
+    $method = is_array($setupIntent) ? (string)($setupIntent['payment_method'] ?? '') : '';
+    if ($method === '' && is_string($setupIntent) && $setupIntent !== '') {
+        $client = billing_stripe_client($db, $prefix);
+        if (!$client) {
+            return array('status' => 'failed', 'note' => 'Stripe is not configured');
+        }
+        $si = $client->request('GET', 'setup_intents/' . rawurlencode($setupIntent));
+        if (!$si['ok']) {
+            return array('status' => 'failed', 'note' => 'could not read the setup: ' . $si['error']);
+        }
+        $method = (string)($si['data']['payment_method'] ?? '');
     }
-    $orderId = (int)$order['order_id'];
-    $homeId = (int)($order['home_id'] ?? 0);
-    if ($homeId <= 0) {
-        return array('status' => 'failed', 'note' => 'order ' . $orderId . ' has no server yet');
+    if ($method === '') {
+        return array('status' => 'failed', 'note' => 'no saved payment method on the setup');
     }
-    $lifecycle = new BillingLifecycleService($repo);
-    $last = $repo->getLatestInvoiceForOrder($orderId, true) ?: array();
-    $home = $repo->getServerHomeBilling($homeId) ?: array();
-    $tax = (int)($inv['tax'] ?? 0);
-    $paid = round(max(0, (int)($inv['amount_paid'] ?? 0) - $tax) / 100, 2);
-    $context = array(
-        'order_id' => $orderId,
-        'service_id' => (int)($order['service_id'] ?? 0),
-        'description' => 'Renewal: ' . (string)($order['home_name'] ?? ''),
-        'invoice_duration' => (string)($last['invoice_duration'] ?? 'month'),
-        'rate_type' => (string)($last['rate_type'] ?? 'monthly'),
-        'rate_per_player' => (float)($last['rate_per_player'] ?? 0),
-        'players' => (int)($last['players'] ?? ($order['max_players'] ?? 0)),
-        'qty' => (int)($last['qty'] ?? 1),
-        'subtotal' => $paid,
-        'total_due' => $paid,
-        'currency' => strtoupper((string)($inv['currency'] ?? 'usd')),
-    );
-    $renewal = $lifecycle->createRenewalInvoice(array(
-        'home_id' => $homeId,
-        'home_name' => (string)($order['home_name'] ?? ''),
-        'user_id' => (int)($order['user_id'] ?? 0),
-        'next_invoice_date' => (string)($home['server_expiration_date'] ?? ($order['end_date'] ?? date('Y-m-d H:i:s'))),
-    ), $context);
-    if (empty($renewal['success'])) {
-        return array('status' => 'failed', 'note' => 'could not create the renewal invoice: ' . ($renewal['error'] ?? 'unknown'));
-    }
-    $paidAt = (int)($inv['status_transitions']['paid_at'] ?? 0);
-    $result = $lifecycle->processPaidInvoice((int)$renewal['invoice_id'], array(
-        'transaction_external_id' => $stripeInvoiceId,
-        'payment_method' => 'stripe',
-        'amount' => $paid,
-        'currency' => $context['currency'],
-        'paid_at' => date('Y-m-d H:i:s', $paidAt > 0 ? $paidAt : time()),
-        'raw_response' => array('stripe_invoice' => $stripeInvoiceId, 'subscription' => (string)($inv['subscription'] ?? ''), 'tax_cents' => $tax),
-    ), $context);
-    if (empty($result['success'])) {
-        return array('status' => 'failed', 'note' => 'could not mark renewal invoice ' . $renewal['invoice_id'] . ' paid: ' . ($result['error'] ?? 'unknown'));
-    }
-    return array('status' => 'processed', 'note' => 'renewal invoice ' . $renewal['invoice_id'] . ' paid for order ' . $orderId);
+    billing_autopay_save($db, $prefix, $homeId, $userId, 'stripe', (string)($session['customer'] ?? ''), $method);
+    return array('status' => 'processed', 'note' => 'auto-renew on for server ' . $homeId);
 }
 
-/** A renewal charge failed. Stripe retries on its own; if it never succeeds, the daily job suspends the server at expiry. */
-function stripe_on_invoice_failed(mysqli $db, string $prefix, array $inv): array
+/** An automatic charge succeeded (normally recorded by the daily job already; this is the safety net). */
+function stripe_on_payment_intent_succeeded(mysqli $db, string $prefix, array $pi): array
 {
-    $order = stripe_order_for_subscription($db, $prefix, (string)($inv['subscription'] ?? ''));
-    $attempt = (int)($inv['attempt_count'] ?? 0);
-    return array('status' => 'processed', 'note' => 'payment failed' . ($order ? ' for order ' . $order['order_id'] : '')
-        . ' (attempt ' . $attempt . '); Stripe will retry');
+    $meta = (array)($pi['metadata'] ?? array());
+    if (($meta['purpose'] ?? '') !== 'autopay' || (int)($meta['invoice_id'] ?? 0) <= 0) {
+        return array('status' => 'ignored', 'note' => 'handled by checkout');
+    }
+    list($ok, $note) = stripe_apply_paid_invoice($db, $prefix, (int)$meta['invoice_id'], (string)$pi['id'],
+        (int)($pi['amount_received'] ?? ($pi['amount'] ?? 0)), (string)($pi['currency'] ?? 'usd'));
+    return array('status' => $ok ? 'processed' : 'failed', 'note' => $note);
 }
 
-/** The subscription ended (cancelled or unpaid): the server runs to its paid date and is then suspended. */
-function stripe_on_subscription_deleted(mysqli $db, string $prefix, array $sub): array
-{
-    $order = stripe_order_for_subscription($db, $prefix, (string)($sub['id'] ?? ''));
-    if (!$order) {
-        return array('status' => 'ignored', 'note' => 'no order for this subscription');
-    }
-    $homeId = (int)($order['home_id'] ?? 0);
-    if ($homeId > 0) {
-        (new BillingRepository($db, $prefix))->updateServerHomeBilling($homeId, array('cancel_at_expiry' => 1));
-    }
-    return array('status' => 'processed', 'note' => 'order ' . $order['order_id'] . ' will not renew');
-}
-
-/** A refund was made (from the panel or the Stripe dashboard). A full refund cancels the panel invoice. */
+/** A refund was made (from the panel or the Stripe dashboard). A full refund cancels the invoices it paid. */
 function stripe_on_charge_refunded(mysqli $db, string $prefix, array $charge): array
 {
-    $repo = new BillingRepository($db, $prefix);
-    $invoice = null;
-    foreach (array((string)($charge['invoice'] ?? ''), (string)($charge['payment_intent'] ?? '')) as $txid) {
-        if ($txid !== '' && ($invoice = $repo->getInvoiceByPaymentTxid($txid))) {
-            break;
-        }
+    $txids = array_values(array_filter(array((string)($charge['payment_intent'] ?? ''), (string)($charge['id'] ?? ''))));
+    if (!$txids) {
+        return array('status' => 'ignored', 'note' => 'no payment reference');
     }
-    if (!$invoice) {
+    $in = implode(',', array_fill(0, count($txids), '?'));
+    $stmt = $db->prepare("SELECT invoice_id FROM `{$prefix}billing_invoices` WHERE payment_txid IN ($in)");
+    $stmt->bind_param(str_repeat('s', count($txids)), ...$txids);
+    $stmt->execute();
+    $ids = array_map('intval', array_column($stmt->get_result()->fetch_all(MYSQLI_ASSOC), 'invoice_id'));
+    $stmt->close();
+    if (!$ids) {
         return array('status' => 'ignored', 'note' => 'no panel invoice for this charge');
     }
     $amount = (int)($charge['amount'] ?? 0);
     $refunded = (int)($charge['amount_refunded'] ?? 0);
     if ($amount > 0 && $refunded >= $amount) {
-        (new BillingLifecycleService($repo))->cancelInvoice((int)$invoice['invoice_id'], 'refunded');
-        return array('status' => 'processed', 'note' => 'invoice ' . $invoice['invoice_id'] . ' fully refunded');
+        $lifecycle = new BillingLifecycleService(new BillingRepository($db, $prefix));
+        foreach ($ids as $id) {
+            $lifecycle->cancelInvoice($id, 'refunded');
+        }
+        return array('status' => 'processed', 'note' => 'fully refunded: invoice ' . implode(', ', $ids));
     }
-    return array('status' => 'processed', 'note' => 'invoice ' . $invoice['invoice_id'] . ' partly refunded (' . round($refunded / 100, 2) . ')');
-}
-
-/**
- * Stops a server's Stripe subscription: at the end of the paid term ($atPeriodEnd) or straight away.
- * Returns array(ok, note). A server without a Stripe subscription is fine (ok, nothing to do).
- */
-function stripe_cancel_subscription_for_home(mysqli $db, string $prefix, int $homeId, bool $atPeriodEnd): array
-{
-    $stmt = $db->prepare("SELECT stripe_subscription_id FROM `{$prefix}billing_orders`
-                          WHERE home_id = ? AND stripe_subscription_id IS NOT NULL AND stripe_subscription_id <> ''
-                          ORDER BY order_id DESC LIMIT 1");
-    if (!$stmt) {
-        return array('ok' => true, 'note' => 'no Stripe columns');
-    }
-    $stmt->bind_param('i', $homeId);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-    if (!$row) {
-        return array('ok' => true, 'note' => 'no Stripe subscription');
-    }
-    $client = billing_stripe_client($db, $prefix);
-    if (!$client) {
-        return array('ok' => false, 'note' => 'Stripe is not configured, so subscription ' . $row['stripe_subscription_id'] . ' was not stopped');
-    }
-    $sub = (string)$row['stripe_subscription_id'];
-    $res = $atPeriodEnd
-        ? $client->request('POST', 'subscriptions/' . rawurlencode($sub), array('cancel_at_period_end' => true))
-        : $client->request('DELETE', 'subscriptions/' . rawurlencode($sub));
-    if (!$res['ok'] && ($res['code'] ?? '') !== 'resource_missing') {
-        return array('ok' => false, 'note' => 'Stripe would not stop subscription ' . $sub . ': ' . $res['error']);
-    }
-    return array('ok' => true, 'note' => 'Stripe subscription ' . $sub . ($atPeriodEnd ? ' ends at the end of the term' : ' cancelled'));
+    return array('status' => 'processed', 'note' => 'partly refunded (' . round($refunded / 100, 2) . ') for invoice ' . implode(', ', $ids));
 }

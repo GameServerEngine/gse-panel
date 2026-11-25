@@ -1,3 +1,4 @@
+<?php
 /*
  * CRON: cron-shop.php  (billing renewals, expiry and deletion)
  *
@@ -78,6 +79,7 @@ require_once("modules/config_games/server_config_parser.php");
 require_once("includes/lib_remote.php");
 require_once("modules/billing/classes/BillingRepository.php");
 require_once("modules/billing/classes/BillingLifecycleService.php");
+require_once("modules/billing/includes/stripe_billing.php");
 require_once("modules/gamemanager/home_handling_functions.php");
 require_once(CONFIG_FILE);
 
@@ -118,6 +120,32 @@ $default_rate_type    = $global_cfg['rate_type']                        ?? 'mont
 
 $db->logger("BILLING-CRON: Config => grace_days={$grace_days}, delete_after={$delete_after_days}, rate={$default_rate_type}");
 
+// Billing schedule from Billing > Settings, and dry-run mode (php cron/cron-shop.php --dry-run)
+$dry_run = in_array('--dry-run', (array)($argv ?? array()), true);
+$schedule = $billing_mysqli
+    ? billing_schedule_settings($billing_mysqli, $table_prefix)
+    : billing_schedule_clamp(array('invoice_days' => 7, 'autopay_days' => 3, 'delete_days' => $delete_after_days, 'grace_days' => $grace_days));
+$invoice_days = (int)$schedule['invoice_days'];
+$autopay_days = (int)$schedule['autopay_days'];
+$delete_after_days = (int)$schedule['delete_days'];
+$autopay_ready = (bool)$db->resultQuery("SHOW TABLES LIKE '{$table_prefix}billing_autopay'");
+
+function cron_note(string $m): void
+{
+    global $db, $dry_run;
+    $db->logger('BILLING-CRON: ' . ($dry_run ? '[dry run] ' : '') . $m);
+    if (PHP_SAPI === 'cli') {
+        echo ($dry_run ? '[dry run] ' : '') . $m . "\n";
+    }
+}
+/** Query results as rows; a failed query (false) is no rows, never one empty row. */
+function cron_rows($result): array
+{
+    return is_array($result) ? $result : array();
+}
+cron_note("Schedule: invoice {$invoice_days} days before the due date, auto-renew charge from {$autopay_days} days before, delete {$delete_after_days} days after"
+    . ($dry_run ? ' (DRY RUN: nothing is changed)' : ''));
+
 // Suspend immediately at expiry. The existing panel stop path is used so all
 // lifecycle/RPC handling remains identical to a user-initiated stop.
 $db->logger("BILLING-CRON: --- Step 0: suspend unpaid homes at expiry ---");
@@ -127,8 +155,9 @@ $to_suspend = $db->resultQuery("SELECT sh.home_id FROM {$table_prefix}server_hom
       AND COALESCE(sh.cancel_at_expiry, 0) = 0 AND COALESCE(sh.billing_suspended, 0) = 0
       AND EXISTS (SELECT 1 FROM {$table_prefix}billing_invoices inv WHERE inv.invoice_id = sh.last_invoice_id
                   AND inv.billing_status = 'Invoiced' AND inv.paid_date IS NULL)");
-foreach ((array)$to_suspend as $srv) {
+foreach (cron_rows($to_suspend) as $srv) {
     $home_id = (int)$srv['home_id'];
+    if ($dry_run) { cron_note("Step 0 - would SUSPEND home {$home_id} (not paid by the due date) and turn its auto-renew off"); continue; }
     $stopped = true;
     $addresses = $db->getHomeIpPorts($home_id);
     if (empty($addresses)) $stopped = false;
@@ -137,6 +166,7 @@ foreach ((array)$to_suspend as $srv) {
     }
     if ($stopped && $db->query("UPDATE {$table_prefix}server_homes SET billing_suspended = 1 WHERE home_id = {$home_id}")) {
         $db->logger("BILLING-CRON: Step 0 - SUSPENDED home {$home_id}");
+        if ($billing_mysqli && $autopay_ready) { billing_autopay_disable($billing_mysqli, $table_prefix, $home_id, 'not paid by the due date'); }
     } else {
         $db->logger("BILLING-CRON: Step 0 - FAILED home {$home_id}");
     }
@@ -150,9 +180,10 @@ $to_retry = $db->resultQuery("SELECT sh.home_id, sh.billing_enabled, sh.billing_
     FROM {$table_prefix}server_homes sh
     WHERE sh.billing_suspended = 1 AND sh.billing_enabled = 1
       AND sh.server_expiration_date >= NOW()");
-foreach ((array)$to_retry as $srv) {
+foreach (cron_rows($to_retry) as $srv) {
     if (!BillingLifecycleService::shouldRetryBillingRestart($srv, $retry_now)) continue;
     $home_id = (int)$srv['home_id'];
+    if ($dry_run) { cron_note("Step 0c - would retry starting home {$home_id}"); continue; }
     $started = true;
     $addresses = $db->getHomeIpPorts($home_id);
     if (empty($addresses)) $started = false;
@@ -166,17 +197,23 @@ foreach ((array)$to_retry as $srv) {
     }
 }
 
-// One reminder per home and expiry date.
-$db->logger("BILLING-CRON: --- Step 0b: one-week expiry reminders ---");
+// One "due tomorrow" reminder per unpaid renewal, for servers without auto-renew
+// (the renewal invoice email already went out {$invoice_days} days before).
+$db->logger("BILLING-CRON: --- Step 0b: due-tomorrow reminders ---");
+$no_autopay = $autopay_ready ? "AND NOT EXISTS (SELECT 1 FROM {$table_prefix}billing_autopay ap WHERE ap.home_id = sh.home_id AND ap.enabled = 1)" : '';
 $reminders = $db->resultQuery("SELECT sh.home_id, sh.home_name, sh.server_expiration_date, u.users_email
     FROM {$table_prefix}server_homes sh LEFT JOIN {$table_prefix}users u ON u.user_id = sh.user_id_main
-    WHERE sh.billing_enabled = 1 AND sh.billing_status = 'Active' AND COALESCE(sh.cancel_at_expiry, 0) = 0
-      AND DATE(sh.server_expiration_date) = DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-      AND (sh.billing_reminder_sent_for IS NULL OR sh.billing_reminder_sent_for <> DATE(sh.server_expiration_date))");
-foreach ((array)$reminders as $srv) {
+    WHERE sh.billing_enabled = 1 AND sh.billing_status = 'Invoiced' AND COALESCE(sh.cancel_at_expiry, 0) = 0
+      AND DATE(sh.server_expiration_date) = DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+      AND (sh.billing_reminder_sent_for IS NULL OR sh.billing_reminder_sent_for <> DATE(sh.server_expiration_date))
+      {$no_autopay}");
+foreach (cron_rows($reminders) as $srv) {
     $home_id = (int)$srv['home_id']; $expiry = date('Y-m-d', strtotime($srv['server_expiration_date']));
-    if (!empty($srv['users_email']) && mymail($srv['users_email'], 'Server expiry reminder - ' . ($srv['home_name'] ?? $home_id),
-        "Your server '{$srv['home_name']}' expires on " . date('F j, Y', strtotime($expiry)) . ". Please renew to keep it active.", $db->getSettings(), false, get_mail_sender($db->getSettings(), true))) {
+    if ($dry_run) { cron_note("Step 0b - would send a due-tomorrow reminder for home {$home_id}"); continue; }
+    $settings = $db->getSettings();
+    if (!empty($srv['users_email']) && mymail($srv['users_email'], 'Payment due tomorrow - ' . ($srv['home_name'] ?? $home_id),
+        "Your server '{$srv['home_name']}' is due on " . date('F j, Y', strtotime($expiry)) . ". Please log in and use Pay Now in your cart to keep it running; unpaid servers are suspended on the due date.",
+        $settings, false, get_mail_sender($settings, true))) {
         $safe = $db->realEscapeSingle($expiry);
         $db->query("UPDATE {$table_prefix}server_homes SET billing_reminder_sent_for = '{$safe}' WHERE home_id = {$home_id}");
         $db->logger("BILLING-CRON: Step 0b - reminder sent for home {$home_id} ({$expiry})");
@@ -193,7 +230,7 @@ $db->logger("BILLING-CRON: --- Step A: Active -> Invoiced ---");
 $due_for_invoice = $db->resultQuery("
     SELECT sh.home_id, sh.home_name, sh.user_id_main AS user_id,
            sh.next_invoice_date, sh.server_expiration_date,
-           bo.price, bo.invoice_duration, bo.qty, bo.order_id, bo.service_id,
+           bo.price, bo.discount_amount, bo.invoice_duration, bo.qty, bo.order_id, bo.service_id,
            COALESCE(bs.price_monthly, 0) AS svc_price_monthly,
            COALESCE(bs.price_year, 0) AS svc_price_year,
            u.users_email,
@@ -205,8 +242,8 @@ $due_for_invoice = $db->resultQuery("
     LEFT JOIN {$table_prefix}billing_services bs ON bs.service_id = bo.service_id
     WHERE sh.billing_enabled = 1
       AND sh.billing_status  = 'Active'
-      AND sh.next_invoice_date IS NOT NULL
-      AND sh.next_invoice_date <= NOW()
+      AND COALESCE(sh.server_expiration_date, sh.next_invoice_date) IS NOT NULL
+      AND COALESCE(sh.server_expiration_date, sh.next_invoice_date) <= DATE_ADD(NOW(), INTERVAL {$invoice_days} DAY)
       AND COALESCE(sh.cancel_at_expiry, 0) = 0
       AND bo.order_id IS NOT NULL
       AND NOT EXISTS (
@@ -232,6 +269,10 @@ if (is_array($due_for_invoice)) {
         $price_per_player = 0.0;
         $player_slots     = max(0, intval($srv['qty'] ?? 0));
         $subtotal = ($raw_rate === 'year') ? (float)($srv['svc_price_year'] ?? 0) : (float)($srv['svc_price_monthly'] ?? 0);
+        // Renewal price: the order's locked catalog price, else its regular price, else the legacy service price.
+        if ($billing_mysqli) {
+            $subtotal = billing_renewal_amount($billing_mysqli, $table_prefix, (int)($srv['order_id'] ?? 0), (float)($srv['price'] ?? 0), (float)($srv['discount_amount'] ?? 0), $subtotal);
+        }
         $total_due = $subtotal;
 
         // Renewal is due on the current service expiration date.
@@ -255,6 +296,7 @@ if (is_array($due_for_invoice)) {
             $db->logger("BILLING-CRON: Step A - FAIL home {$home_id}: lifecycle service unavailable");
             continue;
         }
+        if ($dry_run) { cron_note("Step A - would create a renewal invoice for home {$home_id}: " . number_format($total_due, 2) . " due " . date('Y-m-d', $due_date_ts)); continue; }
         $invoiceResult = $billing_lifecycle->createRenewalInvoice([
             'home_id' => $home_id,
             'home_name' => $home_name,
@@ -289,13 +331,86 @@ if (is_array($due_for_invoice)) {
                       . date('F j, Y', $due_date_ts) . "."
                       . "<br><br>Amount Due: \$" . number_format($total_due, 2)
                       . "<br>Due Date: " . date('F j, Y', $due_date_ts)
-                      . "<br><br>Please log in to pay your invoice and keep your server active."
+                      . (($billing_mysqli && $autopay_ready && ($ap_notice = billing_autopay_notice(billing_autopay_get($billing_mysqli, $table_prefix, $home_id), date('Y-m-d', $due_date_ts), $autopay_days)) !== '')
+                          ? "<br><br>" . htmlspecialchars($ap_notice)
+                          : "<br><br>Please log in and use Pay Now in your cart to keep your server active.")
                       . "<br><br>Thank you!";
             if (!mymail($srv['users_email'], $subject, $message, $settings, false, get_mail_sender($settings, true))) {
                 $db->logger("BILLING-CRON: Step A - Email FAILED for home {$home_id}");
             }
         }
     }
+}
+
+// ======================================================================
+// STEP A2 - Auto-renew charges
+//   From {$autopay_days} days before the due date, charge the saved payment method for the open
+//   renewal invoice, once a day until it is paid. Never on or after the due date.
+// ======================================================================
+$db->logger("BILLING-CRON: --- Step A2: auto-renew charges ---");
+if ($billing_mysqli && $autopay_ready) {
+    $stripe_client = billing_stripe_client($billing_mysqli, $table_prefix);
+    $to_charge = $db->resultQuery("
+        SELECT sh.home_id, sh.home_name, sh.server_expiration_date, sh.last_invoice_id, u.users_email
+        FROM {$table_prefix}server_homes sh
+        INNER JOIN {$table_prefix}billing_autopay ap ON ap.home_id = sh.home_id AND ap.enabled = 1
+        LEFT JOIN {$table_prefix}users u ON u.user_id = sh.user_id_main
+        WHERE sh.billing_enabled = 1 AND sh.billing_status = 'Invoiced'
+          AND sh.server_expiration_date IS NOT NULL
+          AND sh.server_expiration_date > NOW()
+          AND EXISTS (SELECT 1 FROM {$table_prefix}billing_invoices inv WHERE inv.invoice_id = sh.last_invoice_id
+                      AND inv.billing_status = 'Invoiced' AND inv.paid_date IS NULL)
+        ORDER BY sh.home_id ASC");
+    foreach (cron_rows($to_charge) as $srv) {
+        $home_id = (int)$srv['home_id'];
+        $invoice_id = (int)$srv['last_invoice_id'];
+        $autopay = billing_autopay_get($billing_mysqli, $table_prefix, $home_id);
+        list($charge, $why) = billing_autopay_should_charge(array(
+            'enabled' => $autopay && (int)$autopay['enabled'] === 1,
+            'paid' => false,
+            'due' => (string)$srv['server_expiration_date'],
+            'attempted_today' => billing_autopay_attempted_today($billing_mysqli, $table_prefix, $invoice_id),
+        ), time(), $autopay_days);
+        if (!$charge) {
+            cron_note("Step A2 - home {$home_id} invoice #{$invoice_id}: not charging today ({$why})");
+            continue;
+        }
+        $invoice = (new BillingRepository($billing_mysqli, $table_prefix))->getInvoice($invoice_id);
+        if (!$invoice) {
+            cron_note("Step A2 - home {$home_id}: invoice #{$invoice_id} not found");
+            continue;
+        }
+        if ($dry_run) {
+            cron_note("Step A2 - would charge home {$home_id} invoice #{$invoice_id} " . number_format((float)($invoice['total_due'] ?: $invoice['amount']), 2) . " to its saved card");
+            continue;
+        }
+        if (($autopay['gateway'] ?? '') !== 'stripe' || !$stripe_client) {
+            billing_autopay_record_attempt($billing_mysqli, $table_prefix, $invoice_id, $home_id, (string)($autopay['gateway'] ?? ''), 'failed', '', 'payment provider not configured');
+            cron_note("Step A2 - home {$home_id}: payment provider not configured, not charged");
+            continue;
+        }
+        $result = stripe_autopay_charge($billing_mysqli, $table_prefix, $stripe_client, $autopay, $invoice);
+        billing_autopay_record_attempt($billing_mysqli, $table_prefix, $invoice_id, $home_id, 'stripe', $result['status'], $result['reference'], $result['status'] === 'paid' ? '' : $result['note']);
+        cron_note("Step A2 - home {$home_id} invoice #{$invoice_id}: {$result['status']} ({$result['note']})");
+        $settings = $db->getSettings();
+        if ($result['status'] === 'paid' && !empty($srv['users_email'])) {
+            mymail($srv['users_email'], "Payment received - " . ($srv['home_name'] ?? $home_id),
+                "Thank you! Invoice #{$invoice_id} for '{$srv['home_name']}' was paid automatically with your saved card ("
+                . number_format((float)($invoice['total_due'] ?: $invoice['amount']), 2) . "). Your server is renewed.",
+                $settings, false, get_mail_sender($settings, true));
+        } elseif ($result['status'] === 'failed' && !empty($srv['users_email'])) {
+            $tries = $billing_mysqli->query("SELECT COUNT(*) FROM {$table_prefix}billing_payment_attempts WHERE invoice_id = {$invoice_id}");
+            if ($tries && (int)$tries->fetch_row()[0] === 1) {
+                mymail($srv['users_email'], "Automatic payment failed - " . ($srv['home_name'] ?? $home_id),
+                    "We could not charge your saved card for invoice #{$invoice_id} ('{$srv['home_name']}'). We will try again each day until "
+                    . date('F j, Y', strtotime($srv['server_expiration_date'])) . ". You can also log in and use Pay Now in your cart. "
+                    . "Unpaid servers are suspended on the due date.",
+                    $settings, false, get_mail_sender($settings, true));
+            }
+        }
+    }
+} else {
+    cron_note("Step A2 - skipped (auto-renew tables not installed yet)");
 }
 
 // ======================================================================
@@ -331,6 +446,7 @@ $past_due = $db->resultQuery("
 if (is_array($past_due)) {
     foreach ($past_due as $srv) {
         $home_id         = intval($srv['home_id']);
+        if ($dry_run) { cron_note("Step B - would mark home {$home_id} Expired"); continue; }
         $last_invoice_id = intval($srv['last_invoice_id'] ?? 0);
 
         if (!$billing_lifecycle) {
@@ -384,6 +500,7 @@ $to_delete = $db->resultQuery("
 if (is_array($to_delete)) {
     foreach ($to_delete as $srv) {
         $home_id   = intval($srv['home_id']);
+        if ($dry_run) { cron_note("Step C - would DELETE home {$home_id} ({$delete_after_days} days past due)"); continue; }
         $user_id   = intval($srv['user_id']);
         $home_name = $srv['home_name'] ?? 'Server #' . $home_id;
 
@@ -492,6 +609,7 @@ $paid_invoices = $db->resultQuery("
 if (is_array($paid_invoices)) {
     foreach ($paid_invoices as $inv) {
         $home_id    = intval($inv['home_id']);
+        if ($dry_run) { cron_note("Step D - would restore home {$home_id} to Active (paid invoice)"); continue; }
         $invoice_id = intval($inv['invoice_id']);
         $rate_type  = $inv['rate_type'] ?? 'monthly';
 
