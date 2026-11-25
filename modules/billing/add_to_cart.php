@@ -239,7 +239,7 @@ $svcStmt = $db->prepare(
         (home_cfg_id, mod_cfg_id, service_name, description, remote_server_id, enabled,
          slot_min_qty, slot_max_qty, price_daily, price_monthly, price_year,
          img_url, ftp, install_method, manual_url, access_rights, out_of_stock)
-     VALUES (?, 0, ?, ?, ?, 0, ?, ?, ?, ?, ?, '', '', 'steamcmd', '', '', '')"
+     VALUES (?, 0, ?, ?, ?, 0, ?, ?, ?, ?, ?, '', '', 'steamcmd', '', '', 0)"
 );
 if ($svcStmt) {
     $remoteServerIdStr = (string)$remote_server_id;
