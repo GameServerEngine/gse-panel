@@ -5,11 +5,8 @@ name: Sync testing
 # included. testing is fast-forwarded when possible and otherwise reset to working (nobody edits testing
 # directly). Then the Release workflow is started for testing, because a push made with GITHUB_TOKEN does
 # not start it by itself.
+# Manual only: this never runs after a release. Start it from the Actions tab with Run workflow.
 on:
-  workflow_run:
-    workflows: [Release]
-    types: [completed]
-    branches: [working]
   workflow_dispatch:
 
 concurrency:
