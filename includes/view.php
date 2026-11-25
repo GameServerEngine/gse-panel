@@ -74,14 +74,18 @@ class View {
 		if (defined('PANEL_VERSION')) {
 			$page = preg_replace('#((?:href|src)="themes/[^"?]+\.(?:css|js))"#', '$1?v=' . PANEL_VERSION . '"', $page);
 		}
-		if (is_file('images/logo.png')) {
-			$logoSize = isset($panel_settings['panel_logo_size']) ? (int)$panel_settings['panel_logo_size'] : 100;
-			$logoZoom = max(10, min(300, $logoSize)) / 100;
-			$page = str_replace('src="images/logo.png"', 'src="images/logo.png?v=' . filemtime('images/logo.png') . '" style="zoom:' . $logoZoom . '"', $page);
-		}
 		@$top = file_get_contents($path.'top.html');
 		@$bottom = file_get_contents($path.'bottom.html');
 		@$topbody = file_get_contents($path.'topbody.html');
+
+		// Every theme shows the logo from Settings > Panel logo, whatever path its markup uses.
+		if (is_file('images/logo.png')) {
+			$logoSize = isset($panel_settings['panel_logo_size']) ? (int)$panel_settings['panel_logo_size'] : 100;
+			$logoZoom = max(10, min(300, $logoSize)) / 100;
+			$logoTag = 'src="images/logo.png?v=' . filemtime('images/logo.png') . '" style="zoom:' . $logoZoom . '"';
+			$page = preg_replace('#src="(?:[^"]*/)?logo\.png(?:\?[^"]*)?"#', $logoTag, $page);
+			$top = preg_replace('#src="(?:[^"]*/)?logo\.png(?:\?[^"]*)?"#', $logoTag, (string)$top);
+		}
 		@$botbody = file_get_contents($path.'botbody.html');
 
 		if ( isset($panel_settings['logo_link']) &&
