@@ -65,7 +65,7 @@ $returnTo = (string)($_SERVER['REQUEST_URI'] ?? '/');
     <nav class="gsw-header-nav" id="gsw-primary-nav" aria-label="Primary navigation">
       <?php echo billing_nav_link('index.php', 'Home'); ?>
       <?php echo billing_nav_link('serverlist.php', 'Game Servers'); ?>
-      <?php echo billing_nav_link('services.php', 'Services'); ?>
+      <?php echo billing_nav_link('development.php', 'Development'); ?>
       <?php echo billing_nav_link('docs.php', 'Documentation'); ?>
       <div class="gsw-nav-group">
         <?php echo billing_nav_link('support.php', 'Support'); ?>
@@ -73,12 +73,18 @@ $returnTo = (string)($_SERVER['REQUEST_URI'] ?? '/');
           <?php echo billing_nav_link('contact.php', 'Contact'); ?>
         </div>
       </div>
-      <?php if ($is_logged_in): ?>
+      <?php if ($is_logged_in):
+        // The Account label is only a parent: each page below is one click from the menu.
+        $account_pages = array('my_account.php', 'my_servers.php', 'invoices.php', 'cart.php');
+        $current_page = basename((string)($_SERVER['SCRIPT_NAME'] ?? ''));
+      ?>
         <div class="gsw-nav-group">
-          <?php echo billing_nav_link('my_account.php', 'Account'); ?>
+          <span class="gsw-nav-link<?php echo in_array($current_page, $account_pages, true) ? ' is-active' : ''; ?>" style="cursor:default">Account</span>
           <div class="gsw-nav-sub">
-            <?php echo billing_nav_link('my_servers.php', 'My Servers'); ?>
-            <a href="<?php echo billing_nav_escape(billing_url('cart.php')); ?>" class="gsw-nav-link<?php echo basename((string)($_SERVER['SCRIPT_NAME'] ?? '')) === 'cart.php' ? ' is-active' : ''; ?>">Cart<?php if ($cart_count > 0): ?><span class="cart-badge"><?php echo $cart_count; ?></span><?php endif; ?></a>
+            <?php echo billing_nav_link('my_account.php', 'Account Settings'); ?>
+            <?php echo billing_nav_link('my_servers.php', 'Game Servers'); ?>
+            <?php echo billing_nav_link('invoices.php', 'Invoices'); ?>
+            <a href="<?php echo billing_nav_escape(billing_url('cart.php')); ?>" class="gsw-nav-link<?php echo $current_page === 'cart.php' ? ' is-active' : ''; ?>">Cart<?php if ($cart_count > 0): ?><span class="cart-badge"><?php echo $cart_count; ?></span><?php endif; ?></a>
           </div>
         </div>
       <?php endif; ?>
