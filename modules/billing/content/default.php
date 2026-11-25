@@ -58,7 +58,7 @@ return array(
         ),
         'services' => array(
             'enabled' => '1',
-            'eyebrow' => 'Services',
+            'eyebrow' => 'Development',
             'title' => 'Need a hand with your server?',
             'copy' => 'Order help the same way you order a server: setup, configuration and other services.',
             'link_label' => 'See services',
@@ -84,8 +84,8 @@ return array(
         ),
     ),
     'services' => array(
-        'title' => 'Services',
-        'eyebrow' => 'Services',
+        'title' => 'Development',
+        'eyebrow' => 'Development',
         'heading' => 'Extra help for your game server',
         'intro' => 'Choose a service, tell us what you need, and we open a ticket tied to your invoice. You pay the invoice, we do the work, and we keep you posted in the ticket.',
         'featured_title' => 'Game Server Hosting',

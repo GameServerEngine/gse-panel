@@ -93,7 +93,7 @@ if ($ticketsReady) {
                     $formErrors[] = 'Sign in to order ' . $chosenType['name'] . ', or choose another request type.';
                 } else {
                     $_SESSION['service_prefill'] = array('subject' => $subject, 'message' => $message, 'home_id' => $serviceId);
-                    header('Location: ' . billing_url('services.php') . '?service=' . urlencode($chosenType['slug']) . '#order');
+                    header('Location: ' . billing_url('development.php') . '?service=' . urlencode($chosenType['slug']) . '#order');
                     exit();
                 }
             }
@@ -281,7 +281,7 @@ $renderTicket = function (array $ticket, bool $isOpen, bool $expand) use ($posts
           <option value="<?php echo support_h($rt['slug']); ?>"<?php echo $typeSlug === $rt['slug'] ? ' selected' : ''; ?>><?php echo support_h($rt['name']); ?><?php echo $rt['kind'] === 'paid' ? ' (paid service)' : ''; ?></option>
 <?php endforeach; ?>
         </select>
-        <p class="muted">Paid services open an order form and an invoice, and are tracked in a ticket. <a href="<?php echo support_h(billing_url('services.php')); ?>">See all services</a>.</p>
+        <p class="muted">Paid services open an order form and an invoice, and are tracked in a ticket. <a href="<?php echo support_h(billing_url('development.php')); ?>">See all services</a>.</p>
       </div>
 <?php endif; ?>
       <div class="form-group">

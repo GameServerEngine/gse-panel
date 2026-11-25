@@ -29,7 +29,7 @@ if (!function_exists('billing_footer_link')) {
     <nav class="gsw-footer-links" aria-label="Footer navigation">
       <?php echo billing_footer_link('serverlist.php', 'Game Servers'); ?>
       <?php echo billing_footer_link('support.php', 'Support'); ?>
-      <?php if (is_file(dirname(__DIR__) . '/services.php')) { echo billing_footer_link('services.php', 'Services'); } ?>
+      <?php if (is_file(dirname(__DIR__) . '/development.php')) { echo billing_footer_link('development.php', 'Development'); } ?>
       <?php echo billing_footer_link('docs.php', 'Docs'); ?>
       <?php echo billing_footer_link('company.php', 'Company'); ?>
       <?php echo billing_footer_link('contact.php', 'Contact'); ?>
