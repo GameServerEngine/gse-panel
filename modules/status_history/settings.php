@@ -32,7 +32,7 @@ function exec_module()
 	echo "<p>Reporting asks one server at a time, round robin, so each server is refreshed every "
 		. "(number of servers x interval) seconds. Keep times apply to each table: raw samples are the "
 		. "finest, then hourly and daily summaries. Pages never call agents; they read the stored rows.</p>";
-	echo "<form method='post' action='index.php?m=status_history&amp;p=settings'><table>";
+	echo "<form method='post' action='home.php?m=status_history&amp;p=settings'><table>";
 	echo "<tr><td>Reporting on</td><td><input type='checkbox' name='status_history_enabled' value='1'" . ($cfg['enabled'] ? " checked" : '') . "></td></tr>";
 	echo "<tr><td>Seconds between polls (10 to 3600)</td><td><input type='number' min='10' max='3600' name='status_history_interval_seconds' value='" . $e($cfg['interval_seconds']) . "'></td></tr>";
 	echo "<tr><td>Keep raw samples, hours (1 to 48)</td><td><input type='number' min='1' max='48' name='status_history_raw_hours' value='" . $e($cfg['raw_hours']) . "'></td></tr>";

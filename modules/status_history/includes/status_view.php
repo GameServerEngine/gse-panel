@@ -228,7 +228,7 @@ function sv_dashboard_html($db, $isAdmin)
 
 	if (!$cfg['enabled']) {
 		$html .= "<p>Status history reporting is turned off.</p>";
-		if ($isAdmin) $html .= "<p><a href='index.php?m=status_history&amp;p=settings'>Status history settings</a></p>";
+		if ($isAdmin) $html .= "<p><a href='home.php?m=status_history&amp;p=settings'>Status history settings</a></p>";
 		return $html . "</div></div></div>";
 	}
 
@@ -251,7 +251,7 @@ function sv_dashboard_html($db, $isAdmin)
 		$attention = $status !== 'UP' || ($sample !== null && sv_needs_attention($sample, $status));
 		$peak = sv_window_stats($db, $sid, $dayStart, $now, $tz, $cfg['raw_hours'], false);
 		$name = htmlspecialchars($server['remote_server_name']);
-		$link = "index.php?m=status_history&amp;p=detail&amp;remote_server_id=$sid";
+		$link = "home.php?m=status_history&amp;p=detail&amp;remote_server_id=$sid";
 		$html .= "<tr style='border-top:1px solid #ddd;'>"
 			. "<td><a href='$link'>$name</a></td>"
 			. "<td style='text-align:center;'>" . sv_badge($status, $attention) . "</td>"
@@ -299,7 +299,7 @@ function sv_detail_html($db, $server, $isAdmin, $lookup_at)
 	list($status, $age) = sv_effective_status($sample, $now, $cycle);
 	$attention = $status !== 'UP' || ($sample !== null && sv_needs_attention($sample, $status));
 
-	$html = "<p><a href='index.php?m=status_history&amp;p=detail'>&larr; All servers</a> &middot; <a href='index.php?m=dashboard&amp;p=dashboard'>Dashboard</a></p>";
+	$html = "<p><a href='home.php?m=status_history&amp;p=detail'>&larr; All servers</a> &middot; <a href='home.php?m=dashboard&amp;p=dashboard'>Dashboard</a></p>";
 	$html .= "<h2>$name</h2>";
 	$html .= "<p>Status " . sv_badge($status, $attention)
 		. " &nbsp; Uptime " . ($sample && $status === 'UP' ? sv_fmt_duration($sample['uptime_s']) : '-')
