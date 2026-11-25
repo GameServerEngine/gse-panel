@@ -73,18 +73,18 @@ function dash_notifications_card($db)
 	$body .= "<p>Open tickets: <b>$tickets</b></p>";
 	$body .= "<p>Unpaid invoices: <b>$invoices</b></p>";
 
-	$circulars = $db->resultQuery("SELECT c.subject, c.`timestamp` FROM DB_PREFIXcircular_recipients r NATURAL JOIN DB_PREFIXcircular c WHERE r.user_id = $uid ORDER BY c.`timestamp` DESC LIMIT 3");
-	if (is_array($circulars) && count($circulars) > 0)
+	$notifications = $db->resultQuery("SELECT c.subject, c.`timestamp` FROM DB_PREFIXnotification_recipients r NATURAL JOIN DB_PREFIXnotification c WHERE r.user_id = $uid ORDER BY c.`timestamp` DESC LIMIT 3");
+	if (is_array($notifications) && count($notifications) > 0)
 	{
 		$body .= "<ul style='margin:0;padding-left:18px;'>";
-		foreach ($circulars as $circular)
-			$body .= "<li>" . htmlspecialchars($circular['subject']) . "</li>";
+		foreach ($notifications as $notification)
+			$body .= "<li>" . htmlspecialchars($notification['subject']) . "</li>";
 		$body .= "</ul>";
 	}
 	else
 		$body .= "<p>No notifications.</p>";
 
-	return dash_card('Notifications', $body, 'home.php?m=circular&p=show_circular&list=true');
+	return dash_card('Notifications', $body, 'home.php?m=notifications&p=inbox&list=true');
 }
 
 function dash_news_card()

@@ -5,21 +5,21 @@ $('document').ready(function(){
 		var quill = new Quill('#editor', {
 			theme: 'snow'
 		});
-		$.getJSON("home.php?m=circular&get_circulars=true&type=cleared", function(data){
+		$.getJSON("home.php?m=notifications&get_notifications=true&type=cleared", function(data){
 			if(data.length > 0)
 			{
-				$("head").append('<link rel="stylesheet" href="modules/circular/admin_notification.css">');
-				$("h2").append('<i>There are ' + data.length + ' notifications&nbsp;<a href="?m=circular&list=true" >Manage Notifications</a></i>');
+				$("head").append('<link rel="stylesheet" href="modules/notifications/admin_notification.css">');
+				$("h2").append('<i>There are ' + data.length + ' notifications&nbsp;<a href="?m=notifications&list=true" >Manage Notifications</a></i>');
 			}
 		}).fail(function(){
-			console.log('Failed reading JSON for circulars');
+			console.log('Failed reading JSON for notifications');
 		});
 	}
 });
 
-function remove_circulars()
+function remove_notifications()
 {
-	checkboxes = document.getElementsByClassName('circular_checkbox');
+	checkboxes = document.getElementsByClassName('notification_checkbox');
 	var ids = [];
 	for(var i = 0; i < checkboxes.length; i++)
 	{ 
@@ -32,9 +32,9 @@ function remove_circulars()
 	if(ids.length > 0)
 	{
 		var addpost = {};
-		addpost["remove_circulars"] = "true";
-		addpost["circulars_ids"] = ids;
-		var destURL = "home.php?m=circular&list=true";
+		addpost["remove_notifications"] = "true";
+		addpost["notifications_ids"] = ids;
+		var destURL = "home.php?m=notifications&list=true";
 		var destURLCleared = destURL + "&type=cleared";
 		$.ajax({
 			type: "POST",
@@ -50,7 +50,7 @@ function remove_circulars()
 
 function swap_all_checkboxes(obj)
 { 
-	checkboxes = document.getElementsByClassName('circular_checkbox');
+	checkboxes = document.getElementsByClassName('notification_checkbox');
 	for(var i = 0; i < checkboxes.length; i++)
 	{ 
 		checkboxes[i].checked = obj.checked; 
@@ -72,7 +72,7 @@ function toggle_all(obj, selectBox)
     }
 }
 
-function send_circular()
+function send_notification()
 {
 	var addpost = {};
 	addpost['admins'] = $('#select_admins').val(),
@@ -81,7 +81,7 @@ function send_circular()
 	addpost['subusers_of_users'] = $('#select_subusers_of_users').val(),
 	addpost['subject'] = $('#subject').val().trim(),
 	addpost['message'] = document.getElementById("editor").getElementsByClassName("ql-editor")[0].innerHTML,
-	addpost['send_circular'] = "send";
+	addpost['send_notification'] = "send";
 	
 	if(addpost['admins'] == null && addpost['users'] == null && addpost['groups'] == null && addpost['subusers_of_users'] == null)
 	{
@@ -101,7 +101,7 @@ function send_circular()
 		return;
 	}
 	
-	var destURL = "home.php?m=circular";
+	var destURL = "home.php?m=notifications";
 	var destURLCleared = destURL + "&type=cleared";
 	
 	$.ajax({

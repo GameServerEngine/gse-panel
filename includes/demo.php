@@ -28,8 +28,7 @@ function demo_page_allowed($module, $page)
 		'assistant' => array('chat', 'product'),
 		'lgsl_with_img_mod' => array('lgsl', 'image', 'feed'),
 		'news' => array('news'),
-		'notifications' => array('my_notifications'),
-		'circular' => array('show_circular'),
+		'notifications' => array('my_notifications', 'inbox'),
 	);
 	return isset($allowed[$module]) && in_array((string)$page, $allowed[$module], true);
 }

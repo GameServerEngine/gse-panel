@@ -21,31 +21,31 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  */
-include 'modules/circular/functions.php';
+include 'modules/notifications/functions.php';
 function exec_module()
 {
 	global $db;
-	if(isset($_POST['send_circular']))
+	if(isset($_POST['send_notification']))
 	{
-		send_circular($_POST);
+		send_notification($_POST);
 		return;
 	}
 
-	if(isset($_GET['get_circulars']))
+	if(isset($_GET['get_notifications']))
 	{
-		$circulars = get_circulars(true);
+		$notifications = get_notifications(true);
 		header('Content-Type: application/json');
-		echo json_encode($circulars);
+		echo json_encode($notifications);
 		return;
 	}
 
-	if(isset($_POST['remove_circulars']))
+	if(isset($_POST['remove_notifications']))
 	{
-		if(isset($_POST['circulars_ids']) and is_array($_POST['circulars_ids']) and !empty($_POST['circulars_ids']))
+		if(isset($_POST['notifications_ids']) and is_array($_POST['notifications_ids']) and !empty($_POST['notifications_ids']))
 		{
-			foreach ((array)$_POST['circulars_ids'] as $circular_id)
+			foreach ((array)$_POST['notifications_ids'] as $notification_id)
 			{
-				remove_circular($circular_id, true);
+				remove_notification($notification_id, true);
 			}
 		}
 		return;
@@ -53,43 +53,43 @@ function exec_module()
 
 	echo '<link rel="stylesheet" href="css/quill/quill.snow.css">'."\n".
 		 '<script type="text/javascript" src="js/quill/quill.js"></script>'."\n".
-		 '<script type="text/javascript" src="js/modules/circular.js"></script>';
+		 '<script type="text/javascript" src="js/modules/notifications.js"></script>';
 
 	if(isset($_GET['list']))
 	{
-		$circulars = get_circulars(true);
-		if($circulars)
+		$notifications = get_notifications(true);
+		if($notifications)
 		{
-			rsort($circulars);
-			echo "<table id='circular_admin_list'><thead><tr>\n".
+			rsort($notifications);
+			echo "<table id='notification_admin_list'><thead><tr>\n".
 				 "<th><input type=\"checkbox\" onclick=\"swap_all_checkboxes(this)\"></th>\n".
 				 "<th>".get_lang('subject')."</th>\n".
-				 "<th>".get_lang('users_not_read_circular')."</th>".
+				 "<th>".get_lang('users_not_read_notification')."</th>".
 				 "<th>".get_lang('date')."</th></thead>\n";
 
-			foreach ((array)$circulars as $key => $circular)
+			foreach ((array)$notifications as $key => $notification)
 			{
-				$users_not_readed = get_usernames_not_read_circular($circular['circular_id']);
+				$users_not_readed = get_usernames_not_read_notification($notification['notification_id']);
 				$users_not_readed = $users_not_readed ? $users_not_readed: "";
-				echo '<tr><td><input type="checkbox" class="circular_checkbox" name="remove_circular[]" value="'.$circular['circular_id'].'"></td>'."\n".
-					 '<td><b>'.$circular['subject']."</b></td><td>$users_not_readed</td><td>".$circular['timestamp']."</td></tr>\n";
+				echo '<tr><td><input type="checkbox" class="notification_checkbox" name="remove_notification[]" value="'.$notification['notification_id'].'"></td>'."\n".
+					 '<td><b>'.$notification['subject']."</b></td><td>$users_not_readed</td><td>".$notification['timestamp']."</td></tr>\n";
 			}
-			echo '<tr><td colspan=4><button onclick="remove_circulars()">'.get_lang('remove_selected_circulars')."</button></td></tr>\n".
+			echo '<tr><td colspan=4><button onclick="remove_notifications()">'.get_lang('remove_selected_notifications')."</button></td></tr>\n".
 				 "</table>\n";
 		}
 		else
 		{
-			print_failure(get_lang('there_are_no_circulars'));
+			print_failure(get_lang('there_are_no_notifications'));
 		}
-		echo '<p><a href="?m=circular">&lt;&lt; '.get_lang('back')."</a></p>\n";
+		echo '<p><a href="?m=notifications">&lt;&lt; '.get_lang('back')."</a></p>\n";
 		return;
 	}
 
 	$subusers_installed = $db->isModuleInstalled('subusers');
-	echo "<h2>".get_lang('Circular')."</h2>";
+	echo "<h2>".get_lang('Notification')."</h2>";
 
 	//[]admins []users []subusers[of user] []groups[group]
-	echo '<table id="circular"><tr>'."\n".
+	echo '<table id="notification"><tr>'."\n".
 		 '<td rowspan=2>'.get_lang('send_to').':</td>'."\n".
 		 '<td><input type="checkbox" onclick="toggle_all(this, \'select_admins\')" id="admins"><label for="admins">'.get_lang('admins').'</label></td>'."\n".
 		 '<td><input type="checkbox" onclick="toggle_all(this, \'select_users\')" id="users" ><label for="users" >'.get_lang('users') .'</label></td>'."\n".
@@ -150,7 +150,7 @@ function exec_module()
 		 '<tr><td>'.get_lang('subject').'</td><td colspan=4><input type="text" id="subject"></td></tr>'."\n".
 		 '<tr><td colspan='.$colspan.'>'.get_lang('message').'</td></td></tr>'."\n".
 		 '<tr><td colspan='.$colspan.'><div id="editor"></div></td></tr>'."\n".
-		 '<tr><td colspan='.$colspan.'><button onclick="send_circular()" >'.get_lang('send_circular').'</button></td></tr>'."\n".
+		 '<tr><td colspan='.$colspan.'><button onclick="send_notification()" >'.get_lang('send_notification').'</button></td></tr>'."\n".
 		 '</table>';
 }
 ?>

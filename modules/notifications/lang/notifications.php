@@ -22,18 +22,19 @@
  *
  */
 
-define('LANG_your_circulars', "Your Notifications");
+define('LANG_your_notifications', "Your Notifications");
 define('LANG_status', "Status");
 define('LANG_subject', "Subject");
-define('LANG_users_not_red_circular', "Not Seen by");
+define('LANG_users_not_red_notification', "Not Seen by");
 define('LANG_date', "Date");
-define('LANG_remove_selected_circulars', "Remove Selected");
-define('LANG_Circular', "Notification");
+define('LANG_remove_selected_notifications', "Remove Selected");
+define('LANG_back', "Back");
+define('LANG_Notification', "Notification");
 define('LANG_send_to', "Send To");
 define('LANG_admins', "Admins");
 define('LANG_users', "Users");
 define('LANG_groups', "Groups");
 define('LANG_subusers_of_user', "Subusers");
 define('LANG_message', "Message");
-define('LANG_send_circular', "Send Notification");
+define('LANG_send_notification', "Send Notification");
 ?>

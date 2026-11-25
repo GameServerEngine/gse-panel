@@ -1,0 +1,86 @@
+table#notification{
+	width:100%;
+}
+
+table#notification>tbody>tr>td>input[type="text"], 
+table#notification>tbody>tr>td>select,
+table#notification>tbody>tr>td>textarea{
+	width:100%;
+}
+
+#notification > tbody > tr:nth-child(1) > td:nth-child(1),
+#notification > tbody > tr:nth-child(3) > td:nth-child(1){
+	width:90px !important;
+	word-wrap:break-word;
+}
+
+.ql-editor>h0, .ql-editor>h1, .ql-editor>h1, 
+.ql-editor>h2, .ql-editor>h3, .ql-editor>h4, 
+.ql-editor>h5, .ql-editor>h6, .ql-editor>legend, 
+#notification_message>h0, #notification_message>h1, #notification_message>h1, 
+#notification_message>h2, #notification_message>h3, #notification_message>h4, 
+#notification_message>h5, #notification_message>h6, #notification_message>legend {
+	all: initial;
+}
+
+#notification_message{
+	padding:20px;
+}
+
+.ql-toolbar{
+	background:white;
+}
+
+#editor{
+	height:400px;
+	background:white;
+	color:black;
+	text-shadow:none;
+}
+
+.status_0{
+	content:url(../../images/online.png);
+}
+
+.status_1{
+	content:url(../../images/offline.png);
+}
+
+table#notification_admin_list,
+table#notification_list{
+	width:100%;
+}
+
+table#notification_list > tbody > tr > td:first-child,
+table#notification_admin_list > tbody > tr > td:first-child{
+	width:10px;
+	text-align:center;
+}
+
+table#notification_list > tbody > tr > td:last-child,
+table#notification_list > thead > tr > th:last-child,
+table#notification_admin_list > tbody > tr > td:last-child,
+table#notification_admin_list > thead > tr > th:last-child{
+	width:150px;
+	text-align:center;
+}
+
+table#notification_list > tbody > tr > td{
+	padding:5px;
+}
+
+table#notification_admin_list>thead>tr>th,
+table#notification_list>thead>tr>th{
+	background:black;
+	color:white;
+}
+
+table#notification_admin_list,
+table#notification_list{
+	border:1px solid black;
+}
+
+table#notification_admin_list>tbody>tr>td,
+table#notification_list>tbody>tr>td{
+	border:1px solid gray;
+}
