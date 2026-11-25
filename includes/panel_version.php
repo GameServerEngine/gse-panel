@@ -1,3 +1,3 @@
 <?php
 // Panel version. Read by get_current_version() in modules/administration/panel_update.php.
-define('PANEL_VERSION', '2.28.0');
+define('PANEL_VERSION', '2.28.1');
