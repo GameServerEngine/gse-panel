@@ -31,7 +31,6 @@ if (!function_exists('billing_footer_link')) {
       <?php echo billing_footer_link('support.php', 'Support'); ?>
       <?php if (is_file(dirname(__DIR__) . '/services.php')) { echo billing_footer_link('services.php', 'Services'); } ?>
       <?php echo billing_footer_link('docs.php', 'Docs'); ?>
-      <?php echo billing_footer_link('server_status.php', 'Server Status'); ?>
       <?php echo billing_footer_link('company.php', 'Company'); ?>
       <?php echo billing_footer_link('contact.php', 'Contact'); ?>
       <?php echo billing_footer_link('privacy.php', 'Privacy'); ?>
