@@ -33,6 +33,7 @@ function assistant_setting_defs()
 		'assistant_server_monthly_tokens' => array('int', '2000000', 'Default cap per server per month (tokens)', 'Stops one server from using more than its share. Input plus output tokens.', 'min' => 1000, 'max' => 100000000),
 		'assistant_server_caps' => array('text', '', 'Cap overrides for single servers', 'One per entry, like 12=400000, 15=50000 (server id = tokens per month). 0 blocks a server.'),
 		'assistant_user_monthly_tokens' => array('int', '100000000', 'Cap per customer per month (tokens)', 'Across all of that customer\'s servers. The limit is per server (above), so this is left at its maximum, which means no per-customer limit. Administrators are not limited by this.', 'min' => 1000, 'max' => 100000000),
+		'assistant_demo_monthly_tokens' => array('int', '300000', 'Cap for the demo account per month (tokens)', 'The public demo account (Settings, Demo account) is shared by every visitor. This keeps it from using up the monthly budget your customers need.', 'min' => 1000, 'max' => 100000000),
 		'assistant_allow_files' => array('bool', '1', 'Read files and search logs', 'Lets it list and read files in the customer\'s game folder (secrets are hidden) and search them.'),
 		'assistant_allow_edits' => array('bool', '1', 'Propose file edits and new scripts', 'It only proposes. The customer sees the change, presses Apply, and a backup is kept.'),
 		'assistant_allow_db' => array('bool', '1', 'Read the server\'s database', 'Read-only queries on the databases assigned to the server.'),

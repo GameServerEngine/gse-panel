@@ -51,3 +51,24 @@ if (!function_exists('billing_brand_e')) {
         return htmlspecialchars(billing_brand($key), ENT_QUOTES, 'UTF-8');
     }
 }
+
+if (!function_exists('billing_logo_html')) {
+    /**
+     * The panel logo, scaled by the Panel logo size setting (a percentage of its normal size).
+     * Falls back to the bundled storefront mark when no panel logo has been uploaded.
+     */
+    function billing_logo_html(string $class, int $width, int $height): string
+    {
+        $panelLogo = dirname(__DIR__, 2) . '/images/logo.png';
+        $zoom = 1;
+        if (is_file($panelLogo)) {
+            $src = billing_url('panel_logo.php') . '?v=' . filemtime($panelLogo);
+            $settings = function_exists('billing_get_panel_settings') ? @billing_get_panel_settings() : array();
+            $size = isset($settings['panel_logo_size']) ? (int)$settings['panel_logo_size'] : 100;
+            $zoom = max(10, min(300, $size)) / 100;
+        } else {
+            $src = billing_url('images/brand/gse-icon-mark.png');
+        }
+        return '<img src="' . htmlspecialchars($src, ENT_QUOTES, 'UTF-8') . '" alt="" class="' . $class . '" width="' . $width . '" height="' . $height . '" style="zoom:' . $zoom . '">';
+    }
+}

@@ -53,7 +53,7 @@ return array(
                 array('kicker' => 'Automation', 'title' => 'Scheduled restarts and tasks', 'text' => 'Schedule restarts, updates and other routine tasks for the times that suit you.'),
                 array('kicker' => 'Files', 'title' => 'File manager and FTP', 'text' => 'Manage configs, maps and mod files in the browser or over FTP.'),
                 array('kicker' => 'Safety Net', 'title' => 'Backups', 'text' => 'Back up your server and restore it yourself if a change goes wrong.'),
-                array('kicker' => 'Assistant', 'title' => 'AI assistant', 'text' => 'Ask configuration questions in plain language. It is a guide next to the panel, so review changes before you save them.', 'link' => 'ai.php', 'link_label' => 'Try the assistant'),
+                array('kicker' => 'Assistant', 'title' => 'AI Assist', 'text' => 'Ask in plain language. It reads a server\'s logs and files and proposes fixes that you approve. Try it on the demo server.', 'link' => 'ai.php', 'link_label' => 'Try AI Assist'),
             ),
         ),
         'services' => array(

@@ -11,6 +11,7 @@ function exec_module()
 	require_once(__DIR__ . '/assistant_tools.php');
 	require_once(__DIR__ . '/assistant_boot.php');
 	require_once(__DIR__ . '/assistant_ui.php');
+	require_once(__DIR__ . '/assistant_suggestions.php');
 
 	if (!isset($settings['assistant_enabled']) || $settings['assistant_enabled'] !== '1') {
 		echo '<p>The assistant is not switched on for this panel.</p>';
@@ -39,9 +40,14 @@ function exec_module()
 		'Ask about this server: is it running, errors, logins or attacks in its logs, its files and scripts, its database or FTP login. '
 			. 'It can offer a Start, Stop or Restart button, a new-password button, or a change to a file or a new script that you review and apply (and can undo). It never does any of these for you.',
 		'For example: why did my server stop?',
-		assistant_display_name($settings)
+		assistant_display_name($settings),
+		array(
+			'suggestions' => assistant_server_suggestions(),
+			'ask' => isset($_GET['q']) ? (string)$_GET['q'] : '',
+		)
 	);
-	echo '<p><a href="?m=gamemanager&amp;p=game_monitor&amp;home_id=' . (int)$home_id . '">Back to the server</a></p>';
+	echo '<p><a href="?m=gamemanager&amp;p=game_monitor&amp;home_id=' . (int)$home_id . '">Back to the server</a>'
+		. ' &middot; <a href="?m=assistant&amp;p=product">Questions about GameServer Engine</a></p>';
 	return 1;
 }
 ?>
