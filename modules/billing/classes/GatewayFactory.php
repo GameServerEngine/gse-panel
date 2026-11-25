@@ -22,7 +22,7 @@ class GatewayFactory
             case 'manual':
                 return new ManualGateway();
             case 'stripe':
-                return new StripeGateway();
+                return StripeGateway::fromConfig();
             default:
                 throw new InvalidArgumentException("Unknown payment gateway: {$name}");
         }

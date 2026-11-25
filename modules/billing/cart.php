@@ -250,6 +250,12 @@ $discount_amount = billing_cart_cents_to_money($discount_amount_cents);
 $final_amount_cents = max(0, $total_amount_cents - $discount_amount_cents);
 $final_amount = billing_cart_cents_to_money($final_amount_cents);
 
+// Stripe card checkout (from the billing settings or the Stripe env file)
+require_once __DIR__ . '/includes/stripe_config.php';
+require_once __DIR__ . '/includes/action_security.php';
+$stripe_cfg = $db ? billing_stripe_config($db, (string)$table_prefix) : array('configured' => false);
+$stripe_csrf = billing_action_csrf_token('billing_stripe_checkout_csrf');
+
 // PayPal configuration (from config)
 $client_id = function_exists('paypal_get_client_id') ? paypal_get_client_id() : ($paypal_client_id ?? '');
 $sandbox   = function_exists('paypal_is_sandbox')    ? paypal_is_sandbox()    : ($paypal_sandbox ?? true);
@@ -291,6 +297,9 @@ $siteBase = $protocol . $host;
     <link rel="stylesheet" href="css/header.css">
     <!-- Favicon -->
     <link rel="icon" href="<?php echo htmlspecialchars(billing_url('images/brand/favicon-32x32.png'), ENT_QUOTES, 'UTF-8'); ?>" type="image/png">
+    <?php if (!$cart_empty && !empty($stripe_cfg['configured'])): ?>
+    <script src="https://js.stripe.com/dahlia/stripe.js"></script>
+    <?php endif; ?>
     <?php if (!$cart_empty && !empty($client_id)): ?>
     <script src="https://www.paypal.com/sdk/js?client-id=<?php echo htmlspecialchars($client_id, ENT_QUOTES, 'UTF-8'); ?>&currency=USD&intent=capture<?php echo $sandbox ? '&debug=false' : ''; ?>"></script>
     <?php endif; ?>
@@ -480,10 +489,29 @@ $siteBase = $protocol . $host;
             </div>
             <?php else: ?>
             <div class="checkout-section">
-                <h3>Checkout with PayPal</h3>
-                <?php if (empty($client_id)): ?>
+                <h3>Checkout</h3>
+                <?php if (($_GET['payment'] ?? '') === 'cancelled'): ?>
+                <div class="alert alert-error">Card payment was cancelled. Nothing was charged.</div>
+                <?php endif; ?>
+                <?php if (!empty($stripe_cfg['configured'])): ?>
+                <div class="stripe-checkout">
+                    <h4>Pay by card</h4>
+                    <p>Secure checkout by Stripe. Game servers renew automatically at the end of each term; you can cancel any time from My Account.</p>
+                    <?php foreach ((array)$invoices as $inv): ?>
+                    <button type="button" class="btn stripe-pay-btn" data-invoice="<?php echo intval($inv['invoice_id']); ?>">Pay <?php echo count((array)$invoices) > 1 ? 'invoice #' . intval($inv['invoice_id']) . ' ' : ''; ?>by card</button>
+                    <?php endforeach; ?>
+                    <div id="stripe-checkout-form" style="max-width:520px;margin-top:14px;"></div>
+                    <div id="stripe-status" class="status-message"></div>
+                </div>
+                <?php endif; ?>
+                <?php if (!empty($client_id)): ?>
+                <h4>Pay with PayPal</h4>
+                <p>Click the button below to complete your purchase securely through PayPal.</p>
+                <div id="paypal-button-container"></div>
+                <div id="status-message" class="status-message"></div>
+                <?php elseif (empty($stripe_cfg['configured'])): ?>
                 <div class="alert alert-error">
-                    <strong>Checkout Unavailable:</strong> PayPal has not been configured for this site.
+                    <strong>Checkout Unavailable:</strong> Online payment has not been configured for this site.
                     Please contact the site administrator or try again later.
                     <?php
                     // Admin hint: only show config link if the current user is an admin
@@ -500,10 +528,84 @@ $siteBase = $protocol . $host;
                     <br><small><em>Admin: configure PayPal credentials in <a href="<?php echo htmlspecialchars(billing_url('admin_config.php'), ENT_QUOTES, 'UTF-8'); ?>" style="color:inherit;text-decoration:underline;">Site Config</a>.</em></small>
                     <?php endif; ?>
                 </div>
-                <?php else: ?>
-                <p>Click the button below to complete your purchase securely through PayPal.</p>
-                <div id="paypal-button-container"></div>
-                <div id="status-message" class="status-message"></div>
+                <?php endif; ?>
+                <?php if (!empty($stripe_cfg['configured'])): ?>
+                <script>
+                (function () {
+                    var csrf = <?php echo json_encode($stripe_csrf); ?>;
+                    var publishableKey = <?php echo json_encode((string)$stripe_cfg['publishable_key']); ?>;
+                    var endpoint = <?php echo json_encode(billing_url('api/stripe_checkout.php')); ?>;
+                    var status = document.getElementById('stripe-status');
+                    var started = false;
+                    var appearance = {
+                        theme: 'stripe', labels: 'auto', inputs: 'spaced',
+                        variables: { borderRadius: '4px', colorBackground: '#ffffff', colorDanger: '#df1b41', colorPrimary: '#0570de',
+                                     colorSuccess: '#00c853', colorText: '#30313d', fontFamily: 'default', fontSizeBase: '16px', spacingUnit: '4px' }
+                    };
+                    function startSession(invoiceId, ui) {
+                        var body = new FormData();
+                        body.append('invoice_id', invoiceId);
+                        body.append('csrf', csrf);
+                        body.append('ui', ui);
+                        return fetch(endpoint, { method: 'POST', body: body, credentials: 'same-origin' })
+                            .then(function (r) { return r.json().catch(function () { return { error: 'Unexpected reply from the server.' }; }); });
+                    }
+                    function hostedFallback(invoiceId, btn) {
+                        status.textContent = 'Opening secure checkout...';
+                        startSession(invoiceId, 'hosted').then(function (d) {
+                            if (d.url) { window.location.href = d.url; return; }
+                            status.textContent = d.error || 'Card payment could not be started.';
+                            btn.disabled = false;
+                        }).catch(function () { status.textContent = 'Network problem. Please try again.'; btn.disabled = false; });
+                    }
+                    function embeddedForm(invoiceId, btn) {
+                        var stripe = Stripe(publishableKey);
+                        status.textContent = 'Loading the secure payment form...';
+                        var clientSecret = startSession(invoiceId, 'form').then(function (d) {
+                            if (!d.client_secret) { throw new Error(d.error || 'Card payment could not be started.'); }
+                            return d.client_secret;
+                        });
+                        var checkout = stripe.initCheckoutFormSdk({ clientSecret: clientSecret, appearance: appearance });
+                        var form = checkout.createForm({ layout: 'expanded' });
+                        form.mount('#stripe-checkout-form');
+                        clientSecret.then(function () { status.textContent = ''; });
+                        checkout.loadActions().then(function (result) {
+                            if (result.type !== 'success') {
+                                status.textContent = 'The payment form could not load. Opening Stripe checkout instead...';
+                                hostedFallback(invoiceId, btn);
+                                return;
+                            }
+                            form.on('confirm', function (event) {
+                                status.textContent = 'Processing payment...';
+                                result.actions.confirm({ formConfirmEvent: event }).then(function (outcome) {
+                                    if (outcome && outcome.type === 'error') {
+                                        status.textContent = (outcome.error && outcome.error.message) || 'The payment did not go through.';
+                                    }
+                                }).catch(function (error) {
+                                    status.textContent = (error && error.message) || 'The payment did not go through.';
+                                });
+                            });
+                        }).catch(function (error) {
+                            status.textContent = (error && error.message) ? error.message : 'Card payment could not be started.';
+                            btn.disabled = false;
+                        });
+                    }
+                    document.querySelectorAll('.stripe-pay-btn').forEach(function (btn) {
+                        btn.addEventListener('click', function () {
+                            if (started) { return; }
+                            started = true;
+                            document.querySelectorAll('.stripe-pay-btn').forEach(function (b) { b.disabled = true; });
+                            var invoiceId = btn.getAttribute('data-invoice');
+                            var formSupported = typeof window.Stripe === 'function' && publishableKey !== ''
+                                && typeof Stripe(publishableKey).initCheckoutFormSdk === 'function';
+                            if (formSupported) {
+                                try { embeddedForm(invoiceId, btn); return; } catch (e) { /* fall through to the hosted page */ }
+                            }
+                            hostedFallback(invoiceId, btn);
+                        });
+                    });
+                })();
+                </script>
                 <?php endif; ?>
                 <div class="action-buttons">
                     <a href="<?php echo htmlspecialchars(billing_url('serverlist.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-secondary">Continue Shopping</a>

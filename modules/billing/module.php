@@ -25,7 +25,7 @@
 // Module general information
 $module_title = "billing";
 $module_version = "3.9";
-$db_version = 15;
+$db_version = 16;
 $module_required = TRUE;
 // Module description
 $module_description = "Billing storefront / provisioning integration.";
@@ -687,6 +687,62 @@ $install_queries[15] = array(
         }
         return true;
     }
+);
+
+// db_version 16 - Stripe: settings in billing_config, one Stripe customer per user and mode, the
+// subscription on each order, and the webhook event log (each event applied once). Idempotent:
+// tables only when missing, columns and the index only when absent.
+$install_queries[16] = array(
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."billing_stripe_customers` (
+        `user_id` INT(11) NOT NULL,
+        `mode` VARCHAR(4) NOT NULL DEFAULT 'test',
+        `customer_id` VARCHAR(64) NOT NULL,
+        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (`user_id`, `mode`),
+        KEY `customer_id` (`customer_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."billing_stripe_events` (
+        `id` INT(11) NOT NULL AUTO_INCREMENT,
+        `event_id` VARCHAR(64) NOT NULL,
+        `event_type` VARCHAR(80) NOT NULL,
+        `object_id` VARCHAR(80) NOT NULL DEFAULT '',
+        `livemode` TINYINT(1) NOT NULL DEFAULT 0,
+        `processing_status` VARCHAR(20) NOT NULL DEFAULT 'received',
+        `note` VARCHAR(1000) NOT NULL DEFAULT '',
+        `raw_json` MEDIUMTEXT NULL,
+        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `processed_at` DATETIME NULL,
+        PRIMARY KEY (`id`),
+        UNIQUE KEY `event_id` (`event_id`),
+        KEY `event_type` (`event_type`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+    function($db) {
+        $add = array(
+            'billing_config' => array(
+                'stripe_mode' => "VARCHAR(4) NOT NULL DEFAULT 'test'",
+                'stripe_publishable_key' => "VARCHAR(255) NULL",
+                'stripe_secret_key_enc' => "TEXT NULL",
+                'stripe_webhook_secret_enc' => "TEXT NULL",
+                'stripe_automatic_tax' => "TINYINT(1) NOT NULL DEFAULT 0",
+            ),
+            'billing_orders' => array(
+                'stripe_subscription_id' => "VARCHAR(64) NULL",
+                'stripe_customer_id' => "VARCHAR(64) NULL",
+            ),
+        );
+        foreach ($add as $table => $cols) {
+            foreach ($cols as $name => $def) {
+                $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIX".$table."' AND COLUMN_NAME = '".$name."'");
+                if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) continue;
+                if (!$db->query("ALTER TABLE `DB_PREFIX".$table."` ADD `".$name."` ".$def)) return false;
+            }
+        }
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_orders' AND INDEX_NAME = 'stripe_subscription_id'");
+        if (!($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0)) {
+            if (!$db->query("ALTER TABLE `DB_PREFIXbilling_orders` ADD KEY `stripe_subscription_id` (`stripe_subscription_id`)")) return false;
+        }
+        return true;
+    },
 );
 
 ?>

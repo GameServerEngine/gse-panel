@@ -74,6 +74,35 @@ if (($paypalDb['paypal_client_id'] ?? '') !== '') {
 }
 
 // ---------------------------------------------------------------------------
+// Stripe card payments: save the settings and check the key
+// ---------------------------------------------------------------------------
+require_once(__DIR__ . '/includes/stripe_config.php');
+$stripeMsg = null;
+$stripeDb = @mysqli_connect($db_host ?? 'localhost', $db_user ?? '', $db_pass ?? '', $db_name ?? '', intval($db_port ?? 3306) ?: 3306);
+if ($stripeDb) {
+    mysqli_set_charset($stripeDb, 'utf8mb4');
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', array('save_stripe', 'check_stripe'), true)) {
+    if (!hash_equals($csrf, (string)($_POST['csrf'] ?? ''))) {
+        $stripeMsg = array('error', 'Your session expired. Reload the page and try again.');
+    } elseif (!$stripeDb) {
+        $stripeMsg = array('error', 'Database connection failed.');
+    } elseif ($_POST['action'] === 'save_stripe') {
+        list($ok, $text) = billing_stripe_save_settings($stripeDb, (string)($table_prefix ?? ''), $_POST);
+        if ($ok) {
+            list($ok2, $text2) = billing_stripe_check_account($stripeDb, (string)($table_prefix ?? ''));
+            $text .= ' ' . $text2;
+        }
+        $stripeMsg = array($ok ? 'success' : 'error', $text);
+    } else {
+        list($ok, $text) = billing_stripe_check_account($stripeDb, (string)($table_prefix ?? ''));
+        $stripeMsg = array($ok ? 'success' : 'error', $text);
+    }
+}
+$stripeView = $stripeDb ? billing_stripe_config($stripeDb, (string)($table_prefix ?? '')) : array('configured' => false, 'mode' => 'test', 'source' => 'none', 'publishable_key' => '', 'secret_key' => '', 'webhook_secret' => '', 'automatic_tax' => false, 'problem' => 'Database connection failed.');
+$stripeWebhookUrl = billing_stripe_site_base() . '/stripe/webhook.php';
+
+// ---------------------------------------------------------------------------
 // POST: Save interactive form
 // ---------------------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_form') {
@@ -446,6 +475,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
     .recent-errors-table td { padding:5px 8px; border-bottom:1px solid rgba(128,128,128,0.3); word-break:break-word; }
   </style>
   <div class="cfg-section">
+    <h2>Stripe (card payments)</h2>
+    <?php if ($stripeMsg): ?>
+      <div class="<?php echo $stripeMsg[0] === 'success' ? 'success' : 'failure'; ?>" style="margin-bottom:12px;"><?php echo h($stripeMsg[1]); ?></div>
+    <?php endif; ?>
+    <table style="margin-bottom:14px;">
+      <tr><td style="padding-right:16px;"><strong>Status</strong></td><td><?php echo !empty($stripeView['configured']) ? 'Ready (' . h($stripeView['mode']) . ' mode)' : 'Not set up'; ?><?php echo $stripeView['problem'] !== '' ? ' &mdash; ' . h($stripeView['problem']) : ''; ?></td></tr>
+      <tr><td><strong>Keys from</strong></td><td><?php echo h($stripeView['source']); ?><?php echo $stripeView['source'] === 'none' ? ' (save them below, or put them in ' . h(BILLING_STRIPE_DEFAULT_ENV_FILE) . ')' : ''; ?></td></tr>
+      <tr><td><strong>Webhook</strong></td><td><?php echo $stripeView['webhook_secret'] !== '' ? 'signing secret set' : 'no signing secret yet &mdash; payments will not be confirmed until it is set'; ?></td></tr>
+      <tr><td><strong>Webhook URL</strong></td><td><code><?php echo h($stripeWebhookUrl); ?></code></td></tr>
+      <tr><td><strong>Events to send</strong></td><td><code>checkout.session.completed, checkout.session.async_payment_succeeded, invoice.paid, invoice.payment_failed, customer.subscription.deleted, charge.refunded</code></td></tr>
+    </table>
+    <form method="post" style="margin-bottom:22px;">
+      <input type="hidden" name="csrf" value="<?php echo h($csrf); ?>">
+      <input type="hidden" name="action" value="save_stripe">
+      <p><label>Mode
+        <select name="stripe_mode">
+          <option value="test"<?php echo $stripeView['mode'] !== 'live' ? ' selected' : ''; ?>>Test (no real money)</option>
+          <option value="live"<?php echo $stripeView['mode'] === 'live' ? ' selected' : ''; ?>>Live</option>
+        </select></label></p>
+      <p><label>Publishable key<br><input type="text" name="stripe_publishable_key" size="70" value="<?php echo h($stripeView['publishable_key']); ?>" placeholder="pk_test_..."></label></p>
+      <p><label>Secret key<br><input type="password" name="stripe_secret_key" size="70" autocomplete="off" placeholder="<?php echo $stripeView['secret_key'] !== '' ? 'saved &mdash; leave blank to keep' : 'sk_test_...'; ?>"></label></p>
+      <p><label>Webhook signing secret<br><input type="password" name="stripe_webhook_secret" size="70" autocomplete="off" placeholder="<?php echo $stripeView['webhook_secret'] !== '' ? 'saved &mdash; leave blank to keep' : 'whsec_...'; ?>"></label></p>
+      <p><label><input type="checkbox" name="stripe_automatic_tax" value="1"<?php echo !empty($stripeView['automatic_tax']) ? ' checked' : ''; ?>>
+        Charge sales tax with Stripe Tax (set up your tax registrations in the Stripe dashboard first)</label></p>
+      <button type="submit">Save Stripe settings</button>
+    </form>
+    <form method="post" style="margin-bottom:26px;">
+      <input type="hidden" name="csrf" value="<?php echo h($csrf); ?>">
+      <input type="hidden" name="action" value="check_stripe">
+      <button type="submit" class="btn-show">Check Stripe connection</button>
+    </form>
+
     <h2>PayPal Diagnostics</h2>
 
     <!-- Self-check button -->

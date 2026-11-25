@@ -284,7 +284,8 @@ class BillingLifecycleService
                 ])) {
                     throw new RuntimeException('home_billing_update_failed');
                 }
-                $this->restartBillingSuspendedHome($homeId, $home);
+                // $home was loaded before the server was known (renewals find it through the order), so load it now if needed.
+                $this->restartBillingSuspendedHome($homeId, is_array($home) ? $home : ($this->repo->getServerHomeBilling($homeId) ?: []));
             }
 
             $transactionId = $this->repo->logTransaction([
