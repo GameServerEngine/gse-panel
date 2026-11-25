@@ -59,7 +59,8 @@ if (!function_exists('billing_logo_html')) {
      */
     function billing_logo_html(string $class, int $width, int $height): string
     {
-        $panelLogo = dirname(__DIR__, 2) . '/images/logo.png';
+        // brand.php lives in modules/billing/includes, so the panel root is three levels up.
+        $panelLogo = dirname(__DIR__, 3) . '/images/logo.png';
         $zoom = 1;
         if (is_file($panelLogo)) {
             $src = billing_url('panel_logo.php') . '?v=' . filemtime($panelLogo);
