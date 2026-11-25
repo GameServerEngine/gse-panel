@@ -250,14 +250,29 @@ function cat_render_styles(): void
     .cat-button { border: 1px solid #3e7ab8; border-radius: 6px; background: #2f6dac; color: #fff; font-weight: 600; padding: 8px 14px; cursor: pointer; }
     .cat-button:hover { background: #25598d; }
     .cat-tiers span { display: inline-block; margin: 0 14px 8px 0; }
-    .cat-grid th.cat-loc-head, .cat-grid td.cat-loc-cell { text-align: center; }
-    .cat-grid th small { font-weight: normal; }
-    .cat-price { width: 90px; }
+    .cat-grid td { padding: 4px 10px; white-space: nowrap; }
+    .cat-grid td.cat-locs-cell { white-space: normal; }
+    .cat-grid input[type=number].cat-price, .cat-bulk input[type=number] { display: inline-block; width: 84px; height: auto; margin: 0; padding: 3px 6px; }
+    .cat-grid input[type=checkbox], .cat-locs-panel input[type=checkbox] { margin: 0; }
     .cat-changed { background: rgba(255,193,7,0.22); }
     .cat-red { color: #e53935; font-weight: 600; }
     .cat-ok { color: #2e9e5b; font-weight: 600; }
     .cat-savebar { margin: 10px 0; }
-    .cat-bulk select { margin: 0 6px; }
+    .cat-bulk select, .cat-bulk .cat-button { display: inline-block; width: auto; margin: 0 4px; }
+    .cat-bulk { line-height: 2.2; }
+    .cat-locs { position: relative; display: inline-block; }
+    .cat-locs > summary { cursor: pointer; list-style: none; padding: 2px 4px; border-radius: 4px; border: 1px solid transparent; }
+    .cat-locs > summary::-webkit-details-marker { display: none; }
+    .cat-locs > summary:hover, .cat-locs[open] > summary { border-color: rgba(128,128,128,0.6); }
+    .cat-chip { display: inline-block; margin: 1px 4px 1px 0; padding: 0 8px; border-radius: 10px; background: rgba(79,150,220,0.25); font-size: 0.9em; }
+    .cat-chip-more { background: rgba(128,128,128,0.3); }
+    .cat-locs-panel { position: absolute; z-index: 30; left: 0; top: 100%; min-width: 280px; max-height: 340px; overflow: auto; padding: 10px 12px; background: #1f2733; color: #e8edf3; border: 1px solid rgba(128,128,128,0.7); border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.45); white-space: normal; line-height: 1.7; }
+    .cat-locs-panel a { color: #8ec5ff; }
+    .cat-locs-panel input[type=search] { width: 100%; box-sizing: border-box; margin: 0 0 8px; }
+    .cat-region { margin-bottom: 8px; }
+    .cat-region-head { border-bottom: 1px solid rgba(128,128,128,0.4); margin-bottom: 2px; }
+    .cat-pick { display: block; padding: 0 2px; cursor: pointer; }
+    .cat-locbar > summary { cursor: pointer; }
     </style>
     <?php
 }
@@ -379,7 +394,61 @@ function cat_render_game_rows(array $games): void
     }
 }
 
-/** The locations bar: switch a city on or off, and see why a city is unavailable by itself. */
+/** Short summary of a game's locations: up to three names, then "+N". */
+function cat_render_loc_chips(array $labels): string
+{
+    if (!$labels) {
+        return '<span class="cat-muted">not sold</span>';
+    }
+    $out = '';
+    foreach (array_slice($labels, 0, 3) as $label) {
+        $out .= '<span class="cat-chip">' . cat_h($label) . '</span>';
+    }
+    if (count($labels) > 3) {
+        $out .= '<span class="cat-chip cat-chip-more">+' . (count($labels) - 3) . '</span>';
+    }
+    return $out;
+}
+
+/**
+ * Tick boxes for choosing locations, grouped by region. With a game they are the game's real
+ * form fields (loc[game][location]); with null they are the bulk picker, which is never sent.
+ */
+function cat_render_location_picker(array $columns, ?array $game): void
+{
+    $groups = array();
+    foreach ($columns as $col) {
+        $groups[(string)$col['region']][] = $col;
+    }
+    if (count($columns) > 8) {
+        echo '<input type="search" class="cat-loc-search" placeholder="Find a location">';
+    }
+    foreach ($groups as $region => $cols) {
+        ?>
+        <div class="cat-region">
+          <div class="cat-region-head"><strong><?php echo cat_h($region !== '' ? $region : 'Servers without a city'); ?></strong>
+            <small><a href="#" class="cat-reg-all">all</a> &middot; <a href="#" class="cat-reg-none">none</a></small></div>
+          <?php foreach ($cols as $col):
+              $key = (string)$col['key'];
+              if ($game === null): ?>
+            <label class="cat-pick"><input type="checkbox" class="cat-bulk-loc" data-col="<?php echo cat_h($key); ?>"> <?php echo cat_h($col['label']); ?></label>
+              <?php else:
+                  $isOn = !empty($game['on'][$key]);
+                  $canAdd = !empty($game['can_add'][$key]);
+                  ?>
+            <label class="cat-pick"><input type="checkbox" class="cat-loc" data-col="<?php echo cat_h($key); ?>" data-label="<?php echo cat_h($col['label']); ?>"
+                   name="loc[<?php echo (int)$game['home_cfg_id']; ?>][<?php echo cat_h($key); ?>]" value="1"
+                   data-orig="<?php echo $isOn ? '1' : '0'; ?>"<?php echo $isOn ? ' checked' : ''; ?>
+                   <?php echo (!$isOn && !$canAdd) ? ' disabled title="This game uses tier or base pricing. Add this location on the Edit page."' : ''; ?>>
+              <?php echo cat_h($col['label']); ?></label>
+              <?php endif; ?>
+          <?php endforeach; ?>
+        </div>
+        <?php
+    }
+}
+
+/** The locations bar: switch a city on or off, and see why a city is unavailable on its own. Collapsed to one line. */
 function cat_render_locations_bar(mysqli $db, string $prefix): void
 {
     $cities = catalog_admin_cities($db, $prefix);
@@ -393,50 +462,65 @@ function cat_render_locations_bar(mysqli $db, string $prefix): void
     foreach ($agents as $agent) {
         $byCity[(int)$agent['location_id']][] = $agent;
     }
+    $rows = array();
+    $counts = array('on' => 0, 'off' => 0, 'unavailable' => 0);
+    foreach ($cities as $city) {
+        $id = (int)$city['location_id'];
+        $on = (int)$city['enabled'] === 1;
+        $regionOff = $city['region_enabled'] !== null && (int)$city['region_enabled'] !== 1;
+        $names = array();
+        $issues = array();
+        foreach ($byCity[$id] ?? array() as $agent) {
+            $names[] = $agent['remote_server_name'];
+            if (isset($reasons[(int)$agent['remote_server_id']])) {
+                $issues[] = $agent['remote_server_name'] . ': ' . $reasons[(int)$agent['remote_server_id']];
+            }
+        }
+        if (!$on || $regionOff) {
+            $counts['off']++;
+            $status = '<span class="cat-red">' . ($on ? 'Its region is switched off' : 'Switched off') . '</span>';
+        } elseif ($issues) {
+            $counts['unavailable']++;
+            $status = '<span class="cat-red">Unavailable</span> <span class="cat-muted">' . cat_h(implode('; ', $issues)) . '</span>';
+        } else {
+            $counts['on']++;
+            $status = '<span class="cat-ok">Available</span>';
+        }
+        $rows[] = array('id' => $id, 'region' => (string)($city['region_name'] ?? ''), 'name' => (string)$city['name'],
+            'servers' => $names, 'status' => $status, 'on' => $on);
+    }
+    $attention = $counts['off'] > 0 || $counts['unavailable'] > 0;
     ?>
-    <div class="cat-box">
-      <strong>Locations</strong>
+    <details class="cat-box cat-locbar"<?php echo $attention ? ' open' : ''; ?>>
+      <summary><strong>Locations</strong> &mdash;
+        <span class="cat-ok"><?php echo $counts['on']; ?> available</span><?php
+        if ($counts['off']) { echo ', <span class="cat-red">' . $counts['off'] . ' switched off</span>'; }
+        if ($counts['unavailable']) { echo ', <span class="cat-red">' . $counts['unavailable'] . ' unavailable now</span>'; }
+        ?></summary>
       <p class="cat-muted">Switch a location off to show it as <span class="cat-red">Unavailable</span> on the order page for every game sold there.
          A location also shows as Unavailable on its own when its servers are out of room, not answering, or have installs turned off.</p>
       <table class="cat-table">
         <thead><tr><th>Region</th><th>Location</th><th>Servers</th><th>Right now</th><th>On</th></tr></thead>
         <tbody>
-        <?php foreach ($cities as $city):
-            $id = (int)$city['location_id'];
-            $on = (int)$city['enabled'] === 1;
-            $regionOff = $city['region_enabled'] !== null && (int)$city['region_enabled'] !== 1;
-            $names = array();
-            $issues = array();
-            foreach ($byCity[$id] ?? array() as $agent) {
-                $names[] = $agent['remote_server_name'];
-                if (isset($reasons[(int)$agent['remote_server_id']])) {
-                    $issues[] = $agent['remote_server_name'] . ': ' . $reasons[(int)$agent['remote_server_id']];
-                }
-            }
-            ?>
+        <?php foreach ($rows as $row): ?>
           <tr>
-            <td><?php echo cat_h($city['region_name'] ?? ''); ?></td>
-            <td><?php echo cat_h($city['name']); ?></td>
-            <td class="cat-muted"><?php echo $names ? cat_h(implode(', ', $names)) : 'none assigned yet'; ?></td>
-            <td>
-              <?php if (!$on): ?><span class="cat-red">Switched off</span>
-              <?php elseif ($regionOff): ?><span class="cat-red">Its region is switched off</span>
-              <?php elseif ($issues): ?><span class="cat-red">Unavailable</span> <span class="cat-muted"><?php echo cat_h(implode('; ', $issues)); ?></span>
-              <?php else: ?><span class="cat-ok">Available</span><?php endif; ?>
-            </td>
-            <td class="cat-loc-cell">
-              <input type="hidden" name="city_ids[]" value="<?php echo $id; ?>">
-              <input type="checkbox" name="city_enabled[<?php echo $id; ?>]" value="1" data-orig="<?php echo $on ? '1' : '0'; ?>"<?php echo $on ? ' checked' : ''; ?>>
+            <td><?php echo cat_h($row['region']); ?></td>
+            <td><?php echo cat_h($row['name']); ?></td>
+            <td class="cat-muted"><?php echo $row['servers'] ? cat_h(implode(', ', $row['servers'])) : 'none assigned yet'; ?></td>
+            <td><?php echo $row['status']; ?></td>
+            <td style="text-align:center">
+              <input type="hidden" name="city_ids[]" value="<?php echo $row['id']; ?>">
+              <input type="checkbox" name="city_enabled[<?php echo $row['id']; ?>]" value="1" data-orig="<?php echo $row['on'] ? '1' : '0'; ?>"<?php echo $row['on'] ? ' checked' : ''; ?>>
             </td>
           </tr>
         <?php endforeach; ?>
         </tbody>
       </table>
-    </div>
+    </details>
     <?php
 }
 
-/** The grid: one row per game with its price and a tick box for every location. */
+/** The grid: one compact row per game with its price and a location picker. */
 function cat_render_grid(mysqli $db, string $prefix, string $csrf, string $search, string $status): void
 {
     $data = catalog_admin_grid_data($db, $prefix, $search, $status);
@@ -454,17 +538,21 @@ function cat_render_grid(mysqli $db, string $prefix, string $csrf, string $searc
         <button type="submit" class="cat-button">Save all changes</button>
         <span id="cat-change-count" class="cat-muted">No unsaved changes</span>
       </div>
-      <?php if ($columns): ?>
       <div class="cat-box cat-bulk">
-        With the ticked games:
-        <select id="cat-bulk-col">
-          <?php foreach ($columns as $col): ?><option value="<?php echo cat_h($col['key']); ?>"><?php echo cat_h($col['label']); ?></option><?php endforeach; ?>
-        </select>
-        <button type="button" class="cat-button" id="cat-bulk-add">Add location</button>
-        <button type="button" class="cat-button" id="cat-bulk-remove">Remove location</button>
-        <span class="cat-muted">This only ticks or unticks the boxes. Press Save all changes to apply.</span>
+        <strong>With the ticked games:</strong>
+        <?php if ($columns): ?>
+        <details class="cat-locs" id="cat-bulk-picker">
+          <summary><span class="cat-button">Choose locations <span id="cat-bulk-count">(none)</span> &#9662;</span></summary>
+          <div class="cat-locs-panel"><?php cat_render_location_picker($columns, null); ?></div>
+        </details>
+        <button type="button" class="cat-button" id="cat-bulk-add">Add them</button>
+        <button type="button" class="cat-button" id="cat-bulk-remove">Remove them</button>
+        &nbsp;&middot;&nbsp;
+        <?php endif; ?>
+        Price $ <input type="number" step="0.01" min="0" id="cat-bulk-price" placeholder="0.00">
+        <button type="button" class="cat-button" id="cat-bulk-setprice">Set price</button>
+        <span class="cat-muted" id="cat-bulk-note">This only changes the boxes. Press Save all changes to apply.</span>
       </div>
-      <?php endif; ?>
       <table class="cat-table cat-grid">
         <thead>
           <tr>
@@ -472,11 +560,7 @@ function cat_render_grid(mysqli $db, string $prefix, string $csrf, string $searc
             <th>Game</th>
             <th>Config</th>
             <th>Price / slot / month</th>
-            <?php foreach ($columns as $col): ?>
-              <th class="cat-loc-head"><?php echo cat_h($col['label']); ?><br>
-                <small><a href="#" class="cat-col-all" data-col="<?php echo cat_h($col['key']); ?>">all</a> &middot;
-                <a href="#" class="cat-col-none" data-col="<?php echo cat_h($col['key']); ?>">none</a></small></th>
-            <?php endforeach; ?>
+            <th>Locations</th>
             <th></th>
           </tr>
         </thead>
@@ -484,6 +568,12 @@ function cat_render_grid(mysqli $db, string $prefix, string $csrf, string $searc
         <?php foreach ($games as $game):
             $home = (int)$game['home_cfg_id'];
             $price = $game['price'] !== null ? cat_money($game['price']) : '';
+            $labels = array();
+            foreach ($columns as $col) {
+                if (!empty($game['on'][$col['key']])) {
+                    $labels[] = $col['label'];
+                }
+            }
             ?>
           <tr data-home="<?php echo $home; ?>">
             <td>
@@ -498,21 +588,19 @@ function cat_render_grid(mysqli $db, string $prefix, string $csrf, string $searc
                          value="<?php echo cat_h($price); ?>" data-orig="<?php echo cat_h($price); ?>"
                          placeholder="<?php echo $game['price_mixed'] ? 'mixed' : '0.00'; ?>">
               <?php else: ?>
-                <span class="cat-muted">tiers or base price &mdash; use Edit</span>
+                <span class="cat-muted">tiers or base &mdash; use Edit</span>
               <?php endif; ?>
             </td>
-            <?php foreach ($columns as $col):
-                $key = $col['key'];
-                $isOn = !empty($game['on'][$key]);
-                $canAdd = !empty($game['can_add'][$key]);
-                ?>
-              <td class="cat-loc-cell">
-                <input type="checkbox" class="cat-loc" data-col="<?php echo cat_h($key); ?>"
-                       name="loc[<?php echo $home; ?>][<?php echo cat_h($key); ?>]" value="1"
-                       data-orig="<?php echo $isOn ? '1' : '0'; ?>"<?php echo $isOn ? ' checked' : ''; ?>
-                       <?php echo (!$isOn && !$canAdd) ? ' disabled title="This game uses tier or base pricing. Add this location on the Edit page."' : ''; ?>>
-              </td>
-            <?php endforeach; ?>
+            <td class="cat-locs-cell">
+              <?php if ($columns): ?>
+              <details class="cat-locs">
+                <summary><span class="cat-chips"><?php echo cat_render_loc_chips($labels); ?></span> <span class="cat-muted">&#9662;</span></summary>
+                <div class="cat-locs-panel"><?php cat_render_location_picker($columns, $game); ?></div>
+              </details>
+              <?php else: ?>
+                <span class="cat-muted">no servers</span>
+              <?php endif; ?>
+            </td>
             <td><a href="<?php echo cat_url(array('home_cfg_id' => $home)); ?>">Edit</a></td>
           </tr>
         <?php endforeach; ?>
@@ -526,7 +614,24 @@ function cat_render_grid(mysqli $db, string $prefix, string $csrf, string $searc
     (function () {
         var form = document.getElementById('cat-grid-form');
         if (!form) { return; }
-        function fire(el) { el.dispatchEvent(new Event('change', { bubbles: true })); }
+        function fire(el, type) { el.dispatchEvent(new Event(type || 'change', { bubbles: true })); }
+        function selectedRows() {
+            return Array.prototype.filter.call(form.querySelectorAll('tbody tr[data-home]'), function (row) {
+                return row.querySelector('.cat-row-select').checked;
+            });
+        }
+        function note(text) { document.getElementById('cat-bulk-note').textContent = text; }
+        function chips(details) {
+            var box = details.querySelector('.cat-chips');
+            if (!box) { return; }
+            var labels = [];
+            details.querySelectorAll('.cat-loc').forEach(function (b) { if (b.checked) { labels.push(b.getAttribute('data-label')); } });
+            box.textContent = '';
+            function span(cls, text) { var s = document.createElement('span'); s.className = cls; s.textContent = text; box.appendChild(s); }
+            if (!labels.length) { span('cat-muted', 'not sold'); return; }
+            labels.slice(0, 3).forEach(function (l) { span('cat-chip', l); });
+            if (labels.length > 3) { span('cat-chip cat-chip-more', '+' + (labels.length - 3)); }
+        }
         function refresh() {
             var count = 0;
             form.querySelectorAll('[data-orig]').forEach(function (el) {
@@ -534,41 +639,97 @@ function cat_render_grid(mysqli $db, string $prefix, string $csrf, string $searc
                     ? (el.checked ? '1' : '0') !== el.getAttribute('data-orig')
                     : el.value.trim() !== el.getAttribute('data-orig');
                 var cell = el.closest('td');
-                if (cell) { cell.classList.toggle('cat-changed', changed); }
+                if (cell && !el.classList.contains('cat-loc')) { cell.classList.toggle('cat-changed', changed); }
                 if (changed) { count++; }
+            });
+            form.querySelectorAll('tbody tr[data-home] td.cat-locs-cell').forEach(function (cell) {
+                var any = false;
+                cell.querySelectorAll('.cat-loc').forEach(function (b) {
+                    if ((b.checked ? '1' : '0') !== b.getAttribute('data-orig')) { any = true; }
+                });
+                cell.classList.toggle('cat-changed', any);
             });
             document.getElementById('cat-change-count').textContent = count ? count + ' unsaved change(s)' : 'No unsaved changes';
         }
-        form.addEventListener('change', refresh);
+        form.addEventListener('change', function (e) {
+            if (e.target.classList.contains('cat-loc')) { chips(e.target.closest('details')); }
+            if (e.target.classList.contains('cat-bulk-loc')) {
+                var n = form.querySelectorAll('.cat-bulk-loc:checked').length;
+                document.getElementById('cat-bulk-count').textContent = n ? '(' + n + ' chosen)' : '(none)';
+            }
+            refresh();
+        });
         form.addEventListener('input', refresh);
+
         var all = document.getElementById('cat-select-all');
-        if (all) {
-            all.addEventListener('change', function () {
-                form.querySelectorAll('.cat-row-select').forEach(function (box) { box.checked = all.checked; });
-            });
-        }
-        function setColumn(col, value, onlySelected) {
-            form.querySelectorAll('tbody tr[data-home]').forEach(function (row) {
-                if (onlySelected && !row.querySelector('.cat-row-select').checked) { return; }
-                row.querySelectorAll('.cat-loc').forEach(function (box) {
-                    if (box.getAttribute('data-col') === col && !box.disabled && box.checked !== value) {
-                        box.checked = value;
-                        fire(box);
-                    }
+        if (all) { all.addEventListener('change', function () { form.querySelectorAll('.cat-row-select').forEach(function (b) { b.checked = all.checked; }); }); }
+
+        function bulkLocations(value) {
+            var keys = Array.prototype.map.call(form.querySelectorAll('.cat-bulk-loc:checked'), function (b) { return b.getAttribute('data-col'); });
+            var rows = selectedRows();
+            if (!keys.length) { note('Choose at least one location first.'); return; }
+            if (!rows.length) { note('Tick at least one game first.'); return; }
+            var touched = 0;
+            rows.forEach(function (row) {
+                row.querySelectorAll('.cat-loc').forEach(function (b) {
+                    if (keys.indexOf(b.getAttribute('data-col')) !== -1 && !b.disabled && b.checked !== value) { b.checked = value; fire(b); touched++; }
                 });
             });
+            note((value ? 'Ticked ' : 'Unticked ') + touched + ' box(es) on ' + rows.length + ' game(s). Press Save all changes to apply.');
         }
-        form.querySelectorAll('.cat-col-all').forEach(function (link) {
-            link.addEventListener('click', function (e) { e.preventDefault(); setColumn(link.getAttribute('data-col'), true, false); });
+        var add = document.getElementById('cat-bulk-add'), remove = document.getElementById('cat-bulk-remove');
+        if (add) { add.addEventListener('click', function () { bulkLocations(true); }); }
+        if (remove) { remove.addEventListener('click', function () { bulkLocations(false); }); }
+
+        var setPrice = document.getElementById('cat-bulk-setprice');
+        setPrice.addEventListener('click', function () {
+            var input = document.getElementById('cat-bulk-price');
+            var value = parseFloat(input.value);
+            var rows = selectedRows();
+            if (isNaN(value) || value < 0) { note('Type a price first.'); return; }
+            if (!rows.length) { note('Tick at least one game first.'); return; }
+            var done = 0;
+            rows.forEach(function (row) {
+                var box = row.querySelector('.cat-price');
+                if (box) { box.value = value.toFixed(2); fire(box, 'input'); done++; }
+            });
+            note('Price set on ' + done + ' game(s)' + (done < rows.length ? ' (the others use tier or base pricing)' : '') + '. Press Save all changes to apply.');
         });
-        form.querySelectorAll('.cat-col-none').forEach(function (link) {
-            link.addEventListener('click', function (e) { e.preventDefault(); setColumn(link.getAttribute('data-col'), false, false); });
+
+        form.addEventListener('click', function (e) {
+            var link = e.target.closest('a.cat-reg-all, a.cat-reg-none');
+            if (!link) { return; }
+            e.preventDefault();
+            var value = link.classList.contains('cat-reg-all');
+            link.closest('.cat-region').querySelectorAll('input[type=checkbox]').forEach(function (b) {
+                if (!b.disabled && b.checked !== value && b.closest('label').style.display !== 'none') { b.checked = value; fire(b); }
+            });
         });
-        var select = document.getElementById('cat-bulk-col');
-        var add = document.getElementById('cat-bulk-add');
-        var remove = document.getElementById('cat-bulk-remove');
-        if (add) { add.addEventListener('click', function () { setColumn(select.value, true, true); }); }
-        if (remove) { remove.addEventListener('click', function () { setColumn(select.value, false, true); }); }
+        form.addEventListener('input', function (e) {
+            if (!e.target.classList.contains('cat-loc-search')) { return; }
+            var q = e.target.value.trim().toLowerCase();
+            var panel = e.target.closest('.cat-locs-panel');
+            panel.querySelectorAll('.cat-region').forEach(function (region) {
+                var shown = 0;
+                region.querySelectorAll('label').forEach(function (label) {
+                    var hit = !q || label.textContent.toLowerCase().indexOf(q) !== -1;
+                    label.style.display = hit ? '' : 'none';
+                    if (hit) { shown++; }
+                });
+                region.style.display = shown ? '' : 'none';
+            });
+        });
+        form.addEventListener('click', function (e) {
+            var summary = e.target.closest('details.cat-locs > summary');
+            if (!summary) { return; }
+            form.querySelectorAll('details.cat-locs[open]').forEach(function (d) { if (d !== summary.parentNode) { d.removeAttribute('open'); } });
+        });
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('details.cat-locs')) { form.querySelectorAll('details.cat-locs[open]').forEach(function (d) { d.removeAttribute('open'); }); }
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') { form.querySelectorAll('details.cat-locs[open]').forEach(function (d) { d.removeAttribute('open'); }); }
+        });
         refresh();
     })();
     </script>

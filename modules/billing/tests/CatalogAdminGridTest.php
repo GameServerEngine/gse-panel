@@ -10,9 +10,9 @@ function gridExpect($condition, $message)
 }
 
 $agents = array(
-    array('remote_server_id' => 7, 'remote_server_name' => 'Game3', 'location_id' => 6, 'city_name' => 'Kansas City'),
-    array('remote_server_id' => 8, 'remote_server_name' => 'game5', 'location_id' => 6, 'city_name' => 'Kansas City'),
-    array('remote_server_id' => 9, 'remote_server_name' => 'game6', 'location_id' => 4, 'city_name' => 'NYC'),
+    array('remote_server_id' => 7, 'remote_server_name' => 'Game3', 'location_id' => 6, 'city_name' => 'Kansas City', 'region_name' => 'Central USA'),
+    array('remote_server_id' => 8, 'remote_server_name' => 'game5', 'location_id' => 6, 'city_name' => 'Kansas City', 'region_name' => 'Central USA'),
+    array('remote_server_id' => 9, 'remote_server_name' => 'game6', 'location_id' => 4, 'city_name' => 'NYC', 'region_name' => 'East USA'),
     array('remote_server_id' => 10, 'remote_server_name' => 'demo', 'location_id' => null, 'city_name' => null),
     array('remote_server_id' => 11, 'remote_server_name' => 'area-only', 'location_id' => 2, 'city_name' => null),
 );
@@ -27,7 +27,8 @@ gridExpect($byKey['c6']['agent_ids'] === array(7, 8), 'Kansas City covers both o
 gridExpect($byKey['c6']['label'] === 'Kansas City' && $byKey['c6']['city_id'] === 6, 'a city column is named after the city');
 gridExpect($byKey['a10']['label'] === 'demo' && $byKey['a10']['city_id'] === 0, 'a server with no city is named after the server');
 gridExpect(isset($byKey['a11']), 'a server in a location that is not a city is treated as having no city');
-gridExpect(array_column($columns, 'label') === array('area-only', 'demo', 'Kansas City', 'NYC'), 'columns are sorted by name');
+gridExpect(array_column($columns, 'label') === array('Kansas City', 'NYC', 'area-only', 'demo'), 'columns are grouped by region, servers without a city last, each group by name');
+gridExpect($byKey['c6']['region'] === 'Central USA' && $byKey['c4']['region'] === 'East USA' && $byKey['a10']['region'] === '', 'a column knows its region');
 gridExpect(catalog_admin_grid_columns(array()) === array(), 'no servers, no columns');
 
 echo 'CatalogAdminGridTest passed' . PHP_EOL;

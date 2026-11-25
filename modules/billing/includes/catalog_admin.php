@@ -51,9 +51,11 @@ function catalog_admin_agents(mysqli $db, string $prefix): array
 {
     return catalog_admin_rows(
         $db,
-        "SELECT rs.remote_server_id, rs.remote_server_name, rs.server_os, rs.install_enabled, rs.location_id, c.name AS city_name, c.enabled AS city_enabled
+        "SELECT rs.remote_server_id, rs.remote_server_name, rs.server_os, rs.install_enabled, rs.location_id, c.name AS city_name, c.enabled AS city_enabled,
+                r.name AS region_name
          FROM `{$prefix}remote_servers` rs
          LEFT JOIN `{$prefix}billing_locations` c ON c.location_id = rs.location_id AND c.kind = 'city'
+         LEFT JOIN `{$prefix}billing_locations` r ON r.location_id = c.parent_id AND r.kind = 'region'
          ORDER BY rs.remote_server_name"
     );
 }
@@ -454,7 +456,7 @@ function catalog_admin_cities(mysqli $db, string $prefix): array
 /**
  * The location columns of the grid. Agents in the same city share one column; an agent
  * with no city gets a column of its own, named after the agent.
- * Each column: key (c<city id> or a<agent id>), label, city_id, agent_ids.
+ * Each column: key (c<city id> or a<agent id>), label, region (empty for a server with no city), city_id, agent_ids.
  */
 function catalog_admin_grid_columns(array $agents): array
 {
@@ -467,6 +469,7 @@ function catalog_admin_grid_columns(array $agents): array
             $columns[$key] = array(
                 'key' => $key,
                 'label' => $hasCity ? (string)$agent['city_name'] : (string)$agent['remote_server_name'],
+                'region' => $hasCity ? trim((string)($agent['region_name'] ?? '')) : '',
                 'city_id' => $hasCity ? $cityId : 0,
                 'agent_ids' => array(),
             );
@@ -474,7 +477,17 @@ function catalog_admin_grid_columns(array $agents): array
         $columns[$key]['agent_ids'][] = (int)$agent['remote_server_id'];
     }
     $columns = array_values($columns);
+    // Grouped by region (servers without a city last), then by name.
     usort($columns, function ($a, $b) {
+        if ($a['region'] !== $b['region']) {
+            if ($a['region'] === '') {
+                return 1;
+            }
+            if ($b['region'] === '') {
+                return -1;
+            }
+            return strcasecmp($a['region'], $b['region']);
+        }
         return strcasecmp($a['label'], $b['label']);
     });
     return $columns;
