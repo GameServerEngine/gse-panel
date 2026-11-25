@@ -16,5 +16,5 @@ $db_version = 0;
 $module_required = FALSE;
 $module_menus = array(
     array( 'subpage' => 'detail', 'name' => 'Server status', 'group' => 'user' ),
-    array( 'subpage' => 'settings', 'name' => 'Status history settings', 'group' => 'admin' )
+    array( 'subpage' => 'history_settings', 'name' => 'Status history', 'group' => 'admin' )
 );

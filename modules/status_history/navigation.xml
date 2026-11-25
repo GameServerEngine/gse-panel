@@ -1,5 +1,5 @@
 <navigation>
   <page key="default" file="detail.php" access="admin,user,subuser" />
   <page key="detail" file="detail.php" access="admin,user,subuser" />
-  <page key="settings" file="settings.php" access="admin" />
+  <page key="history_settings" file="settings.php" access="admin" />
 </navigation>

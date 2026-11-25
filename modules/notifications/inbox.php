@@ -24,16 +24,28 @@
 include 'modules/notifications/functions.php';
 function exec_module()
 {
+	if(isset($_GET['mark_read']) and is_numeric($_GET['mark_read']))
+		set_notification_readed($_GET['mark_read']);
+	if(isset($_GET['delete_notification']) and is_numeric($_GET['delete_notification']))
+		remove_notification($_GET['delete_notification']);
+
 	$notifications = get_notifications();
 	if(isset($_GET['list']))
 	{
 		echo '<h2>'.get_lang('your_notifications').'</h2>';
 		rsort($notifications);
 		echo "<table id='notification_list'>\n".
-			 "<thead><tr><th>".get_lang('status')."</th><th>".get_lang('subject')."</th><th>".get_lang('date')."</th></tr></thead><tbody>\n";
-		foreach ((array)$notifications as $key => $notification)
+			 "<thead><tr><th>".get_lang('status')."</th><th>".get_lang('subject')."</th><th>".get_lang('date')."</th><th></th></tr></thead><tbody>\n";
+		foreach ((array)$notifications as $notification)
 		{
-			echo '<tr><td><i class="status_'.$notification['status'].'"></i></td><td><a href="?m=notifications&p=inbox&read_notification='.$notification['notification_id'].'">'.$notification['subject']."</a></td><td>".$notification['timestamp']."</td></tr>\n";
+			$id = (int)$notification['notification_id'];
+			$actions = '';
+			if($notification['status'] == '0')
+				$actions .= "<a href='?m=notifications&p=inbox&list=true&mark_read=$id'>".get_lang('mark_as_read')."</a> ";
+			$actions .= "<a href='?m=notifications&p=inbox&list=true&delete_notification=$id'>".get_lang('delete')."</a>";
+			echo '<tr><td><i class="status_'.$notification['status'].'"></i></td>'.
+				 '<td><a href="?m=notifications&p=inbox&read_notification='.$id.'">'.htmlspecialchars($notification['subject']).'</a></td>'.
+				 '<td>'.$notification['timestamp'].'</td><td>'.$actions.'</td></tr>'."\n";
 		}
 		echo "</tbody></table>\n";
 	}
@@ -43,7 +55,7 @@ function exec_module()
 			if($notification['notification_id'] == $_GET['read_notification'])
 				break;
 		echo '<div id="notification_message">'.$notification['message']."</div>\n".
-			 '<p><a href="?m=notifications&p=inbox&list">&lt;&lt; '.get_lang('back')."</a></p>\n";
+			 '<p><a href="?m=notifications&p=inbox&list=true">&lt;&lt; '.get_lang('back')."</a></p>\n";
 		if($notification['status'] == "0")
 			set_notification_readed($notification['notification_id']);
 	}

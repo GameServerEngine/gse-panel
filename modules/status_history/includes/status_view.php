@@ -227,7 +227,7 @@ function sv_dashboard_html($db, $isAdmin)
 
 	if (!$cfg['enabled']) {
 		$html .= "<p>Status history reporting is turned off.</p>";
-		if ($isAdmin) $html .= "<p><a href='home.php?m=status_history&amp;p=settings'>Status history settings</a></p>";
+		if ($isAdmin) $html .= "<p><a href='home.php?m=status_history&amp;p=history_settings'>Status history settings</a></p>";
 		return $html . "</div></div></div>";
 	}
 

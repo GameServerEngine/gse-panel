@@ -22,7 +22,7 @@ $module_menus = array(
 	array('subpage' => 'my_notifications', 'name' => 'Notifications', 'group' => 'user'),
 );
 
-$install_queries[0] = array(
+$install_queries[1] = array(
 	"CREATE TABLE IF NOT EXISTS `".DB_PREFIX."notification` (
 		`notification_id` int NOT NULL AUTO_INCREMENT,
 		`subject` TEXT NOT NULL,

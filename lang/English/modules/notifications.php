@@ -40,4 +40,5 @@ define('LANG_groups', "Groups");
 define('LANG_subusers_of_user', "Subusers");
 define('LANG_message', "Message");
 define('LANG_send_notification', "Send Notification");
+define('LANG_mark_as_read', "Mark as read");
 ?>

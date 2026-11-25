@@ -53,7 +53,6 @@ define('LANG_updated_module', "Updated module: '%s'.");
 define('LANG_updating_modules', "Updating Modules");
 define('LANG_updating_finished', "Updating Finished");
 define('LANG_prereqs_missing', "Prerequisites of %s must be installed on the game server before %s can be installed.");
-?>
 define('LANG_group_required', "Required");
 define('LANG_group_enabled', "Enabled");
 define('LANG_group_disabled', "Disabled");

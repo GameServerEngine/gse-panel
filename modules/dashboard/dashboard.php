@@ -73,16 +73,17 @@ function dash_notifications_card($db)
 	$body .= "<p>Open tickets: <b>$tickets</b></p>";
 	$body .= "<p>Unpaid invoices: <b>$invoices</b></p>";
 
-	$notifications = $db->resultQuery("SELECT c.subject, c.`timestamp` FROM DB_PREFIXnotification_recipients r NATURAL JOIN DB_PREFIXnotification c WHERE r.user_id = $uid ORDER BY c.`timestamp` DESC LIMIT 3");
+	// Only unread notifications are active; read ones leave the dashboard.
+	$notifications = $db->resultQuery("SELECT c.notification_id, c.subject FROM DB_PREFIXnotification_recipients r NATURAL JOIN DB_PREFIXnotification c WHERE r.user_id = $uid AND r.status = 0 ORDER BY c.`timestamp` DESC LIMIT 5");
 	if (is_array($notifications) && count($notifications) > 0)
 	{
 		$body .= "<ul style='margin:0;padding-left:18px;'>";
 		foreach ($notifications as $notification)
-			$body .= "<li>" . htmlspecialchars($notification['subject']) . "</li>";
+			$body .= "<li><a href='home.php?m=notifications&amp;p=inbox&amp;read_notification=" . (int)$notification['notification_id'] . "'>" . htmlspecialchars($notification['subject']) . "</a></li>";
 		$body .= "</ul>";
 	}
 	else
-		$body .= "<p>No notifications.</p>";
+		$body .= "<p>No unread notifications.</p>";
 
 	return dash_card('Notifications', $body, 'home.php?m=notifications&p=inbox&list=true');
 }
@@ -91,33 +92,65 @@ function dash_news_card()
 {
 	$file = __DIR__ . '/../news/data/listings.xml';
 	$xml = file_exists($file) ? simplexml_load_file($file) : false;
-	$best = -1;
-	$bestTime = -1;
+	$items = array();
 	if ($xml)
 	{
 		$index = 0;
 		foreach ($xml->listing as $item)
 		{
-			if ((int)$item->time > $bestTime)
-			{
-				$bestTime = (int)$item->time;
-				$best = $index;
-			}
+			$items[] = array(
+				'id' => $index,
+				'time' => (int)$item->time,
+				'title' => htmlspecialchars(strip_tags(html_entity_decode((string)$item->title))),
+			);
 			$index++;
 		}
+		usort($items, function ($a, $b) { return $b['time'] - $a['time']; });
 	}
-	if ($best < 0)
+	if (empty($items))
 		return dash_card('Latest News', '<p>No news yet.</p>', '');
 
-	$item = $xml->listing[$best];
-	$title = htmlspecialchars(strip_tags(html_entity_decode((string)$item->title)));
-	$when = new DateTime('@' . $bestTime);
-	$when->setTimezone(new DateTimeZone('America/Chicago'));
-	$body = "<p><b>$title</b></p><p><small>" . $when->format('M j, Y') . "</small></p>";
-	return dash_card('Latest News', $body, "home.php?m=news&p=news&page=details&id=$best");
+	// Items from the last 7 days are marked NEW; the newest items are listed first.
+	$recent_since = time() - 7 * 86400;
+	$body = '';
+	foreach (array_slice($items, 0, 4) as $item)
+	{
+		$when = new DateTime('@' . $item['time']);
+		$when->setTimezone(new DateTimeZone('America/Chicago'));
+		$badge = $item['time'] >= $recent_since
+			? " <span style='background:#f90;color:#000;border-radius:3px;padding:0 5px;font-size:11px;'>NEW</span>"
+			: '';
+		$body .= "<p style='margin:0 0 8px;'><a href='home.php?m=news&amp;p=news&amp;page=details&amp;id=" . $item['id'] . "'>" . $item['title'] . "</a>" . $badge . "<br><small>" . $when->format('M j, Y') . "</small></p>";
+	}
+	return dash_card('Latest News', $body, 'home.php?m=news&p=news');
 }
 
+function dash_account_card($db)
+{
+	$uid = (int)$_SESSION['user_id'];
+	if ($db->isAdmin($uid))
+		$homes = $db->getHomesFor('admin', $uid);
+	elseif ($db->isSubUser($uid))
+		$homes = $db->getHomesFor('subuser', $uid);
+	else
+		$homes = $db->getHomesFor('user_and_group', $uid);
 
+	$body = '';
+	$seen = array();
+	foreach ((array)$homes as $home)
+	{
+		$hid = (int)(isset($home['home_id']) ? $home['home_id'] : $home['hid']);
+		if (isset($seen[$hid]))
+			continue;
+		$seen[$hid] = true;
+		$name = isset($home['home_name']) ? $home['home_name'] : ('Server ' . $hid);
+		$body .= "<p style='margin:0 0 6px;'><a href='home.php?m=gamemanager&amp;p=game_monitor&amp;home_id=$hid'>" . htmlspecialchars($name) . "</a></p>";
+	}
+	if ($body === '')
+		$body = '<p>No game servers assigned to you yet.</p>';
+
+	return dash_card('Account Overview', $body, 'home.php?m=gamemanager&p=game_monitor');
+}
 
 function exec_module()
 {
@@ -155,7 +188,7 @@ function exec_module()
 	<?php
 
 	$dashCards = array();
-	$dashCards[] = dash_card('Account Overview', 'Review your assigned servers and jump straight into the Game Monitor.', 'home.php?m=gamemanager&p=game_monitor');
+	$dashCards[] = dash_account_card($db);
 	$dashCards[] = dash_notifications_card($db);
 	$dashCards[] = dash_news_card();
 	echo "<div class='dash-cards' style='display:flex;flex-wrap:wrap;gap:16px;align-items:stretch;'>" . implode('', $dashCards) . "</div>";
