@@ -14,7 +14,7 @@ function restic_admin_defaults()
     // data dir /srv/restic-dev). Shown on the form until saved; saving stores them in settings.
     return array(
         'restic_rest_url'          => 'http://10.255.0.1:8000',   // rest-server base URL, e.g. http://<address>:<port>
-        'restic_target_host'       => 'dr.isaserver.net',         // backup server host name or IP, for SSH
+        'restic_target_host'       => 'backup.vpn.isaserver.net',         // backup server host name or IP, for SSH
         'restic_target_user'       => 'leroy',                    // SSH user on the backup server
         'restic_target_path'       => '/srv/restic-dev',          // storage directory on the backup server (reference only)
         'restic_policy_mode'       => 'manual',   // manual | daily | every_x_days

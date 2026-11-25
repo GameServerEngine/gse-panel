@@ -28,6 +28,7 @@ function exec_module()
 	require_once('includes/form_table_class.php');
 	global $db;
 	echo "<h2>".get_lang('litefm_settings')."</h2>";
+	echo "<p><a class='btn btn-sm btn-success' href='?m=litefm&amp;home_id=panel'>Open LiteFM on the panel files</a></p>";
 
 	// Get File Operations Keys
 	$fo_keys = get_file_operations_keys();

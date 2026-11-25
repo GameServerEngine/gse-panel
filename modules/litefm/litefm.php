@@ -29,6 +29,40 @@ if (!function_exists('with_game_root')) {
 require_once('includes/lib_remote.php');
 require_once('modules/config_games/server_config_parser.php');
 
+// The pseudo server "panel" is the panel's own files, for administrators. It is opened with the same file
+// manager and the same calls as a real server, through LocalPanelRemote.
+function litefm_is_panel_home($home_id)
+{
+	return (string)$home_id === 'panel';
+}
+
+function litefm_get_home($db, $home_id, $as_admin)
+{
+	if (litefm_is_panel_home($home_id)) {
+		if (!$db->isAdmin($_SESSION['user_id'])) {
+			return false;
+		}
+		$root = realpath(dirname(__DIR__, 2));
+		return array('home_id' => 'panel', 'home_name' => 'Panel files', 'home_path' => $root, 'game_root' => $root, 'access_rights' => 'f',
+			'agent_ip' => '', 'agent_port' => 0, 'encryption_key' => '', 'timeout' => 5, 'home_cfg_file' => '', 'remote_server_id' => 0, 'is_panel' => true);
+	}
+	return $as_admin ? $db->getGameHome($home_id) : $db->getUserGameHome($_SESSION['user_id'], $home_id);
+}
+
+function litefm_open_remote(array $home_cfg)
+{
+	if (!empty($home_cfg['is_panel'])) {
+		require_once(__DIR__ . '/local_remote.php');
+		return new LocalPanelRemote($home_cfg['home_path']);
+	}
+	return new RemoteLibrary($home_cfg['agent_ip'], $home_cfg['agent_port'], $home_cfg['encryption_key'], $home_cfg['timeout']);
+}
+
+function litefm_back_url(array $home_cfg)
+{
+	return !empty($home_cfg['is_panel']) ? '?m=litefm&amp;p=litefm_settings' : '?m=gamemanager&amp;p=game_monitor&amp;home_id=' . $home_cfg['home_id'];
+}
+
 function litefm_decode_name_param($value)
 {
 	return rawurldecode((string)$value);
@@ -92,6 +126,9 @@ function litefm_payload_root(array $homeCfg)
 function litefm_attach_game_root(array $homeCfg, &$error = '')
 {
 	$error = '';
+	if (!empty($homeCfg['is_panel'])) {
+		return $homeCfg;
+	}
 	if (empty($homeCfg['home_cfg_file'])) {
 		$error = 'Server XML configuration is missing.';
 		return false;

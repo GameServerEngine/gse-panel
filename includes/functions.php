@@ -983,7 +983,26 @@ function updateAllPanelModules(){
 				continue;
 			update_module($db, $row['id'], $row['folder']);
 		}
+		panel_install_new_modules($db);
 	}
+}
+
+// Installs every module that is on disk but has no row in the modules table (for example Assistant after an update).
+function panel_install_new_modules($db)
+{
+    if (!function_exists('install_module') || !function_exists('list_available_modules')) {
+        return;
+    }
+    $installed = array();
+    foreach ((array)$db->getInstalledModules() as $row) {
+        $installed[] = $row['folder'];
+    }
+    foreach ((array)list_available_modules() as $folder) {
+        if (preg_match('/\.bak/i', $folder) || in_array($folder, $installed, true) || !is_file('modules/' . $folder . '/module.php')) {
+            continue;
+        }
+        install_module($db, $folder, TRUE);
+    }
 }
 
 function getRemoteContent($url, $timeout = 5, $referrer = ""){

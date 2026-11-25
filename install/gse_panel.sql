@@ -756,7 +756,7 @@ INSERT INTO `DB_PREFIXmodule_menus` (`module_id`, `subpage`, `group`, `menu_name
 (16,'lgsl','user','LGSL',0),
 (16,'lgsl','guest','LGSL',0),
 (16,'lgsl_admin','admin','LGSL Admin',0),
-(17,'litefm_settings','admin','LiteFM Settings',0),
+(17,'litefm_settings','admin','LiteFM',0),
 (19,'','admin','Modules',0),
 (20,'mysql_admin','admin','MySQL Admin',0),
 (21,'news','user','News',0),
@@ -772,7 +772,6 @@ INSERT INTO `DB_PREFIXmodule_menus` (`module_id`, `subpage`, `group`, `menu_name
 (26,'','admin','Remote Agents',0),
 (27,'','admin','Panel Settings',0),
 (27,'themes','admin','Theme Settings',0),
-(29,'workshop_admin','admin','Steam Workshop',0),
 (31,'support','user','Support',0),
 (33,'','user','Support Tickets',0),
 (33,'ticket_settings','admin','Support Ticket Settings',0),
@@ -781,7 +780,8 @@ INSERT INTO `DB_PREFIXmodule_menus` (`module_id`, `subpage`, `group`, `menu_name
 (36,'','admin','User Admin',0),
 (36,'show_groups','admin','Group Admin',0),
 (37,'','admin','Game Servers',0),
-(38,'','user','Utilities',0);
+(38,'','user','Utilities',0),
+(39,'admin','admin','Assistant',0);
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `DB_PREFIXmodules` (
@@ -793,7 +793,7 @@ CREATE TABLE `DB_PREFIXmodules` (
   `enabled` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`),
   UNIQUE KEY `folder` (`folder`)
-) ENGINE=MyISAM AUTO_INCREMENT=39 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=40 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 INSERT INTO `DB_PREFIXmodules` (`id`, `title`, `folder`, `version`, `db_version`, `enabled`) VALUES (1,'TS3Admin','TS3Admin','0.2',1,1),
 (2,'Server Content Manager','addonsmanager','2.6',9,1),
@@ -811,7 +811,7 @@ INSERT INTO `DB_PREFIXmodules` (`id`, `title`, `folder`, `version`, `db_version`
 (14,'ftp','ftp','1.0',1,1),
 (15,'Game manager','gamemanager','1.33',3,1),
 (16,'LGSL','lgsl_with_img_mod','0.2',0,1),
-(17,'Lite File Manager','litefm','1.0',1,1),
+(17,'Lite File Manager','litefm','1.1',1,1),
 (18,'Lost Password','lostpwd','1.0',0,1),
 (19,'Module manager','modulemanager','1.0',1,1),
 (20,'MySQL','mysql','0.1',0,1),
@@ -823,7 +823,6 @@ INSERT INTO `DB_PREFIXmodules` (`id`, `title`, `folder`, `version`, `db_version`
 (26,'Remote Agents','server','1.2',5,1),
 (27,'Settings','settings','1.0',1,1),
 (28,'Status','status','Alpha',0,1),
-(29,'Steam Workshop','steam_workshop','1.1',0,1),
 (30,'subusers','subusers','1.0',0,1),
 (31,'Support','support','1.0',0,0),
 (32,'Teamspeak 3 Web Interface','teamspeak3','Beta 3.4.2',0,1),
@@ -832,7 +831,8 @@ INSERT INTO `DB_PREFIXmodules` (`id`, `title`, `folder`, `version`, `db_version`
 (35,'Update','update','1.0',4,1),
 (36,'User admin','user_admin','1.0',7,1),
 (37,'User games','user_games','1.0',3,1),
-(38,'Utilities','util','1.0',0,1);
+(38,'Utilities','util','1.0',0,1),
+(39,'Assistant','assistant','1.0',1,1);
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `DB_PREFIXmysql_databases` (
@@ -1320,7 +1320,8 @@ CREATE TABLE `DB_PREFIXsettings` (
   PRIMARY KEY (`setting`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-INSERT INTO `DB_PREFIXsettings` (`setting`, `value`) VALUES ('title','Gameserver Engine Panel'),
+INSERT INTO `DB_PREFIXsettings` (`setting`, `value`) VALUES ('title','GameServer Engine'),
+('panel_name','GameServer Engine'),
 ('slogan','The Open-Source one!'),
 ('panel_version','0'),
 ('version_type','GSP'),
@@ -1583,3 +1584,52 @@ CREATE TABLE `DB_PREFIXwidgets_users` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- Assistant module (usage limits and audit log)
+CREATE TABLE IF NOT EXISTS `DB_PREFIXassistant_usage` (
+  `user_id` int NOT NULL,
+  `month` char(7) NOT NULL,
+  `input_tokens` bigint NOT NULL DEFAULT 0,
+  `output_tokens` bigint NOT NULL DEFAULT 0,
+  `requests` int NOT NULL DEFAULT 0,
+  PRIMARY KEY (`user_id`,`month`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE IF NOT EXISTS `DB_PREFIXassistant_log` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `created` datetime NOT NULL,
+  `question` text,
+  `tools` varchar(255) DEFAULT NULL,
+  `answer` text,
+  `input_tokens` int NOT NULL DEFAULT 0,
+  `output_tokens` int NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `user_time` (`user_id`,`created`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE IF NOT EXISTS `DB_PREFIXassistant_server_usage` (
+  `home_id` int NOT NULL,
+  `month` char(7) NOT NULL,
+  `input_tokens` bigint NOT NULL DEFAULT 0,
+  `output_tokens` bigint NOT NULL DEFAULT 0,
+  `requests` int NOT NULL DEFAULT 0,
+  PRIMARY KEY (`home_id`,`month`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE IF NOT EXISTS `DB_PREFIXassistant_proposals` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `home_id` int NOT NULL DEFAULT 0,
+  `kind` varchar(12) NOT NULL,
+  `target` varchar(300) NOT NULL,
+  `old_content` mediumblob,
+  `new_content` mediumblob,
+  `note` varchar(300) DEFAULT NULL,
+  `status` varchar(10) NOT NULL DEFAULT 'pending',
+  `created` datetime NOT NULL,
+  `decided` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `home_status` (`home_id`,`status`),
+  KEY `kind_status` (`kind`,`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;

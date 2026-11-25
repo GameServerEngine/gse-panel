@@ -2,7 +2,7 @@
 /**
  * GSP PayPal Webhook Receiver
  *
- * Public URL: $SITE_BASE_URL + $paypal_webhook_path (e.g. https://gameservers.world/paypal/webhook.php)
+ * Public URL: $SITE_BASE_URL + $paypal_webhook_path (e.g. https://order.gameserverengine.com/paypal/webhook.php)
  *
  * This endpoint:
  *   1. Reads raw POST JSON from PayPal

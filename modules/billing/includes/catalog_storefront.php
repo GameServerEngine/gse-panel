@@ -92,6 +92,42 @@ if (!function_exists('catalog_load_offers_for_game')) {
     }
 }
 
+if (!function_exists('catalog_load_game_content')) {
+    /**
+     * Server content (addons) an admin has set up for a game, for the order page.
+     * Each row: addon_id, name, type_label, description. Returns an empty list when there is none
+     * or the addons table is not there.
+     */
+    function catalog_load_game_content(mysqli $db, string $prefix, int $homeCfgId): array
+    {
+        $rows = [];
+        try {
+            $res = $db->query(
+                "SELECT addon_id, name, addon_type, description FROM `{$prefix}addons`
+                 WHERE home_cfg_id = '" . (int)$homeCfgId . "' ORDER BY name, addon_id"
+            );
+            $seen = [];
+            while ($res && ($row = $res->fetch_assoc())) {
+                $key = strtolower(trim((string)$row['name']));
+                if ($key === '' || isset($seen[$key])) {
+                    continue;
+                }
+                $seen[$key] = true;
+                $type = trim(str_replace(array('_', '-'), ' ', (string)$row['addon_type']));
+                $rows[] = [
+                    'addon_id' => (int)$row['addon_id'],
+                    'name' => (string)$row['name'],
+                    'type_label' => $type !== '' ? ucfirst(strtolower($type)) : 'Content',
+                    'description' => trim(strip_tags((string)($row['description'] ?? ''))),
+                ];
+            }
+        } catch (Throwable $e) {
+            return [];
+        }
+        return $rows;
+    }
+}
+
 if (!function_exists('catalog_load_offer_by_id')) {
     function catalog_load_offer_by_id(mysqli $db, string $prefix, int $offerId): ?array
     {

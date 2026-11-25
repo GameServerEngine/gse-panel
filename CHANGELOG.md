@@ -2,8 +2,81 @@
 
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
+## Unreleased
+- **Group restart reports success:** restarting servers from a group action reported every restart as failed, because the restart code never returned its success. It now does.
+- **Urban Terror installs without our file server:** the Urban Terror 4 game configuration downloaded the game from files.iaregamer.com, which no longer serves it, so an install left a web page where the game should be. It now downloads the official Urban Terror 4.3.4 zip from the game's own site and checks it against the published checksum before unpacking.
+
+## 2.21.0 (2026-11-24)
+- **Logo shown at one set size:** the logo in the panel header is now 112 pixels high, twice the old size, and its width follows the picture. A long logo with your name inside it fits as well as a square mark. Clear the Panel name setting and no text is written beside the logo. On the storefront the logo mark is now 112 pixels high on a computer, 88 on a tablet and 72 on a phone (before: 62, 52 and 42). The size comes from one value, the header height, so it is changed in one place.
+- **Storefront stylesheet updates at once:** the storefront's stylesheet address now carries its change time, so a changed stylesheet is loaded immediately instead of a copy kept by the browser or the offline cache.
+- **New storefront address:** the storefront now lives at order.gameserverengine.com and the panel at panel.gameserverengine.com. The storefront's panel link, the example addresses and the PayPal webhook example use the new names. The retired gameservers.world address is gone from the code.
+
+## 2.20.0 (2026-11-24)
+- **One GameServer Engine logo and name:** the panel header (SimpleBootstrap theme) now shows the GameServer Engine mark from Settings > Panel logo with the Panel name beside it, instead of a fixed GameServers World picture. The browser-tab icon, favicon files, app manifest and the panel's default name ("GameServer Engine") use the same mark. The storefront (modules/billing) already uses the mark and the Panel name setting. Removed the unused old logo pictures. Change the name or logo any time under Settings; they apply to the panel and the storefront.
+
+## 2.19.0 (2026-11-24)
+- **Give the AI a name:** AI Assist has a new "AI name" setting. Empty, the server button and chat say "Ask AI". Enter a name such as Dave and the button, the chat heading, the chat label and the Admin page say "Ask Dave", and the assistant answers to that name. The module and its Admin menu entry stay "AI Assist".
+
+## 2.18.3 (2026-11-24)
+- **Backup target name:** the Backup/Restore module's default backup server is now `backup.vpn.isaserver.net` (the old `dr.isaserver.net` name no longer exists).
+
+## 2.18.2 (2026-11-24)
+- **The assistant is now called "AI Assist":** the server button, the Admin menu entry, the page headings, the chat label and the settings switch all use the new name.
+
+## 2.18.1 (2026-11-24)
+- **Message boxes keep their icon beside the text after an update:** the theme's stylesheets and scripts now carry the panel version in their address, so a browser can no longer keep showing the old copy after a release (the icon sat on top of the text when it did).
+
+## 2.18.0 (2026-11-24)
+- **Steam Workshop module removed from the panel:** Steam Workshop is handled by Server Content only. The module, its API endpoint, menu entry, per-server button and theme rules are gone; the server list page no longer needs any module (it shows a module's buttons only if the module exists). The old code is kept for reference in `_reference/`, which is left out of release archives.
+- **Backup/Restore button icon:** shows a cloud-upload icon in the SimpleBootstrap theme instead of the default target.
+
+## 2.17.4 (2026-11-24)
+- **Assistant limits match how people type:** one question per 30 seconds and 60 per hour for each user (was 6 a minute, which a person cannot reach). Each server may use 2,000,000 tokens a month (about $1 at Haiku prices); the per-customer cap is left at its maximum so a customer with several servers gets each server's allowance.
+- **Assistant answers could come back empty:** the assistant thinks before it answers, and thinking shares the same length limit as the answer. A low limit (1200) could be used up by thinking alone, so no answer was written, yet the request was still billed. The default limit is now 16000 (up to 32000 can be set; only tokens actually written are charged), and if a reply still runs out of room the assistant now says so instead of showing nothing.
+
+## 2.16.6 (2026-11-19)
+- **Message box icons covered the text (SimpleBootstrap theme):** the green, red and yellow message boxes get an icon, but a padding rule meant for icon-less boxes removed the room reserved for it, so the icon sat on top of the first letters. That rule now only applies to warning boxes, which have no icon.
+
+## 2.16.5 (2026-11-19)
+- **Admin Assistant page showed PHP warnings** when nothing had been used yet (a query with no rows was read as a row). Empty results are now treated as an empty list on the usage tables, the proposals list, the log and the patch queue.
+
+## 2.16.4 (2026-11-19)
+- **Assistant still missing in Module Manager:** the module list only showed modules that already had a row, and the sync that adds new ones only ran as part of the update. Opening Module Manager now adds every module that is on disk but not in the modules table, so the Assistant appears and can be enabled.
+- **Admin assistant has no limits on what it can fix:** a fix is now one change set with any number of steps. A step changes a file on the panel or on any agent (the whole machine, the panel config included), runs an SQL statement on the panel database or any MySQL server, or runs a command on the panel or an agent. The administrator sees every step as a diff, presses Apply, and the steps run in order and stop at the first failure. Undo puts file changes back. The assistant can also read any file on the panel or an agent and run read-only queries on the panel database and every MySQL server. Nothing is hidden from it, so what it reads is sent to the AI provider. The admin switches for files, edits and resets, and the folder lists, no longer apply to the admin assistant. PHP files must still pass a syntax check before they are written.
+- **LiteFM on the panel's own files is the same file manager customers use:** Admin > LiteFM has a button that opens the normal LiteFM with the panel folder as the server. View, edit, download, upload, rename, copy, move, compress and delete all work and can be used to test LiteFM itself. Every change to an existing file keeps a copy in logs/litefm-backups, and a PHP file that fails the syntax check is not saved.
+
+## 2.16.3 (2026-11-19)
+- **Assistant module missing after an update:** the panel only refreshed modules it already had, so a module added in a new release (the AI Assistant) never got its row. It did not show in Module Manager, the Admin menu or the Game Monitor button. Updating the panel now installs any module that is new since the last update. A module an admin removed is not brought back.
+- **Admin assistant can now propose repairs, not only read:** it can propose one SQL statement (for example a missing grant or account) and a change to one file in the panel folder. Nothing runs until the administrator presses Apply. SQL is limited to one statement with no DROP, TRUNCATE or RENAME. A panel file gets a backup and a PHP syntax check before it is written. The panel config, keys and secrets are never changed.
+- **LiteFM menu entry is now called LiteFM:** the Admin menu entry was LiteFM Settings. The LiteFM page has a button that opens a file browser of the panel's own files, where an administrator can open, edit and save files. Each save keeps a backup next to the file.
+
+## Unreleased
+- **testing always equals working:** a GitHub Action (sync-testing.yml) runs after every release build on working and makes testing identical to it, then builds the testing release. Changes are made on working only.
+- **New: type the AI Assistant API key on the Admin > Assistant page:** no need to edit a file on the server. The key is saved in the panel database and only its last 4 characters are ever shown. A key file, if present, is still used first.
+
+## 2.16.0 (2026-11-18)
+- **AI Assistant can find problems in logs and files, and prepare fixes:** The assistant for a server now reads the log for errors, attacks (failed logins, bans, kicks, rcon and injection attempts) and logins, reads and searches the server's own config and script files, and runs read-only queries on the server's database. It reports what it found with counts and times. To fix something it can propose a change to a file or write a new script or config. You see the exact difference, press Apply, and can Undo a change to an existing file. Nothing is written until you press Apply. Passwords and keys are blanked in everything the AI sees.
+- **AI Assistant for administrators can look at the whole system:** The Admin assistant can read the panel's own code and logs (never the config file or keys), files on agent machines in folders you allow, and any game server's logs, files and database. It can offer start / stop / restart and new-password buttons and file changes for any server. For the panel or an agent it saves a patch for you to download and apply through git; it never edits live panel files.
+- **New: every assistant setting is on the Admin > Assistant page:** switch it on or off, allow or block customers, choose the model, set the monthly budget (default $5, stops all use including admins), the cap per customer, the cap per server (with overrides for single servers), the cap per question, the questions per minute, and which tools it has (files, edits, database, password buttons). The page shows this month's use and estimated cost per customer and per server, the saved patches, and recent activity. Update the Assistant module in Module Manager after upgrading; it adds two tables.
+
+## 2.15.0 (2026-11-18)
+- **New: AI Assistant inside Game Monitor (off by default):** Each server in Game Monitor has an AI Assistant button. It opens a chat for that one server and nothing else, so a customer can only ever talk about a server they own. It reads the server's status and log, checks the server's MySQL database and FTP login, and can offer buttons: Start, Stop, Restart, a new database password, or a new FTP password. The assistant never presses a button. Passwords are made by the panel, are easy to type (three plain words), are shown once on the customer's screen, and never go to the AI or into the log. Turn it on with the assistant_enabled setting and the key file described in docs/ASSISTANT.md.
+- **New: Assistant page in the Admin menu:** Administrators get a read-only assistant that checks the panel (version, disk, errors), MySQL (version, uptime, connections, database sizes), the game databases, every agent (online, version, response time) and any server's status and log. It cannot change anything.
+- **Customers no longer have an Assistant menu entry:** the old general chat page is replaced by the per-server chat. Update the Assistant module in Module Manager after upgrading; it creates the usage tables and moves the menu entry to Admin.
+
 ## 2.14.0 (2026-11-18)
 - **New: Assistant (off by default):** Customers can ask in plain words about their own game servers, such as whether a server is running, what errors are in the log, or who joined, and the assistant can offer Start, Stop and Restart buttons that the customer presses. It uses the Claude Haiku model through the Claude API, so it needs an API key stored on the panel server. An admin turns it on in settings (assistant_enabled), and until then nothing changes and no data leaves the panel. It can only see servers the signed-in user owns, cannot act by itself, ignores instructions found inside log files, refuses unrelated questions, and has a monthly usage cap and a per-minute limit per user. Every question is recorded in an audit table. The per-server chat in Game Monitor and the admin diagnostics are the next steps.
+
+## 2.13.2 (2026-11-17)
+- **The FTP Users page did not work:** The page that lists and edits a server's FTP accounts could not read the Windows agent's replies correctly and showed Windows paths in a form the panel did not understand. It now reads those replies correctly, converts Windows paths, and the server edit page checks only the one account it is editing instead of every account.
+
+## 2.13.1 (2026-11-17)
+- **FTP Users page crashed on some servers:** The page used a settings value before it was set, and failed when a server's record was missing. It now sets that value first and shows a clear message when the record is missing.
+
+## 2.13.0 (2026-11-17)
+- **New: Analyze Log in the File Manager:** Log files get an Analyze Log link. It reads the end of the log (the last 2 MB) and lists likely problems such as crashes, missing libraries, plugin and config errors and failed connections, with how often each happened, sample lines and what to try next. The log text is only searched and shown safely, never run. An optional AI analysis stays off unless an admin sets up a provider; it sends a copy with secrets, e-mail addresses, IP addresses, Steam IDs and user folders removed, only after you tick a box and press the button.
+- **New: Utilities page with categories and more tools:** The Utilities page now has Network Tools, Game Tools and Steam and Admins, with new Port Checker, TCP Connection Test, Server Query, Traceroute and Download Speed Test. Tools that run on an agent are limited to your own servers' addresses (admins can test other targets), have rate limits, and are written to an audit log. An agent that is too old says it needs updating. Admins can set the rules under Utilities > Diagnostics policy.
+- **New: Resource Planner for admins:** Administration > Resource Planner has a Bandwidth Calculator and a Storage Calculator that show their formulas with your numbers and give estimates for monthly traffic, port speed and disk space. The numbers are planning estimates, not measured usage.
 
 ## 2.12.1 (2026-11-17)
 - **Message box icons covered the first word:** The info, success, warning and error boxes reserve room on the left for their icon, but the new status color rules reset the padding and put the icon on top of the text. The color rules no longer set padding on those boxes, so the room for the icon stays.

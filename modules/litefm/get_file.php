@@ -35,9 +35,9 @@ function exec_module()
 	$isAdmin = $db->isAdmin( $_SESSION['user_id'] );
 
 	if($isAdmin)
-		$home_cfg = $db->getGameHome($home_id);
+		$home_cfg = litefm_get_home($db, $home_id, true);
 	else
-		$home_cfg = $db->getUserGameHome($_SESSION['user_id'],$home_id);
+		$home_cfg = litefm_get_home($db, $home_id, false);
 	$path_error = '';
 	$home_cfg = is_array($home_cfg) ? litefm_attach_game_root($home_cfg, $path_error) : false;
 	if ($home_cfg === false) {
@@ -97,7 +97,7 @@ function exec_module()
 	}
 
 	set_time_limit(0);
-	$remote = new RemoteLibrary($home_cfg['agent_ip'], $home_cfg['agent_port'], $home_cfg['encryption_key'], $home_cfg['timeout']);
+	$remote = litefm_open_remote($home_cfg);
 	$fp = fopen("$downloads_folder/$did", "w");
 	$filePath = litefm_safe_join_home_path(litefm_payload_root($home_cfg), isset($_SESSION['download'][$did]['fileph']) ? $_SESSION['download'][$did]['fileph'] : '');
 	if ($filePath === false)

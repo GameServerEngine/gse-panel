@@ -28,7 +28,8 @@ class View {
 
     private string $meta = '';
     private string $noscriptRefresh = '';
-    private string $title = 'Gameserver Engine Panel';
+    private string $title = 'GameServer Engine';
+    private string $panel_name = '';
     private string $header_code = '';
 
     private $refreshTime;
@@ -66,6 +67,16 @@ class View {
 		}
 
 		$page = file_get_contents($path.'layout.html');
+		// The theme's own stylesheets and scripts carry the panel version, so a new release is never shown with old copies from the browser cache.
+		if (!defined('PANEL_VERSION') && is_file(dirname(__FILE__) . '/panel_version.php')) {
+			require_once(dirname(__FILE__) . '/panel_version.php');
+		}
+		if (defined('PANEL_VERSION')) {
+			$page = preg_replace('#((?:href|src)="themes/[^"?]+\.(?:css|js))"#', '$1?v=' . PANEL_VERSION . '"', $page);
+		}
+		if (is_file('images/logo.png')) {
+			$page = str_replace('src="images/logo.png"', 'src="images/logo.png?v=' . filemtime('images/logo.png') . '"', $page);
+		}
 		@$top = file_get_contents($path.'top.html');
 		@$bottom = file_get_contents($path.'bottom.html');
 		@$topbody = file_get_contents($path.'topbody.html');
@@ -89,7 +100,10 @@ class View {
 
 		if ( isset($panel_settings['panel_name']) &&
             !empty($panel_settings['panel_name']))
+		{
 			$this->title = $panel_settings['panel_name'];
+			$this->panel_name = $panel_settings['panel_name'];
+		}
 
 		if ( isset($panel_settings['header_code']) &&
             !empty($panel_settings['header_code']))
@@ -306,6 +320,7 @@ class View {
 				$theme = @$panel_settings['theme'];
 
 			$page = str_replace("%bg_wrapper%",$this->bg_wrapper,$page);
+        	$page = str_replace("%panel_name%",htmlspecialchars($this->panel_name, ENT_QUOTES, 'UTF-8'),$page);
         	$page = str_replace("%title%",$this->title,$page);
         	$page = str_replace("%header_code%",$this->header_code,$page);
 			$page = str_replace("%charset%",$this->charset,$page);

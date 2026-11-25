@@ -5,7 +5,7 @@ return [
     // Optional absolute panel path when running standalone billing copy.
     'panel_path' => '',
     // Panel host for the Control Panel link and shared pictures (panel/images, panel/themes).
-    'panel_base' => 'https://panel.gameservers.world',
+    'panel_base' => 'https://panel.gameserverengine.com',
     // Optional explicit path to canonical legacy timestamp file.
     'legacy_timestamp_path' => '',
 ];

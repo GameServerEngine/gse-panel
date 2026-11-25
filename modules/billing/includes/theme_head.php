@@ -3,6 +3,8 @@
 // billing_url() resolves the module path from any page; order.php includes this
 // before bootstrap.php, so fall back to a path relative to the page.
 $gswCss = function_exists('billing_url') ? billing_url('css/header.css') : 'css/header.css';
+// The file's change time in the address makes browsers (and the service worker) fetch a changed stylesheet at once.
+$gswCss .= '?v=' . (int)@filemtime(__DIR__ . '/../css/header.css');
 $gswManifest = function_exists('billing_url') ? billing_url('manifest.php') : 'manifest.php';
 $gswSw = function_exists('billing_url') ? billing_url('sw.js') : 'sw.js';
 $gswScope = function_exists('billing_url') ? billing_url('') : './';

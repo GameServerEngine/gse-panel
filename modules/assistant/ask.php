@@ -1,62 +1,40 @@
 <?php
 /*
- * Endpoint for the Assistant chat box. Receives one question (POST), asks the model,
- * and answers with JSON. Needs a logged-in panel session and the page's CSRF token.
- * Mirrors the way modules/gamemanager/get_server_log.php starts up.
+ * Endpoint for the Assistant chat box. Receives one question (POST) and the chat's scope token,
+ * asks the model, and answers with JSON. Needs a logged-in panel session and the page's CSRF token.
  */
 
-function assistant_json($status, $data)
-{
-	http_response_code($status);
-	header('Content-Type: application/json; charset=UTF-8');
-	echo json_encode($data);
-}
+require_once(__DIR__ . '/assistant_boot.php');
 
 function assistant_main()
 {
-	$panel_root = realpath(__DIR__ . '/../..');
-	chdir($panel_root);
-	require_once($panel_root . '/includes/functions.php');
-	require_once($panel_root . '/includes/helpers.php');
-	startSession();
+	global $db;
+	$ctx = assistant_boot();
+	if ($ctx === null) {
+		return;
+	}
+	list($panel_root, $user_id) = $ctx;
 
-	foreach (array('IMAGES' => 'images/', 'INCLUDES' => 'includes/', 'MODULES' => 'modules/') as $name => $value) {
-		if (!defined($name)) {
-			define($name, $value);
-		}
-	}
-	if (!defined('CONFIG_FILE')) {
-		define('CONFIG_FILE', $panel_root . '/includes/config.inc.php');
-	}
-	require_once(CONFIG_FILE);
-
-	if (empty($_SESSION['users_login']) || empty($_SESSION['user_id'])) {
-		return assistant_json(401, array('text' => 'Please sign in again.'));
-	}
-	$user_id = (int)$_SESSION['user_id'];
-	$sent_token = isset($_POST['csrf']) ? (string)$_POST['csrf'] : '';
-	$real_token = isset($_SESSION['assistant_csrf']) ? (string)$_SESSION['assistant_csrf'] : '';
-	if ($real_token === '' || !hash_equals($real_token, $sent_token)) {
-		return assistant_json(403, array('text' => 'The page expired. Reload it and try again.'));
-	}
-
-	global $db, $db_type, $db_host, $db_user, $db_pass, $db_name, $table_prefix, $db_port;
-	if (!isset($db) || !is_object($db)) {
-		$db = createDatabaseConnection($db_type, $db_host, $db_user, $db_pass, $db_name, $table_prefix, isset($db_port) ? $db_port : null);
-	}
 	require_once(__DIR__ . '/assistant_lib.php');
 	require_once(__DIR__ . '/assistant_tools.php');
 	require_once(__DIR__ . '/assistant_usage.php');
 
+	$scope = assistant_scope_resolve($db, $user_id, isset($_POST['scope']) ? (string)$_POST['scope'] : '');
+	if ($scope === null) {
+		return assistant_json(403, array('text' => 'Open the assistant from your server page in Game Monitor.'));
+	}
+
+	require_once(__DIR__ . '/assistant_settings.php');
 	$settings = $db->getSettings();
-	if (!isset($settings['assistant_enabled']) || $settings['assistant_enabled'] !== '1') {
+	$cfg = assistant_config($settings);
+	if ($cfg['assistant_enabled'] !== '1') {
 		return assistant_json(503, array('text' => 'The assistant is switched off.'));
 	}
-	$model = !empty($settings['assistant_model']) ? $settings['assistant_model'] : ASSISTANT_DEFAULT_MODEL;
-	$effort = isset($settings['assistant_effort']) ? $settings['assistant_effort'] : 'medium';
-	$cap = isset($settings['assistant_monthly_tokens']) ? (int)$settings['assistant_monthly_tokens'] : 200000;
-	$key_file = !empty($settings['assistant_key_file']) ? $settings['assistant_key_file'] : '/etc/gse-panel/assistant.env';
-	$key = assistant_read_key($key_file);
+	$is_admin = $db->isAdmin($user_id);
+	if (!$is_admin && $cfg['assistant_customer_enabled'] !== '1') {
+		return assistant_json(503, array('text' => 'The assistant is only open to administrators right now.'));
+	}
+	$key = assistant_resolve_key($cfg, $settings);
 	if ($key === '') {
 		return assistant_json(503, array('text' => 'The assistant is not set up on this panel yet.'));
 	}
@@ -67,27 +45,50 @@ function assistant_main()
 	}
 	$question = mb_substr($question, 0, ASSISTANT_MAX_QUESTION_CHARS);
 
+	// Limits, cheapest check first. The budget stops everyone; the other caps are for customers.
 	assistant_ensure_tables($db);
-	if (assistant_requests_last_minute($db, $user_id) >= 6) {
-		return assistant_json(429, array('text' => 'Slow down a little. Try again in a minute.'));
+	if (assistant_requests_since($db, $user_id, (int)$cfg['assistant_seconds_between']) >= 1) {
+		return assistant_json(429, array('text' => 'Please wait a few seconds before asking again.'));
 	}
-	$is_admin = $db->isAdmin($user_id);
-	if (!$is_admin && assistant_tokens_this_month($db, $user_id) >= $cap) {
-		return assistant_json(429, array('text' => 'You have used this month\'s assistant allowance.'));
+	if (assistant_requests_since($db, $user_id, 3600) >= (int)$cfg['assistant_per_hour']) {
+		return assistant_json(429, array('text' => 'You have reached the limit of questions for this hour. Please try again later.'));
 	}
+	list($month_in, $month_out, $month_requests) = assistant_month_totals($db);
+	if (assistant_cost_usd($month_in, $month_out, $cfg) >= (float)$cfg['assistant_monthly_budget_usd']) {
+		return assistant_json(429, array('text' => 'The assistant has used its budget for this month. It will be back next month, or an administrator can raise the budget.'));
+	}
+	if (!$is_admin) {
+		if (assistant_tokens_this_month($db, $user_id) >= (int)$cfg['assistant_user_monthly_tokens']) {
+			return assistant_json(429, array('text' => 'You have used this month\'s assistant allowance.'));
+		}
+		if ($scope['type'] === 'server' && assistant_server_tokens_this_month($db, $scope['home_id']) >= assistant_server_cap($cfg, $scope['home_id'])) {
+			return assistant_json(429, array('text' => 'This server has used its assistant allowance for the month.'));
+		}
+	}
+	$model = $cfg['assistant_model'];
+	$effort = $cfg['assistant_effort'];
 
-	$history = isset($_SESSION['assistant_history']) && is_array($_SESSION['assistant_history']) ? $_SESSION['assistant_history'] : array();
-	$run_tool = function ($name, $input) use ($db, $user_id, $panel_root) {
-		return assistant_run_tool($db, $user_id, $panel_root, $name, $input);
+	// Each chat (each server, and the admin chat) keeps its own short history.
+	$all_history = isset($_SESSION['assistant_history']) && is_array($_SESSION['assistant_history']) ? $_SESSION['assistant_history'] : array();
+	$history = isset($all_history[$scope['key']]) ? $all_history[$scope['key']] : array();
+	$run_tool = function ($name, $input) use ($db, $user_id, $panel_root, $scope, $cfg) {
+		return assistant_run_tool($db, $user_id, $panel_root, $name, $input, $scope, $cfg);
 	};
-	$result = assistant_ask($key, $model, $effort, $history, $question, $run_tool);
+	$opts = array(
+		'cfg' => $cfg,
+		'max_steps' => (int)$cfg['assistant_max_tool_steps'],
+		'max_tokens' => (int)$cfg['assistant_max_output_tokens'],
+		'max_question_tokens' => (int)$cfg['assistant_max_question_tokens'],
+	);
+	$result = assistant_ask($key, $model, $effort, $history, $question, $run_tool, $scope['type'], 'assistant_api_post', $opts);
 
-	assistant_record($db, $user_id, $question, $result);
+	assistant_record($db, $user_id, $question, $result, $scope['key'], $scope['type'] === 'server' ? $scope['home_id'] : 0);
 	if (!$result['error']) {
 		// Keep only the plain words of each turn, not the tool blocks.
 		$history[] = array('role' => 'user', 'content' => $question);
 		$history[] = array('role' => 'assistant', 'content' => $result['text']);
-		$_SESSION['assistant_history'] = array_slice($history, -ASSISTANT_MAX_HISTORY);
+		$all_history[$scope['key']] = array_slice($history, -ASSISTANT_MAX_HISTORY);
+		$_SESSION['assistant_history'] = $all_history;
 	}
 	assistant_json(200, array('text' => $result['text'], 'buttons' => $result['buttons']));
 }

@@ -215,8 +215,16 @@ td > h3 {
 .logo{
         padding: 20px;
 }
-.logo h2 {
-	margin-top: 0px;
+.logo .panel-logo {
+	height: 112px;
+	width: auto;
+	vertical-align: middle;
+}
+.logo .panel-name {
+	margin-left: 12px;
+	font-size: 28px;
+	font-weight: bold;
+	vertical-align: middle;
 }
 
 .login-container {
@@ -525,11 +533,7 @@ div.failure {
 	text-shadow: none;
 	text-align: left;
 }
-/* Plain message boxes have no icon, so they get simple padding. The .alert boxes get theirs from .alert above. */
-p.failure,
-div.failure,
-p.success,
-div.success,
+/* Success and failure boxes get .alert (and its icon room) from main.js. Warning boxes get no icon, so they get simple padding. */
 p.warning,
 div.warning {
 	padding: 10px 14px;
@@ -997,8 +1001,6 @@ input[type="checkbox"] {
 .menu [href="?m=update"] > span:before,
 .administration-table [href="?m=update"]:before { content: "\f021"; }
 .menu [href^="?m=gamemanager&p=update"] > span:before,
-.menu [href^="?m=steam_workshop"] > span:before,
-.administration-table [href^="?m=steam_workshop"]:before,
 .monitorButtonContainer [href^="?m=gamemanager&p=update"]:before { content: "\f1b6"; }
 .menu [href^="?m=user_admin"] > span:before,
 .menu [link^="?m=user_admin"] > span:before,
@@ -1041,6 +1043,7 @@ input[type="checkbox"] {
 .monitorbutton.size:before { content: "\f115"; }
 .monitorbutton.getAutoUpdateLink:before { content: "\f0c1"; }
 .monitorButtonContainer [href^="?m=gamemanager&p=rsync_install"]:before { content: "\f0ed"; }
+.monitorButtonContainer [href^="?m=backup-restore"]:before { content: "\f0ee"; }
 .administration-table [href^="?m=administration&p=iframe&external_link="]:before { content: "\f0c1"; }
 .menu [href^="?m=tickets"] > span:before,
 .administration-table [href^="?m=tickets"]:before { content: "\f145"; }

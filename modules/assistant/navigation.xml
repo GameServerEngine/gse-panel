@@ -1,3 +1,4 @@
 <navigation>
   <page key="chat" file="chat.php" access="user,admin" />
+  <page key="admin" file="admin.php" access="admin" />
 </navigation>

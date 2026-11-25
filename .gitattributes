@@ -1,0 +1,3 @@
+# Reference-only code is not part of the panel; keep it out of release archives.
+_reference export-ignore
+_reference/** export-ignore

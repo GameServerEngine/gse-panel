@@ -29,7 +29,6 @@ require_once("modules/config_games/server_config_parser.php");
 
 require_once("includes/refreshed.php");
 require_once('includes/lib_remote.php');
-require_once("modules/steam_workshop/functions.php");
 
 if (!defined('WEBSITE_DOCS_BASE_URL')) {
 	define('WEBSITE_DOCS_BASE_URL', 'https://gameservers.world/docs/');
@@ -491,13 +490,6 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 					$db->saveServerStatusCache($server_home['ip_id'], $server_home['port'], $agent_status);
 				}
 				$update_in_progress = $remote->is_screen_running(SCREEN_TYPE_UPDATE,$server_home['home_id']) === 1;
-				if($update_in_progress)
-				{
-					$workshop_log_txt = "";
-					$workshop_log_state = $remote->get_log(SCREEN_TYPE_UPDATE, $server_home['home_id'], clean_path($server_home['home_path']), $workshop_log_txt, 25);
-					if($workshop_log_state == 1 && steam_workshop_log_is_terminal($workshop_log_txt))
-						$update_in_progress = false;
-				}
 				if($agent_state === "RUNNING" && ((int)($agent_status['process_running'] ?? 0) === 1) && ((int)($agent_status['port_listening'] ?? ($agent_status['game_port_listening'] ?? 0)) === 1))
 				{
 					$status = "online";

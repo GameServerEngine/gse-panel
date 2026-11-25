@@ -85,7 +85,6 @@ define('LANG_xml_file_not_valid', "XML file '%s' could not be validated with sch
 define('LANG_unable_to_load_xml', "Unable to load XML file '%s'. Permission issue?");
 define('LANG_gamemanager', "Game Manager");
 define('LANG_game_monitor', "Game Monitor");
-define('LANG_steam_workshop', "Steam Workshop");
 define('LANG_dashboard', "Dashboard");
 define('LANG_user_addons', "Server Content");
 define('LANG_ftp', "FTP");
@@ -124,7 +123,7 @@ define('LANG_lgsl', "LGSL");
 define('LANG_lgsl_admin', "LGSL Admin");
 define('LANG_rcon', "RCON");
 define('LANG_watch_logger', "Watch Logger");
-define('LANG_litefm_settings', "LiteFM Settings");
+define('LANG_litefm_settings', "LiteFM");
 define('LANG_assign_expiration_date', "Assign expiration date");
 define('LANG_assign_expiration_date_info', "Once it expires the game server is unassigned but not removed.");
 define('LANG_server_expiration_date', "Server expiration date");

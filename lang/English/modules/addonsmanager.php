@@ -94,7 +94,6 @@ define('LANG_optional_folder_name', "Optional Folder Name");
 define('LANG_config_edit_rule', "Config Edit Rule");
 define('LANG_launch_param_additions', "Launch Parameter Additions");
 define('LANG_content_type_help_download_zip', "Download and extract a ZIP, RAR, or archive file.");
-define('LANG_content_type_help_steam_workshop', "Install a Steam Workshop mod using Workshop ID.");
 define('LANG_content_type_help_post_script', "Run a custom scripted installation process.");
 define('LANG_content_type_help_config_edit', "Install configuration files, profiles, or templates.");
 ?>

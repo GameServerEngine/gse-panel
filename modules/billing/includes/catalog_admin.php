@@ -51,9 +51,11 @@ function catalog_admin_agents(mysqli $db, string $prefix): array
 {
     return catalog_admin_rows(
         $db,
-        "SELECT rs.remote_server_id, rs.remote_server_name, rs.server_os, rs.install_enabled, c.name AS city_name
+        "SELECT rs.remote_server_id, rs.remote_server_name, rs.server_os, rs.install_enabled, rs.location_id, c.name AS city_name, c.enabled AS city_enabled,
+                r.name AS region_name
          FROM `{$prefix}remote_servers` rs
          LEFT JOIN `{$prefix}billing_locations` c ON c.location_id = rs.location_id AND c.kind = 'city'
+         LEFT JOIN `{$prefix}billing_locations` r ON r.location_id = c.parent_id AND r.kind = 'region'
          ORDER BY rs.remote_server_name"
     );
 }
@@ -432,4 +434,346 @@ function catalog_admin_save_headroom(mysqli $db, string $prefix, int $cpu, int $
         return 'The headroom was not saved: ' . $e->getMessage();
     }
     return '';
+}
+
+/* ---------------------------------------------------------------------------
+   Bulk grid on the Game Catalog list: prices and locations for many games at once
+--------------------------------------------------------------------------- */
+
+/** Every city with its region, for the locations bar. */
+function catalog_admin_cities(mysqli $db, string $prefix): array
+{
+    return catalog_admin_rows(
+        $db,
+        "SELECT c.location_id, c.name, c.enabled, r.name AS region_name, r.enabled AS region_enabled
+         FROM `{$prefix}billing_locations` c
+         LEFT JOIN `{$prefix}billing_locations` r ON r.location_id = c.parent_id AND r.kind = 'region'
+         WHERE c.kind = 'city'
+         ORDER BY r.name, c.name"
+    );
+}
+
+/**
+ * The location columns of the grid. Agents in the same city share one column; an agent
+ * with no city gets a column of its own, named after the agent.
+ * Each column: key (c<city id> or a<agent id>), label, region (empty for a server with no city), city_id, agent_ids.
+ */
+function catalog_admin_grid_columns(array $agents): array
+{
+    $columns = array();
+    foreach ($agents as $agent) {
+        $cityId = (int)($agent['location_id'] ?? 0);
+        $hasCity = $cityId > 0 && trim((string)($agent['city_name'] ?? '')) !== '';
+        $key = $hasCity ? 'c' . $cityId : 'a' . (int)$agent['remote_server_id'];
+        if (!isset($columns[$key])) {
+            $columns[$key] = array(
+                'key' => $key,
+                'label' => $hasCity ? (string)$agent['city_name'] : (string)$agent['remote_server_name'],
+                'region' => $hasCity ? trim((string)($agent['region_name'] ?? '')) : '',
+                'city_id' => $hasCity ? $cityId : 0,
+                'agent_ids' => array(),
+            );
+        }
+        $columns[$key]['agent_ids'][] = (int)$agent['remote_server_id'];
+    }
+    $columns = array_values($columns);
+    // Grouped by region (servers without a city last), then by name.
+    usort($columns, function ($a, $b) {
+        if ($a['region'] !== $b['region']) {
+            if ($a['region'] === '') {
+                return 1;
+            }
+            if ($b['region'] === '') {
+                return -1;
+            }
+            return strcasecmp($a['region'], $b['region']);
+        }
+        return strcasecmp($a['label'], $b['label']);
+    });
+    return $columns;
+}
+
+/** Offers for several games as home_cfg_id => agent id => row. */
+function catalog_admin_offers_for_games(mysqli $db, string $prefix, array $homeCfgIds): array
+{
+    $ids = array_values(array_unique(array_filter(array_map('intval', $homeCfgIds))));
+    if (!$ids) {
+        return array();
+    }
+    $out = array();
+    foreach (catalog_admin_rows($db, "SELECT * FROM `{$prefix}catalog_offer` WHERE home_cfg_id IN (" . implode(',', $ids) . ')') as $row) {
+        $out[(int)$row['home_cfg_id']][(int)$row['remote_server_id']] = $row;
+    }
+    return $out;
+}
+
+/**
+ * What the grid shows for each game: its price per slot per month and which location columns it is sold in.
+ * A price can be typed in the grid only when every offer of the game is priced per slot.
+ * Returns array(games => rows, columns => columns).
+ */
+function catalog_admin_grid_data(mysqli $db, string $prefix, string $search, string $status): array
+{
+    $games = catalog_admin_game_list($db, $prefix, $search, $status);
+    $columns = catalog_admin_grid_columns(catalog_admin_agents($db, $prefix));
+    $offersByGame = catalog_admin_offers_for_games($db, $prefix, array_column($games, 'home_cfg_id'));
+
+    $rows = array();
+    foreach ($games as $game) {
+        $home = (int)$game['home_cfg_id'];
+        $offers = $offersByGame[$home] ?? array();
+        $perSlot = true;
+        $prices = array();
+        $anyEnabled = false;
+        foreach ($offers as $offer) {
+            if ((string)$offer['pricing_mode'] !== 'per_slot') {
+                $perSlot = false;
+            }
+        }
+        foreach ($offers as $offer) {
+            if ((int)$offer['enabled'] === 1) {
+                $anyEnabled = true;
+                $prices[] = round((float)$offer['per_slot_price_monthly'], 4);
+            }
+        }
+        if (!$anyEnabled) {
+            foreach ($offers as $offer) {
+                $prices[] = round((float)$offer['per_slot_price_monthly'], 4);
+            }
+        }
+        $prices = array_values(array_unique($prices));
+        $on = array();
+        $canAdd = array();
+        foreach ($columns as $col) {
+            $on[$col['key']] = false;
+            $hasRow = false;
+            foreach ($col['agent_ids'] as $agentId) {
+                if (isset($offers[$agentId])) {
+                    $hasRow = true;
+                    if ((int)$offers[$agentId]['enabled'] === 1) {
+                        $on[$col['key']] = true;
+                    }
+                }
+            }
+            $canAdd[$col['key']] = $perSlot || $hasRow;
+        }
+        $rows[] = array(
+            'home_cfg_id' => $home,
+            'name' => ($game['display_name'] !== null && $game['display_name'] !== '') ? (string)$game['display_name'] : (string)$game['game_name'],
+            'config' => (string)$game['home_cfg_file'],
+            'price_editable' => $perSlot,
+            'price' => count($prices) === 1 ? $prices[0] : null,
+            'price_mixed' => count($prices) > 1,
+            'on' => $on,
+            'can_add' => $canAdd,
+        );
+    }
+    return array('games' => $rows, 'columns' => $columns);
+}
+
+/**
+ * Applies the whole grid in one go: prices, locations per game, and which cities are switched on.
+ * $post holds games[] (the rows that were shown), price[<game>], loc[<game>][<column key>],
+ * city_ids[] and city_enabled[<city id>]. Only the games that were shown are touched.
+ * Returns array(changes => list of texts, errors => list of texts).
+ */
+function catalog_admin_apply_grid(mysqli $db, string $prefix, array $post): array
+{
+    $changes = array();
+    $errors = array();
+    $games = array();
+    foreach ((array)($post['games'] ?? array()) as $id) {
+        if ((int)$id > 0) {
+            $games[(int)$id] = (int)$id;
+        }
+    }
+    $columns = catalog_admin_grid_columns(catalog_admin_agents($db, $prefix));
+    $names = array();
+    if ($games) {
+        foreach (catalog_admin_rows(
+            $db,
+            "SELECT ch.home_cfg_id, COALESCE(NULLIF(cg.display_name, ''), ch.game_name) AS shown
+             FROM `{$prefix}config_homes` ch
+             LEFT JOIN `{$prefix}catalog_game` cg ON cg.home_cfg_id = ch.home_cfg_id
+             WHERE ch.home_cfg_id IN (" . implode(',', $games) . ')'
+        ) as $row) {
+            $names[(int)$row['home_cfg_id']] = (string)$row['shown'];
+        }
+    }
+    $offersByGame = catalog_admin_offers_for_games($db, $prefix, array_keys($names));
+
+    $priceGames = array();
+    $added = array();
+    $removed = array();
+    $freeGames = array();
+    $cityOff = array();
+    $cityOn = array();
+
+    $db->begin_transaction();
+    try {
+        foreach ($names as $home => $name) {
+            $offers = $offersByGame[$home] ?? array();
+            $perSlot = true;
+            foreach ($offers as $offer) {
+                if ((string)$offer['pricing_mode'] !== 'per_slot') {
+                    $perSlot = false;
+                }
+            }
+
+            // price
+            $desired = null;
+            $raw = isset($post['price'][$home]) ? trim((string)$post['price'][$home]) : '';
+            if ($raw !== '') {
+                if (!is_numeric($raw) || (float)$raw < 0 || (float)$raw > 10000) {
+                    $errors[] = $name . ': the price must be a number from 0 to 10000. This game was not changed.';
+                    continue;
+                }
+                $desired = round((float)$raw, 4);
+            }
+            if ($desired !== null && $perSlot && $offers) {
+                $differs = false;
+                foreach ($offers as $offer) {
+                    if (abs((float)$offer['per_slot_price_monthly'] - $desired) > 0.00005) {
+                        $differs = true;
+                    }
+                }
+                if ($differs) {
+                    $p = catalog_period_prices((float)$desired);
+                    catalog_admin_run(
+                        $db,
+                        "UPDATE `{$prefix}catalog_offer`
+                         SET per_slot_price_daily = ?, per_slot_price_monthly = ?, per_slot_price_year = ?, updated_at = NOW()
+                         WHERE home_cfg_id = ? AND pricing_mode = 'per_slot'",
+                        'dddi',
+                        array($p['daily'], $p['monthly'], $p['year'], $home)
+                    );
+                    $priceGames[] = $name;
+                    if ($desired <= 0) {
+                        $freeGames[] = $name;
+                    }
+                }
+            } elseif ($desired !== null && !$perSlot) {
+                $errors[] = $name . ': this game uses tier or base pricing, so change its price on the Edit page.';
+            }
+
+            // the price a new offer would start at
+            $startPrice = $desired;
+            if ($startPrice === null) {
+                foreach ($offers as $offer) {
+                    if ((int)$offer['enabled'] === 1) {
+                        $startPrice = round((float)$offer['per_slot_price_monthly'], 4);
+                        break;
+                    }
+                }
+            }
+            if ($startPrice === null && $offers) {
+                $startPrice = round((float)reset($offers)['per_slot_price_monthly'], 4);
+            }
+            $template = $offers ? reset($offers) : null;
+
+            // locations
+            foreach ($columns as $col) {
+                $want = !empty($post['loc'][$home][$col['key']]);
+                $have = false;
+                foreach ($col['agent_ids'] as $agentId) {
+                    if (isset($offers[$agentId]) && (int)$offers[$agentId]['enabled'] === 1) {
+                        $have = true;
+                    }
+                }
+                if ($want && !$have) {
+                    $done = 0;
+                    foreach ($col['agent_ids'] as $agentId) {
+                        if (isset($offers[$agentId])) {
+                            catalog_admin_run(
+                                $db,
+                                "UPDATE `{$prefix}catalog_offer` SET enabled = 1, updated_at = NOW() WHERE home_cfg_id = ? AND remote_server_id = ?",
+                                'ii',
+                                array($home, $agentId)
+                            );
+                            $done++;
+                        } elseif ($perSlot) {
+                            if ($startPrice === null || $startPrice <= 0) {
+                                $errors[] = $name . ': set a price above 0 before adding ' . $col['label'] . '.';
+                                break;
+                            }
+                            catalog_admin_publish_offer($db, $prefix, $home, $agentId, array(
+                                'mode' => 'per_slot',
+                                'period' => $template ? (string)$template['period_default'] : 'monthly',
+                                'slot_min' => $template ? max(1, (int)$template['slot_min_qty']) : 1,
+                                'slot_max' => $template ? max(1, (int)$template['slot_max_qty']) : 100,
+                                'per_slot_monthly' => (float)$startPrice,
+                                'base_slots' => 0,
+                                'base_monthly' => 0.0,
+                                'extra_monthly' => 0.0,
+                            ));
+                            $done++;
+                        } else {
+                            $errors[] = $name . ': ' . $col['label'] . ' cannot be added here because the game uses tier or base pricing. Use the Edit page.';
+                            break;
+                        }
+                    }
+                    if ($done > 0) {
+                        $added[$col['label']][] = $name;
+                    }
+                } elseif (!$want && $have) {
+                    foreach ($col['agent_ids'] as $agentId) {
+                        if (isset($offers[$agentId]) && (int)$offers[$agentId]['enabled'] === 1) {
+                            catalog_admin_unpublish_offer($db, $prefix, $home, $agentId);
+                        }
+                    }
+                    $removed[$col['label']][] = $name;
+                }
+            }
+        }
+
+        // cities switched on or off
+        $cityIds = array();
+        foreach ((array)($post['city_ids'] ?? array()) as $id) {
+            if ((int)$id > 0) {
+                $cityIds[(int)$id] = (int)$id;
+            }
+        }
+        if ($cityIds) {
+            foreach (catalog_admin_rows(
+                $db,
+                "SELECT location_id, name, enabled FROM `{$prefix}billing_locations`
+                 WHERE kind = 'city' AND location_id IN (" . implode(',', $cityIds) . ')'
+            ) as $city) {
+                $id = (int)$city['location_id'];
+                $want = !empty($post['city_enabled'][$id]) ? 1 : 0;
+                if ($want !== (int)$city['enabled']) {
+                    catalog_admin_run($db, "UPDATE `{$prefix}billing_locations` SET enabled = ? WHERE location_id = ?", 'ii', array($want, $id));
+                    if ($want === 1) {
+                        $cityOn[] = $city['name'];
+                    } else {
+                        $cityOff[] = $city['name'];
+                    }
+                }
+            }
+        }
+        $db->commit();
+    } catch (Throwable $e) {
+        $db->rollback();
+        return array('changes' => array(), 'errors' => array('Nothing was saved: ' . $e->getMessage()));
+    }
+
+    if ($priceGames) {
+        $changes[] = 'Price changed on ' . count($priceGames) . ' game(s): ' . implode(', ', array_slice($priceGames, 0, 12)) . (count($priceGames) > 12 ? ', and more' : '') . '.';
+    }
+    foreach ($freeGames as $name) {
+        $errors[] = $name . ' is now priced at 0.00, so customers can order it for free.';
+    }
+    foreach ($added as $label => $list) {
+        $changes[] = 'Added ' . $label . ' to ' . count($list) . ' game(s).';
+    }
+    foreach ($removed as $label => $list) {
+        $changes[] = 'Removed ' . $label . ' from ' . count($list) . ' game(s).';
+    }
+    if ($cityOff) {
+        $changes[] = 'Switched off: ' . implode(', ', $cityOff) . '. Customers see it as Unavailable.';
+    }
+    if ($cityOn) {
+        $changes[] = 'Switched on: ' . implode(', ', $cityOn) . '.';
+    }
+    return array('changes' => $changes, 'errors' => $errors);
 }

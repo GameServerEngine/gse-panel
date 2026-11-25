@@ -51,7 +51,11 @@
         </text>
       </replace_texts>
       <post_install>
-wget -r -np -nH --cut-dirs=2  -R "index.html*" http://files.iaregamer.com/rsync/urt_linux/
+wget -q -O urt.zip http://cdn.urbanterror.info/urt/43/releases/zips/UrbanTerror434_full.zip
+echo "9bf7f0092161391697d24f6b004a6c6b  urt.zip" | md5sum -c - || { rm -f urt.zip; exit 1; }
+unzip -q -o urt.zip
+cp -a UrbanTerror43/. .
+rm -rf UrbanTerror43 urt.zip
 cp q3ut4/server_example.cfg q3ut4/server.cfg 
 cp q3ut4/mapcycle_example.txt q3ut4/mapcycle.txt 
 </post_install>
@@ -86,9 +90,11 @@ Quake3-UrT-Ded.x86_64
         </text>
       </replace_texts>
       <post_install>
-wget http://files.iaregamer.com/installers/urt_linux/urt.tar.gz
-tar -xzvf urt.tar.gz
-rm urt.tar.gz
+wget -q -O urt.zip http://cdn.urbanterror.info/urt/43/releases/zips/UrbanTerror434_full.zip
+echo "9bf7f0092161391697d24f6b004a6c6b  urt.zip" | md5sum -c - || { rm -f urt.zip; exit 1; }
+unzip -q -o urt.zip
+cp -a UrbanTerror43/. .
+rm -rf UrbanTerror43 urt.zip
 cp q3ut4/server_example.cfg q3ut4/server.cfg 
 cp q3ut4/mapcycle_example.txt q3ut4/mapcycle.txt 
 </post_install>

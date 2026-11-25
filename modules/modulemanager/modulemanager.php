@@ -26,6 +26,9 @@ function exec_module()
 {
     global $db;
 
+    require_once('modules/modulemanager/module_handling.php');
+    panel_install_new_modules($db);
+
     print "<h2>".get_lang('modules')."</h2>";
     print '<a href="?m=modulemanager&amp;p=update">'.get_lang('update_modules').'</a>';
 

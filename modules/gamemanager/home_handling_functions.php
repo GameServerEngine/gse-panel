@@ -611,6 +611,7 @@ function exec_operation( $action, $home_id, $mod_id, $ip, $port, $override = fal
 			$db->logger(get_lang_f('server_restarted', $home_info['home_name']) . "($ip:$port)");
 			$ip_id = $db->getIpIdByIp($ip);
 			$db->delServerStatusCache($ip_id,$port);
+			return TRUE;
 		}
 	}
 	elseif ( $action == "start" AND ! $screen_running )
