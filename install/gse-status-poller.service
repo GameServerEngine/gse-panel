@@ -1,0 +1,17 @@
+[Unit]
+Description=GameServer Engine status poller
+After=network-online.target mysql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Runs as the web user so it can read includes/config.inc.php (www-data owned).
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/html/GSE/Panel
+ExecStart=/usr/bin/php /var/www/html/GSE/Panel/modules/status_history/poller.php
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

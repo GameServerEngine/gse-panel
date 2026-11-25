@@ -840,6 +840,19 @@ class RemoteLibrary
 			);
 		}
 
+		public function status_sample()
+	{
+		$args = $this->encrypt_params("status_sample");
+		$this->add_enc_chk($args);
+		$request = xmlrpc_encode_request("status_sample", $args);
+		$reply = $this->sendRequest($request);
+		// A fault (old agent, changed key) comes back as text so the poller can mark UNKNOWN, not DOWN.
+		if ($reply === NULL && $this->last_fault_text !== '') {
+			return "FAULT:" . $this->last_fault_text;
+		}
+		return $reply;
+	}
+
 		public function mon_stats()
 	{
 		$args = $this->encrypt_params("mon_stats");
