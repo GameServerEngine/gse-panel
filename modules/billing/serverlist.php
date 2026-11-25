@@ -28,6 +28,16 @@ function billing_serverlist_e($value): string
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
+function billing_serverlist_name_size(string $name): string
+{
+    // Longer names get a smaller font so they fit in at most two lines.
+    $len = function_exists('mb_strlen') ? mb_strlen($name) : strlen($name);
+    if ($len <= 16) {
+        return 'gsw-name-short';
+    }
+    return $len <= 30 ? 'gsw-name-medium' : 'gsw-name-long';
+}
+
 function billing_serverlist_excerpt(string $value): string
 {
     $value = trim(strip_tags(str_replace('<br>', ' ', $value)));
@@ -102,7 +112,7 @@ if ($db instanceof mysqli) {
           <?php if (!empty($row['img_url'])): ?>
             <img class="gsw-catalog-card-image" src="<?php echo billing_serverlist_e(panel_asset_url('images/games/' . rawurlencode((string)$row['img_url']))); ?>" alt="" loading="lazy">
           <?php endif; ?>
-          <h2><?php echo billing_serverlist_e($serviceDisplayName); ?></h2>
+          <h2 class="gsw-catalog-name <?php echo billing_serverlist_name_size($serviceDisplayName); ?>"><?php echo billing_serverlist_e($serviceDisplayName); ?></h2>
           <p><?php echo billing_serverlist_e(billing_serverlist_excerpt((string)($row['description'] ?? ''))); ?></p>
           <div class="gsw-catalog-meta" aria-label="Server details">
             <?php if ($slots !== ''): ?><span><?php echo billing_serverlist_e($slots); ?></span><?php endif; ?>
