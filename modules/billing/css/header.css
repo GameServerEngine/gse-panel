@@ -196,6 +196,33 @@ p {
     background: rgba(255, 138, 0, 0.1);
 }
 
+/* Grouped links: a dropdown on wide screens, opened by hover or keyboard focus. */
+.gsw-nav-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.gsw-nav-sub {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 20;
+    min-width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 6px;
+    border-radius: var(--radius);
+    background: rgba(3, 7, 13, 0.98);
+    border: 1px solid rgba(255, 138, 0, 0.26);
+}
+
+.gsw-nav-group:hover .gsw-nav-sub,
+.gsw-nav-group:focus-within .gsw-nav-sub {
+    display: flex;
+}
+
 .gsw-nav-cta {
     margin-left: 8px;
     min-height: 38px;
@@ -1066,6 +1093,21 @@ p {
 
     .gsw-nav-cta {
         margin: 6px 0 0;
+    }
+
+    /* On the stacked mobile menu the group shows its links indented under its label. */
+    .gsw-nav-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .gsw-nav-sub {
+        position: static;
+        display: flex;
+        min-width: 0;
+        padding: 0 0 0 16px;
+        border: 0;
+        background: none;
     }
 }
 

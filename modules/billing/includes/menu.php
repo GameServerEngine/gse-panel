@@ -67,12 +67,20 @@ $returnTo = (string)($_SERVER['REQUEST_URI'] ?? '/');
       <?php echo billing_nav_link('serverlist.php', 'Game Servers'); ?>
       <?php echo billing_nav_link('services.php', 'Services'); ?>
       <?php echo billing_nav_link('docs.php', 'Documentation'); ?>
-      <?php echo billing_nav_link('support.php', 'Support'); ?>
-      <?php echo billing_nav_link('contact.php', 'Contact'); ?>
+      <div class="gsw-nav-group">
+        <?php echo billing_nav_link('support.php', 'Support'); ?>
+        <div class="gsw-nav-sub">
+          <?php echo billing_nav_link('contact.php', 'Contact'); ?>
+        </div>
+      </div>
       <?php if ($is_logged_in): ?>
-        <?php echo billing_nav_link('my_servers.php', 'My Servers'); ?>
-        <?php echo billing_nav_link('my_account.php', 'My Account'); ?>
-        <a href="<?php echo billing_nav_escape(billing_url('cart.php')); ?>" class="gsw-nav-link<?php echo basename((string)($_SERVER['SCRIPT_NAME'] ?? '')) === 'cart.php' ? ' is-active' : ''; ?>">Cart<?php if ($cart_count > 0): ?><span class="cart-badge"><?php echo $cart_count; ?></span><?php endif; ?></a>
+        <div class="gsw-nav-group">
+          <?php echo billing_nav_link('my_account.php', 'Account'); ?>
+          <div class="gsw-nav-sub">
+            <?php echo billing_nav_link('my_servers.php', 'My Servers'); ?>
+            <a href="<?php echo billing_nav_escape(billing_url('cart.php')); ?>" class="gsw-nav-link<?php echo basename((string)($_SERVER['SCRIPT_NAME'] ?? '')) === 'cart.php' ? ' is-active' : ''; ?>">Cart<?php if ($cart_count > 0): ?><span class="cart-badge"><?php echo $cart_count; ?></span><?php endif; ?></a>
+          </div>
+        </div>
       <?php endif; ?>
       <a href="<?php echo billing_nav_escape(panel_home_url()); ?>" class="gsw-nav-link">Control Panel</a>
       <?php if ($is_logged_in): ?>
