@@ -3593,6 +3593,18 @@ class DatabaseMySQL extends Database
 		return $this->table_prefix;
 	}
 
+	// Read-only rows for the status history pages. Callers escape or cast every value they put in $sql.
+	public function statusHistoryRows($sql)
+	{
+		$rows = array();
+		if ( !$this->link ) return $rows;
+		++$this->queries_;
+		$result = mysqli_query($this->link, $sql);
+		if ( !$result ) return $rows;
+		while ( $row = mysqli_fetch_assoc($result) ) $rows[] = $row;
+		return $rows;
+	}
+
 	public function incrementalNumByHomeId($home_id,$mod_cfg_id,$remote_server_id)
 	{
 		$mod_cfg_id = $this->realEscapeSingle($mod_cfg_id);

@@ -143,19 +143,12 @@ function exec_module()
 			echo $html.'</div>';
 	}
 
-	// Server Status Link - Available to all users
-	echo "<div style='margin-top:20px;'>
-		   <div class='bloc rounded' >
-		   <h4>Server Status</h4>
-			<div style='text-align: center; padding: 20px;'>
-				<p>View the status of all game servers</p>
-				<a href='server_status.php' target='_blank' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin: 10px;'>
-					🖥️ View Server Status
-				</a>
-				<br><small style='color: #666;'>Opens in a new window</small>
-			</div>
-		   </div>
-		  </div>";
+	// Server status: stored history only, no agent is called here. Visible to all users.
+	if ( $db->isModuleInstalled('status_history') )
+	{
+		require_once(__DIR__ . '/../status_history/includes/status_view.php');
+		echo sv_dashboard_html($db, $isAdmin);
+	}
 
 	if( $isAdmin AND $db->isModuleInstalled('status') )
 	{

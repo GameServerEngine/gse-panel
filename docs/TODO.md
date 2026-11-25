@@ -147,4 +147,4 @@
 | todo | Urban Terror 4 installs from the official 4.3.4 zip (checksum checked) because files.iaregamer.com no longer serves the game. | done | Claude | |
 | todo | Rebuild the file server (a repository of game installers) and move the 16 other game configs off files.iaregamer.com (7 Days to Die, ArmA 2/3, Reforger, BigBrotherBot, CS:S, CS 1.6, DayZ, Epoch, Factorio, SpunkyBot, Terraria, TF2, UT3, Wurm). | open | | |
 | todo | Site name beside the logo is a Settings switch; the storefront header shows the same name as the panel. | open | Claude | |
-| todo | Status history: poller, tables and rollups (first slice). Still to do: agent status_sample on Windows and Linux (network counters), status pages, module settings page, install step for the poller unit. | open | Claude | |
+| todo | Status history: poller, tables, pages and agent call are built. Open: deploy to core (testing first), install the poller unit, verify status_sample on a live Windows host (kcwin), and move the old server_status.php (calls every agent live) to stored data. | open | Claude | |
