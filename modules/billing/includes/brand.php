@@ -11,6 +11,9 @@
  * Logo: set it in the panel under Settings > Panel logo (images/logo.png).
  */
 
+// The panel settings helpers live in panel_bridge.php, which normal storefront pages do not load.
+require_once __DIR__ . '/panel_bridge.php';
+
 if (!function_exists('billing_brand')) {
     function billing_brand(string $key): string
     {
