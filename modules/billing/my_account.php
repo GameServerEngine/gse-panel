@@ -151,52 +151,35 @@ if (!$servers_result) {
         error_log("My Account Debug - User ID: $user_id, Servers Found: " . mysqli_num_rows($servers_result));
 }
 
-// Fetch invoices (from data directory JSON files)
-$dataDir = (isset($SITE_DATA_DIR) && $SITE_DATA_DIR) ? $SITE_DATA_DIR : realpath(__DIR__ . '/') . DIRECTORY_SEPARATOR . 'data';
+// Invoices come from the billing_invoices table, the same records Stripe and PayPal mark paid.
 $invoices = [];
-if (is_dir($dataDir)) {
-    foreach (glob($dataDir . '/*.json') as $file) {
-        $j = json_decode(file_get_contents($file), true);
-        if (!$j || !is_array($j)) continue;
-
-        // Try to match by user email or user_id in custom field
-        $match = false;
-        if ($user_info && !empty($user_info['users_email'])) {
-            if (!empty($j['payer']) && stripos($j['payer'], $user_info['users_email']) !== false) $match = true;
-            if (!$match && !empty($j['custom']) && stripos($j['custom'], $user_info['users_email']) !== false) $match = true;
-        }
-
-        if ($match) {
-            $invoices[] = $j;
+if ($user_id > 0) {
+    $inv_result = mysqli_query($db, "SELECT invoice_id, amount, currency, status, payment_status, invoice_date, paid_date FROM {$table_prefix}billing_invoices WHERE user_id = $user_id ORDER BY invoice_id DESC");
+    if ($inv_result) {
+        while ($row = mysqli_fetch_assoc($inv_result)) {
+            $pay = strtolower((string)$row['payment_status']);
+            $state = strtolower((string)$row['status']);
+            if ($pay === 'paid' || $state === 'paid') {
+                $status = 'paid';
+            } elseif ($state === 'cancelled' || $pay === 'cancelled') {
+                $status = 'cancelled';
+            } elseif ($state === 'expired') {
+                $status = 'expired';
+            } elseif ($state === 'in-cart' || $state === 'in_cart') {
+                $status = 'in-cart';
+            } else {
+                $status = 'pending';
+            }
+            $invoices[] = array(
+                'invoice' => $row['invoice_id'],
+                'ts' => ($status === 'paid' && !empty($row['paid_date'])) ? $row['paid_date'] : $row['invoice_date'],
+                'amount' => $row['amount'],
+                'currency' => $row['currency'] ?: 'USD',
+                'status' => $status,
+            );
         }
     }
 }
-
-// Sort invoices by invoice/order id (newest order id first) when available,
-// otherwise fall back to timestamp (newest first).
-usort($invoices, function($a, $b) {
-    $getOrderId = function($inv) {
-        if (!empty($inv['invoice']) && is_numeric($inv['invoice'])) return intval($inv['invoice']);
-        if (!empty($inv['custom']) && is_numeric($inv['custom'])) return intval($inv['custom']);
-        return null;
-    };
-
-    $aId = $getOrderId($a);
-    $bId = $getOrderId($b);
-
-    if ($aId !== null || $bId !== null) {
-        // If either has a numeric order id, prefer numeric comparison (desc)
-        if ($aId === $bId) {
-            return strtotime($b['ts'] ?? 0) - strtotime($a['ts'] ?? 0);
-        }
-        if ($aId === null) return 1; // b has id -> b before a
-        if ($bId === null) return -1; // a has id -> a before b
-        return $bId - $aId; // numeric desc
-    }
-
-    // Fallback: newest timestamp first
-    return strtotime($b['ts'] ?? 0) - strtotime($a['ts'] ?? 0);
-});
 
 // Organize invoices by status
 $invoices_by_status = [];
