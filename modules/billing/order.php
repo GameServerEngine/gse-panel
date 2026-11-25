@@ -23,6 +23,10 @@
         .order-form-table textarea { width: 100%; min-height: 40px; }
         .order-form-table input[type="radio"] { margin-right: 8px; }
         .location-option { margin-bottom: 8px; }
+        .location-unavailable { color: #c62828; font-weight: 600; }
+        .content-picker summary { cursor: pointer; font-weight: 600; }
+        .content-list { margin: 8px 0 0; padding-left: 18px; }
+        .content-list li { margin-bottom: 6px; }
         .slidecontainer { max-width: 100%; }
         .slidecontainer .slider { width: 100%; }
         .order-pricing { line-height: 1.5; word-break: break-word; }
@@ -193,19 +197,25 @@ if ($sdCtx):
   <td align="right"><b>Location</b></td>
   <td align="left">
 <?php
-$locationGroups = storefront_build_location_groups($offers, storefront_load_enabled_cities($db, $table_prefix));
+$blockedOffers = storefront_blocked_offers($offers, storefront_agent_unavailable_reasons($db, $table_prefix, array_column($offers, 'remote_server_id')));
+$locationGroups = storefront_build_location_groups($offers, storefront_load_cities($db, $table_prefix), $blockedOffers);
 $firstOffer = true;
+$anyLocationOpen = false;
 foreach ($locationGroups as $group):
+    // A city the game is not sold in is left out. A city it is sold in but cannot be ordered from is shown in red.
+    $visibleCities = array_filter($group['cities'], function ($entry) { return $entry['state'] !== 'not_sold'; });
+    if (!$visibleCities) { continue; }
 ?>
   <div class="location-region"><b><?php echo order_e($group['region']); ?></b></div>
-<?php foreach ($group['cities'] as $cityEntry):
+<?php foreach ($visibleCities as $cityEntry):
     $cityOffer = $cityEntry['offer'];
     if ($cityOffer === null):
 ?>
-  <div class="location-option"><span class="muted"><?php echo order_e($cityEntry['name']); ?> &mdash; Unavailable</span></div>
+  <div class="location-option"><span class="location-unavailable"<?php echo $cityEntry['reason'] !== '' ? ' title="' . order_e($cityEntry['reason']) . '"' : ''; ?>><?php echo order_e($cityEntry['name']); ?> &mdash; Unavailable</span></div>
 <?php
         continue;
     endif;
+    $anyLocationOpen = true;
     $offerId = (int)$cityOffer['offer_id'];
     $mode = (string)$cityOffer['pricing_mode'];
     $checked = $firstOffer ? ' checked' : '';
@@ -218,8 +228,32 @@ foreach ($locationGroups as $group):
   </div>
 <?php endforeach; ?>
 <?php endforeach; ?>
+<?php if (!$anyLocationOpen): ?>
+  <div class="location-unavailable">No location is available for this game right now.</div>
+<?php endif; ?>
   </td>
 </tr>
+<?php $gameContent = catalog_load_game_content($db, $table_prefix, (int)$homeCfgId); ?>
+<?php if (!empty($gameContent)): ?>
+<tr>
+  <td align="right"><b>Server content</b></td>
+  <td align="left">
+    <details class="content-picker">
+      <summary><?php echo count($gameContent); ?> item(s) available for one-click install</summary>
+      <ul class="content-list">
+<?php foreach ($gameContent as $contentItem): ?>
+        <li><b><?php echo order_e($contentItem['name']); ?></b> <span class="muted">(<?php echo order_e($contentItem['type_label']); ?>)</span>
+<?php if ($contentItem['description'] !== ''): ?>
+          <br><span class="muted"><?php echo order_e($contentItem['description']); ?></span>
+<?php endif; ?>
+        </li>
+<?php endforeach; ?>
+      </ul>
+      <p class="muted">Once your server is ready, install any of these from the Server Content page of your control panel.</p>
+    </details>
+  </td>
+</tr>
+<?php endif; ?>
 <tr>
   <td align="right"><b>Configure</b></td>
   <td align="left">

@@ -13,6 +13,7 @@
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/includes/action_security.php';
 require_once __DIR__ . '/includes/catalog_admin.php';
+require_once __DIR__ . '/includes/storefront_locations.php';
 
 const CAT_CSRF_KEY = 'billing_admin_catalog_csrf';
 
@@ -175,6 +176,30 @@ function cat_save_headroom(mysqli $db, string $prefix): ?string
     return cat_url();
 }
 
+/** Saves the grid on the list page (prices, locations and which cities are on). Returns the address to go to next. */
+function cat_save_grid(mysqli $db, string $prefix): string
+{
+    $result = catalog_admin_apply_grid($db, $prefix, $_POST);
+    $params = array();
+    $search = trim((string)($_POST['q'] ?? ''));
+    if ($search !== '') {
+        $params['q'] = $search;
+    }
+    $status = (string)($_POST['status'] ?? '');
+    if (in_array($status, array('published', 'draft'), true)) {
+        $params['status'] = $status;
+    }
+    if (!$result['changes'] && !$result['errors']) {
+        cat_set_flash('ok', array('No changes to save.'));
+    } elseif ($result['errors']) {
+        $messages = $result['changes'] ? array_merge(array('Saved:'), $result['changes']) : array();
+        cat_set_flash('err', array_merge($messages, array('Please check:'), $result['errors']));
+    } else {
+        cat_set_flash('ok', array_merge(array('Saved:'), $result['changes']));
+    }
+    return cat_url($params);
+}
+
 /** Handles any form post. Same return value as cat_import(). */
 function cat_handle_post(mysqli $db, string $prefix): array
 {
@@ -189,6 +214,9 @@ function cat_handle_post(mysqli $db, string $prefix): array
     }
     if ($action === 'import') {
         return cat_import($db, $prefix);
+    }
+    if ($action === 'save_grid') {
+        return array('redirect' => cat_save_grid($db, $prefix), 'preview' => null);
     }
     if ($action === 'save_headroom') {
         return array('redirect' => cat_save_headroom($db, $prefix), 'preview' => null);
@@ -222,6 +250,14 @@ function cat_render_styles(): void
     .cat-button { border: 1px solid #3e7ab8; border-radius: 6px; background: #2f6dac; color: #fff; font-weight: 600; padding: 8px 14px; cursor: pointer; }
     .cat-button:hover { background: #25598d; }
     .cat-tiers span { display: inline-block; margin: 0 14px 8px 0; }
+    .cat-grid th.cat-loc-head, .cat-grid td.cat-loc-cell { text-align: center; }
+    .cat-grid th small { font-weight: normal; }
+    .cat-price { width: 90px; }
+    .cat-changed { background: rgba(255,193,7,0.22); }
+    .cat-red { color: #e53935; font-weight: 600; }
+    .cat-ok { color: #2e9e5b; font-weight: 600; }
+    .cat-savebar { margin: 10px 0; }
+    .cat-bulk select { margin: 0 6px; }
     </style>
     <?php
 }
@@ -343,27 +379,216 @@ function cat_render_game_rows(array $games): void
     }
 }
 
+/** The locations bar: switch a city on or off, and see why a city is unavailable by itself. */
+function cat_render_locations_bar(mysqli $db, string $prefix): void
+{
+    $cities = catalog_admin_cities($db, $prefix);
+    if (!$cities) {
+        echo '<p class="cat-muted">No locations yet. Add regions and cities on the Locations tab, then give each server a city.</p>';
+        return;
+    }
+    $agents = catalog_admin_agents($db, $prefix);
+    $reasons = storefront_agent_unavailable_reasons($db, $prefix, array_column($agents, 'remote_server_id'));
+    $byCity = array();
+    foreach ($agents as $agent) {
+        $byCity[(int)$agent['location_id']][] = $agent;
+    }
+    ?>
+    <div class="cat-box">
+      <strong>Locations</strong>
+      <p class="cat-muted">Switch a location off to show it as <span class="cat-red">Unavailable</span> on the order page for every game sold there.
+         A location also shows as Unavailable on its own when its servers are out of room, not answering, or have installs turned off.</p>
+      <table class="cat-table">
+        <thead><tr><th>Region</th><th>Location</th><th>Servers</th><th>Right now</th><th>On</th></tr></thead>
+        <tbody>
+        <?php foreach ($cities as $city):
+            $id = (int)$city['location_id'];
+            $on = (int)$city['enabled'] === 1;
+            $regionOff = $city['region_enabled'] !== null && (int)$city['region_enabled'] !== 1;
+            $names = array();
+            $issues = array();
+            foreach ($byCity[$id] ?? array() as $agent) {
+                $names[] = $agent['remote_server_name'];
+                if (isset($reasons[(int)$agent['remote_server_id']])) {
+                    $issues[] = $agent['remote_server_name'] . ': ' . $reasons[(int)$agent['remote_server_id']];
+                }
+            }
+            ?>
+          <tr>
+            <td><?php echo cat_h($city['region_name'] ?? ''); ?></td>
+            <td><?php echo cat_h($city['name']); ?></td>
+            <td class="cat-muted"><?php echo $names ? cat_h(implode(', ', $names)) : 'none assigned yet'; ?></td>
+            <td>
+              <?php if (!$on): ?><span class="cat-red">Switched off</span>
+              <?php elseif ($regionOff): ?><span class="cat-red">Its region is switched off</span>
+              <?php elseif ($issues): ?><span class="cat-red">Unavailable</span> <span class="cat-muted"><?php echo cat_h(implode('; ', $issues)); ?></span>
+              <?php else: ?><span class="cat-ok">Available</span><?php endif; ?>
+            </td>
+            <td class="cat-loc-cell">
+              <input type="hidden" name="city_ids[]" value="<?php echo $id; ?>">
+              <input type="checkbox" name="city_enabled[<?php echo $id; ?>]" value="1" data-orig="<?php echo $on ? '1' : '0'; ?>"<?php echo $on ? ' checked' : ''; ?>>
+            </td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+    <?php
+}
+
+/** The grid: one row per game with its price and a tick box for every location. */
+function cat_render_grid(mysqli $db, string $prefix, string $csrf, string $search, string $status): void
+{
+    $data = catalog_admin_grid_data($db, $prefix, $search, $status);
+    $columns = $data['columns'];
+    $games = $data['games'];
+    ?>
+    <p class="cat-muted"><?php echo count($games); ?> game(s) shown.</p>
+    <form method="post" action="<?php echo cat_url(); ?>" id="cat-grid-form">
+      <input type="hidden" name="csrf" value="<?php echo cat_h($csrf); ?>">
+      <input type="hidden" name="action" value="save_grid">
+      <input type="hidden" name="q" value="<?php echo cat_h($search); ?>">
+      <input type="hidden" name="status" value="<?php echo cat_h($status); ?>">
+      <?php cat_render_locations_bar($db, $prefix); ?>
+      <div class="cat-savebar">
+        <button type="submit" class="cat-button">Save all changes</button>
+        <span id="cat-change-count" class="cat-muted">No unsaved changes</span>
+      </div>
+      <?php if ($columns): ?>
+      <div class="cat-box cat-bulk">
+        With the ticked games:
+        <select id="cat-bulk-col">
+          <?php foreach ($columns as $col): ?><option value="<?php echo cat_h($col['key']); ?>"><?php echo cat_h($col['label']); ?></option><?php endforeach; ?>
+        </select>
+        <button type="button" class="cat-button" id="cat-bulk-add">Add location</button>
+        <button type="button" class="cat-button" id="cat-bulk-remove">Remove location</button>
+        <span class="cat-muted">This only ticks or unticks the boxes. Press Save all changes to apply.</span>
+      </div>
+      <?php endif; ?>
+      <table class="cat-table cat-grid">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="cat-select-all" title="Tick every game shown"></th>
+            <th>Game</th>
+            <th>Config</th>
+            <th>Price / slot / month</th>
+            <?php foreach ($columns as $col): ?>
+              <th class="cat-loc-head"><?php echo cat_h($col['label']); ?><br>
+                <small><a href="#" class="cat-col-all" data-col="<?php echo cat_h($col['key']); ?>">all</a> &middot;
+                <a href="#" class="cat-col-none" data-col="<?php echo cat_h($col['key']); ?>">none</a></small></th>
+            <?php endforeach; ?>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($games as $game):
+            $home = (int)$game['home_cfg_id'];
+            $price = $game['price'] !== null ? cat_money($game['price']) : '';
+            ?>
+          <tr data-home="<?php echo $home; ?>">
+            <td>
+              <input type="hidden" name="games[]" value="<?php echo $home; ?>">
+              <input type="checkbox" class="cat-row-select" title="Tick to use the bulk buttons">
+            </td>
+            <td><a href="<?php echo cat_url(array('home_cfg_id' => $home)); ?>"><?php echo cat_h($game['name']); ?></a></td>
+            <td class="cat-muted"><?php echo cat_h($game['config']); ?></td>
+            <td>
+              <?php if ($game['price_editable']): ?>
+                $ <input type="number" step="0.01" min="0" class="cat-price" name="price[<?php echo $home; ?>]"
+                         value="<?php echo cat_h($price); ?>" data-orig="<?php echo cat_h($price); ?>"
+                         placeholder="<?php echo $game['price_mixed'] ? 'mixed' : '0.00'; ?>">
+              <?php else: ?>
+                <span class="cat-muted">tiers or base price &mdash; use Edit</span>
+              <?php endif; ?>
+            </td>
+            <?php foreach ($columns as $col):
+                $key = $col['key'];
+                $isOn = !empty($game['on'][$key]);
+                $canAdd = !empty($game['can_add'][$key]);
+                ?>
+              <td class="cat-loc-cell">
+                <input type="checkbox" class="cat-loc" data-col="<?php echo cat_h($key); ?>"
+                       name="loc[<?php echo $home; ?>][<?php echo cat_h($key); ?>]" value="1"
+                       data-orig="<?php echo $isOn ? '1' : '0'; ?>"<?php echo $isOn ? ' checked' : ''; ?>
+                       <?php echo (!$isOn && !$canAdd) ? ' disabled title="This game uses tier or base pricing. Add this location on the Edit page."' : ''; ?>>
+              </td>
+            <?php endforeach; ?>
+            <td><a href="<?php echo cat_url(array('home_cfg_id' => $home)); ?>">Edit</a></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+      <div class="cat-savebar">
+        <button type="submit" class="cat-button">Save all changes</button>
+      </div>
+    </form>
+    <script>
+    (function () {
+        var form = document.getElementById('cat-grid-form');
+        if (!form) { return; }
+        function fire(el) { el.dispatchEvent(new Event('change', { bubbles: true })); }
+        function refresh() {
+            var count = 0;
+            form.querySelectorAll('[data-orig]').forEach(function (el) {
+                var changed = el.type === 'checkbox'
+                    ? (el.checked ? '1' : '0') !== el.getAttribute('data-orig')
+                    : el.value.trim() !== el.getAttribute('data-orig');
+                var cell = el.closest('td');
+                if (cell) { cell.classList.toggle('cat-changed', changed); }
+                if (changed) { count++; }
+            });
+            document.getElementById('cat-change-count').textContent = count ? count + ' unsaved change(s)' : 'No unsaved changes';
+        }
+        form.addEventListener('change', refresh);
+        form.addEventListener('input', refresh);
+        var all = document.getElementById('cat-select-all');
+        if (all) {
+            all.addEventListener('change', function () {
+                form.querySelectorAll('.cat-row-select').forEach(function (box) { box.checked = all.checked; });
+            });
+        }
+        function setColumn(col, value, onlySelected) {
+            form.querySelectorAll('tbody tr[data-home]').forEach(function (row) {
+                if (onlySelected && !row.querySelector('.cat-row-select').checked) { return; }
+                row.querySelectorAll('.cat-loc').forEach(function (box) {
+                    if (box.getAttribute('data-col') === col && !box.disabled && box.checked !== value) {
+                        box.checked = value;
+                        fire(box);
+                    }
+                });
+            });
+        }
+        form.querySelectorAll('.cat-col-all').forEach(function (link) {
+            link.addEventListener('click', function (e) { e.preventDefault(); setColumn(link.getAttribute('data-col'), true, false); });
+        });
+        form.querySelectorAll('.cat-col-none').forEach(function (link) {
+            link.addEventListener('click', function (e) { e.preventDefault(); setColumn(link.getAttribute('data-col'), false, false); });
+        });
+        var select = document.getElementById('cat-bulk-col');
+        var add = document.getElementById('cat-bulk-add');
+        var remove = document.getElementById('cat-bulk-remove');
+        if (add) { add.addEventListener('click', function () { setColumn(select.value, true, true); }); }
+        if (remove) { remove.addEventListener('click', function () { setColumn(select.value, false, true); }); }
+        refresh();
+    })();
+    </script>
+    <?php
+}
+
 function cat_render_list(mysqli $db, string $prefix, string $csrf, ?array $preview): void
 {
     $search = trim((string)($_GET['q'] ?? ''));
     $status = in_array($_GET['status'] ?? '', array('published', 'draft'), true) ? (string)$_GET['status'] : '';
-    $games = catalog_admin_game_list($db, $prefix, $search, $status);
     ?>
     <h2>Game Catalog</h2>
-    <p>Choose which games customers can rent, what they cost, and which agents they run on.
-       Open a game to edit it. Only published games appear on the storefront.
+    <p>Set prices and locations for many games at once, then press Save all changes. Open a game with Edit for its name,
+       picture, description, tiers and server requirements. Only games sold in at least one location appear on the storefront.
        To size an agent, use the <a href="?m=administration&amp;p=resource_planner">bandwidth and storage calculators</a>.</p>
     <?php
     cat_render_import($db, $prefix, $csrf, catalog_admin_agents($db, $prefix), $preview);
     cat_render_headroom($db, $prefix, $csrf);
     cat_render_filter($search, $status);
-    ?>
-    <p class="cat-muted"><?php echo count($games); ?> game(s) shown.</p>
-    <table class="cat-table">
-      <thead><tr><th>Game</th><th>Game config</th><th>Storefront</th><th>Lowest price / month</th><th></th></tr></thead>
-      <tbody><?php cat_render_game_rows($games); ?></tbody>
-    </table>
-    <?php
+    cat_render_grid($db, $prefix, $csrf, $search, $status);
 }
 
 function cat_render_details_fields(array $game, array $images): void
