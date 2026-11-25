@@ -146,3 +146,4 @@
 | todo | Every backup reference uses backup.vpn.isaserver.net (Proxmox storage, VPS backup scripts, panel setting and module default). | done | Claude | |
 | todo | Urban Terror 4 installs from the official 4.3.4 zip (checksum checked) because files.iaregamer.com no longer serves the game. | done | Claude | |
 | todo | Rebuild the file server (a repository of game installers) and move the 16 other game configs off files.iaregamer.com (7 Days to Die, ArmA 2/3, Reforger, BigBrotherBot, CS:S, CS 1.6, DayZ, Epoch, Factorio, SpunkyBot, Terraria, TF2, UT3, Wurm). | open | | |
+| todo | Site name beside the logo is a Settings switch; the storefront header shows the same name as the panel. | open | Claude | |

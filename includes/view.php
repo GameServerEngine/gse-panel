@@ -88,6 +88,14 @@ class View {
 		}
 		@$botbody = file_get_contents($path.'botbody.html');
 
+		// The site name beside the logo is optional (Settings > Show site name). When it is off the
+		// header shows only the logo; the Panel name itself stays for titles, emails and invoices.
+		$showSiteName = !isset($panel_settings['panel_show_site_name']) || (string)$panel_settings['panel_show_site_name'] !== '0';
+		if (!$showSiteName) {
+			$page = preg_replace('#<span class="panel-name">%panel_name%</span>#', '', $page);
+			$top = preg_replace('#<span class="panel-name">%panel_name%</span>#', '', (string)$top);
+		}
+
 		if ( isset($panel_settings['logo_link']) &&
             !empty($panel_settings['logo_link']))
             $this->logo = $panel_settings['logo_link'];

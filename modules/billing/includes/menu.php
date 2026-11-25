@@ -44,7 +44,7 @@ if ($is_logged_in && file_exists(__DIR__ . '/cart_helper.php')) {
 }
 
 // The brand name is two words on the GameServer Engine mark: "Game Server" / "Engine".
-$brandName = trim(billing_brand('name'));
+$brandName = billing_header_site_name();
 $brandSplit = strrpos($brandName, ' ');
 $brandFirst = $brandSplit === false ? $brandName : substr($brandName, 0, $brandSplit);
 $brandLast = $brandSplit === false ? '' : substr($brandName, $brandSplit + 1);
@@ -57,7 +57,7 @@ $returnTo = (string)($_SERVER['REQUEST_URI'] ?? '/');
   <div class="gsw-header-inner">
     <a href="<?php echo billing_nav_escape(billing_url('index.php')); ?>" class="gsw-brand" aria-label="<?php echo billing_brand_e('name'); ?> home">
       <?php echo billing_logo_html('gsw-brand-mark', 64, 64); ?>
-      <span class="gsw-brand-text"><strong><?php echo billing_nav_escape($brandFirst); ?></strong><?php if ($brandLast !== ''): ?> <span><?php echo billing_nav_escape($brandLast); ?></span><?php endif; ?></span>
+      <?php if ($brandName !== ''): ?><span class="gsw-brand-text"><strong><?php echo billing_nav_escape($brandFirst); ?></strong><?php if ($brandLast !== ''): ?> <span><?php echo billing_nav_escape($brandLast); ?></span><?php endif; ?></span><?php endif; ?>
     </a>
     <button class="gsw-nav-toggle" type="button" aria-controls="gsw-primary-nav" aria-expanded="false" aria-label="Open primary navigation">
       <span class="gsw-nav-toggle-bars" aria-hidden="true"></span>

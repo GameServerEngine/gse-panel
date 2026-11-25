@@ -42,6 +42,8 @@ define('LANG_panel_name', "Panel name");
 define('LANG_panel_name_info', "Name of the Panel that is shown in the page title. This value will overrule all page titles, if it's not empty.");
 define('LANG_panel_logo', "Panel logo (PNG)");
 define('LANG_panel_logo_info', "Shown in the panel header and the storefront header. PNG only, 2 MB max.");
+define('LANG_panel_show_site_name', "Show site name next to the logo");
+define('LANG_panel_show_site_name_info', "On: the Panel name is shown beside the logo in the panel and the storefront headers. Off: only the logo is shown. The Panel name is still used in emails, invoices and page titles.");
 define('LANG_panel_logo_size', "Panel logo size (%)");
 define('LANG_panel_logo_size_info', "100 is the logo's normal size. Allowed: 10 to 300. Applies to the panel and storefront headers.");
 define('LANG_feed_enable', "Enable LGSL Feed");

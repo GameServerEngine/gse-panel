@@ -121,6 +121,7 @@ function exec_module()
 			"default_game_server_home_path_prefix" => $_REQUEST['default_game_server_home_path_prefix'],
 			"port_block_size" => settings_port_block_size($_REQUEST['port_block_size'] ?? 10),
 			"panel_logo_size" => settings_logo_size($_REQUEST['panel_logo_size'] ?? 100),
+			"panel_show_site_name" => (int)!empty($_REQUEST['panel_show_site_name']),
 			"use_authorized_hosts" => $_REQUEST['use_authorized_hosts'],
 			"allow_setting_cpu_affinity" => $_REQUEST['allow_setting_cpu_affinity'],
 			"regex_invalid_file_name_chars" => addslashes($_REQUEST['regex_invalid_file_name_chars']),
@@ -186,6 +187,7 @@ function exec_module()
 	$ft->add_field('string','panel_name',@$row['panel_name']);
 	$logo_preview = is_file('images/logo.png') ? "<img src='images/logo.png?v=" . filemtime('images/logo.png') . "' style='max-height:64px;background:#222;padding:4px;'>" : '';
 	$ft->add_custom_field('panel_logo', "<input type='file' name='panel_logo' id='panel_logo' accept='image/png'> " . $logo_preview);
+	$ft->add_field('on_off','panel_show_site_name', $row['panel_show_site_name'] ?? 1);
 	$ft->add_field('string','panel_logo_size',settings_logo_size($row['panel_logo_size'] ?? 100), 8, "inputmode='numeric'");
 	$locale_files = makefilelist("lang/", ".|..|.svn", true, "folders");
 	$locale_files = array('' => "-") + $locale_files;

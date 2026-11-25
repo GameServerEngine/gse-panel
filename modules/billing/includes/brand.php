@@ -2,8 +2,9 @@
 /*
  * Brand text for the storefront.
  *
- * Name: set it in the panel under Settings > Panel name. That value is used on the
- *       storefront too. If it is empty, the 'brand' name in site_config is used.
+ * Name: set it in the panel under Settings > Panel name. The storefront header shows it only
+ *       while Settings > Show site name next to the logo is on. Emails and invoices always use it.
+ *       If it is empty, the 'brand' name in site_config is used for page text.
  * Company: set 'brand' => ['company' => '...'] in site_config.local.php.
  * Support contact: 'brand' => ['email' => '...', 'discord_url' => 'https://discord.gg/...'] in
  *       site_config.local.php. The support page shows Discord only when discord_url is set.
@@ -49,6 +50,24 @@ if (!function_exists('billing_brand_e')) {
     function billing_brand_e(string $key): string
     {
         return htmlspecialchars(billing_brand($key), ENT_QUOTES, 'UTF-8');
+    }
+}
+
+if (!function_exists('billing_header_site_name')) {
+    /**
+     * The site name beside the logo in the storefront header: the Panel name, shown only while
+     * Settings > Show site name next to the logo is on. Empty when hidden or not set.
+     */
+    function billing_header_site_name(): string
+    {
+        $settings = function_exists('billing_get_panel_settings') ? @billing_get_panel_settings() : array();
+        if (!is_array($settings)) {
+            return '';
+        }
+        if (isset($settings['panel_show_site_name']) && (string)$settings['panel_show_site_name'] === '0') {
+            return '';
+        }
+        return trim((string)($settings['panel_name'] ?? ''));
     }
 }
 

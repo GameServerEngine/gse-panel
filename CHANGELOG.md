@@ -3,6 +3,7 @@
 Each fixed issue gets an entry under the version that shipped it: a one-line title, then the cause and the fix in plain language, written so a customer can follow it.
 
 ## Unreleased
+- **Site name beside the logo is a setting:** Settings now has "Show site name next to the logo" (on by default). Turn it off and the panel header and the storefront header show only the logo. The Panel name is still used in emails, invoices and page titles. The storefront header now shows the same name as the panel, and shows no name when the Panel name is blank.
 - **Group restart reports success:** restarting servers from a group action reported every restart as failed, because the restart code never returned its success. It now does.
 - **Urban Terror installs without our file server:** the Urban Terror 4 game configuration downloaded the game from files.iaregamer.com, which no longer serves it, so an install left a web page where the game should be. It now downloads the official Urban Terror 4.3.4 zip from the game's own site and checks it against the published checksum before unpacking.
 
