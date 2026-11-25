@@ -222,7 +222,6 @@ function sv_window_stats($db, $sid, $from, $now, $tz, $raw_hours, $useDays)
 function sv_dashboard_html($db, $isAdmin)
 {
 	$cfg = sv_settings($db);
-	$tz = sv_tz($db);
 	$now = time();
 	$html = "<div style='margin-top:20px;'><div class='bloc rounded'><h4>Server status</h4><div style='padding:10px;'>";
 
@@ -235,37 +234,29 @@ function sv_dashboard_html($db, $isAdmin)
 	$servers = sv_servers($db);
 	$cycle = count($servers) * $cfg['interval_seconds'];
 	$latest = sv_latest_samples($db);
-	$dayStart = sh_day_start($now, $tz);
 
 	$html .= "<table class='sv_table' style='width:100%;border-collapse:collapse;'><tr>"
-		. "<th style='text-align:left;'>Server</th><th>Status</th><th>Uptime</th><th>Last report</th>"
-		. "<th>CPU</th><th>RAM</th><th>Disk</th><th>Today's peak CPU</th><th>Today's peak RAM</th></tr>";
+		. "<th style='text-align:left;'>Server</th><th>IP</th><th>Status</th><th>Uptime</th></tr>";
 
 	if (count($servers) === 0) {
-		$html .= "<tr><td colspan='9'>No servers are set up yet.</td></tr>";
+		$html .= "<tr><td colspan='4'>No servers are set up yet.</td></tr>";
 	}
 	foreach ($servers as $server) {
 		$sid = (int)$server['remote_server_id'];
 		$sample = isset($latest[$sid]) ? $latest[$sid] : null;
-		list($status, $age) = sv_effective_status($sample, $now, $cycle);
+		list($status) = sv_effective_status($sample, $now, $cycle);
 		$attention = $status !== 'UP' || ($sample !== null && sv_needs_attention($sample, $status));
-		$peak = sv_window_stats($db, $sid, $dayStart, $now, $tz, $cfg['raw_hours'], false);
 		$name = htmlspecialchars($server['remote_server_name']);
+		$ip = htmlspecialchars($server['agent_ip']);
 		$link = "home.php?m=status_history&amp;p=detail&amp;remote_server_id=$sid";
 		$html .= "<tr style='border-top:1px solid #ddd;'>"
 			. "<td><a href='$link'>$name</a></td>"
+			. "<td style='text-align:center;'>$ip</td>"
 			. "<td style='text-align:center;'>" . sv_badge($status, $attention) . "</td>"
 			. "<td style='text-align:center;'>" . ($sample && $status === 'UP' ? sv_fmt_duration($sample['uptime_s']) : '-') . "</td>"
-			. "<td style='text-align:center;'>" . ($age === null ? 'never' : sv_fmt_ago($age)) . "</td>"
-			. "<td style='text-align:center;'>" . ($sample ? sv_fmt_pct($sample['cpu_pct']) : '-') . "</td>"
-			. "<td style='text-align:center;'>" . ($sample ? sv_fmt_pct($sample['ram_pct']) : '-') . "</td>"
-			. "<td style='text-align:center;'>" . ($sample ? sv_fmt_pct($sample['disk_pct']) : '-') . "</td>"
-			. "<td style='text-align:center;'>" . sv_fmt_pct($peak['cpu_max']) . ($peak['cpu_max'] !== null ? " <small>" . sv_fmt_time($peak['cpu_at'], $tz) . "</small>" : '') . "</td>"
-			. "<td style='text-align:center;'>" . sv_fmt_pct($peak['ram_max']) . ($peak['ram_max'] !== null ? " <small>" . sv_fmt_time($peak['ram_at'], $tz) . "</small>" : '') . "</td>"
 			. "</tr>";
 	}
 	$html .= "</table>";
-	$html .= "<p><small>Percentages are of the whole machine. Times are US Central.</small></p>";
 	return $html . "</div></div></div>";
 }
 

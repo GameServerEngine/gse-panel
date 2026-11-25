@@ -26,6 +26,98 @@
 
 require_once('includes/lib_remote.php');
 
+function dash_card($title, $body, $href)
+{
+	$out = "<div class='bloc rounded' style='flex:1 1 280px;min-width:260px;'>"
+		. "<h4>" . htmlspecialchars($title) . "</h4>"
+		. "<div style='padding:10px;'>" . $body . "</div>";
+	if ($href !== '')
+		$out .= "<div style='padding:0 10px 10px;'><a href='" . htmlspecialchars($href) . "'>Open</a></div>";
+	return $out . "</div>";
+}
+
+function dash_count($db, $sql)
+{
+	$rows = $db->resultQuery($sql);
+	return (is_array($rows) && isset($rows[0]['c'])) ? (int)$rows[0]['c'] : 0;
+}
+
+function dash_notifications_card($db)
+{
+	$uid = (int)$_SESSION['user_id'];
+	$body = '';
+
+	if ($db->isModuleInstalled('status_history'))
+	{
+		require_once(__DIR__ . '/../status_history/includes/status_view.php');
+		$cfg = sv_settings($db);
+		if ($cfg['enabled'])
+		{
+			$servers = sv_servers($db);
+			$cycle = count($servers) * $cfg['interval_seconds'];
+			$latest = sv_latest_samples($db);
+			$up = 0;
+			foreach ($servers as $server)
+			{
+				$sid = (int)$server['remote_server_id'];
+				list($status) = sv_effective_status(isset($latest[$sid]) ? $latest[$sid] : null, time(), $cycle);
+				if ($status === 'UP')
+					$up++;
+			}
+			$body .= "<p>Servers: <b>$up of " . count($servers) . "</b> up</p>";
+		}
+	}
+
+	$tickets = dash_count($db, "SELECT COUNT(1) AS c FROM DB_PREFIXtickets WHERE user_id = $uid AND status <> 0");
+	$invoices = dash_count($db, "SELECT COUNT(1) AS c FROM DB_PREFIXbilling_invoices WHERE user_id = $uid AND payment_status <> 'paid'");
+	$body .= "<p>Open tickets: <b>$tickets</b></p>";
+	$body .= "<p>Unpaid invoices: <b>$invoices</b></p>";
+
+	$circulars = $db->resultQuery("SELECT c.subject, c.`timestamp` FROM DB_PREFIXcircular_recipients r NATURAL JOIN DB_PREFIXcircular c WHERE r.user_id = $uid ORDER BY c.`timestamp` DESC LIMIT 3");
+	if (is_array($circulars) && count($circulars) > 0)
+	{
+		$body .= "<ul style='margin:0;padding-left:18px;'>";
+		foreach ($circulars as $circular)
+			$body .= "<li>" . htmlspecialchars($circular['subject']) . "</li>";
+		$body .= "</ul>";
+	}
+	else
+		$body .= "<p>No notifications.</p>";
+
+	return dash_card('Notifications', $body, 'home.php?m=circular&p=show_circular&list=true');
+}
+
+function dash_news_card()
+{
+	$file = __DIR__ . '/../news/data/listings.xml';
+	$xml = file_exists($file) ? simplexml_load_file($file) : false;
+	$best = -1;
+	$bestTime = -1;
+	if ($xml)
+	{
+		$index = 0;
+		foreach ($xml->listing as $item)
+		{
+			if ((int)$item->time > $bestTime)
+			{
+				$bestTime = (int)$item->time;
+				$best = $index;
+			}
+			$index++;
+		}
+	}
+	if ($best < 0)
+		return dash_card('Latest News', '<p>No news yet.</p>', '');
+
+	$item = $xml->listing[$best];
+	$title = htmlspecialchars(strip_tags(html_entity_decode((string)$item->title)));
+	$when = new DateTime('@' . $bestTime);
+	$when->setTimezone(new DateTimeZone('America/Chicago'));
+	$body = "<p><b>$title</b></p><p><small>" . $when->format('M j, Y') . "</small></p>";
+	return dash_card('Latest News', $body, "home.php?m=news&p=news&page=details&id=$best");
+}
+
+
 
 function exec_module()
 {
@@ -61,87 +153,12 @@ function exec_module()
 	?>
 	<div style="margin-top:20px;">
 	<?php
-	//$title[$id] = "The Title";
-	//$content[$id] = "Content of the Widget";
-	$title = array();
-	$content = array();
-	$href = array();
-	// Account Overview
-	$title[1] = "Account Overview";
-	$content[1] = 'Review your assigned servers and jump straight into the Game Monitor.';
-	$href[1] = 'home.php?m=gamemanager&p=game_monitor';
 
-	// Recent News
-    //$xml=simplexml_load_file("modules/news/data/listings.xml");
-	//$lastnews = count((array)$xml)-1;
-	//$title[2] = "Recent News";
-	//$content[2] = $xml->listing[$lastnews]->title;
-	//$href[2] = 'home.php?m=news&p=news';
-
-	// Notifications
-	$title[3] = "Notifications"; // get_lang('orders');
-	$content[3] = 'View all your notifications. ';
-	$href[3] = 'home.php?m=circular&p=show_circular&list=true';
-
-	// Support Resources quick link
-	$title[4] = 'Support Resources';
-	$content[4] ='Need help? Visit the support section to open tickets or review documentation.';
-	$href[4] = 'home.php?m=tickets';
-
-	// Support
-	$title[5] = (isset($settings['support_widget_title']) && $settings['support_widget_title'] != "") ?
-				 $settings['support_widget_title'] : get_lang('support');
-	$content[5] = '<img src="themes/' . $settings['theme'] . '/images/icons/support.png" style="width:48px;float:right;margin:0 0 0 8px" />	Submit a SUPPORT TICKET or use our Discord Chat at the bottom right.  Click this box to JOIN our Discord';
-	$href[5] = 'https://discord.gg/cWHAbav';
-
-
-
-
-	$widgets = $db->resultQuery("SELECT * FROM DB_PREFIXwidgets_users WHERE user_id='".$_SESSION['user_id']."' ORDER BY sort_no");
-
-	if(!$widgets)
-	{
-		if($db->createUserWidgets($_SESSION['user_id']))
-			$widgets = $db->resultQuery("SELECT * FROM DB_PREFIXwidgets_users WHERE user_id='".$_SESSION['user_id']."' ORDER BY sort_no");
-	}
-
-	if($widgets)
-	{
-		$colhtml[1] = '<div class="column one_fourth" id="column1" >';
-		$colhtml[2] = '<div class="column one_two" id="column2" >';
-		$colhtml[3] = '<div class="column one_fourth" id="column3" >';
-		foreach ((array)$widgets as $widget)
-		{
-			if(array_key_exists($widget["widget_id"], (array)$title)){
-				if( (!isset($settings['old_dashboard_behavior']) or $settings['old_dashboard_behavior'] == 0) AND $widget['widget_id'] == "3" )
-					continue;
-				$colhtml[$widget['column_id']] .= '<div class="dragbox bloc rounded" id="item'.$widget['widget_id'].'">'.
-												  '<h4><span class="configure"></span>';
-				if(!is_null($title[$widget['widget_id']]))
-					$colhtml[$widget['column_id']] .= $title[$widget['widget_id']];
-
-				$colhtml[$widget['column_id']] .= '</h4><div class="dragbox-content" ';
-				if(!is_null($href[$widget['widget_id']]))
-				{
-					$colhtml[$widget['column_id']] .= "onclick=\"location.href='". $href[$widget['widget_id']] . "'\" style=\"cursor:pointer;";
-					if($widget['collapsed']==1)
-						$colhtml[$widget['column_id']] .= 'display:none;';
-					$colhtml[$widget['column_id']] .= '"';
-				}
-				elseif($widget['collapsed']==1)
-					$colhtml[$widget['column_id']] .= 'style="display:none;"';
-
-				$colhtml[$widget['column_id']] .= '>';
-
-				if(!is_null($content[$widget['widget_id']]))
-					$colhtml[$widget['column_id']] .= $content[$widget['widget_id']];
-
-				$colhtml[$widget['column_id']] .= '</div></div>';
-			}
-		}
-		foreach ((array)$colhtml as $html)
-			echo $html.'</div>';
-	}
+	$dashCards = array();
+	$dashCards[] = dash_card('Account Overview', 'Review your assigned servers and jump straight into the Game Monitor.', 'home.php?m=gamemanager&p=game_monitor');
+	$dashCards[] = dash_notifications_card($db);
+	$dashCards[] = dash_news_card();
+	echo "<div class='dash-cards' style='display:flex;flex-wrap:wrap;gap:16px;align-items:stretch;'>" . implode('', $dashCards) . "</div>";
 
 	// Server status: stored history only, no agent is called here. Visible to all users.
 	if ( $db->isModuleInstalled('status_history') )
