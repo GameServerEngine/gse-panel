@@ -338,7 +338,7 @@ function sv_detail_html($db, $server, $isAdmin, $lookup_at)
 	$default = new DateTime('@' . $now);
 	$default->setTimezone(new DateTimeZone($tz));
 	$html .= "<h3>Look up a complaint time</h3>"
-		. "<form method='get' action='index.php'>"
+		. "<form method='get' action='home.php'>"
 		. "<input type='hidden' name='m' value='status_history'><input type='hidden' name='p' value='detail'>"
 		. "<input type='hidden' name='remote_server_id' value='$sid'>"
 		. "<input type='datetime-local' name='at' value='" . $default->format('Y-m-d\TH:i') . "'> "
