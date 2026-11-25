@@ -140,21 +140,6 @@ if(isset($_GET['m']))
 				}
 				exit();
 			}
-			elseif($_GET['p']=='themeLogo')
-			{
-				// load global setting (id -1)
-				$themeLogo = $ThemeDB->getSetting('themeLogo', -1);
-
-				if(empty($themeLogo))
-				{
-					echo 0;
-					exit();
-				}
-
-				header("Content-Type: application/json");
-				echo json_encode($themeLogo);
-				exit();
-			}
 			elseif($_GET['p']=='themeNavWidth')
 			{
 				if(isset($_SESSION['users_login']))
@@ -308,35 +293,7 @@ if(isset($_GET['m']))
 		{
 			if(isset($_GET['p']))
 			{
-				if($_GET['p']=='fileUpload')
-				{
-					echo _NewFileUpload($_FILES['themeLogo'], 'themeLogo', 'themeLogo', true);
-					exit;
-				}
-				elseif($_GET['p']=='themeLogo')
-				{
-					if(isset($_GET['v']) && ($_GET['v']=='remove'))
-					{
-						// load global setting (id -1)
-						$themeLogo = $ThemeDB->getSetting('themeLogo', -1);
-
-						if(!empty($themeLogo))
-						{
-							// build direct path
-							$oldLogo = $uploadsFolder."/".basename($themeLogo);
-
-							// delete old logo if exists
-							if(file_exists($oldLogo))
-							{
-								unlink($oldLogo);
-							}
-
-							// remove logo from db
-							echo $ThemeDB->removeSetting('themeLogo', -1);
-						}
-					}
-				}
-				elseif($_GET['p']=='themeNavWidth')
+				if($_GET['p']=='themeNavWidth')
 				{
 					if(isset($_GET['v']) && is_numeric($_GET['v']) && $_GET['v']>=250 && $_GET['v']<=350)
 					{
