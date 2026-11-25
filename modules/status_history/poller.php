@@ -53,7 +53,7 @@ function sh_read_settings(mysqli $db, $prefix)
 function sh_read_servers(mysqli $db, $prefix)
 {
 	$servers = array();
-	$res = $db->query('SELECT `remote_server_id`, `agent_ip`, `agent_port`, `encryption_key`, `timeout` FROM `' . $prefix . 'remote_servers` WHERE `enabled` = 1 ORDER BY `remote_server_id`');
+	$res = $db->query('SELECT `remote_server_id`, `agent_ip`, `agent_port`, `encryption_key`, `timeout` FROM `' . $prefix . 'remote_servers` ORDER BY `remote_server_id`');
 	if ($res) {
 		while ($row = $res->fetch_assoc()) {
 			$servers[] = $row;

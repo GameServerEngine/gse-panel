@@ -17,7 +17,7 @@ function exec_module()
 
 	$sid = isset($_GET['remote_server_id']) ? (int)$_GET['remote_server_id'] : 0;
 	$server = null;
-	foreach (sv_enabled_servers($db) as $row) {
+	foreach (sv_servers($db) as $row) {
 		if ((int)$row['remote_server_id'] === $sid) $server = $row;
 	}
 	if ($server === null) {

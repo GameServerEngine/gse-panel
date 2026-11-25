@@ -24,14 +24,10 @@ function sv_prefix($db)
 	return $db->getTablePrefix();
 }
 
-/** Enabled servers only: the poller does not visit disabled ones. */
-function sv_enabled_servers($db)
+/** Every registered server. The live remote_servers table has no per-server enable flag, so all are reported. */
+function sv_servers($db)
 {
-	$out = array();
-	foreach ((array)$db->getRemoteServers() as $row) {
-		if ((int)$row['enabled'] === 1) $out[] = $row;
-	}
-	return $out;
+	return (array)$db->getRemoteServers();
 }
 
 function sv_fmt_time($ts, $tz)
@@ -236,7 +232,7 @@ function sv_dashboard_html($db, $isAdmin)
 		return $html . "</div></div></div>";
 	}
 
-	$servers = sv_enabled_servers($db);
+	$servers = sv_servers($db);
 	$cycle = count($servers) * $cfg['interval_seconds'];
 	$latest = sv_latest_samples($db);
 	$dayStart = sh_day_start($now, $tz);
@@ -296,7 +292,7 @@ function sv_detail_html($db, $server, $isAdmin, $lookup_at)
 	$now = time();
 	$sid = (int)$server['remote_server_id'];
 	$name = htmlspecialchars($server['remote_server_name']);
-	$cycle = count(sv_enabled_servers($db)) * $cfg['interval_seconds'];
+	$cycle = count(sv_servers($db)) * $cfg['interval_seconds'];
 
 	$latest = sv_latest_samples($db);
 	$sample = isset($latest[$sid]) ? $latest[$sid] : null;
