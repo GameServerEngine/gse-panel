@@ -44,7 +44,6 @@ define('LANG_remove_install', "Please remove install.php file for security reaso
 define('LANG_agent_offline', "The Agent that is controlling this game server is offline.");
 define('LANG_logged_in', "You are logged in as");
 define('LANG_delete', "Delete");
-define('LANG_write_permission_required', "Write permission required");
 define('LANG_edit', "Edit");
 define('LANG_actions', "Actions");
 define('LANG_invalid_subpage', "Invalid subpage.");
