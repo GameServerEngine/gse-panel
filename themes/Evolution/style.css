@@ -110,10 +110,7 @@ body {
 }
 					
 #topBanner {
-	background-position:center;
 	height:120px;
-	background-image:url(images/topBanner.png);
-	background-repeat:no-repeat;	
 }
 
 .main-content {

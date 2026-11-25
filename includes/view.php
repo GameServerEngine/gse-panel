@@ -83,6 +83,7 @@ class View {
 			$logoSize = isset($panel_settings['panel_logo_size']) ? (int)$panel_settings['panel_logo_size'] : 100;
 			$logoZoom = max(10, min(300, $logoSize)) / 100;
 			$logoTag = 'src="images/logo.png?v=' . filemtime('images/logo.png') . '" style="zoom:' . $logoZoom . '"';
+			$this->header_code .= '<script>window.panelLogoZoom = ' . $logoZoom . ';</script>' . "\n";
 			$page = preg_replace('#src="(?:[^"]*/)?logo\.png(?:\?[^"]*)?"#', $logoTag, $page);
 			$top = preg_replace('#src="(?:[^"]*/)?logo\.png(?:\?[^"]*)?"#', $logoTag, (string)$top);
 		}
