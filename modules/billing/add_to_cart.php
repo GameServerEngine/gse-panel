@@ -163,6 +163,7 @@ if (!$offer || (int)$offer['home_cfg_id'] !== $home_cfg_id) {
 
 // Optional free subdomain: make sure the chosen name is still available before the invoice is created.
 require_once(__DIR__ . '/includes/subdomain_bridge.php');
+require_once(__DIR__ . '/includes/order_options.php');
 $sd_name = isset($_POST['sd_name']) ? strtolower(trim((string)$_POST['sd_name'])) : '';
 $sd_domain = isset($_POST['sd_domain']) ? strtolower(trim((string)$_POST['sd_domain'])) : '';
 $sd_ctx = null;
@@ -276,6 +277,9 @@ $max_players = max(1, $max_players);
 // $priceResult['total_price'] is already the authoritative, catalog-computed total
 // (unit price for the chosen slots/tier, multiplied by $qty periods).
 $subtotal = billing_cents_to_money(max(0, billing_money_to_cents((float)$priceResult['total_price'])));
+// One-time extras (Server Setup and similar) ticked on the order page; prices come from the database.
+$option_rows = order_options_selected($db, $table_prefix, $_POST['options'] ?? array());
+$subtotal = billing_cents_to_money(billing_money_to_cents($subtotal + order_options_total($option_rows)));
 $amount = $subtotal;
 $period_end = date('Y-m-d H:i:s', strtotime('+' . ($durationInfo['days'] * $qty) . ' days'));
 $catalog_snapshot = json_encode([
@@ -316,6 +320,9 @@ $esc_ip_id = intval($ip_id);
 $esc_max_players = intval($max_players);
 $esc_qty = intval($qty);
 $description = trim(($service_name !== '' ? $service_name : 'Game Server') . ': ' . $home_name);
+foreach ($option_rows as $opt_row) {
+    $description .= ' + ' . $opt_row['title'];
+}
 $invoiceTable = $table_prefix . 'billing_invoices';
 $invoiceColumns = [];
 $columnsResult = mysqli_query($db, "SHOW COLUMNS FROM `{$invoiceTable}`");
@@ -439,6 +446,10 @@ if (!$res || $err_no > 0) {
             billing_fail_add_to_cart('Subdomain reservation failed', ['name' => $sd_name], '/order.php?home_cfg_id=' . intval($home_cfg_id) . '&sd_name=' . rawurlencode($sd_name) . '&error_message=' . rawurlencode('Server address: that name was just taken. Please pick another.'));
         }
     }
+}
+
+if (!empty($option_rows) && isset($insert_id) && $insert_id > 0 && $res && $err_no === 0) {
+    order_options_save_invoice($db, $table_prefix, (int)$insert_id, $option_rows);
 }
 
 if ($stmt instanceof mysqli_stmt) {

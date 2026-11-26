@@ -25,7 +25,7 @@
 // Module general information
 $module_title = "billing";
 $module_version = "3.9";
-$db_version = 17;
+$db_version = 18;
 $module_required = TRUE;
 // Module description
 $module_description = "Billing storefront / provisioning integration.";
@@ -798,6 +798,32 @@ $install_queries[17] = array(
         }
         return true;
     },
+);
+
+// db_version 18 - one-time order options (Server Setup at $5 and similar). The options are edited in
+// Billing > Order Options. Each ticked option is copied onto its invoice. The old $25 "Server Setup"
+// service is switched off because the option replaces it.
+$install_queries[18] = array(
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."billing_order_options` (
+        `option_id` INT(11) NOT NULL AUTO_INCREMENT,
+        `title` VARCHAR(120) NOT NULL,
+        `description` TEXT NULL,
+        `price` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+        `enabled` TINYINT(1) NOT NULL DEFAULT 1,
+        `sort_order` INT(11) NOT NULL DEFAULT 0,
+        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (`option_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."billing_invoice_options` (
+        `invoice_id` INT(11) NOT NULL,
+        `option_id` INT(11) NOT NULL,
+        `title` VARCHAR(120) NOT NULL,
+        `price` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+        PRIMARY KEY (`invoice_id`, `option_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+    "INSERT INTO `".DB_PREFIX."billing_order_options` (title, description, price, enabled, sort_order)
+        VALUES ('Server Setup', 'Server will be installed immediately but allow up to 24 hours for the configuration to be performed.', 5.00, 1, 10)",
+    "UPDATE `".DB_PREFIX."billing_service_types` SET enabled = 0 WHERE slug = 'server-setup'",
 );
 
 ?>
