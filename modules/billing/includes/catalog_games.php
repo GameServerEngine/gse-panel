@@ -36,9 +36,15 @@ if (!function_exists('catalog_period_prices')) {
 }
 
 if (!function_exists('catalog_clamp_slots')) {
-    /** Returns array(min, max) where min is at least 1 and max is at least min. */
+    /**
+     * Returns array(min, max) where min is at least 1 and max is at least min.
+     * 0 and 0 is kept as it is: it means "not offered" and the storefront skips the offer.
+     */
     function catalog_clamp_slots($min, $max): array
     {
+        if ((int)$min <= 0 && (int)$max <= 0) {
+            return array(0, 0);
+        }
         $min = max(1, (int)$min);
         $max = max($min, (int)$max);
         return array($min, $max);

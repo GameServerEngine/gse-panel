@@ -811,8 +811,9 @@ function cat_render_price_fields(array $s): void
       <tr><th><label for="cat-period">Default billing period</label></th>
         <td><select id="cat-period" name="period_default"><?php cat_period_options($s['period']); ?></select></td></tr>
       <tr><th>Slots customers can pick</th>
-        <td>From <input type="number" min="1" class="cat-number" name="slot_min_qty" value="<?php echo (int)$s['slot_min']; ?>">
-            to <input type="number" min="1" class="cat-number" name="slot_max_qty" value="<?php echo (int)$s['slot_max']; ?>"></td></tr>
+        <td>From <input type="number" min="0" class="cat-number" name="slot_min_qty" value="<?php echo (int)$s['slot_min']; ?>">
+            to <input type="number" min="0" class="cat-number" name="slot_max_qty" value="<?php echo (int)$s['slot_max']; ?>">
+            <small>0 and 0 = not offered on the order page</small></td></tr>
       <tr><th>Monthly price</th>
         <td>
           <div class="cat-mode-fields" data-mode="per_slot">$<input type="number" step="0.01" min="0" class="cat-number" name="per_slot_price_monthly"

@@ -265,7 +265,20 @@ if ($db && !billing_payment_method_enabled($db, (string)$table_prefix, 'paypal')
 }
 
 $paypal_csrf = billing_action_csrf_token('billing_paypal_checkout_csrf');
-$paypal_on = !empty($client_id);
+$paypal_enabled = !$db || billing_payment_method_enabled($db, (string)$table_prefix, 'paypal');
+$paypal_secret = function_exists('paypal_get_client_secret') ? paypal_get_client_secret() : '';
+// The button needs both the client id and the secret; the id alone cannot make an order.
+$paypal_on = !empty($client_id) && $paypal_secret !== '';
+
+// Is the signed-in customer an administrator? (Used for hints about missing payment setup.)
+$cart_is_admin = false;
+$cart_user_id_check = intval($_SESSION['website_user_id'] ?? 0);
+if ($cart_user_id_check > 0 && $db) {
+    $ar = mysqli_query($db, "SELECT users_role FROM {$table_prefix}users WHERE user_id = " . $cart_user_id_check . " LIMIT 1");
+    if ($ar && ($arow = mysqli_fetch_assoc($ar))) {
+        $cart_is_admin = strtolower($arow['users_role'] ?? '') === 'admin';
+    }
+}
 $paypal_invoice_ids = implode(',', array_map('intval', array_column((array)$invoices, 'invoice_id')));
 
 // (Do not close the shared DB connection here; menu and other includes may use it.)
@@ -481,6 +494,9 @@ $paypal_invoice_ids = implode(',', array_map('intval', array_column((array)$invo
                     <div id="stripe-status" class="status-message"></div>
                 </div>
                 <?php endif; ?>
+                <?php if ($paypal_enabled && !$paypal_on && $cart_is_admin): ?>
+                <p class="status-message" style="display:block;"><small><em>Admin: PayPal is enabled but its client id or secret is missing, so customers do not see the PayPal button. Save them in Billing &gt; Setting.</em></small></p>
+                <?php endif; ?>
                 <?php if ($paypal_on): ?>
                 <div class="paypal-checkout">
                     <h4>Pay with PayPal</h4>
@@ -515,15 +531,7 @@ $paypal_invoice_ids = implode(',', array_map('intval', array_column((array)$invo
                     <strong>Checkout Unavailable:</strong> Online payment has not been configured for this site.
                     Please contact the site administrator or try again later.
                     <?php
-                    // Admin hint: only show config link if the current user is an admin
-                    $cart_user_id_check = intval($_SESSION['website_user_id'] ?? 0);
-                    $cart_is_admin = false;
-                    if ($cart_user_id_check > 0 && $db) {
-                        $ar = mysqli_query($db, "SELECT users_role FROM {$table_prefix}users WHERE user_id = " . $cart_user_id_check . " LIMIT 1");
-                        if ($ar && ($arow = mysqli_fetch_assoc($ar))) {
-                            $cart_is_admin = strtolower($arow['users_role'] ?? '') === 'admin';
-                        }
-                    }
+                    // Admin hint: only show config link if the current user is an admin ($cart_is_admin is set above)
                     if ($cart_is_admin):
                     ?>
                     <br><small><em>Admin: configure PayPal credentials in <a href="<?php echo htmlspecialchars(billing_url('admin_config.php'), ENT_QUOTES, 'UTF-8'); ?>" style="color:inherit;text-decoration:underline;">Site Config</a>.</em></small>
