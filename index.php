@@ -154,12 +154,7 @@ function home()
 	$lang_sel .= "</select>\n";
 	$lang_switch = ( isset( $_GET['lang'] ) AND $_GET['lang'] != "-" ) ? "&amp;lang=" . $_GET['lang'] : "";
 	?>
-<div>
-</div>
-
-<div style="clear: both;">
-</div>
-	%top%
+<?php if (getThemePath() !== 'themes/Login/') { echo "\t%top%\n"; } // The Login layout draws its own logo header. ?>
 
 
 	%topbody%
@@ -321,7 +316,7 @@ function home()
 	?>
 	<!-- Sign-in form. The Login theme (themes/Login) draws the page around it. -->
 	<h1><?php print_lang('login_title'); ?></h1>
-	<form action="index.php<?php echo preg_replace( "/\&amp;/", "?", $lang_switch ); ?>" name="login_form" method="post">
+	<form class="login-form" action="index.php<?php echo preg_replace( "/\&amp;/", "?", $lang_switch ); ?>" name="login_form" method="post">
 		<label for="ulogin"><?php print_lang('login'); ?></label>
 		<input type="text" name="ulogin" id="ulogin" autocomplete="username" required>
 		<label for="upassword"><?php print_lang('password'); ?></label>
@@ -340,12 +335,6 @@ function home()
 
 	}
 	?>
-	<div class="clear">
-</div>
-    </div>
-</div>
-
-
 	%bottom%
 <?php
 }
