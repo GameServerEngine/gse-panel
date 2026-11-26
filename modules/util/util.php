@@ -55,11 +55,9 @@ function exec_module()
 	</div>
 </div>
 <div id="translation"
-data-target_empty="<?=get_lang('target_empty')?>"
 data-command_empty="<?=get_lang('command_empty')?>"
 data-agent_invalid="<?=get_lang('agent_invalid')?>"
 data-post_failed="<?=get_lang('post_failed')?>"
-data-no_endpoints="<?=get_lang('no_endpoints')?>"
 data-select_server="<?=get_lang('select_server')?>"
 data-select_server_option="<?=get_lang('select_server_option')?>"
 data-select_agent="<?=get_lang('select_agent')?>" ></div>

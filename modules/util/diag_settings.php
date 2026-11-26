@@ -1,6 +1,6 @@
 <?php
 /*
- * Admin page: diagnostic target policy, speed test endpoints, limits and the audit trail.
+ * Admin page: diagnostic private-address override, limits, optional AI log analysis and the audit trail.
  * home.php?m=util&p=diag_settings  (admin only, see navigation.xml)
  */
 require_once 'modules/util/diag_env.php';
@@ -10,52 +10,20 @@ function util_h($text)
 	return htmlspecialchars((string)$text, ENT_QUOTES, 'UTF-8');
 }
 
-// Lines of the test target box. Returns array(clean lines, rejected lines).
-function util_settings_targets($text)
-{
-	$clean = array();
-	$rejected = array();
-	foreach (preg_split('/\s+/', trim((string)$text)) as $line) {
-		if ($line === '') {
-			continue;
-		}
-		$host = diag_parse_host($line);
-		if ($host['ok']) {
-			$clean[] = $host['host'];
-		} else {
-			$rejected[] = $line;
-		}
-	}
-	return array($clean, $rejected);
-}
-
 function util_settings_save($db)
 {
 	if (!diag_csrf_valid(diag_csrf_from_request())) {
 		print_failure('The page expired. Reload it and try again.');
 		return;
 	}
-	list($targets, $rejected) = util_settings_targets(isset($_POST['diag_test_targets']) ? $_POST['diag_test_targets'] : '');
-	$endpoints_json = trim(isset($_POST['diag_speed_endpoints']) ? $_POST['diag_speed_endpoints'] : '');
-	$kept = diag_load_speed_endpoints($endpoints_json);
-	$values = array(
-		'diag_test_targets' => implode("\n", $targets),
-		'diag_admin_allow_private' => empty($_POST['diag_admin_allow_private']) ? '0' : '1',
-		'diag_speed_endpoints' => $endpoints_json,
-	);
+	$values = array('diag_admin_allow_private' => empty($_POST['diag_admin_allow_private']) ? '0' : '1');
 	foreach (array('diag_rate_window_s', 'diag_rate_per_user', 'diag_rate_per_agent', 'diag_running_per_user', 'diag_running_per_agent') as $name) {
 		$values[$name] = (string)diag_limit_settings(array($name => isset($_POST[$name]) ? $_POST[$name] : ''))[$name];
 	}
 	$values = array_merge($values, util_settings_ai_values($db->getSettings()));
 	$db->setSettings($values);
 	$db->logger('Admin saved diagnostics settings');
-	print_success('Settings saved. ' . count($targets) . ' test target(s), ' . count($kept) . ' valid speed test endpoint(s).');
-	if ($rejected) {
-		print_failure('Not saved, not a valid host or IP: ' . util_h(implode(', ', $rejected)));
-	}
-	if ($endpoints_json !== '' && !$kept) {
-		print_failure('No valid speed test endpoint was found in the JSON. Check the format below.');
-	}
+	print_success('Settings saved.');
 }
 
 // Optional AI log analysis settings. An empty key box keeps the stored key; the key is never printed back.
@@ -100,15 +68,10 @@ function util_settings_audit($db)
 function util_settings_form($settings)
 {
 	$limits = diag_limit_settings($settings);
-	$sample = '[{"id":"example","label":"Example CDN","sizes":[{"id":"10","label":"10 MB","bytes":10485760,"url":"https://speed.example.net/10mb.bin"}]}]';
 	echo '<form method="post" action="?m=util&amp;p=diag_settings" class="util-form">';
 	echo '<input type="hidden" name="csrf" value="' . util_h(diag_csrf_token()) . '">';
-	echo '<label for="diag_test_targets">Test targets (one host name or IP per line). Everyone may test these; their own game server addresses are always allowed.</label>';
-	echo '<textarea id="diag_test_targets" name="diag_test_targets" rows="5">' . util_h(isset($settings['diag_test_targets']) ? $settings['diag_test_targets'] : '') . '</textarea>';
 	$checked = (!empty($settings['diag_admin_allow_private']) && $settings['diag_admin_allow_private'] !== '0') ? ' checked' : '';
-	echo '<p><label><input type="checkbox" name="diag_admin_allow_private" value="1"' . $checked . '> Administrator override: admins may test private network addresses (10.x, 172.16-31.x, 192.168.x). Loopback, link-local and reserved ranges stay blocked.</label></p>';
-	echo '<label for="diag_speed_endpoints">Speed test endpoints (JSON). Users can only pick from this list; each entry has one host and fixed file sizes (1 MB to 256 MB).</label>';
-	echo '<textarea id="diag_speed_endpoints" name="diag_speed_endpoints" rows="6" placeholder="' . util_h($sample) . '">' . util_h(isset($settings['diag_speed_endpoints']) ? $settings['diag_speed_endpoints'] : '') . '</textarea>';
+	echo '<p><label><input type="checkbox" name="diag_admin_allow_private" value="1"' . $checked . '> Administrator override: admins may ping private network addresses (10.x, 172.16-31.x, 192.168.x). Loopback, link-local and reserved ranges stay blocked.</label></p>';
 	$fields = array('diag_rate_window_s' => 'Rate window (seconds)', 'diag_rate_per_user' => 'Runs per user in the window', 'diag_rate_per_agent' => 'Runs per agent in the window',
 		'diag_running_per_user' => 'Running tests per user', 'diag_running_per_agent' => 'Running tests per agent');
 	foreach ($fields as $name => $label) {

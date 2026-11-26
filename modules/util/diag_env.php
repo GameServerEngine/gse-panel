@@ -7,6 +7,7 @@
 require_once 'includes/lib_remote.php';
 require_once 'includes/diagnostics/runner.php';
 require_once 'includes/diagnostics/csrf.php';
+require_once 'modules/config_games/server_config_parser.php';
 
 // Game server rows the user may see: each has remote_server_id, ip, port, home_id, home_name, game_key.
 function util_diag_server_rows($db, $user_id)
@@ -49,6 +50,13 @@ function util_diag_own_ips($server_rows)
 	return $ips;
 }
 
+// The ports of one game server row: its game port plus the query and reserved ports of its game config.
+function util_diag_server_ports($row)
+{
+	$xml = read_server_config(SERVER_CONFIG_LOCATION . '/' . $row['home_cfg_file'], os_for_install_row($row));
+	return diag_ports_from_config($xml, (int)$row['port']);
+}
+
 function util_diag_agent_factory($db)
 {
 	return function ($agent_id, $timeout_s) use ($db) {
@@ -73,7 +81,7 @@ function util_diag_env($db)
 		'policy' => diag_policy_context($role, util_diag_own_ips($rows), $settings),
 		'agent_ids' => util_diag_agent_ids($db, $_SESSION['user_id'], $role, $rows),
 		'agent' => util_diag_agent_factory($db),
-		'speed_endpoints' => diag_load_speed_endpoints(isset($settings['diag_speed_endpoints']) ? $settings['diag_speed_endpoints'] : ''),
 		'rows' => $rows,
+		'server_ports' => 'util_diag_server_ports',
 	);
 }

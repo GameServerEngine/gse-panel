@@ -1,7 +1,7 @@
 <?php
 /*
  * JSON endpoint for the Utilities page. home.php?m=util&p=diag&type=cleared
- *   GET  action=config   tools this user may use, presets, own servers, the CSRF token
+ *   GET  action=config   tools this user may use, own servers, the visitor's IP, the CSRF token
  *   POST action=run      runs one tool (needs the CSRF token)
  * All rules live in includes/diagnostics/ (see runner.php); this file only connects them to the session.
  */
@@ -19,19 +19,10 @@ function util_diag_json($data, $http_code = 200)
 // What the page needs to build its forms. No agent keys, no endpoint URLs.
 function util_diag_config($db, $env)
 {
-	$all = util_diag_all_agents($db);
 	$servers = array();
 	foreach ($env['rows'] as $row) {
 		$servers[] = array('label' => $row['home_name'] . ' (' . $row['ip'] . ':' . $row['port'] . ')', 'ip' => $row['ip'], 'port' => (int)$row['port'],
-			'agent' => (int)$row['remote_server_id'], 'game_key' => isset($row['game_key']) ? $row['game_key'] : '');
-	}
-	$endpoints = array();
-	foreach ($env['speed_endpoints'] as $endpoint) {
-		$sizes = array();
-		foreach ($endpoint['sizes'] as $size) {
-			$sizes[] = array('id' => $size['id'], 'label' => $size['label']);
-		}
-		$endpoints[] = array('id' => $endpoint['id'], 'label' => $endpoint['label'], 'sizes' => $sizes);
+			'agent' => (int)$row['remote_server_id']);
 	}
 	$tools = array();
 	foreach (diag_default_tool_access() as $tool => $roles) {
@@ -39,8 +30,7 @@ function util_diag_config($db, $env)
 			$tools[] = $tool;
 		}
 	}
-	return array('csrf' => diag_csrf_token(), 'tools' => $tools, 'presets' => diag_game_presets(), 'servers' => $servers, 'speed_endpoints' => $endpoints,
-		'adapters' => array_map(function ($a) { return array('id' => $a->id(), 'label' => $a->label(), 'port' => $a->default_port()); }, array_values(diag_query_adapters())));
+	return array('csrf' => diag_csrf_token(), 'tools' => $tools, 'servers' => $servers, 'my_ip' => $env['client_ip'], 'is_admin' => ($env['role'] === 'admin'));
 }
 
 function util_diag_run($db, $env)
