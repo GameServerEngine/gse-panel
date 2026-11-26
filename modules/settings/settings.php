@@ -121,6 +121,7 @@ function exec_module()
 			"default_game_server_home_path_prefix" => $_REQUEST['default_game_server_home_path_prefix'],
 			"port_block_size" => settings_port_block_size($_REQUEST['port_block_size'] ?? 10),
 			"panel_logo_size" => settings_logo_size($_REQUEST['panel_logo_size'] ?? 100),
+			"ntfy_base_url" => rtrim(trim((string)($_REQUEST['ntfy_base_url'] ?? '')), '/'),
 			"panel_show_site_name" => (int)!empty($_REQUEST['panel_show_site_name']),
 			"use_authorized_hosts" => $_REQUEST['use_authorized_hosts'],
 			"allow_setting_cpu_affinity" => $_REQUEST['allow_setting_cpu_affinity'],
@@ -189,6 +190,7 @@ function exec_module()
 	$ft->add_custom_field('panel_logo', "<input type='file' name='panel_logo' id='panel_logo' accept='image/png'> " . $logo_preview);
 	$ft->add_field('on_off','panel_show_site_name', $row['panel_show_site_name'] ?? 1);
 	$ft->add_field('string','panel_logo_size',settings_logo_size($row['panel_logo_size'] ?? 100), 8, "inputmode='numeric'");
+	$ft->add_field('string','ntfy_base_url',@$row['ntfy_base_url'], 50);
 	$locale_files = makefilelist("lang/", ".|..|.svn", true, "folders");
 	$locale_files = array('' => "-") + $locale_files;
 	$ft->add_custom_field('panel_language',

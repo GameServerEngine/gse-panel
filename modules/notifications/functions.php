@@ -84,7 +84,8 @@ function get_notifications($all = false)
 				 "NATURAL JOIN `DB_PREFIXnotification` ".
 				 "WHERE user_id = $_SESSION[user_id]";
 
-	return $db->resultQuery($query);
+	$rows = $db->resultQuery($query);
+	return is_array($rows) ? $rows : array();
 }
 
 function send_to_user($user_id, $notification_id)
