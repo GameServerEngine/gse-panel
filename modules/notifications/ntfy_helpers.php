@@ -16,11 +16,32 @@ if (!defined('NTFY_HELPERS_LOADED')) {
 	define('NTFY_HELPERS_LOADED', true);
 
 	define('NTFY_ADMIN_TOPIC', 'gse-admin');
+	// The panel's own topic: announcements sent from Notifications. Every customer is offered it first.
+	define('NTFY_NOTICE_TOPIC', 'gse-notices');
 
 	/** Per-server topic name. Stable and predictable so customers can subscribe once. */
 	function ntfy_topic_for_home($home_id)
 	{
 		return 'gse-' . (int)$home_id;
+	}
+
+	/**
+	 * What a customer can subscribe to: the panel first (always), then one topic per game server.
+	 * $homes are server rows with home_id, ip and port. The same home is listed once.
+	 */
+	function ntfy_customer_topics($homes)
+	{
+		$rows = array(array('label' => 'GameServer Engine panel (announcements)', 'topic' => NTFY_NOTICE_TOPIC));
+		$seen = array();
+		foreach ((array)$homes as $home) {
+			$id = (int)$home['home_id'];
+			if (isset($seen[$id])) {
+				continue;
+			}
+			$seen[$id] = true;
+			$rows[] = array('label' => $home['ip'] . ':' . $home['port'], 'topic' => ntfy_topic_for_home($id));
+		}
+		return $rows;
 	}
 
 	/**

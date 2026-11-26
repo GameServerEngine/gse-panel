@@ -15,6 +15,8 @@ if (!defined('BILLING_STRIPE_WEBHOOK_EVENTS')) {
     define('BILLING_STRIPE_WEBHOOK_EVENTS', 'checkout.session.completed,checkout.session.async_payment_succeeded,payment_intent.succeeded,payment_intent.payment_failed,charge.refunded');
 }
 
+require_once __DIR__ . '/payment_methods.php';
+
 if (!function_exists('billing_stripe_config')) {
     /**
      * Returns: mode (test|live), publishable_key, secret_key, webhook_secret, automatic_tax (bool),
@@ -23,7 +25,8 @@ if (!function_exists('billing_stripe_config')) {
     function billing_stripe_config(mysqli $db, string $prefix): array
     {
         $cfg = array('mode' => 'test', 'publishable_key' => '', 'secret_key' => '', 'webhook_secret' => '',
-            'automatic_tax' => false, 'checkout_ui' => 'hosted', 'configured' => false, 'problem' => '');
+            'automatic_tax' => false, 'checkout_ui' => 'hosted', 'configured' => false, 'problem' => '',
+            'enabled' => billing_payment_method_enabled($db, $prefix, 'stripe'));
         try {
             $res = $db->query("SELECT * FROM `{$prefix}billing_config` WHERE game_key IS NULL ORDER BY config_id ASC LIMIT 1");
             $row = $res ? $res->fetch_assoc() : null;
@@ -184,6 +187,7 @@ if (!function_exists('billing_stripe_save_settings')) {
         $stmt->bind_param('ssisi', $mode, $pub, $tax, $ui, $id);
         $stmt->execute();
         $stmt->close();
+        billing_payment_method_set($db, $prefix, 'stripe', !empty($in['stripe_enabled']));
         $message = 'Stripe settings saved.';
         if ($secret !== '') {
             if (!billing_stripe_store_secret($db, $prefix, $id, 'stripe_secret_key_enc', $secret)) {

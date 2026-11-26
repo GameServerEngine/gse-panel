@@ -189,6 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
                             $cfgVals['paypal_sandbox_client_secret'] = $paypalDb['paypal_client_secret'] ?? '';
                             $cfgVals['paypal_sandbox_webhook_id'] = $paypalDb['paypal_webhook_id'] ?? '';
                         }
+                        billing_payment_method_set($paypalDbLink, (string)$table_prefix, 'paypal', !empty($_POST['paypal_enabled']));
                         $status = 'PayPal settings saved.';
                         $statusType = 'success';
                     } catch (Throwable $e) {
@@ -287,6 +288,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
 
       <hr style="border:none;border-top:1px solid rgba(128,128,128,0.4);margin:24px 0;">
       <h3 style="margin-top:0;color:inherit;">PayPal Configuration</h3>
+      <p><label><input type="checkbox" name="paypal_enabled" value="1"<?php echo billing_payment_method_enabled($stripeDb, (string)($table_prefix ?? ''), 'paypal') ? ' checked' : ''; ?>>
+        <strong>Enabled</strong> &mdash; offer PayPal as a payment option at checkout</label></p>
 
       <?php
       $isSandboxMode = ($cfgVals['paypal_mode'] ?? 'sandbox') !== 'live';
@@ -508,6 +511,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
     <form method="post" style="margin-bottom:12px;">
       <input type="hidden" name="csrf" value="<?php echo h($csrf); ?>">
       <input type="hidden" name="action" value="save_stripe">
+      <p><label><input type="checkbox" name="stripe_enabled" value="1"<?php echo !empty($stripeView['enabled']) ? ' checked' : ''; ?>>
+        <strong>Enabled</strong> &mdash; offer card payments (Stripe) as a payment option at checkout</label></p>
       <p><label>Publishable key<br><input type="text" name="stripe_publishable_key" size="70" value="<?php echo h($stripeView['publishable_key']); ?>" placeholder="pk_live_... or pk_test_..."></label></p>
       <p><label>Secret key<br><input type="password" name="stripe_secret_key" size="70" autocomplete="off" placeholder="<?php echo $stripeView['secret_key'] !== '' ? 'saved &mdash; leave blank to keep' : 'sk_live_... or sk_test_...'; ?>"></label></p>
       <p><label>Card payment page

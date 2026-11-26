@@ -25,7 +25,7 @@ if (!$db) {
     $db->set_charset('utf8mb4');
     $prefix = (string)$table_prefix;
     if (!billing_service_types_ready($db, $prefix)) {
-        $error = 'The services tables are not installed yet. Update the Billing module first (Administration > Modules).';
+        $error = 'The services tables are missing from the database, so this page cannot run.';
         $db = false;
     }
 }
@@ -137,9 +137,9 @@ $statuses = array('in_progress' => 'In progress', 'delivered' => 'Delivered', 'c
 ?>
 <div class="container-wide panel">
   <h1>Services</h1>
-  <p>What customers can order besides game servers. Prices below the starter set are placeholders: set your own.</p>
-<?php if ($status): ?><div class="status success"><?php echo h($status); ?></div><?php endif; ?>
-<?php if ($error): ?><div class="status error"><?php echo h($error); ?></div><?php endif; ?>
+  <p>What customers can ask for besides a game server: a support request, custom work and similar. Each request opens a support ticket and, for paid services, one or more invoices. Extras ticked while ordering a game server (such as Server Setup) are on the Order Options tab. A service shows on the site's Services page when "Shown to customers" is ticked.</p>
+<?php if ($status): ?><div class="success"><?php echo h($status); ?></div><?php endif; ?>
+<?php if ($error): ?><div class="failure"><?php echo h($error); ?></div><?php endif; ?>
 
 <?php if ($db): ?>
   <h2>Requests</h2>

@@ -4,10 +4,6 @@
 // scripts/install-ntfy.sh (run as root through a sudo rule for the web user).
 require_once __DIR__ . '/ntfy_helpers.php';
 
-if (!defined('NTFY_NOTICE_TOPIC')) {
-    define('NTFY_NOTICE_TOPIC', 'gse-notices');
-}
-
 function ntfy_admin_setting($db, $key)
 {
     $rows = $db->resultQuery("SELECT value FROM `DB_PREFIXsettings` WHERE setting = '" . $db->real_escape_string($key) . "' LIMIT 1");
@@ -144,7 +140,23 @@ function ntfy_admin_publish_notice($db, $subject, $message)
     return ntfy_admin_post($baseUrl, NTFY_NOTICE_TOPIC, $title, $text);
 }
 
-// Handles the two forms on the page. Returns array of messages to show.
+// Sends one test message to one of the listed topics. Returns array(bool ok, text).
+function ntfy_admin_send_test($db, $topic)
+{
+    $baseUrl = ntfy_admin_base_url(ntfy_admin_setting($db, 'ntfy_base_url'));
+    if ($baseUrl === '') {
+        return array(false, 'Set the ntfy address first.');
+    }
+    $known = array_column(ntfy_admin_topics($db, $baseUrl), 'topic');
+    if (!in_array($topic, $known, true)) {
+        return array(false, 'That topic is not in the list.');
+    }
+    $sent = ntfy_admin_post($baseUrl, $topic, 'GSE test message', 'Test from the panel for topic ' . $topic . ' at ' . date('Y-m-d H:i:s') . '. If you can read this, push notifications work.');
+    return $sent ? array(true, 'Test sent to ' . $topic . '. If a phone or browser is subscribed to it, the message shows up now.')
+        : array(false, 'ntfy did not accept the test for ' . $topic . '. Check that ntfy is running and the address is right.');
+}
+
+// Handles the forms on the page. Returns array of messages to show.
 function ntfy_admin_handle_post($db)
 {
     $messages = array();
@@ -156,11 +168,23 @@ function ntfy_admin_handle_post($db)
         $messages[] = ntfy_admin_save_address($db, $_POST['ntfy_ip'] ?? '', $_POST['ntfy_port'] ?? 0);
         ntfy_admin_save_setting($db, 'ntfy_enabled', isset($_POST['ntfy_enabled']) ? '1' : '0');
         $messages[] = array(true, isset($_POST['ntfy_enabled']) ? 'ntfy messages are on.' : 'ntfy messages are off.');
+    } elseif ($action === 'send_test') {
+        $messages[] = ntfy_admin_send_test($db, (string)($_POST['ntfy_topic'] ?? ''));
     } elseif ($action === 'install_ntfy') {
         $result = ntfy_admin_install($_POST['ntfy_install_port'] ?? 0);
         $messages[] = array($result[0], $result[1] !== '' ? $result[1] : ($result[0] ? 'ntfy installed.' : 'The install did not finish.'));
     }
     return $messages;
+}
+
+// A small form that looks like a link: "Send test" for one topic.
+function ntfy_admin_test_form($csrf, $topic)
+{
+    return '<form method="post" action="?m=notifications" style="display:inline;">'
+        . '<input type="hidden" name="ntfy_csrf" value="' . htmlspecialchars($csrf, ENT_QUOTES) . '">'
+        . '<input type="hidden" name="ntfy_action" value="send_test">'
+        . '<input type="hidden" name="ntfy_topic" value="' . htmlspecialchars($topic, ENT_QUOTES) . '">'
+        . '<button type="submit" style="background:none;border:0;padding:0;color:inherit;text-decoration:underline;cursor:pointer;">Send test</button></form>';
 }
 
 function ntfy_admin_render($db)
@@ -205,11 +229,12 @@ function ntfy_admin_render($db)
     }
 
     echo '<h4 style="margin-top:14px;">Topics</h4>';
-    echo '<table><thead><tr><th>Who it is for</th><th>Topic</th><th>Subscribe at</th></tr></thead><tbody>';
+    echo '<table><thead><tr><th>Who it is for</th><th>Topic</th><th>Subscribe at</th><th>Test</th></tr></thead><tbody>';
     foreach (ntfy_admin_topics($db, $baseUrl) as $row) {
         echo '<tr><td>' . htmlspecialchars($row['label'], ENT_QUOTES) . '</td>'
             . '<td>' . htmlspecialchars($row['topic'], ENT_QUOTES) . '</td>'
-            . '<td>' . ($row['url'] === '' ? '<span class="muted">set the address first</span>' : '<a href="' . htmlspecialchars($row['url'], ENT_QUOTES) . '" target="_blank">' . htmlspecialchars($row['url'], ENT_QUOTES) . '</a>') . '</td></tr>';
+            . '<td>' . ($row['url'] === '' ? '<span class="muted">set the address first</span>' : '<a href="' . htmlspecialchars($row['url'], ENT_QUOTES) . '" target="_blank">' . htmlspecialchars($row['url'], ENT_QUOTES) . '</a>') . '</td>'
+            . '<td>' . ($row['url'] === '' ? '' : ntfy_admin_test_form($csrf, $row['topic'])) . '</td></tr>';
     }
     echo '</tbody></table>';
     echo '</div>';

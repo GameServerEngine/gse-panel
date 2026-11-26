@@ -11,8 +11,8 @@
  *
  */
 
-// Customer-facing page: shows each owned server's ntfy subscribe link and the
-// ntfy app download links. Read-only; does not send anything itself.
+// Customer-facing page: shows the panel's ntfy subscribe link (always first) and one link per owned
+// server, plus the ntfy app download links. Read-only; does not send anything itself.
 
 require_once('modules/notifications/ntfy_helpers.php');
 
@@ -21,10 +21,6 @@ function exec_module()
 	global $db, $settings;
 
 	$homes = $db->getIpPortsForUser($_SESSION['user_id']);
-	if (!$homes) {
-		print_failure(get_lang('cron_no_servers_tied_to_account'));
-		return 0;
-	}
 
 	$baseUrl = isset($settings['ntfy_base_url']) ? $settings['ntfy_base_url'] : '';
 	if (empty($baseUrl)) {
@@ -38,11 +34,10 @@ function exec_module()
 
 	echo '<table class="center">';
 	echo '<tr><th>Server</th><th>Subscribe link</th></tr>';
-	foreach ((array)$homes as $home) {
-		$topic = ntfy_topic_for_home($home['home_id']);
-		$subscribeUrl = $baseUrl . '/' . rawurlencode($topic);
+	foreach (ntfy_customer_topics($homes) as $row) {
+		$subscribeUrl = $baseUrl . '/' . rawurlencode($row['topic']);
 		echo '<tr>';
-		echo '<td>' . htmlspecialchars($home['ip'] . ':' . $home['port']) . '</td>';
+		echo '<td>' . htmlspecialchars($row['label']) . '</td>';
 		echo '<td><a href="' . htmlspecialchars($subscribeUrl) . '" target="_blank" rel="noopener">' . htmlspecialchars($subscribeUrl) . '</a></td>';
 		echo '</tr>';
 	}

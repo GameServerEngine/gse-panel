@@ -3,6 +3,54 @@
 // The options live in billing_order_options. Ticked options are copied to billing_invoice_options
 // when the invoice is created, so the invoice keeps its own record if an option changes later.
 
+// The SQL that creates the order option tables and the first option. The Billing database step
+// (module.php, db_version 18) and the Order Options page both use this one list, so a panel that
+// never ran the step still gets the tables. Every statement is safe to run again.
+function order_options_install_sql(string $prefix): array
+{
+    $options = '`' . $prefix . 'billing_order_options`';
+    return array(
+        "CREATE TABLE IF NOT EXISTS {$options} (
+            `option_id` INT(11) NOT NULL AUTO_INCREMENT,
+            `title` VARCHAR(120) NOT NULL,
+            `description` TEXT NULL,
+            `price` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+            `enabled` TINYINT(1) NOT NULL DEFAULT 1,
+            `sort_order` INT(11) NOT NULL DEFAULT 0,
+            `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`option_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+        "CREATE TABLE IF NOT EXISTS `{$prefix}billing_invoice_options` (
+            `invoice_id` INT(11) NOT NULL,
+            `option_id` INT(11) NOT NULL,
+            `title` VARCHAR(120) NOT NULL,
+            `price` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+            PRIMARY KEY (`invoice_id`, `option_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+        "INSERT INTO {$options} (title, description, price, enabled, sort_order)
+            SELECT 'Server Setup', 'Server will be installed immediately but allow up to 24 hours for the configuration to be performed.', 5.00, 1, 10
+            FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM {$options} WHERE title = 'Server Setup')",
+        // The option replaces the old $25 Server Setup service.
+        "UPDATE `{$prefix}billing_service_types` SET enabled = 0 WHERE slug = 'server-setup'",
+    );
+}
+
+// Creates the order option tables when they are missing. Returns '' on success, otherwise the error text.
+function order_options_install(mysqli $db, string $prefix): string
+{
+    $firstError = '';
+    foreach (order_options_install_sql($prefix) as $sql) {
+        try {
+            $db->query($sql);
+        } catch (Throwable $e) {
+            if ($firstError === '') {
+                $firstError = $e->getMessage();
+            }
+        }
+    }
+    return order_options_table_ready($db, $prefix) ? '' : ($firstError !== '' ? $firstError : 'the table was not created');
+}
+
 function order_options_table_ready(mysqli $db, string $prefix): bool
 {
     $res = @$db->query("SHOW TABLES LIKE '" . $db->real_escape_string($prefix . 'billing_order_options') . "'");
