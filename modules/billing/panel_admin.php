@@ -19,6 +19,7 @@ if (!function_exists('exec_module')) {
             'locations' => array('Locations', 'admin_locations.php'),
             'coupons' => array('Coupons', 'admin_coupons.php'),
             'services' => array('Services', 'admin_services.php'),
+            'order_options' => array('Order Options', 'admin_order_options.php'),
             'config' => array('Settings', 'admin_config.php'),
         );
 
