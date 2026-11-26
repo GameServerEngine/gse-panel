@@ -936,6 +936,10 @@ function getThemePath()
 {
 	global $settings;
 	$path = "";
+	// Signed-out pages (sign in, lost password, register) use the plain Login theme.
+	if (empty($_SESSION['users_login']) && is_file('themes/Login/layout.html')) {
+		return 'themes/Login/';
+	}
 	if ( isset($_SESSION['users_theme']) &&
 		!empty($_SESSION['users_theme']) &&
 		is_dir( 'themes/'.$_SESSION['users_theme'] ) &&
