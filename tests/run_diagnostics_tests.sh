@@ -8,6 +8,7 @@ for test in \
 	includes/tests/diag_a2s_test.php \
 	includes/tests/diag_a2s_udp_integration_test.php \
 	includes/tests/diag_policy_test.php \
+	includes/tests/diag_listening_test.php \
 	includes/tests/diag_runner_test.php \
 	includes/tests/diag_contract_test.php \
 	includes/tests/diag_log_analyzer_test.php \

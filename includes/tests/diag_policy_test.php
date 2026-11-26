@@ -47,7 +47,7 @@ $resolver = function ($host) use ($dns) {
 };
 function ctx($role, $resolver, $extra = array())
 {
-	return array_merge(array('role' => $role, 'own_ips' => array('198.51.101.7', '10.9.9.9'), 'test_targets' => array('tests.example.org'),
+	return array_merge(array('role' => $role, 'own_ips' => array('198.51.101.7', '10.9.9.9'),
 		'admin_allow_private' => false, 'resolver' => $resolver), $extra);
 }
 
@@ -58,15 +58,14 @@ check('user: name resolving to own IP allowed, IP pinned', $r['ok'] && $r['ip'] 
 $r = diag_check_target('10.9.9.9', ctx('user', $resolver));
 check('user: own private IP allowed with allow_private', $r['ok'] && $r['allow_private']);
 check('user: other private IP denied', diag_check_target('10.0.0.8', ctx('user', $resolver))['code'] === 'private_denied');
-check('user: random public IP denied', diag_check_target('8.8.8.8', ctx('user', $resolver))['code'] === 'not_authorized');
-check('user: listed test target allowed', diag_check_target('tests.example.org', ctx('user', $resolver))['ok']);
+check('user: any public IP allowed', diag_check_target('8.8.8.8', ctx('user', $resolver))['ok']);
+check('user: any public host name allowed, IP pinned', diag_check_target('tests.example.org', ctx('user', $resolver))['ip'] === '93.184.216.34');
 check('user: loopback denied', diag_check_target('127.0.0.1', ctx('user', $resolver))['code'] === 'blocked');
 check('user: metadata IP denied', diag_check_target('169.254.169.254', ctx('user', $resolver))['code'] === 'blocked');
 check('user: DNS rebinding answer (public + loopback) denied', !diag_check_target('rebind.example.net', ctx('admin', $resolver))['ok']);
 check('user: name resolving to internal denied', diag_check_target('internal.example.net', ctx('user', $resolver))['code'] === 'private_denied');
 check('user: unresolvable name', diag_check_target('nothing.example.net', ctx('user', $resolver))['code'] === 'no_address');
 check('user: bad input', diag_check_target('127.0.0.1; id', ctx('user', $resolver))['code'] === 'bad_target');
-check('user: listed IP-only target', diag_check_target('8.8.4.4', ctx('user', $resolver, array('test_targets' => array('8.8.4.4'))))['ok']);
 
 check('admin: any public IP allowed', diag_check_target('8.8.8.8', ctx('admin', $resolver))['ok']);
 check('admin: public IPv6 allowed', diag_check_target('v6.example.net', ctx('admin', $resolver))['ok']);
@@ -74,7 +73,7 @@ check('admin: other private denied by default', diag_check_target('10.0.0.8', ct
 $r = diag_check_target('internal.example.net', ctx('admin', $resolver, array('admin_allow_private' => true)));
 check('admin: private allowed with override', $r['ok'] && $r['allow_private']);
 check('admin: loopback denied even with override', diag_check_target('127.0.0.1', ctx('admin', $resolver, array('admin_allow_private' => true)))['code'] === 'blocked');
-check('subuser: public IP not theirs denied', diag_check_target('8.8.8.8', ctx('subuser', $resolver))['code'] === 'not_authorized');
+check('subuser: public IP allowed', diag_check_target('8.8.8.8', ctx('subuser', $resolver))['ok']);
 check('override flag is ignored for users', diag_check_target('10.0.0.8', ctx('user', $resolver, array('admin_allow_private' => true)))['code'] === 'private_denied');
 
 // IPv6 own IP written differently
@@ -85,6 +84,6 @@ check('IPv6 written long still matches own IP', $r['ok']);
 check('pick prefers IPv4', diag_pick_address(array('2606:4700::1', '93.184.216.34')) === '93.184.216.34');
 
 // Policy context from settings
-$c = diag_policy_context('admin', array('1.2.3.4', '1.2.3.4'), array('diag_test_targets' => "Tests.Example.org\n8.8.4.4", 'diag_admin_allow_private' => '1'));
-check('context: lowercased targets, own IPs unique, override on', $c['test_targets'] === array('tests.example.org', '8.8.4.4') && $c['own_ips'] === array('1.2.3.4') && $c['admin_allow_private']);
+$c = diag_policy_context('admin', array('1.2.3.4', '1.2.3.4'), array('diag_admin_allow_private' => '1'));
+check('context: own IPs unique, override on', $c['own_ips'] === array('1.2.3.4') && $c['admin_allow_private'] && !isset($c['test_targets']));
 echo "All policy tests passed\n";
