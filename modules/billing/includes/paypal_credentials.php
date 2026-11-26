@@ -59,7 +59,7 @@ function billing_paypal_read_key(): string
 function billing_paypal_config(mysqli $db, string $prefix): array
 {
     $table = $prefix . 'billing_config';
-    $result = @mysqli_query($db, "SELECT config_id, paypal_mode, paypal_client_id, paypal_client_secret_enc, paypal_webhook_id FROM `{$table}` ORDER BY config_id ASC LIMIT 1");
+    $result = @mysqli_query($db, "SELECT config_id, paypal_mode, paypal_client_id, paypal_client_secret_enc, paypal_webhook_id FROM `{$table}` ORDER BY (game_key = '__global__') DESC, config_id ASC LIMIT 1");
     $row = $result ? mysqli_fetch_assoc($result) : null;
     if (!is_array($row)) return [];
     $key = billing_paypal_read_key();

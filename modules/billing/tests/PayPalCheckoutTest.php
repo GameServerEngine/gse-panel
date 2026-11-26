@@ -27,3 +27,11 @@ if (strpos($cart, 'api/paypal_checkout.php') === false) {
     throw new RuntimeException('cart.php does not call the PayPal checkout endpoint');
 }
 echo "PayPalCheckoutTest passed\n";
+
+// The saved PayPal keys live on the __global__ row; an older row with no keys must not win.
+$credentials = file_get_contents(dirname(__DIR__) . '/includes/paypal_credentials.php');
+if (strpos($credentials, "ORDER BY (game_key = '__global__') DESC, config_id ASC") === false) {
+    fwrite(STDERR, "FAIL: billing_paypal_config must read the __global__ row first\n");
+    exit(1);
+}
+echo "PayPal credentials row order ok\n";
