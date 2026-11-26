@@ -50,7 +50,8 @@ function sv_fmt_duration($seconds)
 
 function sv_fmt_pct($value)
 {
-	return ($value === null) ? '-' : number_format((float)$value, 1) . '%';
+	// Whole numbers: 8.7 and 87 looked alike at a glance.
+	return ($value === null) ? '-' : number_format(round((float)$value), 0) . '%';
 }
 
 function sv_fmt_ago($seconds)
@@ -404,7 +405,7 @@ function sv_proc_list($list, $is_cpu)
 	$parts = array();
 	foreach (array_slice($list, 0, 5) as $proc) {
 		$name = htmlspecialchars((string)$proc['name']);
-		$value = $is_cpu ? number_format((float)$proc['value'], 1) . '%' : number_format((float)$proc['value'] / 1048576, 0) . ' MB';
+		$value = $is_cpu ? number_format(round((float)$proc['value']), 0) . '%' : number_format((float)$proc['value'] / 1048576, 0) . ' MB';
 		$parts[] = "$name ($value)";
 	}
 	return implode('<br>', $parts);

@@ -805,6 +805,12 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
 
 	echo "</table>";
+	if ( $isAdmin )
+	{
+		// Native or Docker for this server (admin only; customers keep the same panel either way).
+		echo gse_execution_backend_handle_post($db, $remote, $home_info);
+		gse_execution_backend_render_admin($db, $home_info);
+	}
 	echo "<h3>". get_lang("expert_mode") ."</h3>";
 	echo "<table class='center' id='expert_mode_settings' >";
 	echo "<tr><td class='right'>" . get_lang("expert_mode") . ":</td><td class='left'>" . (!empty($home_info['expert_mode']) ? "ON - configure in the config files" : "OFF - configure in the panel") . " <a href='?m=user_games&amp;p=edit&amp;home_id=" . $home_id . "&amp;expert_mode=" . (!empty($home_info['expert_mode']) ? "0" : "1") . "'>" . (!empty($home_info['expert_mode']) ? "Turn expert mode off" : "Turn expert mode on") . "</a></td></tr>";
