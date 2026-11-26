@@ -246,7 +246,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
   <h1>Edit Site Config</h1>
 
   <?php if ($status): ?>
-  <div class="status-box status-<?php echo h($statusType); ?>"><?php echo h($status); ?></div>
+  <div class="status-box status-<?php echo h($statusType); ?> <?php echo $statusType === 'success' ? 'success' : ($statusType === 'error' ? 'failure' : ''); ?>" style="margin-bottom:12px;"><?php echo h($status); ?></div>
   <?php endif; ?>
 
   <?php if (!empty($billing_config_warning)): ?>
