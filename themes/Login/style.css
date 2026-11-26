@@ -1,61 +1,43 @@
 body.login-page {
   margin: 0;
   min-height: 100vh;
-  background: #f4f5f7;
-  color: #1f2933;
+  background: #000;
+  color: #fff;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-size: 15px;
-  line-height: 1.45;
 }
-.login-header {
-  background: #ffffff;
-  border-bottom: 1px solid #e4e7eb;
-  padding: 16px 24px;
-}
+.login-header { padding: 16px 24px; }
 .login-header a { display: inline-block; }
 .login-header img { display: block; width: auto; }
-.login-main { max-width: 360px; margin: 48px auto; padding: 0 16px; }
-.login-card {
-  background: #ffffff;
-  border: 1px solid #e4e7eb;
-  border-radius: 10px;
-  padding: 28px 28px 24px;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
-}
-.login-card h1 { font-size: 20px; font-weight: 600; margin: 0 0 20px; }
-.login-form label { display: block; font-size: 13px; font-weight: 600; margin: 0 0 6px; color: #3e4c59; }
+.login-main { max-width: 320px; margin: 48px auto; padding: 0 16px; }
+.login-main h1 { font-size: 20px; font-weight: normal; margin: 0 0 20px; }
+.login-form label { display: block; font-size: 13px; margin: 0 0 6px; color: #bbb; }
 .login-form input[type=text],
 .login-form input[type=password] {
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 12px;
-  border: 1px solid #cbd2d9;
-  border-radius: 6px;
+  padding: 10px;
+  background: #000;
+  border: 1px solid #555;
+  border-radius: 0;
+  color: #fff;
   font: inherit;
   margin: 0 0 16px;
 }
-.login-form input:focus { outline: 2px solid #2563eb; outline-offset: 0; border-color: #2563eb; }
+.login-form input:focus { outline: none; border-color: #fff; }
 .login-form .g-recaptcha { margin: 0 0 16px; }
 .login-form button {
   width: 100%;
-  padding: 11px 12px;
-  border: 0;
-  border-radius: 6px;
-  background: #2563eb;
-  color: #ffffff;
+  padding: 10px;
+  border: 1px solid #fff;
+  border-radius: 0;
+  background: #000;
+  color: #fff;
   font: inherit;
-  font-weight: 600;
   cursor: pointer;
 }
-.login-form button:hover { background: #1d4ed8; }
+.login-form button:hover { background: #fff; color: #000; }
 .login-links { margin: 18px 0 0; text-align: center; font-size: 14px; }
-.login-links a { color: #2563eb; text-decoration: none; }
-.login-links a:hover { text-decoration: underline; }
-.failure, .success {
-  border-radius: 6px;
-  padding: 10px 12px;
-  margin: 0 0 16px;
-  font-size: 14px;
-}
-.failure { background: #fdecec; color: #9b1c1c; border: 1px solid #f5c2c2; }
-.success { background: #e9f7ef; color: #1e6b3a; border: 1px solid #b7e1c6; }
+.login-links a { color: #bbb; }
+.failure { color: #ff6b6b; font-size: 14px; margin: 0 0 16px; }
+.success { color: #6bff9e; font-size: 14px; margin: 0 0 16px; }

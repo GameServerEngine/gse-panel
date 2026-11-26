@@ -161,53 +161,6 @@ function home()
 </div>
 	%top%
 
-	<div class="menu-bg">
-		<div class="menu">
-		<ul>
-		<li><a href="index.php<?php echo preg_replace( "/\&amp;/", "?", $lang_switch ); ?>" <?php if (!isset($_GET['m'])) echo 'class="admin_menu_link_selected"'; else echo 'class="admin_menu_link"'; ?> target="_self" ><span class="controlpanellogin"><?php echo get_lang("login_title"); ?></span></a></li>
-<?php
-	$menus = $db->getMenusForGroup('guest');
-	if(!empty($menus))
-	{
-		foreach ((array)$menus as $menu)
-		{
-			$module = $menu['module'];
-			if ( !empty( $menu['subpage'] ) )
-			{
-				$subpage = "&amp;p=".$menu['subpage'];
-				$button = $menu['subpage'];
-				if (isset($_GET['p']) AND $_GET['p'] == $menu['subpage'] ) $menu_link_class = 'user_menu_link_selected'; else $menu_link_class = 'user_menu_link';
-			}
-			else
-			{
-				$subpage = "";
-				$button = $menu['module'];
-				if (isset($_GET['m']) AND $_GET['m'] == $menu['module'] ) $menu_link_class = 'user_menu_link_selected'; else $menu_link_class = 'user_menu_link';
-			}
-
-			$button_url = "?m=".$module.$subpage.$lang_switch;
-
-			if ( preg_match( '/\\_?\\_/', get_lang("$button") ) )
-			{
-				$button_name = $menu['menu_name'];
-			}
-			else
-			{
-				$button_name = get_lang("$button");
-			}
-			//THIS IS A HACK TO REMOVE THE SHOP_GUEST MENU ITEM
-			if(strcmp($button_name, "Shop"))
-			{
-			echo "<li><a class='".$menu_link_class."' href='".$button_url."'><span class='$button'>$button_name</span></a>
-				  </li>\n";
-			}
-		}
-	}
-?>
-		</ul>
-		</div>
-	</div>
-</div>
 
 	%topbody%
 	<?php
@@ -367,7 +320,6 @@ function home()
 		}
 	?>
 	<!-- Sign-in form. The Login theme (themes/Login) draws the page around it. -->
-	<div class="login-card">
 	<h1><?php print_lang('login_title'); ?></h1>
 	<form action="index.php<?php echo preg_replace( "/\&amp;/", "?", $lang_switch ); ?>" name="login_form" method="post">
 		<label for="ulogin"><?php print_lang('login'); ?></label>
@@ -383,7 +335,6 @@ function home()
 		<button type="submit" name="login" value="1"><?php print_lang('login_button'); ?></button>
 	</form>
 	<p class="login-links"><a href="?m=lostpwd<?php echo $lang_switch; ?>"><?php print_lang('lost_passwd'); ?></a></p>
-	</div>
 	<script>document.getElementById('ulogin').focus();</script>
 	<?php
 
@@ -394,42 +345,6 @@ function home()
     </div>
 </div>
 
-<p style="text-align:center">
-
-</div>
-<div style="content:'';clear:both;display:table; margin: 0 auto;">
-
-  <div style="float: left;  padding: 0px;  margin: 0 auto;">
-    <img class="orange" src="images/games/day_z.jpg" width="96" height="45" alt="dayz">
-    </div>
-
-  <div style="float: left;  padding: 0px;  margin: 0 auto;">
-  <img class="orange" src="images/games/ark_se.jpg" width="96" height="45" alt="dayz"></a>
-  </div>
-
-  <div style="float: left;  padding: 0px;  margin: 0 auto;">
-    <img class="orange" src="images/games/minecraft.jpg" width="96" height="45" alt="dayz">
-  </div>
-
-  <div style="float: left;  padding: 0px;  margin: 0 auto;">
-    <img class="orange" src="images/games/cs_go.jpg" width="96" height="45" alt="dayz">
-  </div>
-  <div style="float: left;  padding: 0px;  margin: 0 auto;">
-    <img class="orange" src="images/games/tf2.jpg" width="96" height="45" alt="dayz">
-  </div>
-  <div style="float: left;  padding: 0px;  margin: 0 auto;">
-    <img class="orange" src="images/games/rust_header.jpg" width="96" height="45" alt="dayz">
-  </div>
-
-  <div style="float: left;  padding: 0px;  margin: 0 auto;">
-    <img  class="orange" src="images/games/garrys_mod.jpg" width="96" height="45" alt="dayz">
-  </div>
-</div>
-
-<hr>
-
-<div style="text-align:center"> <h1>Level up your gaming</h1></div>
-<div class="row">
 
 	%bottom%
 <?php
