@@ -78,7 +78,7 @@ function exec_module()
 			$mod_key = $game_home['mod_key'];
 			$token = $db->getApiToken($_SESSION['user_id']);
 
-			$command = build_cron_scheduler_command($panelURL, $token, $game_home, $_POST['action']);
+			$command = cron_command_for_post($panelURL, $token, $game_home, isset($_POST['editJob']) && isset($jobsArray[$_POST['r_server_id']][$_POST['job_id']]) ? $jobsArray[$_POST['r_server_id']][$_POST['job_id']]['job'] : '');
 			if($command === false)
 			{
 				print_failure(get_lang('bad_inputs'));
@@ -173,7 +173,7 @@ You can read more on our <a href='http://wiki.iaregamer.com/doku.php?id=cron' ta
 			<input style="width: 30px;" type="text" name="dayOfTheWeek" value="*" />
 		</td>
 		<td>
-			<?php echo get_action_selector(false, $server_homes, $homeid_ip_port);?>
+			<?php echo get_action_selector(false, $server_homes, $homeid_ip_port) . get_assistant_command_input();?>
 		</td>
 		<td>
 			<?php echo get_server_selector($server_homes, $homeid_ip_port, true);?>
@@ -217,6 +217,7 @@ You can read more on our <a href='http://wiki.iaregamer.com/doku.php?id=cron' ta
 	</tr>
 <?php
 		$user_jobs = "";
+		$assistant_tasks = cron_assistant_tasks($jobsArray);
 		foreach ((array)$jobsArray as $remote_server_id => $jobs )
 		{
 			foreach ((array)$jobs as $jobId => $job)
@@ -248,7 +249,7 @@ You can read more on our <a href='http://wiki.iaregamer.com/doku.php?id=cron' ta
 											<input style="width: 30px;" type="text" name="dayOfTheWeek" value="'.$job['dayOfTheWeek'].'" />
 										</td>
 										<td>
-											'.get_action_selector($job['action'], $server_homes, $uniqueStr)."</td><td>".
+											'.get_action_selector($job['action'], $server_homes, $uniqueStr).get_assistant_command_input($job, $assistant_tasks)."</td><td>".
 											  get_server_selector($server_homes, $uniqueStr).'
 										</td>
 										<td style="width: 132px;">

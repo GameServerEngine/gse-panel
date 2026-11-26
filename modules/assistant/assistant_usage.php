@@ -23,6 +23,9 @@ function assistant_ensure_tables($db)
 	$db->query('CREATE TABLE IF NOT EXISTS ' . assistant_table('usage') . ' ('
 		. '`user_id` int NOT NULL, `month` char(7) NOT NULL, `input_tokens` bigint NOT NULL DEFAULT 0, '
 		. '`output_tokens` bigint NOT NULL DEFAULT 0, `requests` int NOT NULL DEFAULT 0, PRIMARY KEY (`user_id`, `month`))');
+	$db->query('CREATE TABLE IF NOT EXISTS ' . assistant_table('tasks') . ' ('
+		. '`id` int NOT NULL AUTO_INCREMENT, `user_id` int NOT NULL, `home_id` int NOT NULL, `command` varchar(600) NOT NULL, '
+		. '`created` datetime NOT NULL, `last_run` datetime, `last_result` varchar(600), PRIMARY KEY (`id`), KEY `user_home` (`user_id`, `home_id`))');
 	$db->query('CREATE TABLE IF NOT EXISTS ' . assistant_table('log') . ' ('
 		. '`id` bigint NOT NULL AUTO_INCREMENT, `user_id` int NOT NULL, `created` datetime NOT NULL, '
 		. '`question` text, `tools` varchar(255), `answer` text, `input_tokens` int NOT NULL DEFAULT 0, '
