@@ -82,8 +82,11 @@ class View {
 		if (is_file('images/logo.png')) {
 			$logoSize = isset($panel_settings['panel_logo_size']) ? (int)$panel_settings['panel_logo_size'] : 100;
 			$logoZoom = max(10, min(300, $logoSize)) / 100;
-			$logoTag = 'src="images/logo.png?v=' . filemtime('images/logo.png') . '" style="zoom:' . $logoZoom . '"';
-			$this->header_code .= '<script>window.panelLogoZoom = ' . $logoZoom . ';</script>' . "\n";
+			// 112px is the header logo height on the storefront (header height less 20px). The percentage scales that
+			// base height, so the same setting gives the same size in every theme, whatever the uploaded image's pixel size.
+			$logoHeight = round(112 * $logoZoom, 1);
+			$logoTag = 'src="images/logo.png?v=' . filemtime('images/logo.png') . '" style="height:' . $logoHeight . 'px;width:auto"';
+			$this->header_code .= '<script>window.panelLogoHeight = ' . $logoHeight . ';</script>' . "\n";
 			$page = preg_replace('#src="(?:[^"]*/)?logo\.png(?:\?[^"]*)?"#', $logoTag, $page);
 			$top = preg_replace('#src="(?:[^"]*/)?logo\.png(?:\?[^"]*)?"#', $logoTag, (string)$top);
 		}
