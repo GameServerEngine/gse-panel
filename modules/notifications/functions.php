@@ -137,6 +137,8 @@ function send_notification($data)
 {
 	global $db;
 	$notification_id = $db->resultInsertId('notification', array('subject' => $data['subject'], 'message' => $data['message']));
+	require_once __DIR__ . '/ntfy_admin.php';
+	ntfy_admin_publish_notice($db, $data['subject'], $data['message']);
 	$user_ids = array();
 	unset($data['subject'], $data['message']);
 	foreach ((array)$data as $type => $ids)

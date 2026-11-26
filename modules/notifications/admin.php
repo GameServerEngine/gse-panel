@@ -25,6 +25,12 @@ include 'modules/notifications/functions.php';
 function exec_module()
 {
 	global $db;
+	require_once __DIR__ . '/ntfy_admin.php';
+	if(isset($_POST['ntfy_action']))
+	{
+		foreach (ntfy_admin_handle_post($db) as $message)
+			if($message[0]) print_success($message[1]); else print_failure($message[1]);
+	}
 	if(isset($_POST['send_notification']))
 	{
 		send_notification($_POST);
@@ -85,6 +91,7 @@ function exec_module()
 		return;
 	}
 
+	ntfy_admin_render($db);
 	$subusers_installed = $db->isModuleInstalled('subusers');
 	echo "<h2>".get_lang('Notification')."</h2>";
 
