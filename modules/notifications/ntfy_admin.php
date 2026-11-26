@@ -11,7 +11,7 @@ if (!defined('NTFY_NOTICE_TOPIC')) {
 function ntfy_admin_setting($db, $key)
 {
     $rows = $db->resultQuery("SELECT value FROM `DB_PREFIXsettings` WHERE setting = '" . $db->real_escape_string($key) . "' LIMIT 1");
-    return ($rows && isset($rows[0]['value'])) ? (string)$rows[0]['value'] : '';
+    return (is_array($rows) && isset($rows[0]['value'])) ? (string)$rows[0]['value'] : '';
 }
 
 function ntfy_admin_save_setting($db, $key, $value)
@@ -90,10 +90,13 @@ function ntfy_admin_topics($db, $baseUrl)
         array('label' => 'Admin: every event', 'topic' => NTFY_ADMIN_TOPIC),
         array('label' => 'Notices sent from Notifications', 'topic' => NTFY_NOTICE_TOPIC),
     );
-    $homes = $db->resultQuery("SELECT home_id, ip, port FROM `DB_PREFIXserver_homes` ORDER BY home_id");
-    foreach ((array)$homes as $home) {
+    $homes = $db->resultQuery("SELECT home_id, home_name FROM `DB_PREFIXserver_homes` ORDER BY home_id");
+    if (!is_array($homes)) {
+        $homes = array();
+    }
+    foreach ($homes as $home) {
         $list[] = array(
-            'label' => 'Server ' . $home['ip'] . ':' . $home['port'] . ' (ID ' . (int)$home['home_id'] . ')',
+            'label' => 'Server ' . $home['home_name'] . ' (ID ' . (int)$home['home_id'] . ')',
             'topic' => ntfy_topic_for_home((int)$home['home_id']),
         );
     }
