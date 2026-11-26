@@ -24,6 +24,7 @@
 
 require_once(__DIR__ . "/../Crypt/XXTEA.php");
 require_once(__DIR__ . "/diagnostics/contract.php");
+require_once(__DIR__ . "/execution_backend.php");
 
 if (!defined('XMLRPC_READY')) {
 	if (!function_exists('xmlrpc_encode_request') || !function_exists('xmlrpc_decode')) {
@@ -355,6 +356,13 @@ class RemoteLibrary
 	public function remote_stop_server_result($home_id, $server_ip,
 		$server_port, $control_protocol, $control_password, $control_type, $home_path = "", $lifecycle_payload = null)
 	{
+		$backend = gse_execution_backend($home_id);
+		if ($backend === GSE_BACKEND_DOCKER) {
+			return $this->docker_stop_result($home_id, $server_ip, $server_port);
+		}
+		if ($backend === GSE_BACKEND_ERROR) {
+			return $this->backend_unreadable_result($home_id);
+		}
 		$params_array = $this->encrypt_params($home_id,$server_ip,$server_port,
 			$control_protocol,$control_password,$control_type,$home_path);
 		if ($lifecycle_payload !== null) {
@@ -390,6 +398,19 @@ class RemoteLibrary
 	public function remote_send_rcon_command($home_id, $server_ip,
 		$server_port, $control_protocol, $control_password, $control_type, $rconCommand,&$data)
 	{
+		if (gse_execution_backend($home_id) === GSE_BACKEND_DOCKER) {
+			list($request, $error) = gse_container_request($home_id, $server_ip, $server_port);
+			if ($request === null) {
+				return -1;
+			}
+			$result = $this->container_game_command_result($home_id, $request, (string)$rconCommand);
+			if (!empty($result['success'])) {
+				$data .= "Sent to the server console: " . $rconCommand . "\n";
+				return 1;
+			}
+			$code = isset($result['error']['code']) ? $result['error']['code'] : '';
+			return ($code === 'agent_unreachable') ? 0 : -1;
+		}
 		$params_array = $this->encrypt_params($home_id,$server_ip,$server_port,
 			$control_protocol,$control_password,$control_type, $rconCommand);
 		$this->add_enc_chk($params_array);
@@ -721,12 +742,131 @@ class RemoteLibrary
 	/// \return -2 In other errors.
 	/// \todo Other return values?
 	// Starts game server
+	/// Sends one game-container RPC. The agent replies with JSON text in the
+	/// gse.container.v1 result shape; this returns it as an array (never NULL).
+	private function container_rpc($method, array $params)
+	{
+		$params_array = array();
+		foreach ($params as $param) {
+			$params_array[] = $this->encryptParam(is_array($param) ? json_encode($param, JSON_UNESCAPED_SLASHES) : $param);
+		}
+		$this->add_enc_chk($params_array);
+		$response = $this->sendRequest(xmlrpc_encode_request($method, $params_array));
+		if ($response === NULL) {
+			return array('success' => 0, 'status' => 'agent_unreachable', 'state' => 'unknown', 'message' => 'Agent did not answer the container request.', 'error' => array('code' => 'agent_unreachable'));
+		}
+		if (is_array($response) && xmlrpc_is_fault($response)) {
+			return array('success' => 0, 'status' => 'xmlrpc_fault', 'state' => 'unknown', 'message' => 'The agent does not support container game servers (update the agent).', 'error' => array('code' => 'unsupported_agent'));
+		}
+		$decoded = is_string($response) ? json_decode($response, true) : (is_array($response) ? $response : null);
+		if (!is_array($decoded)) {
+			return array('success' => 0, 'status' => 'invalid_agent_response', 'state' => 'unknown', 'message' => 'The agent returned an unreadable container response.', 'error' => array('code' => 'invalid_agent_response'));
+		}
+		$decoded['success'] = !empty($decoded['success']) ? 1 : 0;
+		if (empty($decoded['message']) && isset($decoded['error']['message'])) {
+			$decoded['message'] = $decoded['error']['message'];
+		}
+		$decoded['execution_backend'] = GSE_BACKEND_DOCKER;
+		return $decoded;
+	}
+
+	public function container_capabilities_result()
+	{
+		return $this->container_rpc("container_capabilities", array());
+	}
+
+	public function container_game_start_result($home_id, $game_home, $game_binary, $run_dir, $startup_cmd,
+		$server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key, $console_log, array $request)
+	{
+		return $this->container_rpc("container_game_start", array($home_id, $game_home, $game_binary, $run_dir, $startup_cmd,
+			$server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key, $console_log, $request));
+	}
+
+	public function container_game_stop_result($home_id, array $request)
+	{
+		return $this->container_rpc("container_game_stop", array($home_id, $request));
+	}
+
+	public function container_game_status_result($home_id, array $request)
+	{
+		return $this->container_rpc("container_game_status", array($home_id, $request));
+	}
+
+	public function container_game_command_result($home_id, array $request, $line)
+	{
+		return $this->container_rpc("container_game_command", array($home_id, $request, $line));
+	}
+
+	public function container_game_logs_result($home_id, array $request, $lines = 200)
+	{
+		return $this->container_rpc("container_game_logs", array($home_id, $request, (int)$lines));
+	}
+
+	public function container_game_remove_result($home_id, array $request)
+	{
+		return $this->container_rpc("container_game_remove", array($home_id, $request));
+	}
+
+	/// Docker-backed start: same arguments as universal_start_result. Never falls back to native.
+	private function docker_start_result($home_id, $game_home, $game_binary, $run_dir, $startup_cmd,
+		$server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key, $console_log)
+	{
+		list($request, $error) = gse_container_request($home_id, $server_ip, $server_port);
+		if ($request === null) {
+			return gse_execution_refusal('start_failed', $error);
+		}
+		$result = $this->container_game_start_result($home_id, $game_home, $game_binary, $run_dir, $startup_cmd,
+			$server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key, $console_log, $request);
+		gse_execution_record_state($home_id, $result);
+		if (!empty($result['success'])) {
+			$result['status'] = 'started';
+			$result['message'] = 'Container start accepted; waiting for the game to come online.';
+		} else {
+			$result['status'] = 'start_failed';
+			$result['message'] = 'Container start failed: ' . (isset($result['message']) ? $result['message'] : 'unknown error');
+		}
+		return $result;
+	}
+
+	/// Docker-backed stop: console stop command, bounded wait, then docker stop.
+	private function docker_stop_result($home_id, $server_ip, $server_port, $force = false)
+	{
+		list($request, $error) = gse_container_request($home_id, $server_ip, $server_port);
+		if ($request === null) {
+			return gse_execution_refusal('stop_failed', $error);
+		}
+		if ($force) {
+			$request['stop_command'] = '';
+		}
+		$result = $this->container_game_stop_result($home_id, $request);
+		gse_execution_record_state($home_id, $result);
+		$result['status'] = !empty($result['success']) ? 'stopped' : 'stop_failed';
+		if (!empty($result['success'])) {
+			$result['message'] = 'Server stopped.';
+		}
+		return $result;
+	}
+
+	/// Refusal when the backend of a home cannot be read: do nothing rather than guess.
+	private function backend_unreadable_result($home_id)
+	{
+		return gse_execution_refusal('backend_unknown', 'The execution backend for this server could not be read; no action was taken.', array('execution_backend' => GSE_BACKEND_ERROR));
+	}
+
 	public function universal_start_result($home_id, $game_home, $game_binary, $run_dir, $startup_cmd,
 		$server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key, $console_log = "", $lifecycle_payload = null)
 	{
 		$port_error = $this->missing_game_port_result($server_port);
 		if ($port_error !== null) {
 			return $port_error;
+		}
+		$backend = gse_execution_backend($home_id);
+		if ($backend === GSE_BACKEND_DOCKER) {
+			return $this->docker_start_result($home_id, $game_home, $game_binary, $run_dir, $startup_cmd,
+				$server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key, $console_log);
+		}
+		if ($backend === GSE_BACKEND_ERROR) {
+			return $this->backend_unreadable_result($home_id);
 		}
 		$params_array = $this->encrypt_params($home_id, $game_home, $game_binary,
 			$run_dir, $startup_cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key, $console_log);
@@ -798,6 +938,18 @@ class RemoteLibrary
 	/// \return -1 If agent could not be reached.
 		public function is_screen_running($screen_type,$home_id)
 		{
+			if ($screen_type === SCREEN_TYPE_HOME && gse_execution_backend($home_id) === GSE_BACKEND_DOCKER) {
+				list($request, $error) = gse_container_request($home_id, '0.0.0.0', 1);
+				if ($request === null) {
+					return -1;
+				}
+				$result = $this->container_game_status_result($home_id, $request);
+				$state = isset($result['result']['game_state']) ? $result['result']['game_state'] : 'UNKNOWN';
+				if (in_array($state, array('ONLINE', 'STARTING'), true)) {
+					return 1;
+				}
+				return in_array($state, array('STOPPED', 'CREATED', 'FAILED', 'OOM'), true) ? 0 : -1;
+			}
 		$params = $this->encrypt_params($screen_type,$home_id);
 		$this->add_enc_chk($params);
 		$request = xmlrpc_encode_request("is_screen_running", $params);
@@ -812,6 +964,16 @@ class RemoteLibrary
 
 		public function remote_server_status($home_id, $server_ip, $server_port, $query_port = "", $rcon_port = "", $startup_timeout = 180, $state_hint = "")
 		{
+			if (gse_execution_backend($home_id) === GSE_BACKEND_DOCKER) {
+				list($request, $error) = gse_container_request($home_id, $server_ip, $server_port);
+				$result = $request === null
+					? array('success' => 0, 'message' => $error, 'result' => array('game_state' => 'UNKNOWN'))
+					: $this->container_game_status_result($home_id, $request + array('include_stats' => 1));
+				if ($request !== null) {
+					gse_execution_record_state($home_id, $result);
+				}
+				return gse_container_status_to_agent_status($result, $server_ip, $server_port, $query_port, $rcon_port);
+			}
 			$params = $this->encrypt_params($home_id, $server_ip, $server_port, $query_port, $rcon_port, $startup_timeout, $state_hint);
 			$this->add_enc_chk($params);
 			$request = xmlrpc_encode_request("server_status", $params);
@@ -930,6 +1092,23 @@ class RemoteLibrary
 		if ($port_error !== null) {
 			return $port_error;
 		}
+		$backend = gse_execution_backend($home_id);
+		if ($backend === GSE_BACKEND_DOCKER) {
+			$stop = $this->docker_stop_result($home_id, $server_ip, $server_port);
+			if (empty($stop['success'])) {
+				$stop['status'] = 'restart_failed';
+				$stop['raw_response'] = -2;
+				return $stop;
+			}
+			$start = $this->docker_start_result($home_id, $home_path, $server_exe, $run_dir, $cmd,
+				$server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key, $console_log);
+			$start['status'] = !empty($start['success']) ? 'restarted' : 'restart_failed';
+			$start['raw_response'] = !empty($start['success']) ? 1 : -1;
+			return $start;
+		}
+		if ($backend === GSE_BACKEND_ERROR) {
+			return $this->backend_unreadable_result($home_id);
+		}
 		$params_array = $this->encrypt_params($home_id,$server_ip,$server_port,
 			$control_protocol,$control_password,$control_type,
 			$home_path,$server_exe,$run_dir,$cmd,$cpu,$nice,$preStart,$envVars, $game_key, $console_log, $restart_reason);
@@ -972,6 +1151,13 @@ class RemoteLibrary
 
 	public function remote_force_stop_server($home_id, $server_ip, $server_port, $home_path, $lifecycle_payload = null)
 	{
+		$backend = gse_execution_backend($home_id);
+		if ($backend === GSE_BACKEND_DOCKER) {
+			return $this->docker_stop_result($home_id, $server_ip, $server_port, true);
+		}
+		if ($backend === GSE_BACKEND_ERROR) {
+			return $this->backend_unreadable_result($home_id);
+		}
 		$params_array = $this->encrypt_params($home_id, $server_ip, $server_port, $home_path);
 		if ($lifecycle_payload !== null) {
 			$params_array[] = $this->encryptParam($this->lifecycle_payload_json($lifecycle_payload));
