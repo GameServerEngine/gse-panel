@@ -21,6 +21,22 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  */
+// Splits one crontab line into minute, hour, day of month, month, day of week and command.
+// Returns false for lines that are not a normal five-field job (blank lines, comments, NAME=value
+// settings, @reboot lines), because the job list and its edit form only handle five-field jobs.
+function cron_split_job($job)
+{
+	$parts = preg_split('/\s+/', trim((string)$job), 6);
+	if(count($parts) < 6)
+		return false;
+	for($i = 0; $i < 5; $i++)
+	{
+		if(!preg_match('/^[0-9A-Za-z*\/,-]+$/', $parts[$i]))
+			return false;
+	}
+	return $parts;
+}
+
 function reloadJobs($server_homes, $remote_servers, $getAllJobs = true)
 {
 	global $db;
@@ -41,7 +57,10 @@ function reloadJobs($server_homes, $remote_servers, $getAllJobs = true)
 			{
 				foreach ((array)$jobs as $jobId => $job)
 				{
-					list($minute,$hour,$dayOfTheMonth,$month,$dayOfTheWeek,$command) = explode(" ", $job, 6);
+					$fields = cron_split_job($job);
+					if($fields === false)
+						continue;
+					list($minute,$hour,$dayOfTheMonth,$month,$dayOfTheWeek,$command) = $fields;
 					if(preg_match('/'.preg_quote('wget -qO- "','/').'([^"]+)'.preg_quote('" --no-check-certificate > /dev/null 2>&1','/').'/', $command))
 					{
 						list($wget,$wget_args,$url,$wget_nocert,$gt,$devnull,$err2out) =  explode(" ", $command, 7);
