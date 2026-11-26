@@ -1,0 +1,43 @@
+body.login-page {
+  margin: 0;
+  min-height: 100vh;
+  background: #000;
+  color: #fff;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+}
+.login-header { padding: 16px 24px; }
+.login-header a { display: inline-block; }
+.login-header img { display: block; width: auto; }
+.login-main { max-width: 320px; margin: 48px auto; padding: 0 16px; }
+.login-main h1 { font-size: 20px; font-weight: normal; margin: 0 0 20px; }
+.login-form label { display: block; font-size: 13px; margin: 0 0 6px; color: #bbb; }
+.login-form input[type=text],
+.login-form input[type=password] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  background: #000;
+  border: 1px solid #555;
+  border-radius: 0;
+  color: #fff;
+  font: inherit;
+  margin: 0 0 16px;
+}
+.login-form input:focus { outline: none; border-color: #fff; }
+.login-form .g-recaptcha { margin: 0 0 16px; }
+.login-form button {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #fff;
+  border-radius: 0;
+  background: #000;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+.login-form button:hover { background: #fff; color: #000; }
+.login-links { margin: 18px 0 0; text-align: center; font-size: 14px; }
+.login-links a { color: #bbb; }
+.failure { color: #ff6b6b; font-size: 14px; margin: 0 0 16px; }
+.success { color: #6bff9e; font-size: 14px; margin: 0 0 16px; }

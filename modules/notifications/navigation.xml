@@ -1,3 +1,5 @@
 <navigation>
-  <page key="my_notifications" file="my_notifications.php" access="user,admin" />
+	<page key="default" file="admin.php" access="admin" />
+	<page key="inbox" file="inbox.php" access="admin,user,subuser" />
+	<page key="my_notifications" file="my_notifications.php" access="user,admin" />
 </navigation>

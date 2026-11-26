@@ -94,6 +94,15 @@ function navigation() {
 					}
                 }
 
+                // The shared demo account only looks around and uses its demo server.
+                global $settings;
+                require_once('includes/demo.php');
+                if ( demo_is_session($settings) && !demo_page_allowed($_REQUEST['m'], $wanted_page) )
+                {
+                    print_failure('This is not available in the demo. Sign up for your own panel to use it.');
+                    return;
+                }
+
                 $include_file = MODULES.$_REQUEST['m'].'/'.$page['file'];
 
                 if ( !is_file( $include_file ) )

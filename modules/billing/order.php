@@ -262,14 +262,16 @@ foreach ($locationGroups as $group):
     $mode = (string)$offer['pricing_mode'];
     $slotMin = (int)$offer['slot_min_qty'];
     $slotMax = (int)$offer['slot_max_qty'];
+    // The slider starts at half of the maximum (never below the minimum).
+    $slotStart = max($slotMin, (int)round($slotMax / 2));
     $period = (string)$offer['period_default'];
 ?>
   <div class="offer-pricing-fields" data-offer="<?php echo $offerId; ?>">
     <?php if ($mode === 'per_slot' || $mode === 'base_plus_extra'): ?>
       <center><b>Player Slots</b></center>
       <input type="range" class="offer-slots-input" data-offer="<?php echo $offerId; ?>"
-             min="<?php echo $slotMin; ?>" max="<?php echo $slotMax; ?>" value="<?php echo $slotMin; ?>" class="slider">
-      <center><span class="offer-slots-readout" data-offer="<?php echo $offerId; ?>"><?php echo $slotMin; ?></span> slots</center>
+             min="<?php echo $slotMin; ?>" max="<?php echo $slotMax; ?>" value="<?php echo $slotStart; ?>" class="slider">
+      <center><span class="offer-slots-readout" data-offer="<?php echo $offerId; ?>"><?php echo $slotStart; ?></span> slots</center>
       <?php if ($mode === 'per_slot'): ?>
         <span class="muted">$<?php echo number_format((float)$offer['per_slot_price_monthly'], 2); ?> / slot / month</span>
       <?php else: ?>
@@ -300,6 +302,23 @@ foreach ($locationGroups as $group):
   </td>
 </tr>
 
+<?php
+require_once __DIR__ . '/includes/order_options.php';
+$orderOptions = order_options_active($db, $table_prefix);
+if ($orderOptions):
+?>
+<tr>
+<td align="right"><b>Extras</b></td>
+<td align="left">
+<?php foreach ($orderOptions as $opt): ?>
+<div class="order-option" style="margin-bottom:8px;">
+<label><input type="checkbox" name="options[]" value="<?php echo (int)$opt['option_id']; ?>" class="order-option-input" data-price="<?php echo number_format($opt['price'], 2, '.', ''); ?>"> <b><?php echo order_e($opt['title']); ?></b> &mdash; $<?php echo number_format($opt['price'], 2); ?> one time</label>
+<?php if ($opt['description'] !== ''): ?><div class="muted" style="margin-left:22px;"><?php echo order_e($opt['description']); ?></div><?php endif; ?>
+</div>
+<?php endforeach; ?>
+</td>
+</tr>
+<?php endif; ?>
 <tr>
 <td align="left" colspan="2">
 <?php if ($is_logged_in): ?>
@@ -404,7 +423,9 @@ foreach ($locationGroups as $group):
             submitTierKey.value = tierKey || '';
         }
 
-        totalOut.textContent = 'Estimated total: $' + (unit * months).toFixed(2) + ' (confirmed at checkout)';
+        var extras = 0;
+        document.querySelectorAll('.order-option-input:checked').forEach(function (el) { extras += parseFloat(el.getAttribute('data-price')) || 0; });
+        totalOut.textContent = 'Estimated total: $' + (unit * months + extras).toFixed(2) + ' (confirmed at checkout)';
     }
 
     document.querySelectorAll('.offer-slots-input').forEach(function (input) {
@@ -443,6 +464,7 @@ foreach ($locationGroups as $group):
         input.addEventListener('change', filterDomains);
     });
     monthsSlider.addEventListener('input', recalc);
+    document.querySelectorAll('.order-option-input').forEach(function (el) { el.addEventListener('change', recalc); });
 
     recalc();
     filterDomains();

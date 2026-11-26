@@ -44,7 +44,7 @@ if ($is_logged_in && file_exists(__DIR__ . '/cart_helper.php')) {
 }
 
 // The brand name is two words on the GameServer Engine mark: "Game Server" / "Engine".
-$brandName = trim(billing_brand('name'));
+$brandName = billing_header_site_name();
 $brandSplit = strrpos($brandName, ' ');
 $brandFirst = $brandSplit === false ? $brandName : substr($brandName, 0, $brandSplit);
 $brandLast = $brandSplit === false ? '' : substr($brandName, $brandSplit + 1);
@@ -56,8 +56,8 @@ $returnTo = (string)($_SERVER['REQUEST_URI'] ?? '/');
 <header class="gsw-header">
   <div class="gsw-header-inner">
     <a href="<?php echo billing_nav_escape(billing_url('index.php')); ?>" class="gsw-brand" aria-label="<?php echo billing_brand_e('name'); ?> home">
-      <img src="<?php echo billing_nav_escape(billing_url('images/brand/gse-icon-mark.png')); ?>" alt="" class="gsw-brand-mark" width="64" height="64">
-      <span class="gsw-brand-text"><strong><?php echo billing_nav_escape($brandFirst); ?></strong><?php if ($brandLast !== ''): ?> <span><?php echo billing_nav_escape($brandLast); ?></span><?php endif; ?></span>
+      <?php echo billing_logo_html('gsw-brand-mark', 64, 64); ?>
+      <?php if ($brandName !== ''): ?><span class="gsw-brand-text"><strong><?php echo billing_nav_escape($brandFirst); ?></strong><?php if ($brandLast !== ''): ?> <span><?php echo billing_nav_escape($brandLast); ?></span><?php endif; ?></span><?php endif; ?>
     </a>
     <button class="gsw-nav-toggle" type="button" aria-controls="gsw-primary-nav" aria-expanded="false" aria-label="Open primary navigation">
       <span class="gsw-nav-toggle-bars" aria-hidden="true"></span>
@@ -65,14 +65,28 @@ $returnTo = (string)($_SERVER['REQUEST_URI'] ?? '/');
     <nav class="gsw-header-nav" id="gsw-primary-nav" aria-label="Primary navigation">
       <?php echo billing_nav_link('index.php', 'Home'); ?>
       <?php echo billing_nav_link('serverlist.php', 'Game Servers'); ?>
-      <?php echo billing_nav_link('services.php', 'Services'); ?>
+      <?php echo billing_nav_link('development.php', 'Development'); ?>
       <?php echo billing_nav_link('docs.php', 'Documentation'); ?>
-      <?php echo billing_nav_link('support.php', 'Support'); ?>
-      <?php echo billing_nav_link('contact.php', 'Contact'); ?>
-      <?php if ($is_logged_in): ?>
-        <?php echo billing_nav_link('my_servers.php', 'My Servers'); ?>
-        <?php echo billing_nav_link('my_account.php', 'My Account'); ?>
-        <a href="<?php echo billing_nav_escape(billing_url('cart.php')); ?>" class="gsw-nav-link<?php echo basename((string)($_SERVER['SCRIPT_NAME'] ?? '')) === 'cart.php' ? ' is-active' : ''; ?>">Cart<?php if ($cart_count > 0): ?><span class="cart-badge"><?php echo $cart_count; ?></span><?php endif; ?></a>
+      <div class="gsw-nav-group">
+        <?php echo billing_nav_link('support.php', 'Support'); ?>
+        <div class="gsw-nav-sub">
+          <?php echo billing_nav_link('contact.php', 'Contact'); ?>
+        </div>
+      </div>
+      <?php if ($is_logged_in):
+        // The Account label is only a parent: each page below is one click from the menu.
+        $account_pages = array('my_account.php', 'my_servers.php', 'invoices.php', 'cart.php');
+        $current_page = basename((string)($_SERVER['SCRIPT_NAME'] ?? ''));
+      ?>
+        <div class="gsw-nav-group">
+          <span class="gsw-nav-link<?php echo in_array($current_page, $account_pages, true) ? ' is-active' : ''; ?>" style="cursor:default">Account</span>
+          <div class="gsw-nav-sub">
+            <?php echo billing_nav_link('my_account.php', 'Account Settings'); ?>
+            <?php echo billing_nav_link('my_servers.php', 'Game Servers'); ?>
+            <?php echo billing_nav_link('invoices.php', 'Invoices'); ?>
+            <a href="<?php echo billing_nav_escape(billing_url('cart.php')); ?>" class="gsw-nav-link<?php echo $current_page === 'cart.php' ? ' is-active' : ''; ?>">Cart<?php if ($cart_count > 0): ?><span class="cart-badge"><?php echo $cart_count; ?></span><?php endif; ?></a>
+          </div>
+        </div>
       <?php endif; ?>
       <a href="<?php echo billing_nav_escape(panel_home_url()); ?>" class="gsw-nav-link">Control Panel</a>
       <?php if ($is_logged_in): ?>

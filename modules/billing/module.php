@@ -25,7 +25,7 @@
 // Module general information
 $module_title = "billing";
 $module_version = "3.9";
-$db_version = 15;
+$db_version = 18;
 $module_required = TRUE;
 // Module description
 $module_description = "Billing storefront / provisioning integration.";
@@ -688,5 +688,123 @@ $install_queries[15] = array(
         return true;
     }
 );
+
+// db_version 16 - Stripe: settings in billing_config, one Stripe customer per user and mode, the
+// subscription on each order, and the webhook event log (each event applied once). Idempotent:
+// tables only when missing, columns and the index only when absent.
+$install_queries[16] = array(
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."billing_stripe_customers` (
+        `user_id` INT(11) NOT NULL,
+        `mode` VARCHAR(4) NOT NULL DEFAULT 'test',
+        `customer_id` VARCHAR(64) NOT NULL,
+        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (`user_id`, `mode`),
+        KEY `customer_id` (`customer_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."billing_stripe_events` (
+        `id` INT(11) NOT NULL AUTO_INCREMENT,
+        `event_id` VARCHAR(64) NOT NULL,
+        `event_type` VARCHAR(80) NOT NULL,
+        `object_id` VARCHAR(80) NOT NULL DEFAULT '',
+        `livemode` TINYINT(1) NOT NULL DEFAULT 0,
+        `processing_status` VARCHAR(20) NOT NULL DEFAULT 'received',
+        `note` VARCHAR(1000) NOT NULL DEFAULT '',
+        `raw_json` MEDIUMTEXT NULL,
+        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `processed_at` DATETIME NULL,
+        PRIMARY KEY (`id`),
+        UNIQUE KEY `event_id` (`event_id`),
+        KEY `event_type` (`event_type`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+    function($db) {
+        $add = array(
+            'billing_config' => array(
+                'stripe_mode' => "VARCHAR(4) NOT NULL DEFAULT 'test'",
+                'stripe_publishable_key' => "VARCHAR(255) NULL",
+                'stripe_secret_key_enc' => "TEXT NULL",
+                'stripe_webhook_secret_enc' => "TEXT NULL",
+                'stripe_automatic_tax' => "TINYINT(1) NOT NULL DEFAULT 0",
+            ),
+            'billing_orders' => array(
+                'stripe_subscription_id' => "VARCHAR(64) NULL",
+                'stripe_customer_id' => "VARCHAR(64) NULL",
+            ),
+        );
+        foreach ($add as $table => $cols) {
+            foreach ($cols as $name => $def) {
+                $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIX".$table."' AND COLUMN_NAME = '".$name."'");
+                if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) continue;
+                if (!$db->query("ALTER TABLE `DB_PREFIX".$table."` ADD `".$name."` ".$def)) return false;
+            }
+        }
+        $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_orders' AND INDEX_NAME = 'stripe_subscription_id'");
+        if (!($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0)) {
+            if (!$db->query("ALTER TABLE `DB_PREFIXbilling_orders` ADD KEY `stripe_subscription_id` (`stripe_subscription_id`)")) return false;
+        }
+        return true;
+    },
+);
+
+// db_version 17 - billing schedule and auto-renew. Settings on the global billing_config row:
+// invoice_days_before (renewal invoice this many days before the due date), autopay_days_before
+// (first automatic charge this many days before the due date, then daily until it is paid; never
+// after the due date) and stripe_checkout_ui (hosted page or embedded form). billing_autopay keeps,
+// per server, only the payment provider's references (never card data); billing_payment_attempts
+// logs every automatic charge. Idempotent.
+$install_queries[17] = array(
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."billing_autopay` (
+        `home_id` INT(11) NOT NULL,
+        `user_id` INT(11) NOT NULL,
+        `gateway` VARCHAR(20) NOT NULL DEFAULT 'stripe',
+        `customer_ref` VARCHAR(80) NULL,
+        `method_ref` VARCHAR(80) NULL,
+        `enabled` TINYINT(1) NOT NULL DEFAULT 0,
+        `enabled_at` DATETIME NULL,
+        `disabled_at` DATETIME NULL,
+        `disabled_reason` VARCHAR(120) NOT NULL DEFAULT '',
+        PRIMARY KEY (`home_id`),
+        KEY `user_id` (`user_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+    "CREATE TABLE IF NOT EXISTS `".DB_PREFIX."billing_payment_attempts` (
+        `attempt_id` INT(11) NOT NULL AUTO_INCREMENT,
+        `invoice_id` INT(11) NOT NULL,
+        `home_id` INT(11) NOT NULL DEFAULT 0,
+        `gateway` VARCHAR(20) NOT NULL DEFAULT 'stripe',
+        `attempt_date` DATE NOT NULL,
+        `status` VARCHAR(20) NOT NULL,
+        `reference` VARCHAR(80) NOT NULL DEFAULT '',
+        `error` VARCHAR(255) NOT NULL DEFAULT '',
+        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (`attempt_id`),
+        KEY `invoice_day` (`invoice_id`, `attempt_date`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+    function($db) {
+        $cols = array(
+            'invoice_days_before' => "INT(11) NOT NULL DEFAULT 7",
+            'autopay_days_before' => "INT(11) NOT NULL DEFAULT 3",
+            'stripe_checkout_ui' => "VARCHAR(10) NOT NULL DEFAULT 'hosted'",
+        );
+        foreach ($cols as $name => $def) {
+            $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXbilling_config' AND COLUMN_NAME = '".$name."'");
+            if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) continue;
+            if (!$db->query("ALTER TABLE `DB_PREFIXbilling_config` ADD `".$name."` ".$def)) return false;
+        }
+        // The daily billing job also needs these server columns; add them where an older install lacks them.
+        $homeCols = array('billing_suspended' => "TINYINT(1) NOT NULL DEFAULT 0", 'billing_reminder_sent_for' => "DATE NULL");
+        foreach ($homeCols as $name => $def) {
+            $r = $db->resultQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DB_PREFIXserver_homes' AND COLUMN_NAME = '".$name."'");
+            if ($r && isset($r[0]['cnt']) && (int)$r[0]['cnt'] > 0) continue;
+            if (!$db->query("ALTER TABLE `DB_PREFIXserver_homes` ADD `".$name."` ".$def)) return false;
+        }
+        return true;
+    },
+);
+
+// db_version 18 - one-time order options (Server Setup at $5 and similar). The options are edited in
+// Billing > Order Options. Each ticked option is copied onto its invoice. The old $25 "Server Setup"
+// service is switched off because the option replaces it.
+// The statements live in includes/order_options.php because the Order Options page runs the same ones.
+require_once __DIR__ . '/includes/order_options.php';
+$install_queries[18] = order_options_install_sql(DB_PREFIX);
 
 ?>

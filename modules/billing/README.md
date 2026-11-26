@@ -15,7 +15,7 @@ Change the name and company in `site_config.local.php` (per install, not in git)
 ],
 ```
 
-Anything not set falls back to the defaults in `includes/brand.php`. To change the logo, replace the PNG files in `images/brand/` and keep the same file names.
+Anything not set falls back to the defaults in `includes/brand.php`. The logo comes from the panel (Settings > Panel logo), and its size from Settings > Panel logo size. `images/brand/` holds the fallback mark used when no panel logo is set.
 
 ## Configuration (`site_config.php`)
 

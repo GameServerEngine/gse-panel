@@ -261,7 +261,7 @@ if (!function_exists('storefront_offer_is_orderable')) {
                 FROM `{$prefix}catalog_offer` co
                 INNER JOIN `{$prefix}remote_servers` rs ON rs.remote_server_id = co.remote_server_id
                 LEFT JOIN `{$prefix}billing_locations` c ON c.location_id = rs.location_id AND c.kind = 'city'
-                WHERE co.offer_id = {$offerId} AND co.enabled = 1 AND rs.install_enabled = 1
+                WHERE co.offer_id = {$offerId} AND co.enabled = 1 AND NOT (co.slot_min_qty = 0 AND co.slot_max_qty = 0) AND rs.install_enabled = 1
                   AND (rs.location_id IS NULL OR (c.location_id IS NOT NULL AND c.enabled = 1))
                 LIMIT 1";
         $res = $db->query($sql);

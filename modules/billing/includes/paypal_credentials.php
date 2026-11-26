@@ -34,16 +34,32 @@ if (!function_exists('billing_paypal_decrypt_secret')) {
     }
 }
 
+/**
+ * The key that encrypts payment provider secrets in the database. A key file is used when one is
+ * configured; otherwise the key is derived from this install's database credentials, so the billing
+ * admin page works without anyone creating files. (If the database password changes, the saved
+ * provider secrets must be entered again.)
+ */
 function billing_paypal_read_key(): string
 {
     $path = billing_paypal_key_path();
-    return ($path !== '' && is_readable($path)) ? trim((string)file_get_contents($path)) : '';
+    if ($path !== '' && is_readable($path)) {
+        $fileKey = trim((string)file_get_contents($path));
+        if ($fileKey !== '') {
+            return $fileKey;
+        }
+    }
+    global $db_name, $db_user, $db_pass, $db_host;
+    if ((string)($db_name ?? '') === '') {
+        return '';
+    }
+    return hash('sha256', 'gse-billing-secrets|' . $db_host . '|' . $db_name . '|' . $db_user . '|' . $db_pass);
 }
 
 function billing_paypal_config(mysqli $db, string $prefix): array
 {
     $table = $prefix . 'billing_config';
-    $result = @mysqli_query($db, "SELECT config_id, paypal_mode, paypal_client_id, paypal_client_secret_enc, paypal_webhook_id FROM `{$table}` ORDER BY config_id ASC LIMIT 1");
+    $result = @mysqli_query($db, "SELECT config_id, paypal_mode, paypal_client_id, paypal_client_secret_enc, paypal_webhook_id FROM `{$table}` ORDER BY (game_key = '__global__') DESC, config_id ASC LIMIT 1");
     $row = $result ? mysqli_fetch_assoc($result) : null;
     if (!is_array($row)) return [];
     $key = billing_paypal_read_key();

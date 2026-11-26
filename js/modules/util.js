@@ -69,7 +69,7 @@ $(function(){
 		$('#loading_failed').removeClass('hide').addClass('show');
 	});
 
-	// ----- Config: CSRF token, presets, own game servers, speed endpoints -----
+	// ----- Config: CSRF token and the user's own game servers -----
 	function fillServers(){
 		$('.util-servers').each(function(){
 			var $s = $(this);
@@ -79,68 +79,23 @@ $(function(){
 		});
 	}
 
-	function fillEndpoints(){
-		var $form = $('#tool-speed_test');
-		var $ep = $form.find('.util-endpoints');
-		for(var i = 0; i < config.speed_endpoints.length; ++i){
-			$ep.append($('<option>').val(config.speed_endpoints[i].id).text(config.speed_endpoints[i].label));
-		}
-		$ep.on('change', function(){ fillSizes($form); });
-		fillSizes($form);
-		if(config.speed_endpoints.length === 0){
-			$form.find('.util-run').prop('disabled', true);
-			$form.find('.util-result').text(tr.attr('data-no_endpoints'));
-		}
-	}
-
-	function fillSizes($form){
-		var $size = $form.find('select[name="size"]').empty();
-		var id = $form.find('.util-endpoints').val();
-		for(var i = 0; i < config.speed_endpoints.length; ++i){
-			if(config.speed_endpoints[i].id === id){
-				$.each(config.speed_endpoints[i].sizes, function(_, s){ $size.append($('<option>').val(s.id).text(s.label)); });
-			}
-		}
-	}
-
 	$.getJSON(BASE + '&p=diag&action=config', function(data){
 		config = data;
 		csrfToken = data.csrf;
 		fillServers();
-		fillEndpoints();
 	});
 
-	// Picking a preset fills the port and the protocol.
-	$('.util-preset').on('change', function(){
-		var $form = $(this).closest('form');
-		var $opt = $(this).find('option:selected');
-		if(!$opt.val()){
-			return;
-		}
-		$form.find('input[name="port"]').val($opt.attr('data-port'));
-		if($opt.attr('data-adapter')){
-			$form.find('select[name="adapter"]').val($opt.attr('data-adapter'));
-		}else{
-			$form.find('select[name="protocol"]').val('tcp');
-		}
-	});
-
-	// Picking one of the user's own game servers fills host, port, agent and preset.
+	// Picking one of the user's own game servers. Ping: it only selects the agent that runs that machine.
+	// Port check: it fills the hidden agent, address and port that the server checks again.
 	$('.util-servers').on('change', function(){
 		var $form = $(this).closest('form');
-		if(!config || $(this).val() === ''){
-			return;
+		var srv = (config && $(this).val() !== '') ? config.servers[parseInt($(this).val(), 10)] : null;
+		if(srv){
+			$form.find('.util-agent').val(String(srv.agent));
 		}
-		var srv = config.servers[parseInt($(this).val(), 10)];
-		$form.find('input[name="host"]').val(srv.ip);
-		$form.find('input[name="port"]').val(srv.port);
-		$form.find('.util-agent').val(String(srv.agent));
-		for(var i = 0; i < config.presets.length; ++i){
-			if(config.presets[i].game_key && config.presets[i].game_key === srv.game_key){
-				$form.find('.util-preset').val(config.presets[i].key).trigger('change');
-				$form.find('input[name="port"]').val(srv.port);
-			}
-		}
+		$form.find('.util-agent-value').val(srv ? srv.agent : '');
+		$form.find('.util-server-ip').val(srv ? srv.ip : '');
+		$form.find('.util-server-port').val(srv ? srv.port : '');
 	});
 
 	// ----- Running a tool -----
@@ -152,28 +107,9 @@ $(function(){
 
 	// Which colour a result gets. Anything not listed counts as a problem.
 	function outcomeKind(outcome){
-		var good = ['connected', 'online', 'ok', 'completed', 'done'];
-		var warn = ['refused', 'timeout', 'no_response', 'port_unreachable', 'max_hops', 'unreachable'];
+		var good = ['ok', 'done'];
+		var warn = ['partial'];
 		return good.indexOf(outcome) >= 0 ? 'good' : (warn.indexOf(outcome) >= 0 ? 'warn' : 'bad');
-	}
-
-	function table(headers, rows){
-		var $t = $('<table class="util-table">');
-		var $h = $('<tr>');
-		$.each(headers, function(_, h){ $h.append($('<th scope="col">').text(h)); });
-		$t.append($('<thead>').append($h));
-		var $b = $('<tbody>');
-		$.each(rows, function(_, r){
-			var $r = $('<tr>');
-			$.each(r, function(_, c){ $r.append($('<td>').text(c)); });
-			$b.append($r);
-		});
-		return $t.append($b);
-	}
-
-	function hopCell(p){
-		if(p.timeout){ return '*'; }
-		return (p.host || p.ip || '?') + (p.rtt_ms !== null ? '  ' + p.rtt_ms + ' ms' : '');
 	}
 
 	function renderDetails($out, res){
@@ -181,14 +117,6 @@ $(function(){
 			var $dl = $('<dl class="util-rows">');
 			$.each(res.rows, function(_, r){ $dl.append($('<dt>').text(r[0])).append($('<dd>').text(r[1])); });
 			$out.append($dl);
-		}
-		if(res.hops){
-			$out.append(table(['Hop', 'Address / latency'], $.map(res.hops, function(h){
-				return [[h.hop, $.map(h.probes, hopCell).join('   ')]];
-			})));
-		}
-		if(res.players && res.players.length){
-			$out.append(table(['Player', 'Score', 'Time (s)'], $.map(res.players, function(p){ return [[p.name, p.score, p.seconds]]; })));
 		}
 		if(res.output){
 			$out.append($('<pre>').text(res.output));
@@ -208,16 +136,14 @@ $(function(){
 		renderDetails($out, res);
 		var s = res.source;
 		$out.append($('<p class="util-source">').text('Source agent: ' + agentName + ' | Target: ' + s.target + (s.ip && s.ip !== s.target ? ' (' + s.ip + ')' : '')
-			+ (s.port ? ' | Port: ' + s.port : '') + ' | Protocol: ' + s.protocol + ' | Duration: ' + s.duration_ms + ' ms'));
+			+ (s.port ? ' | Port: ' + s.port : '') + ' | Duration: ' + s.duration_ms + ' ms'));
 	}
 
 	// Checks in the browser. The server checks everything again.
 	function formError($form){
-		var host = $form.find('input[name="host"]');
-		var port = $form.find('input[name="port"]');
-		if(!$form.find('.util-agent').val()){ return tr.attr('data-agent_invalid'); }
-		if(host.length && $.trim(host.val()) === ''){ return tr.attr('data-target_empty'); }
-		if(port.length && !/^[0-9]{1,5}$/.test($.trim(port.val()))){ return 'Port must be a number from 1 to 65535.'; }
+		if(!$form.find('.util-agent, .util-agent-value').val()){
+			return $form.find('.util-servers[required]').length ? 'Choose one of your game servers.' : tr.attr('data-agent_invalid');
+		}
 		return '';
 	}
 
@@ -230,7 +156,7 @@ $(function(){
 			$out.empty().append(box('bad', error, 'alert')).focus();
 			return;
 		}
-		var agentName = $form.find('.util-agent option:selected').text();
+		var agentName = $form.find('.util-agent option:selected').text() || $form.find('.util-servers option:selected').text();
 		var $button = $form.find('.util-run').prop('disabled', true);
 		$out.empty().addClass('util-busy').append($('<p>').text('Running...')).attr('aria-busy', 'true');
 		$.ajax({url: BASE + '&p=diag&action=run', method: 'POST', data: $form.serialize(), headers: {'X-CSRF-Token': csrfToken}, dataType: 'json'})

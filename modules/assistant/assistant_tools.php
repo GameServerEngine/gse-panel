@@ -115,6 +115,48 @@ function assistant_tool_propose_action($db, $user_id, $home_id, $action)
 	);
 }
 
+// Sends one push notification to an ntfy topic. $prefix is put in front of the message (the server's name).
+// Returns array('data' => ...). Never throws: a failed notification is reported to the model, not raised.
+function assistant_send_ntfy($db, $panel_root, $topic, $input, $prefix)
+{
+	require_once($panel_root . '/modules/notifications/ntfy_helpers.php');
+	$settings = $db->getSettings();
+	$base = isset($settings['ntfy_base_url']) ? trim((string)$settings['ntfy_base_url']) : '';
+	if ($base === '') {
+		return array('data' => array('error' => 'The ntfy server is not set up on this panel (Notifications settings).'));
+	}
+	// Header values must be one plain line.
+	$title = preg_replace('/[^\x20-\x7E]/', ' ', isset($input['title']) ? (string)$input['title'] : '');
+	$title = trim(substr($title, 0, 80));
+	$message = trim(substr(isset($input['message']) ? (string)$input['message'] : '', 0, 500));
+	if ($message === '') {
+		return array('data' => array('error' => 'The message is empty.'));
+	}
+	$priority = isset($input['priority']) && in_array($input['priority'], array('low', 'default', 'high'), true) ? $input['priority'] : 'default';
+	$request = ntfy_build_request($base, $topic, $title === '' ? 'Ask Dave' : $title, $prefix . $message, $priority, array('speech_balloon'));
+	if (!ntfy_send_request($request)) {
+		return array('data' => array('error' => 'The ntfy server did not accept the notification.'));
+	}
+	return array('data' => array('ok' => true, 'sent_to_topic' => $topic));
+}
+
+// The topic is made from the server's id, so the model cannot pick another one.
+function assistant_tool_notify_server($db, $user_id, $home_id, $input, $panel_root)
+{
+	list($home, $why) = assistant_open_home($db, $user_id, $home_id);
+	if ($home === null) {
+		return array('data' => array('error' => $why));
+	}
+	require_once($panel_root . '/modules/notifications/ntfy_helpers.php');
+	return assistant_send_ntfy($db, $panel_root, ntfy_topic_for_home((int)$home['home_id']), $input, '[' . $home['home_name'] . '] ');
+}
+
+function assistant_tool_notify_admins($db, $input, $panel_root)
+{
+	require_once($panel_root . '/modules/notifications/ntfy_helpers.php');
+	return assistant_send_ntfy($db, $panel_root, NTFY_ADMIN_TOPIC, $input, '');
+}
+
 // $scope is array('type' => 'server', 'home_id' => n) or array('type' => 'admin').
 // In a server scope the server id comes from the scope, never from the model.
 // $cfg (assistant_config) switches groups of tools off; the allowed list is built from the catalog.
@@ -146,6 +188,10 @@ function assistant_dispatch_tool($db, $user_id, $panel_root, $name, $input, $hom
 			return assistant_tool_server_status($db, $user_id, $home_id, $panel_root);
 		case 'server_log':
 			return assistant_tool_server_log($db, $user_id, $home_id, $filter, $panel_root);
+		case 'notify_server':
+			return assistant_tool_notify_server($db, $user_id, $home_id, $input, $panel_root);
+		case 'notify_admins':
+			return $db->isAdmin($user_id) ? assistant_tool_notify_admins($db, $input, $panel_root) : array('data' => array('error' => 'Not allowed.'));
 		case 'propose_action':
 			return assistant_tool_propose_action($db, $user_id, $home_id, isset($input['action']) ? (string)$input['action'] : '');
 		case 'database_info':

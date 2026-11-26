@@ -4,10 +4,15 @@
  * All text from the model is put on the page as plain text, never as HTML.
  * Buttons the model offers are a link to the panel's own server pages, a password reset or a
  * file change (both ask the person to confirm first), or a patch download for administrators.
+ *
+ * $options: 'suggestions' => questions shown as buttons under the box (a click asks it),
+ * 'ask' => a question to ask as soon as the page opens (from a link such as the Try AI page).
  */
 
-function assistant_render_chat($scope_token, $heading, $intro, $placeholder, $ai_name = 'AI')
+function assistant_render_chat($scope_token, $heading, $intro, $placeholder, $ai_name = 'AI', $options = array())
 {
+	$suggestions = isset($options['suggestions']) && is_array($options['suggestions']) ? array_values($options['suggestions']) : array();
+	$ask_now = isset($options['ask']) ? mb_substr(trim((string)$options['ask']), 0, defined('ASSISTANT_MAX_QUESTION_CHARS') ? ASSISTANT_MAX_QUESTION_CHARS : 600) : '';
 	if (empty($_SESSION['assistant_csrf'])) {
 		$_SESSION['assistant_csrf'] = bin2hex(random_bytes(16));
 	}
@@ -21,6 +26,13 @@ function assistant_render_chat($scope_token, $heading, $intro, $placeholder, $ai
 	echo '<input type="text" id="assistant-input" maxlength="600" style="width:78%" autocomplete="off" placeholder="' . htmlspecialchars($placeholder, ENT_QUOTES, 'UTF-8') . '">';
 	echo ' <button type="submit" id="assistant-send">Ask</button>';
 	echo '</form>';
+	if (!empty($suggestions)) {
+		echo '<div id="assistant-suggestions" style="max-width:720px;margin:4px 0 8px">';
+		foreach ($suggestions as $text) {
+			echo '<button type="button" class="monitorbutton assistant-suggestion" style="margin:4px 8px 4px 0">' . htmlspecialchars((string)$text, ENT_QUOTES, 'UTF-8') . '</button>';
+		}
+		echo '</div>';
+	}
 	?>
 <script>
 (function () {
@@ -175,10 +187,9 @@ function assistant_render_chat($scope_token, $heading, $intro, $placeholder, $ai
 		log.scrollTop = log.scrollHeight;
 	}
 
-	form.addEventListener('submit', function (event) {
-		event.preventDefault();
-		var question = input.value.trim();
-		if (question === '') { return; }
+	function ask(question) {
+		question = question.trim();
+		if (question === '' || send.disabled) { return; }
 		addLine('You', question);
 		input.value = '';
 		send.disabled = true;
@@ -190,7 +201,23 @@ function assistant_render_chat($scope_token, $heading, $intro, $placeholder, $ai
 			})
 			.catch(function () { waiting.lastChild.textContent = 'Something went wrong. Please try again.'; })
 			.then(function () { send.disabled = false; input.focus(); });
+	}
+
+	form.addEventListener('submit', function (event) {
+		event.preventDefault();
+		ask(input.value);
 	});
+	Array.prototype.forEach.call(document.querySelectorAll('.assistant-suggestion'), function (chip) {
+		chip.addEventListener('click', function () { ask(chip.textContent); });
+	});
+	var askNow = <?php echo json_encode($ask_now, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+	if (askNow !== '') {
+		// Ask once: a reload of the page must not ask the same question again.
+		if (window.history && window.history.replaceState) {
+			window.history.replaceState(null, '', window.location.href.replace(/([?&])q=[^&]*(&|$)/, '$1').replace(/[?&]$/, ''));
+		}
+		ask(askNow);
+	}
 })();
 </script>
 	<?php

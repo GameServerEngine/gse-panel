@@ -27,11 +27,11 @@ class FakeDb
 		$this->agent_port = $agent_port;
 	}
 	public function getUserById($id) { return array('users_role' => $this->role, 'user_id' => $id); }
-	public function getSettings() { return array('diag_speed_endpoints' => '[{"id":"cdn","label":"CDN","sizes":[{"id":"10","label":"10 MB","bytes":10485760,"url":"https://secret-speed.example.net/10mb.bin"}]}]') + $this->saved; }
+	public function getSettings() { return $this->saved; }
 	public function setSettings($s) { $this->saved = $s + $this->saved; return true; }
 	public function getIpPortsForUser($id)
 	{
-		return array(array('remote_server_id' => 3, 'ip' => '198.51.101.7', 'port' => 27015, 'home_id' => 1, 'home_name' => 'My CS Server', 'game_key' => 'cstrike'));
+		return array(array('remote_server_id' => 3, 'ip' => '198.51.101.7', 'port' => 27015, 'home_id' => 1, 'home_name' => 'My CS Server', 'home_cfg_file' => 'cstrike.xml', 'server_os' => 'linux'));
 	}
 	public function getRemoteServers()
 	{

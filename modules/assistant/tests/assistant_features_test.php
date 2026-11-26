@@ -34,7 +34,7 @@ check('cost estimate', abs(assistant_cost_usd(1000000, 1000000, assistant_config
 // ---- groups switch tools off ---------------------------------------------------------------
 $off = assistant_config(array('assistant_allow_files' => '0', 'assistant_allow_edits' => '0', 'assistant_allow_db' => '0', 'assistant_allow_resets' => '0'));
 $server_tools = assistant_allowed_tools('server', $off);
-check('switches remove file, edit, db and reset tools', $server_tools === array('server_status', 'server_log', 'database_info', 'ftp_info', 'propose_action'));
+check('switches remove file, edit, db and reset tools', $server_tools === array('server_status', 'server_log', 'database_info', 'ftp_info', 'propose_action', 'notify_server'));
 $on = assistant_config(array('assistant_allow_files' => '1', 'assistant_allow_edits' => '1', 'assistant_allow_db' => '1', 'assistant_allow_resets' => '1'));
 check('agent tools need agent folders', !in_array('agent_read', assistant_allowed_tools('admin', $on), true));
 $on = assistant_config(array('assistant_agent_paths' => '/home/gameserver/GSP'));
@@ -179,6 +179,24 @@ $bytes_api = function ($key, $body) use (&$tool_results) {
 };
 assistant_ask('k', 'm', '', array(), 'hi', $run, 'server', $bytes_api);
 check('invalid UTF-8 in a tool result does not break the reply', is_string($tool_results) && $tool_results !== '' && json_decode($tool_results, true) !== null);
+
+// ---- product chat and the demo account -------------------------------------------------------
+check('the product chat has no tools', assistant_allowed_tools('product', assistant_config(array())) === array());
+$prompt = assistant_system_prompt('product');
+check('the product prompt carries the product facts', strpos($prompt, '<product_facts>') !== false && strpos($prompt, 'Run Level Systems') !== false);
+$sent = null;
+$product_api = function ($key, $body) use (&$sent) {
+	$sent = $body;
+	return array(200, array('stop_reason' => 'end_turn', 'usage' => array('input_tokens' => 1, 'output_tokens' => 1), 'content' => array(array('type' => 'text', 'text' => 'It is free.'))));
+};
+$reply = assistant_ask('k', 'm', '', array(), 'Is it free?', function () { return array('data' => array()); }, 'product', $product_api);
+check('a product question sends no tools list and gets the answer', is_array($sent) && !array_key_exists('tools', $sent) && $reply['text'] === 'It is free.');
+require_once(__DIR__ . '/../../../includes/demo.php');
+check('the demo may use Game Monitor, AI Assist and the product chat', demo_page_allowed('gamemanager', 'game_monitor') && demo_page_allowed('gamemanager', 'restart') && demo_page_allowed('assistant', 'chat') && demo_page_allowed('assistant', 'product'));
+check('the demo may not edit the account, files, FTP or reinstall', !demo_page_allowed('user_admin', 'edit_user') && !demo_page_allowed('litefm', 'write_file') && !demo_page_allowed('ftp', 'default') && !demo_page_allowed('gamemanager', 'update') && !demo_page_allowed('editconfigfiles', 'modify'));
+$_SESSION = array('users_login' => 'demo');
+check('a demo session is recognised only when the demo is set', demo_is_session(array('demo_login_user' => 'demo')) && !demo_is_session(array('demo_login_user' => '')) && !demo_is_session(array('demo_login_user' => 'other')));
+check('the demo cap defaults to 300000 tokens', (int)assistant_config(array())['assistant_demo_monthly_tokens'] === 300000);
 
 echo $failures === 0 ? "All passed\n" : "$failures failed\n";
 exit($failures === 0 ? 0 : 1);

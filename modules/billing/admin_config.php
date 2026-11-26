@@ -74,6 +74,44 @@ if (($paypalDb['paypal_client_id'] ?? '') !== '') {
 }
 
 // ---------------------------------------------------------------------------
+// Stripe card payments: save the settings and check the key
+// ---------------------------------------------------------------------------
+require_once(__DIR__ . '/includes/stripe_config.php');
+$stripeMsg = null;
+$stripeDb = @mysqli_connect($db_host ?? 'localhost', $db_user ?? '', $db_pass ?? '', $db_name ?? '', intval($db_port ?? 3306) ?: 3306);
+if ($stripeDb) {
+    mysqli_set_charset($stripeDb, 'utf8mb4');
+}
+require_once(__DIR__ . '/includes/billing_autopay.php');
+$stripeWebhookUrl = billing_stripe_site_base() . '/stripe/webhook.php';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', array('save_stripe', 'check_stripe', 'register_stripe_webhook', 'save_schedule'), true)) {
+    $pfx = (string)($table_prefix ?? '');
+    if (!hash_equals($csrf, (string)($_POST['csrf'] ?? ''))) {
+        $stripeMsg = array('error', 'Your session expired. Reload the page and try again.');
+    } elseif (!$stripeDb) {
+        $stripeMsg = array('error', 'Database connection failed.');
+    } elseif ($_POST['action'] === 'save_stripe') {
+        list($ok, $text) = billing_stripe_save_settings($stripeDb, $pfx, $_POST, $stripeWebhookUrl);
+        if ($ok) {
+            list($ok2, $text2) = billing_stripe_check_account($stripeDb, $pfx);
+            $text .= ' ' . $text2;
+        }
+        $stripeMsg = array($ok ? 'success' : 'error', $text);
+    } elseif ($_POST['action'] === 'register_stripe_webhook') {
+        list($ok, $text) = billing_stripe_register_webhook($stripeDb, $pfx, $stripeWebhookUrl);
+        $stripeMsg = array($ok ? 'success' : 'error', $text);
+    } elseif ($_POST['action'] === 'save_schedule') {
+        list($ok, $text) = billing_schedule_save($stripeDb, $pfx, $_POST);
+        $stripeMsg = array($ok ? 'success' : 'error', $text);
+    } else {
+        list($ok, $text) = billing_stripe_check_account($stripeDb, $pfx);
+        $stripeMsg = array($ok ? 'success' : 'error', $text);
+    }
+}
+$stripeView = $stripeDb ? billing_stripe_config($stripeDb, (string)($table_prefix ?? '')) : array('configured' => false, 'mode' => 'test', 'publishable_key' => '', 'secret_key' => '', 'webhook_secret' => '', 'automatic_tax' => false, 'checkout_ui' => 'hosted', 'problem' => 'Database connection failed.');
+$scheduleView = $stripeDb ? billing_schedule_settings($stripeDb, (string)($table_prefix ?? '')) : array('invoice_days' => 7, 'autopay_days' => 3, 'delete_days' => 7);
+
+// ---------------------------------------------------------------------------
 // POST: Save interactive form
 // ---------------------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_form') {
@@ -151,6 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
                             $cfgVals['paypal_sandbox_client_secret'] = $paypalDb['paypal_client_secret'] ?? '';
                             $cfgVals['paypal_sandbox_webhook_id'] = $paypalDb['paypal_webhook_id'] ?? '';
                         }
+                        billing_payment_method_set($paypalDbLink, (string)$table_prefix, 'paypal', !empty($_POST['paypal_enabled']));
                         $status = 'PayPal settings saved.';
                         $statusType = 'success';
                     } catch (Throwable $e) {
@@ -207,7 +246,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
   <h1>Edit Site Config</h1>
 
   <?php if ($status): ?>
-  <div class="status-box status-<?php echo h($statusType); ?>"><?php echo h($status); ?></div>
+  <div class="status-box status-<?php echo h($statusType); ?> <?php echo $statusType === 'success' ? 'success' : ($statusType === 'error' ? 'failure' : ''); ?>" style="margin-bottom:12px;"><?php echo h($status); ?></div>
   <?php endif; ?>
 
   <?php if (!empty($billing_config_warning)): ?>
@@ -249,6 +288,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
 
       <hr style="border:none;border-top:1px solid rgba(128,128,128,0.4);margin:24px 0;">
       <h3 style="margin-top:0;color:inherit;">PayPal Configuration</h3>
+      <p><label><input type="checkbox" name="paypal_enabled" value="1"<?php echo billing_payment_method_enabled($stripeDb, (string)($table_prefix ?? ''), 'paypal') ? ' checked' : ''; ?>>
+        <strong>Enabled</strong> &mdash; offer PayPal as a payment option at checkout</label></p>
 
       <?php
       $isSandboxMode = ($cfgVals['paypal_mode'] ?? 'sandbox') !== 'live';
@@ -446,6 +487,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
     .recent-errors-table td { padding:5px 8px; border-bottom:1px solid rgba(128,128,128,0.3); word-break:break-word; }
   </style>
   <div class="cfg-section">
+    <h2>Billing schedule</h2>
+    <?php if ($stripeMsg): ?>
+      <div class="<?php echo $stripeMsg[0] === 'success' ? 'success' : 'failure'; ?>" style="margin-bottom:12px;"><?php echo h($stripeMsg[1]); ?></div>
+    <?php endif; ?>
+    <p>Used by the daily billing job. A server that is still unpaid on its due date is suspended and its auto-renew is turned off; automatic charges never happen on or after the due date.</p>
+    <form method="post" style="margin-bottom:26px;">
+      <input type="hidden" name="csrf" value="<?php echo h($csrf); ?>">
+      <input type="hidden" name="action" value="save_schedule">
+      <p><label>Create the renewal invoice <input type="number" name="invoice_days_before" min="1" max="60" value="<?php echo (int)$scheduleView['invoice_days']; ?>" style="width:70px;"> days before the due date</label></p>
+      <p><label>Charge auto-renew payments from <input type="number" name="autopay_days_before" min="1" max="60" value="<?php echo (int)$scheduleView['autopay_days']; ?>" style="width:70px;"> days before the due date (then once a day until paid)</label></p>
+      <p><label>Delete a suspended server <input type="number" name="delete_after_expired_days" min="0" max="365" value="<?php echo (int)$scheduleView['delete_days']; ?>" style="width:70px;"> days after the due date</label></p>
+      <button type="submit">Save schedule</button>
+    </form>
+
+    <h2>Stripe (card payments)</h2>
+    <p>Create a Stripe account, add your business details there, then paste your two API keys here (Stripe dashboard &rarr; Developers &rarr; API keys). Saving the secret key connects this site to Stripe and sets up payment notifications automatically.</p>
+    <table style="margin-bottom:14px;">
+      <tr><td style="padding-right:16px;"><strong>Status</strong></td><td><?php echo !empty($stripeView['configured']) ? 'Ready (' . h($stripeView['mode']) . ' mode)' : 'Not set up'; ?><?php echo $stripeView['problem'] !== '' ? ' &mdash; ' . h($stripeView['problem']) : ''; ?></td></tr>
+      <tr><td><strong>Payment notifications</strong></td><td><?php echo $stripeView['webhook_secret'] !== '' ? 'connected' : 'not connected yet (save the secret key, or press "Connect notifications again")'; ?></td></tr>
+      <tr><td><strong>Notification address</strong></td><td><code><?php echo h($stripeWebhookUrl); ?></code></td></tr>
+    </table>
+    <form method="post" style="margin-bottom:12px;">
+      <input type="hidden" name="csrf" value="<?php echo h($csrf); ?>">
+      <input type="hidden" name="action" value="save_stripe">
+      <p><label><input type="checkbox" name="stripe_enabled" value="1"<?php echo !empty($stripeView['enabled']) ? ' checked' : ''; ?>>
+        <strong>Enabled</strong> &mdash; offer card payments (Stripe) as a payment option at checkout</label></p>
+      <p><label>Publishable key<br><input type="text" name="stripe_publishable_key" size="70" value="<?php echo h($stripeView['publishable_key']); ?>" placeholder="pk_live_... or pk_test_..."></label></p>
+      <p><label>Secret key<br><input type="password" name="stripe_secret_key" size="70" autocomplete="off" placeholder="<?php echo $stripeView['secret_key'] !== '' ? 'saved &mdash; leave blank to keep' : 'sk_live_... or sk_test_...'; ?>"></label></p>
+      <p><label>Card payment page
+        <select name="stripe_checkout_ui">
+          <option value="hosted"<?php echo ($stripeView['checkout_ui'] ?? 'hosted') !== 'form' ? ' selected' : ''; ?>>Stripe's payment page (customer goes to Stripe and comes back)</option>
+          <option value="form"<?php echo ($stripeView['checkout_ui'] ?? '') === 'form' ? ' selected' : ''; ?>>Card form on our cart page</option>
+        </select></label></p>
+      <p><label><input type="checkbox" name="stripe_automatic_tax" value="1"<?php echo !empty($stripeView['automatic_tax']) ? ' checked' : ''; ?>>
+        Charge sales tax with Stripe Tax (set up your tax registrations in the Stripe dashboard first)</label></p>
+      <p style="opacity:0.8;">Test keys (pk_test_ / sk_test_) take only test cards such as 4242 4242 4242 4242; switch to live keys when you are ready to take real payments.</p>
+      <button type="submit">Save Stripe settings</button>
+    </form>
+    <form method="post" style="display:inline-block;margin:0 8px 26px 0;">
+      <input type="hidden" name="csrf" value="<?php echo h($csrf); ?>">
+      <input type="hidden" name="action" value="check_stripe">
+      <button type="submit" class="btn-show">Check Stripe connection</button>
+    </form>
+    <form method="post" style="display:inline-block;margin:0 0 26px 0;">
+      <input type="hidden" name="csrf" value="<?php echo h($csrf); ?>">
+      <input type="hidden" name="action" value="register_stripe_webhook">
+      <button type="submit" class="btn-show">Connect notifications again</button>
+    </form>
+
     <h2>PayPal Diagnostics</h2>
 
     <!-- Self-check button -->

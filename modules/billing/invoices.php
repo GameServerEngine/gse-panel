@@ -1,30 +1,32 @@
 <?php
-// User invoice history (reads payments/data/*.json)
-$session_name = session_name(); session_start();
-require_once(__DIR__ . '/includes/config_loader.php');
-// Intentionally do not require login here; invoices should be viewable (or filtered) without forcing a login.
+// Invoice history for the signed-in user, read from billing_invoices.
+if (session_status() === PHP_SESSION_NONE) {
+    session_name("gameserverpanel_web");
+    session_start();
+}
+require_once(__DIR__ . '/bootstrap.php');
+require_once(__DIR__ . '/includes/invoice_state.php');
 
-// try to get logged-in user's email for matching
-$user_email = $_SESSION['website_user_email'] ?? '';
-
-$dataDir = (isset($SITE_DATA_DIR) && $SITE_DATA_DIR) ? $SITE_DATA_DIR : realpath(__DIR__ . '/') . DIRECTORY_SEPARATOR . 'data';
-$records = [];
-if (is_dir($dataDir)) {
-    foreach (glob($dataDir . '/*.json') as $file) {
-        $j = json_decode(file_get_contents($file), true);
-        if (!$j || !is_array($j)) continue;
-        // Best-effort match: payer email or custom contains user identifier
-        $match = false;
-        if ($user_email && !empty($j['payer']) && stripos($j['payer'], $user_email) !== false) $match = true;
-        if (!$match && !empty($j['custom']) && stripos($j['custom'], $user_email) !== false) $match = true;
-        if (!$match && empty($user_email)) $match = true; // fallback: show everything when no email in session
-        if ($match) {
-            $records[] = $j;
-        }
-    }
+$user_id = intval($_SESSION['website_user_id'] ?? 0);
+if ($user_id <= 0) {
+    include(__DIR__ . '/login.php');
+    exit;
 }
 
-function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+$db = mysqli_connect($db_host, $db_user, $db_pass, $db_name, isset($db_port) ? (int)$db_port : null);
+if (!$db) {
+    die("Connection failed: " . mysqli_connect_error());
+}
+mysqli_set_charset($db, 'utf8mb4');
+
+$rows = [];
+$res = mysqli_query($db, "SELECT invoice_id, description, home_name, amount, currency, status, payment_status, invoice_date, paid_date FROM {$table_prefix}billing_invoices WHERE user_id = {$user_id} ORDER BY invoice_id DESC");
+if ($res) {
+    while ($r = mysqli_fetch_assoc($res)) {
+        $rows[] = $r;
+    }
+}
+$e = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 ?>
 <!doctype html>
 <html>
@@ -39,28 +41,33 @@ function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 <?php include(__DIR__ . '/includes/top.php'); include(__DIR__ . '/includes/menu.php'); ?>
 <div class="container-wide panel">
   <h1>Your Invoices</h1>
-  <?php if (!$records): ?>
+  <?php if (!$rows): ?>
     <p>No invoices found for your account.</p>
   <?php else: ?>
   <table class="cart-table">
       <thead>
         <tr>
-          <th>Invoice</th><th>Amount</th><th>Payer</th><th>Date</th><th>Details</th>
+          <th>Invoice</th><th>Description</th><th>Amount</th><th>Status</th><th>Date</th><th></th>
         </tr>
       </thead>
       <tbody>
-      <?php foreach ((array)$records as $r): ?>
+      <?php foreach ($rows as $r):
+          $state = billing_invoice_state($r);
+          $when  = ($state === 'paid' && !empty($r['paid_date'])) ? $r['paid_date'] : $r['invoice_date'];
+      ?>
         <tr>
-          <td><?php echo h($r['invoice'] ?? ($r['custom'] ?? 'NO-ID')); ?></td>
-          <td><?php echo h(($r['currency'] ?? '') . ' ' . number_format((float)($r['amount'] ?? 0),2)); ?></td>
-          <td><?php echo h($r['payer'] ?? ''); ?></td>
-          <td><?php echo h($r['ts'] ?? ''); ?></td>
-          <td><a href="return.php?invoice=<?php echo urlencode($r['invoice'] ?? ($r['custom'] ?? '')); ?>">View</a></td>
+          <td>#<?php echo $e($r['invoice_id']); ?></td>
+          <td><?php echo $e($r['description'] ?: $r['home_name']); ?></td>
+          <td><?php echo $e(($r['currency'] ?: 'USD') . ' ' . number_format((float)$r['amount'], 2)); ?></td>
+          <td><?php echo $e(ucfirst($state)); ?></td>
+          <td><?php echo $e($when); ?></td>
+          <td><a href="invoice_view.php?id=<?php echo (int)$r['invoice_id']; ?>">View</a></td>
         </tr>
       <?php endforeach; ?>
       </tbody>
     </table>
   <?php endif; ?>
+  <p><a href="my_account.php">Back to My Account</a></p>
 </div>
 <?php include(__DIR__ . '/includes/footer.php'); ?>
 </body>

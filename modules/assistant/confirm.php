@@ -34,6 +34,10 @@ function assistant_confirm_main()
 		return assistant_json(503, array('ok' => false, 'message' => 'The assistant is switched off.', 'password' => ''));
 	}
 	$what = isset($_POST['what']) ? (string)$_POST['what'] : '';
+	require_once($panel_root . '/includes/demo.php');
+	if (demo_is_session($db->getSettings()) && $what !== 'proposal_view' && $what !== 'proposal_discard') {
+		return assistant_json(403, array('ok' => false, 'message' => 'Not in the demo: AI Assist shows the change, but only your own panel applies it.', 'password' => ''));
+	}
 	$home_id = $scope['type'] === 'server' ? (int)$scope['home_id'] : (isset($_POST['home_id']) ? (int)$_POST['home_id'] : 0);
 	$id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 	assistant_ensure_tables($db);

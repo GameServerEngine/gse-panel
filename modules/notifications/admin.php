@@ -1,0 +1,163 @@
+<?php
+/*
+ *
+ * GSP - GameServer Panel
+ * Copyright (C) 2008 - 2018 The GSP Development Team
+ *
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ */
+include 'modules/notifications/functions.php';
+function exec_module()
+{
+	global $db;
+	require_once __DIR__ . '/ntfy_admin.php';
+	if(isset($_POST['ntfy_action']))
+	{
+		foreach (ntfy_admin_handle_post($db) as $message)
+			if($message[0]) print_success($message[1]); else print_failure($message[1]);
+	}
+	if(isset($_POST['send_notification']))
+	{
+		send_notification($_POST);
+		return;
+	}
+
+	if(isset($_GET['get_notifications']))
+	{
+		$notifications = get_notifications(true);
+		header('Content-Type: application/json');
+		echo json_encode($notifications);
+		return;
+	}
+
+	if(isset($_POST['remove_notifications']))
+	{
+		if(isset($_POST['notifications_ids']) and is_array($_POST['notifications_ids']) and !empty($_POST['notifications_ids']))
+		{
+			foreach ((array)$_POST['notifications_ids'] as $notification_id)
+			{
+				remove_notification($notification_id, true);
+			}
+		}
+		return;
+	}
+
+	echo '<link rel="stylesheet" href="css/quill/quill.snow.css">'."\n".
+		 '<script type="text/javascript" src="js/quill/quill.js"></script>'."\n".
+		 '<script type="text/javascript" src="js/modules/notifications.js"></script>';
+
+	if(isset($_GET['list']))
+	{
+		$notifications = get_notifications(true);
+		if($notifications)
+		{
+			rsort($notifications);
+			echo "<table id='notification_admin_list'><thead><tr>\n".
+				 "<th><input type=\"checkbox\" onclick=\"swap_all_checkboxes(this)\"></th>\n".
+				 "<th>".get_lang('subject')."</th>\n".
+				 "<th>".get_lang('users_not_read_notification')."</th>".
+				 "<th>".get_lang('date')."</th></thead>\n";
+
+			foreach ((array)$notifications as $key => $notification)
+			{
+				$users_not_readed = get_usernames_not_read_notification($notification['notification_id']);
+				$users_not_readed = $users_not_readed ? $users_not_readed: "";
+				echo '<tr><td><input type="checkbox" class="notification_checkbox" name="remove_notification[]" value="'.$notification['notification_id'].'"></td>'."\n".
+					 '<td><b>'.$notification['subject']."</b></td><td>$users_not_readed</td><td>".$notification['timestamp']."</td></tr>\n";
+			}
+			echo '<tr><td colspan=4><button onclick="remove_notifications()">'.get_lang('remove_selected_notifications')."</button></td></tr>\n".
+				 "</table>\n";
+		}
+		else
+		{
+			print_failure(get_lang('there_are_no_notifications'));
+		}
+		echo '<p><a href="?m=notifications">&lt;&lt; '.get_lang('back')."</a></p>\n";
+		return;
+	}
+
+	ntfy_admin_render($db);
+	$subusers_installed = $db->isModuleInstalled('subusers');
+	echo "<h2>".get_lang('Notification')."</h2>";
+
+	//[]admins []users []subusers[of user] []groups[group]
+	echo '<table id="notification"><tr>'."\n".
+		 '<td rowspan=2>'.get_lang('send_to').':</td>'."\n".
+		 '<td><input type="checkbox" onclick="toggle_all(this, \'select_admins\')" id="admins"><label for="admins">'.get_lang('admins').'</label></td>'."\n".
+		 '<td><input type="checkbox" onclick="toggle_all(this, \'select_users\')" id="users" ><label for="users" >'.get_lang('users') .'</label></td>'."\n".
+		 '<td><input type="checkbox" onclick="toggle_all(this, \'select_groups\')" id="groups"><label for="groups">'.get_lang('groups').'</label></td>'."\n";
+
+	if($subusers_installed){
+		echo '<td><input type="checkbox" onclick="toggle_all(this, \'select_subusers_of_users\')" id="subusers_of_user"><label for="subusers_of_user">'.get_lang('subusers_of_user').'</label></td>'."\n";
+	}
+
+	$users = $db->getUserList();
+	echo '</tr><tr>'."\n".
+		 '<td><select id="select_admins" multiple>'."\n";
+	if(!empty($users))
+	{
+		foreach ((array)$users as $user)
+		{
+			if($user['users_role'] == 'admin')
+				echo '<option value="'.$user['user_id'].'">'.$user['users_login'].'</option>'."\n";
+		}
+	}
+	echo '</select></td>'."\n".
+		 '<td><select id="select_users" multiple>'."\n";
+	if(!empty($users))
+	{
+		foreach ((array)$users as $user)
+		{
+			if($user['users_role'] == 'user')
+				echo '<option value="'.$user['user_id'].'">'.$user['users_login'].'</option>'."\n";
+		}
+	}
+	echo '</select></td>'."\n".
+		 '<td><select id="select_groups" multiple>'."\n";
+	$groups = $db->getGroupList();
+	if(!empty($groups))
+	{
+		foreach ((array)$groups as $group)
+		{
+			if($db->listUsersInGroup($group['group_id']))
+				echo '<option value="'.$group['group_id'].'">'.$group['group_name'].'</option>';
+		}
+	}
+	echo '</select></td>'."\n";
+	if($subusers_installed){
+		echo '<td><select id="select_subusers_of_users" multiple>'."\n";
+		if(!empty($users))
+		{
+			foreach ((array)$users as $user)
+			{
+				$sub_users_ids = $db->getUsersSubUsersIds($user['user_id']);
+				if($user['users_role'] == 'user' and $sub_users_ids)
+					echo '<option value="'.$user['user_id'].'">'.$user['users_login'].'</option>'."\n";
+			}
+		}
+		echo '</select></td>'."\n";
+	}
+	$colspan = $subusers_installed ? '5':'4';
+	echo '</tr>'."\n".
+		 '<tr><td>'.get_lang('subject').'</td><td colspan=4><input type="text" id="subject"></td></tr>'."\n".
+		 '<tr><td colspan='.$colspan.'>'.get_lang('message').'</td></td></tr>'."\n".
+		 '<tr><td colspan='.$colspan.'><div id="editor"></div></td></tr>'."\n".
+		 '<tr><td colspan='.$colspan.'><button onclick="send_notification()" >'.get_lang('send_notification').'</button></td></tr>'."\n".
+		 '</table>';
+}
+?>

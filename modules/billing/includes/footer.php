@@ -23,15 +23,14 @@ if (!function_exists('billing_footer_link')) {
 <footer class="gsw-footer">
   <div class="gsw-footer-inner">
     <div class="gsw-footer-brand">
-      <img src="<?php echo htmlspecialchars(billing_url('images/brand/gse-logo-footer.png'), ENT_QUOTES, 'UTF-8'); ?>" alt="" class="gsw-footer-logo" width="56" height="56">
+      <?php echo billing_logo_html('gsw-footer-logo', 56, 56); ?>
       <p><strong><?php echo billing_brand_e('name'); ?></strong><br><?php echo billing_text_e('site.tagline'); ?></p>
     </div>
     <nav class="gsw-footer-links" aria-label="Footer navigation">
       <?php echo billing_footer_link('serverlist.php', 'Game Servers'); ?>
       <?php echo billing_footer_link('support.php', 'Support'); ?>
-      <?php if (is_file(dirname(__DIR__) . '/services.php')) { echo billing_footer_link('services.php', 'Services'); } ?>
+      <?php if (is_file(dirname(__DIR__) . '/development.php')) { echo billing_footer_link('development.php', 'Development'); } ?>
       <?php echo billing_footer_link('docs.php', 'Docs'); ?>
-      <?php echo billing_footer_link('server_status.php', 'Server Status'); ?>
       <?php echo billing_footer_link('company.php', 'Company'); ?>
       <?php echo billing_footer_link('contact.php', 'Contact'); ?>
       <?php echo billing_footer_link('privacy.php', 'Privacy'); ?>

@@ -1,0 +1,163 @@
+<?php
+/*
+ *
+ * GSP - GameServer Panel
+ * Copyright (C) 2008 - 2018 The GSP Development Team
+ *
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ */
+function get_usernames_not_read_notification($notification_id)
+{
+	global $db;
+	$notification_id = $db->real_escape_string($notification_id);
+	$query = "SELECT user_id ".
+			 "FROM `DB_PREFIXnotification_recipients` ".
+			 "WHERE `notification_id` = '$notification_id' ".
+			 "AND `status` = '0'";
+	$users = $db->resultQuery($query);
+	if($users)
+	{
+		$user_names = array();
+		foreach ((array)$users as $user)
+		{
+			$user_info = $db->getUserById($user['user_id']);
+			$user_names[] = $user_info['users_login'];
+		}
+		return implode(', ', $user_names);
+	}
+	return false;
+}
+
+function remove_notification($notification_id, $admin = false)
+{
+	global $db;
+	$notification_id = $db->real_escape_string($notification_id);
+
+	if($admin)
+	{
+		$db->query("DELETE FROM `DB_PREFIXnotification_recipients` ".
+				   "WHERE `notification_id` = '$notification_id'");
+		$db->query("DELETE FROM `DB_PREFIXnotification` ".
+				   "WHERE `notification_id` = '$notification_id'");
+	}
+	else
+	{
+		$db->query("DELETE FROM `DB_PREFIXnotification_recipients` ".
+				   "WHERE `notification_id` = '$notification_id' ".
+				   "AND `user_id` = '$_SESSION[user_id]'");
+	}
+}
+
+function set_notification_readed($notification_id)
+{
+	global $db;
+	$notification_id = $db->real_escape_string($notification_id);
+	$db->query("UPDATE `DB_PREFIXnotification_recipients` ".
+			   "SET `status` = '1' ".
+			   "WHERE `notification_id` = '$notification_id' ".
+			   "AND `user_id` = '$_SESSION[user_id]'");
+}
+
+function get_notifications($all = false)
+{
+	global $db;
+	if($all)
+		$query = "SELECT * FROM `DB_PREFIXnotification`";
+	else
+		$query = "SELECT * ".
+				 "FROM `DB_PREFIXnotification_recipients` ".
+				 "NATURAL JOIN `DB_PREFIXnotification` ".
+				 "WHERE user_id = $_SESSION[user_id]";
+
+	$rows = $db->resultQuery($query);
+	return is_array($rows) ? $rows : array();
+}
+
+function send_to_user($user_id, $notification_id)
+{
+	global $db;
+	$user_id = $db->real_escape_string($user_id);
+	$notification_id = $db->real_escape_string($notification_id);
+	return $db->query("INSERT INTO `DB_PREFIXnotification_recipients` VALUES('$user_id','$notification_id','0');");
+}
+
+function get_user_ids($type, $ids, &$user_ids)
+{
+	global $db;
+	foreach ((array)$ids as $id)
+	{
+		if($type == 'admins' or $type == 'users')
+		{
+			if(!in_array($id, $user_ids))
+				$user_ids[] = $id;
+		}
+		elseif($type == 'groups')
+		{
+			$group_users = $db->listUsersInGroup($id);
+			if($group_users and !empty($group_users))
+			{
+				foreach ((array)$group_users as $user)
+				{
+					if(!in_array($user['user_id'], $user_ids))
+						$user_ids[] = $user['user_id'];
+				}
+			}
+		}
+		elseif($type == 'subusers_of_users')
+		{
+			$sub_users_ids = $db->getUsersSubUsersIds($id);
+			if($sub_users_ids and !empty($sub_users_ids))
+			{
+				foreach ((array)$sub_users_ids as $user_id)
+				{
+					if(!in_array($user_id, $user_ids))
+						$user_ids[] = $user_id;
+				}
+			}
+		}
+	}
+}
+
+function send_notification($data)
+{
+	global $db;
+	$notification_id = $db->resultInsertId('notification', array('subject' => $data['subject'], 'message' => $data['message']));
+	require_once __DIR__ . '/ntfy_admin.php';
+	ntfy_admin_publish_notice($db, $data['subject'], $data['message']);
+	$user_ids = array();
+	unset($data['subject'], $data['message']);
+	foreach ((array)$data as $type => $ids)
+	{
+		if(is_array($ids) and !empty($ids))
+			get_user_ids($type, $ids, $user_ids);
+	}
+	$failed_recipients = array();
+	foreach ((array)$user_ids as $user_id)
+	{
+		if(!send_to_user($user_id, $notification_id))
+			$failed_recipients[] = $user_id;
+	}
+	if(empty($failed_recipients))
+	{
+		echo "Notification sent to all recipients.";
+	}
+	else
+	{
+		echo "Failed to send notification to users with the following ids:\n". implode(", ", $failed_recipients) . ".";
+	}
+}

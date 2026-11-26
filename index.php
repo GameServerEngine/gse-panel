@@ -126,7 +126,9 @@ function heading()
 			return;
 		}
 	}
-	include "includes/navig.php";
+	if (isset($_SESSION['users_login'])) {
+		include "includes/navig.php";
+	}
 	if(isset($maintenance))echo $maintenance;
 }
 
@@ -152,60 +154,8 @@ function home()
 	$lang_sel .= "</select>\n";
 	$lang_switch = ( isset( $_GET['lang'] ) AND $_GET['lang'] != "-" ) ? "&amp;lang=" . $_GET['lang'] : "";
 	?>
-<div>
-</div>
+<?php if (getThemePath() !== 'themes/Login/') { echo "\t%top%\n"; } // The Login layout draws its own logo header. ?>
 
-<div style="clear: both;">
-</div>
-	%top%
-
-	<div class="menu-bg">
-		<div class="menu">
-		<ul>
-		<li><a href="index.php<?php echo preg_replace( "/\&amp;/", "?", $lang_switch ); ?>" <?php if (!isset($_GET['m'])) echo 'class="admin_menu_link_selected"'; else echo 'class="admin_menu_link"'; ?> target="_self" ><span class="controlpanellogin"><?php echo get_lang("login_title"); ?></span></a></li>
-<?php
-	$menus = $db->getMenusForGroup('guest');
-	if(!empty($menus))
-	{
-		foreach ((array)$menus as $menu)
-		{
-			$module = $menu['module'];
-			if ( !empty( $menu['subpage'] ) )
-			{
-				$subpage = "&amp;p=".$menu['subpage'];
-				$button = $menu['subpage'];
-				if (isset($_GET['p']) AND $_GET['p'] == $menu['subpage'] ) $menu_link_class = 'user_menu_link_selected'; else $menu_link_class = 'user_menu_link';
-			}
-			else
-			{
-				$subpage = "";
-				$button = $menu['module'];
-				if (isset($_GET['m']) AND $_GET['m'] == $menu['module'] ) $menu_link_class = 'user_menu_link_selected'; else $menu_link_class = 'user_menu_link';
-			}
-
-			$button_url = "?m=".$module.$subpage.$lang_switch;
-
-			if ( preg_match( '/\\_?\\_/', get_lang("$button") ) )
-			{
-				$button_name = $menu['menu_name'];
-			}
-			else
-			{
-				$button_name = get_lang("$button");
-			}
-			//THIS IS A HACK TO REMOVE THE SHOP_GUEST MENU ITEM
-			if(strcmp($button_name, "Shop"))
-			{
-			echo "<li><a class='".$menu_link_class."' href='".$button_url."'><span class='$button'>$button_name</span></a>
-				  </li>\n";
-			}
-		}
-	}
-?>
-		</ul>
-		</div>
-	</div>
-</div>
 
 	%topbody%
 	<?php
@@ -364,112 +314,27 @@ function home()
 			return;
 		}
 	?>
-	<!-- Made for Revolution Theme v2 -->
-	<style type="text/css">
-	div.main-content {
-		background:transparent;
-		border:none;
-		padding:0;
-		border-radius:0px;
-		-moz-border-radius:0px;
-	}
-	</style>
-	<table style='width:200px' align='center'>
-	  <tr style='background-color:transparent;' >
-		<td style='background-color:transparent;' >
-		<div class='bloc' >
-		<h4><?php print_lang('login_title'); ?></h4>
-		<br>
-		<form action="index.php<?php echo preg_replace( "/\&amp;/", "?", $lang_switch ); ?>" name="login_form" method="post">
-		<table>
-
-			<tr>
-				<td><?php print_lang('lang'); ?>:</td>
-				<td><?php echo $lang_sel; ?></td>
-			</tr>
-			<tr>
-				<td><?php print_lang('login'); ?>:</td>
-				<td><input type="text" name="ulogin" id="ulogin" value="" size="20" /></td>
-			</tr>
-			<tr>
-				<td><?php print_lang('password'); ?>:</td>
-				<td><input type="password" name="upassword" value="" size="20" /></td>
-			</tr>
-			<?php
-				if($settings['recaptcha_use_login'] == "1" && !empty($settings['recaptcha_site_key']) && !empty($settings['recaptcha_secret_key'])){
-			?>
-			<tr>
-				<td><?php print_lang('solve_captcha'); ?>:</td>
-				<td>
-					<script src="https://www.google.com/recaptcha/api.js"></script>
-					<div style="display: inline-block;" class="g-recaptcha" data-sitekey="<?php echo $settings['recaptcha_site_key']; ?>"></div>
-				</td>
-			</tr>
-			<?php
-				}
-			?>
-			<tr>
-				<td><input type="submit" name="login" value="<?php print_lang('login_button'); ?>" /></td>
-				<td><a href="?m=lostpwd<?php echo $lang_switch; ?>"><?php print_lang('lost_passwd'); ?></a></td>
-			</tr>
-		</table>
-		</form>
-
-		<script language="JavaScript">
-			document.login_form.ulogin.focus();
-		</script>
-		<br>
-		</div>
-		</td>
-	  </tr>
-	</table>
-
+	<!-- Sign-in form. The Login theme (themes/Login) draws the page around it. -->
+	<h1><?php print_lang('login_title'); ?></h1>
+	<form class="login-form" action="index.php<?php echo preg_replace( "/\&amp;/", "?", $lang_switch ); ?>" name="login_form" method="post">
+		<label for="ulogin"><?php print_lang('login'); ?></label>
+		<input type="text" name="ulogin" id="ulogin" autocomplete="username" required>
+		<label for="upassword"><?php print_lang('password'); ?></label>
+		<input type="password" name="upassword" id="upassword" autocomplete="current-password" required>
+		<?php
+		if($settings['recaptcha_use_login'] == "1" && !empty($settings['recaptcha_site_key']) && !empty($settings['recaptcha_secret_key'])){
+		?>
+		<script src="https://www.google.com/recaptcha/api.js"></script>
+		<div class="g-recaptcha" data-sitekey="<?php echo $settings['recaptcha_site_key']; ?>"></div>
+		<?php } ?>
+		<button type="submit" name="login" value="1"><?php print_lang('login_button'); ?></button>
+	</form>
+	<p class="login-links"><a href="?m=lostpwd<?php echo $lang_switch; ?>"><?php print_lang('lost_passwd'); ?></a></p>
+	<script>document.getElementById('ulogin').focus();</script>
 	<?php
 
 	}
 	?>
-	<div class="clear">
-</div>
-    </div>
-</div>
-
-<p style="text-align:center">
-
-</div>
-<div style="content:'';clear:both;display:table; margin: 0 auto;">
-
-  <div style="float: left;  padding: 0px;  margin: 0 auto;">
-    <img class="orange" src="images/games/day_z.jpg" width="96" height="45" alt="dayz">
-    </div>
-
-  <div style="float: left;  padding: 0px;  margin: 0 auto;">
-  <img class="orange" src="images/games/ark_se.jpg" width="96" height="45" alt="dayz"></a>
-  </div>
-
-  <div style="float: left;  padding: 0px;  margin: 0 auto;">
-    <img class="orange" src="images/games/minecraft.jpg" width="96" height="45" alt="dayz">
-  </div>
-
-  <div style="float: left;  padding: 0px;  margin: 0 auto;">
-    <img class="orange" src="images/games/cs_go.jpg" width="96" height="45" alt="dayz">
-  </div>
-  <div style="float: left;  padding: 0px;  margin: 0 auto;">
-    <img class="orange" src="images/games/tf2.jpg" width="96" height="45" alt="dayz">
-  </div>
-  <div style="float: left;  padding: 0px;  margin: 0 auto;">
-    <img class="orange" src="images/games/rust_header.jpg" width="96" height="45" alt="dayz">
-  </div>
-
-  <div style="float: left;  padding: 0px;  margin: 0 auto;">
-    <img  class="orange" src="images/games/garrys_mod.jpg" width="96" height="45" alt="dayz">
-  </div>
-</div>
-
-<hr>
-
-<div style="text-align:center"> <h1>Level up your gaming</h1></div>
-<div class="row">
-
 	%bottom%
 <?php
 }

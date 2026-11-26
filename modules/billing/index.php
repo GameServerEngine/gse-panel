@@ -28,9 +28,9 @@ $trust = billing_text_list('home.trust');
 $whyCards = billing_text_list('home.why.cards');
 $includedCards = billing_text_list('home.included.cards');
 $locations = billing_text_list('home.locations.list');
-$showServices = billing_text('home.services.enabled') === '1' && is_file(__DIR__ . '/services.php');
-$secondaryTarget = $showServices && billing_text('home.hero.secondary') === 'See Services' ? 'services.php' : 'support.php';
-$ctaSecondaryTarget = $showServices && billing_text('home.cta.secondary') === 'See Services' ? 'services.php' : 'support.php';
+$showServices = billing_text('home.services.enabled') === '1' && is_file(__DIR__ . '/development.php');
+$secondaryTarget = $showServices && billing_text('home.hero.secondary') === 'See Services' ? 'development.php' : 'support.php';
+$ctaSecondaryTarget = $showServices && billing_text('home.cta.secondary') === 'See Services' ? 'development.php' : 'support.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -116,7 +116,7 @@ $ctaSecondaryTarget = $showServices && billing_text('home.cta.secondary') === 'S
       <p class="gsw-section-eyebrow"><?php echo billing_text_e('home.services.eyebrow'); ?></p>
       <h2 class="gsw-section-title" id="services-title"><?php echo billing_text_e('home.services.title'); ?></h2>
       <p class="gsw-section-copy"><?php echo billing_text_e('home.services.copy'); ?></p>
-      <p><a class="gsw-btn-secondary" href="<?php echo gsw_home_e(billing_url('services.php')); ?>"><?php echo billing_text_e('home.services.link_label'); ?></a></p>
+      <p><a class="gsw-btn-secondary" href="<?php echo gsw_home_e(billing_url('development.php')); ?>"><?php echo billing_text_e('home.services.link_label'); ?></a></p>
     </div>
   </section>
 <?php endif; ?>

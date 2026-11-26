@@ -58,6 +58,10 @@ function assistant_main()
 		return assistant_json(429, array('text' => 'The assistant has used its budget for this month. It will be back next month, or an administrator can raise the budget.'));
 	}
 	if (!$is_admin) {
+		require_once($panel_root . '/includes/demo.php');
+		if (demo_is_session($settings) && assistant_tokens_this_month($db, $user_id) >= (int)$cfg['assistant_demo_monthly_tokens']) {
+			return assistant_json(429, array('text' => 'The demo has used its AI allowance for this month. Install GameServer Engine to use AI Assist with your own key.'));
+		}
 		if (assistant_tokens_this_month($db, $user_id) >= (int)$cfg['assistant_user_monthly_tokens']) {
 			return assistant_json(429, array('text' => 'You have used this month\'s assistant allowance.'));
 		}

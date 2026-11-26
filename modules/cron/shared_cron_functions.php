@@ -21,6 +21,22 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  */
+// Splits one crontab line into minute, hour, day of month, month, day of week and command.
+// Returns false for lines that are not a normal five-field job (blank lines, comments, NAME=value
+// settings, @reboot lines), because the job list and its edit form only handle five-field jobs.
+function cron_split_job($job)
+{
+	$parts = preg_split('/\s+/', trim((string)$job), 6);
+	if(count($parts) < 6)
+		return false;
+	for($i = 0; $i < 5; $i++)
+	{
+		if(!preg_match('/^[0-9A-Za-z*\/,-]+$/', $parts[$i]))
+			return false;
+	}
+	return $parts;
+}
+
 function reloadJobs($server_homes, $remote_servers, $getAllJobs = true)
 {
 	global $db;
@@ -41,7 +57,10 @@ function reloadJobs($server_homes, $remote_servers, $getAllJobs = true)
 			{
 				foreach ((array)$jobs as $jobId => $job)
 				{
-					list($minute,$hour,$dayOfTheMonth,$month,$dayOfTheWeek,$command) = explode(" ", $job, 6);
+					$fields = cron_split_job($job);
+					if($fields === false)
+						continue;
+					list($minute,$hour,$dayOfTheMonth,$month,$dayOfTheWeek,$command) = $fields;
 					if(preg_match('/'.preg_quote('wget -qO- "','/').'([^"]+)'.preg_quote('" --no-check-certificate > /dev/null 2>&1','/').'/', $command))
 					{
 						list($wget,$wget_args,$url,$wget_nocert,$gt,$devnull,$err2out) =  explode(" ", $command, 7);
@@ -70,6 +89,8 @@ function reloadJobs($server_homes, $remote_servers, $getAllJobs = true)
 							$action = "start";
 						}else if($action == "gamemanager/restart"){
 							$action = "restart";
+						}else if($action == "assistant/run"){
+							$action = "ask_assistant";
 						}else if($action == "server_content/run_scheduled_action" && isset($url_query['action']) && $url_query['action'] != ""){
 							$action = $url_query['action'];
 						}
@@ -85,6 +106,7 @@ function reloadJobs($server_homes, $remote_servers, $getAllJobs = true)
 															   'home_id' => $home_info['home_id'],
 															   'ip' => $home_info['ip'],
 															   'port' => $home_info['port'],
+															   'assistant_task' => isset($url_query['task']) ? (int)$url_query['task'] : 0,
 															   'mod_key' => isset($url_query['mod_key']) ? $url_query['mod_key'] : '');
 					}
 					else
@@ -121,7 +143,7 @@ function get_server_content_scheduled_actions() {
 	);
 }
 
-function build_cron_scheduler_command($panelURL, $token, $game_home, $action) {
+function build_cron_scheduler_command($panelURL, $token, $game_home, $action, $task_id = 0) {
 	$ip = $game_home['ip'];
 	$port = $game_home['port'];
 	$mod_key = isset($game_home['mod_key']) ? $game_home['mod_key'] : '';
@@ -145,6 +167,13 @@ function build_cron_scheduler_command($panelURL, $token, $game_home, $action) {
 		}
 		$options_json = urlencode(json_encode($options));
 		return "wget -qO- \"{$panelURL}/api.php?server_content/run_scheduled_action&token={$token}&home_id={$home_id}&action={$action}&options={$options_json}\" --no-check-certificate > /dev/null 2>&1";
+	}
+	if($action == 'ask_assistant')
+	{
+		// The text of the command is saved in the panel; the cron line only names it.
+		if((int)$task_id < 1)
+			return false;
+		return "wget -qO- \"{$panelURL}/api.php?assistant/run&token={$token}&home_id={$home_id}&task=" . (int)$task_id . "\" --no-check-certificate > /dev/null 2>&1";
 	}
 	switch ($action) {
 		case "stop":
@@ -205,6 +234,55 @@ function deleteJobsByHomeServerID($home_id){
 	}
 }
 
+// The Task Scheduler can start the AI assistant when the assistant module is installed.
+function cron_assistant_available() {
+	global $db;
+	return is_object($db) && $db->isModuleInstalled('assistant') && file_exists(MODULES . 'assistant/assistant_scheduled.php');
+}
+
+// Task id => saved text command and last result, for every "ask the assistant" job in $jobsArray.
+function cron_assistant_tasks($jobsArray) {
+	global $db;
+	if(!cron_assistant_available())
+		return array();
+	require_once(MODULES . 'assistant/assistant_scheduled.php');
+	$ids = array();
+	foreach ((array)$jobsArray as $jobs)
+		foreach ((array)$jobs as $job)
+			if(!empty($job['assistant_task']))
+				$ids[] = (int)$job['assistant_task'];
+	return assistant_tasks_by_id($db, $ids);
+}
+
+// The text box for the assistant's command, shown under the action list only while "Ask the assistant" is picked.
+function get_assistant_command_input($job = false, $tasks = array()) {
+	if(!cron_assistant_available())
+		return '';
+	$task = ($job && !empty($job['assistant_task']) && isset($tasks[(int)$job['assistant_task']])) ? $tasks[(int)$job['assistant_task']] : false;
+	$shown = $job && isset($job['action']) && $job['action'] == 'ask_assistant';
+	$html = '<input type="text" name="assistant_command" maxlength="600" style="width: 100%; box-sizing: border-box; margin-top: 4px; display: ' . ($shown ? 'block' : 'none') . ';" '
+		. 'placeholder="What should the assistant do? For example: check the log for crashes and notify me" value="' . htmlspecialchars($task ? $task['command'] : '', ENT_QUOTES, 'UTF-8') . '" />';
+	if($task && !empty($task['last_run']))
+		$html .= '<small>Last run ' . htmlspecialchars($task['last_run'], ENT_QUOTES, 'UTF-8') . ': ' . htmlspecialchars((string)$task['last_result'], ENT_QUOTES, 'UTF-8') . '</small>';
+	return $html;
+}
+
+// The cron command for the job form that was posted. For "Ask the assistant" the text command is saved first.
+// $old_job is the existing cron line when a job is being edited (so its task is updated, not duplicated).
+function cron_command_for_post($panelURL, $token, $game_home, $old_job = '') {
+	global $db;
+	$task_id = 0;
+	if($_POST['action'] == 'ask_assistant')
+	{
+		if(!cron_assistant_available())
+			return false;
+		require_once(MODULES . 'assistant/assistant_scheduled.php');
+		$text = isset($_POST['assistant_command']) ? $_POST['assistant_command'] : '';
+		$task_id = assistant_task_save($db, $_SESSION['user_id'], (int)$game_home['home_id'], $text, assistant_task_id_from_cron_line($old_job));
+	}
+	return build_cron_scheduler_command($panelURL, $token, $game_home, $_POST['action'], $task_id);
+}
+
 function get_action_selector($action = false, $server_homes = false, $homeid_ip_port = false) {
 	$server_actions = array('restart','stop','start');
 	if($server_homes and $homeid_ip_port)
@@ -218,11 +296,16 @@ function get_action_selector($action = false, $server_homes = false, $homeid_ip_
 	{
 		$server_actions = array_merge($server_actions, get_server_content_scheduled_actions());
 	}
-	$select_action = '<select name="action" style="width: 100%;">';
+	if(cron_assistant_available())
+	{
+		$server_actions[] = 'ask_assistant';
+	}
+	$select_action = '<select name="action" style="width: 100%;" onchange="var c = this.form.elements[\'assistant_command\']; if (c) { c.style.display = this.value == \'ask_assistant\' ? \'block\' : \'none\'; }">';
 	foreach ((array)$server_actions as $server_action)
 	{
 		$selected = ($action and $action == $server_action) ? 'selected="selected"' : '';
-		$select_action .= '<option value="'.$server_action.'" '.$selected.'>'.get_lang($server_action).'</option>';
+		$label = ($server_action == 'ask_assistant' && !defined('LANG_ask_assistant')) ? 'Ask the assistant' : get_lang($server_action);
+		$select_action .= '<option value="'.$server_action.'" '.$selected.'>'.$label.'</option>';
 	}
 	return $select_action .= '</select>';
 }

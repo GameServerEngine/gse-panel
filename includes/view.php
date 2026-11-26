@@ -74,13 +74,31 @@ class View {
 		if (defined('PANEL_VERSION')) {
 			$page = preg_replace('#((?:href|src)="themes/[^"?]+\.(?:css|js))"#', '$1?v=' . PANEL_VERSION . '"', $page);
 		}
-		if (is_file('images/logo.png')) {
-			$page = str_replace('src="images/logo.png"', 'src="images/logo.png?v=' . filemtime('images/logo.png') . '"', $page);
-		}
 		@$top = file_get_contents($path.'top.html');
 		@$bottom = file_get_contents($path.'bottom.html');
 		@$topbody = file_get_contents($path.'topbody.html');
+
+		// Every theme shows the logo from Settings > Panel logo, whatever path its markup uses.
+		if (is_file('images/logo.png')) {
+			$logoSize = isset($panel_settings['panel_logo_size']) ? (int)$panel_settings['panel_logo_size'] : 100;
+			$logoZoom = max(10, min(300, $logoSize)) / 100;
+			// 112px is the header logo height on the storefront (header height less 20px). The percentage scales that
+			// base height, so the same setting gives the same size in every theme, whatever the uploaded image's pixel size.
+			$logoHeight = round(112 * $logoZoom, 1);
+			$logoTag = 'src="images/logo.png?v=' . filemtime('images/logo.png') . '" style="height:' . $logoHeight . 'px;width:auto"';
+			$this->header_code .= '<script>window.panelLogoHeight = ' . $logoHeight . ';</script>' . "\n";
+			$page = preg_replace('#src="(?:[^"]*/)?logo\.png(?:\?[^"]*)?"#', $logoTag, $page);
+			$top = preg_replace('#src="(?:[^"]*/)?logo\.png(?:\?[^"]*)?"#', $logoTag, (string)$top);
+		}
 		@$botbody = file_get_contents($path.'botbody.html');
+
+		// The site name beside the logo is optional (Settings > Show site name). When it is off the
+		// header shows only the logo; the Panel name itself stays for titles, emails and invoices.
+		$showSiteName = !isset($panel_settings['panel_show_site_name']) || (string)$panel_settings['panel_show_site_name'] !== '0';
+		if (!$showSiteName) {
+			$page = preg_replace('#<span class="panel-name">%panel_name%</span>#', '', $page);
+			$top = preg_replace('#<span class="panel-name">%panel_name%</span>#', '', (string)$top);
+		}
 
 		if ( isset($panel_settings['logo_link']) &&
             !empty($panel_settings['logo_link']))

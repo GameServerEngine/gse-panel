@@ -37,7 +37,7 @@ if (!function_exists('catalog_load_enabled_games')) {
                 FROM `{$prefix}catalog_offer` co
                 INNER JOIN `{$prefix}config_homes` ch ON ch.home_cfg_id = co.home_cfg_id
                 {$detailJoin}
-                WHERE co.enabled = 1
+                WHERE co.enabled = 1 AND NOT (co.slot_min_qty = 0 AND co.slot_max_qty = 0)
                 GROUP BY ch.home_cfg_id, ch.game_name, ch.game_key, ch.home_cfg_file{$detailGroup}
                 ORDER BY display_name";
         $res = $db->query($sql);
@@ -81,7 +81,7 @@ if (!function_exists('catalog_load_offers_for_game')) {
         $sql = "SELECT co.*, rs.remote_server_name, rs.location_id AS city_location_id
                 FROM `{$prefix}catalog_offer` co
                 INNER JOIN `{$prefix}remote_servers` rs ON rs.remote_server_id = co.remote_server_id
-                WHERE co.enabled = 1 AND co.home_cfg_id = {$homeCfgId}
+                WHERE co.enabled = 1 AND NOT (co.slot_min_qty = 0 AND co.slot_max_qty = 0) AND co.home_cfg_id = {$homeCfgId}
                 ORDER BY rs.remote_server_name";
         $res = $db->query($sql);
         $rows = [];
@@ -132,7 +132,7 @@ if (!function_exists('catalog_load_offer_by_id')) {
     function catalog_load_offer_by_id(mysqli $db, string $prefix, int $offerId): ?array
     {
         $offerId = (int)$offerId;
-        $res = $db->query("SELECT * FROM `{$prefix}catalog_offer` WHERE offer_id = {$offerId} AND enabled = 1 LIMIT 1");
+        $res = $db->query("SELECT * FROM `{$prefix}catalog_offer` WHERE offer_id = {$offerId} AND enabled = 1 AND NOT (slot_min_qty = 0 AND slot_max_qty = 0) LIMIT 1");
         $row = $res ? $res->fetch_assoc() : null;
         return $row ?: null;
     }

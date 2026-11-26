@@ -5,9 +5,8 @@
  * The address table must match section 4 of docs/agent-diagnostics-protocol.md.
  *
  * Who may test what:
- *   - Everyone: the IP addresses of game servers they own (they may be private addresses).
- *   - Everyone: host names and public IPs the admin listed as test targets.
- *   - Admins: any public address. Private ranges only if the admin override setting is on.
+ *   - Everyone: any public address, and the IP addresses of game servers they own (those may be private).
+ *   - Admins: private ranges too, but only if the admin override setting is on.
  *   - Nobody: loopback, link-local, multicast, unspecified, reserved/documentation ranges.
  */
 
@@ -161,8 +160,8 @@ function diag_address_verdict($ip, $host, $ctx)
 	if ($class === 'private') {
 		return ($own || ($is_admin && !empty($ctx['admin_allow_private']))) ? '' : 'private_denied';
 	}
-	$listed = in_array($host, $ctx['test_targets'], true) || in_array($ip, $ctx['test_targets'], true);
-	return ($own || $listed || $is_admin) ? '' : 'not_authorized';
+	// Any public address may be pinged: it is the same as running ping from any home connection.
+	return '';
 }
 
 function diag_deny_message($code)
@@ -170,13 +169,12 @@ function diag_deny_message($code)
 	$messages = array(
 		'blocked' => 'This address is in a range that can never be tested (loopback, link-local, multicast or reserved).',
 		'private_denied' => 'Private network addresses can only be tested when they belong to one of your game servers.',
-		'not_authorized' => 'You can only test your own game server addresses and the test targets the administrator listed.',
 		'no_address' => 'The host name did not resolve to an address.',
 	);
 	return isset($messages[$code]) ? $messages[$code] : 'This target is not allowed.';
 }
 
-// The one entry point. $ctx keys: role, own_ips[], test_targets[] (lowercase), admin_allow_private,
+// The one entry point. $ctx keys: role, own_ips[], admin_allow_private,
 // resolver (callable host => ips, optional).
 // Returns array(ok, code, message, host, ips[], ip, allow_private). 'ip' is the address to send to the agent.
 function diag_check_target($input, $ctx)
@@ -223,16 +221,9 @@ function diag_pick_address($ips)
 // The settings that feed $env['policy'].
 function diag_policy_context($role, $own_ips, $settings)
 {
-	$targets = array();
-	foreach (preg_split('/\s+/', strtolower((string)($settings['diag_test_targets'] ?? ''))) as $entry) {
-		if ($entry !== '') {
-			$targets[] = $entry;
-		}
-	}
 	return array(
 		'role' => $role,
 		'own_ips' => array_values(array_unique($own_ips)),
-		'test_targets' => $targets,
 		'admin_allow_private' => !empty($settings['diag_admin_allow_private']) && $settings['diag_admin_allow_private'] !== '0',
 	);
 }

@@ -29,6 +29,7 @@ define('LANG_month', "Month");
 define('LANG_day_of_the_week', "D/Week");
 define('LANG_action', "Action");
 define('LANG_steam_auto_update', "Steam Auto Update");
+define('LANG_ask_assistant', "Ask the assistant (AI)");
 define('LANG_stop', "Stop");
 define('LANG_start', "Start");
 define('LANG_restart', "Restart");

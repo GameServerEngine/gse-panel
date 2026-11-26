@@ -59,6 +59,9 @@ function get_function_args($main_request)
 	//______________ Server Content
 	$functions["server_content/run_scheduled_action"] = array("token" => true, "home_id" => true, "action" => true, "options" => false);
 
+	//______________ Assistant (scheduled runs from the Task Scheduler)
+	$functions["assistant/run"] = array("token" => true, "home_id" => true, "task" => true);
+
 	//______________ Settings
 	$functions["setting/get"] = array("token" => true, "setting_name" => true);
 

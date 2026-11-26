@@ -25,22 +25,14 @@ require_once 'modules/util/diag_env.php';
 
 // The old Network Tools endpoint (command + remote_target + agent, plain text answer).
 // It now runs through the same checks as the new page: role, agent permission, target policy,
-// rate limits, audit. Ping runs as before; traceroute needs an agent with diagnostics support.
+// rate limits, audit. Only ping is left: the traceroute was removed from the Utilities page.
 // A CSRF token (field "csrf") is required like for every diagnostic request.
 function util_legacy_text($result)
 {
 	if (!$result['ok']) {
 		return $result['message'];
 	}
-	if (isset($result['output'])) {
-		return $result['output'];
-	}
-	$lines = array($result['summary']);
-	foreach ((array)(isset($result['hops']) ? $result['hops'] : array()) as $hop) {
-		$probe = $hop['probes'][0];
-		$lines[] = $hop['hop'] . '  ' . ($probe['ip'] !== '' ? $probe['ip'] : '*') . '  ' . ($probe['rtt_ms'] !== null ? $probe['rtt_ms'] . ' ms' : '');
-	}
-	return implode("\n", $lines);
+	return isset($result['output']) ? $result['output'] : $result['summary'];
 }
 
 function exec_module()
@@ -50,7 +42,7 @@ function exec_module()
 		echo 'The page expired. Reload it and try again.';
 		return;
 	}
-	$tools = array('ping' => 'ping', 'traceroute' => 'traceroute');
+	$tools = array('ping' => 'ping');
 	$command = isset($_POST['command']) ? trim($_POST['command']) : '';
 	if (!isset($tools[$command])) {
 		echo get_lang('command_empty');

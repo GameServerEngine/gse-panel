@@ -33,4 +33,15 @@ ntfy_test_assert($req['body'] === 'Body', 'body is passed through unchanged');
 $req = ntfy_build_request('http://127.0.0.1:8080', 'gse admin topic/weird', 'T', 'B');
 ntfy_test_assert(strpos($req['url'], ' ') === false, 'topic names are URL-encoded (no raw spaces in the request URL)');
 
+$topics = ntfy_customer_topics(array());
+ntfy_test_assert(count($topics) === 1 && $topics[0]['topic'] === 'gse-notices', 'a customer with no servers still gets the panel topic');
+$topics = ntfy_customer_topics(array(
+	array('home_id' => 7, 'ip' => '10.0.0.1', 'port' => 27015),
+	array('home_id' => 7, 'ip' => '10.0.0.1', 'port' => 27016),
+	array('home_id' => 9, 'ip' => '10.0.0.2', 'port' => 2302),
+));
+ntfy_test_assert($topics[0]['topic'] === 'gse-notices', 'the panel topic is always listed first');
+ntfy_test_assert(count($topics) === 3, 'one topic per server, a server with two addresses is listed once');
+ntfy_test_assert($topics[1]['topic'] === 'gse-7' && $topics[2]['topic'] === 'gse-9', 'server topics stay unique per server id');
+
 echo "All ntfy helper tests passed.\n";
