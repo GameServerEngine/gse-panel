@@ -411,7 +411,7 @@ $(document).ready(function()
 		var boxClass = 'login-box';
 		var headerContent = '\
 		<!--<h1>' + headTitle + '</h1>-->\
-		<img src="images/logo.png" class="brand-image" style="zoom:' + (window.panelLogoZoom || 1) + '">\
+		<img src="images/logo.png" class="brand-image" style="height:' + (window.panelLogoHeight || 112) + 'px;width:auto">\
 		';
 
 		if(new_form !== undefined)
