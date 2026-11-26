@@ -13,6 +13,7 @@
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/includes/action_security.php';
 require_once __DIR__ . '/includes/catalog_admin.php';
+require_once __DIR__ . '/includes/competitor_prices.php';
 require_once __DIR__ . '/includes/storefront_locations.php';
 
 const CAT_CSRF_KEY = 'billing_admin_catalog_csrf';
@@ -927,6 +928,92 @@ function cat_render_edit(mysqli $db, string $prefix, string $csrf, array $game):
     cat_render_script();
 }
 
+/**
+ * The competitor price search at the top of the page. It looks the game up on gameservercheck.com
+ * and lists what each hoster charges, so a price can be set 10% under the lowest one.
+ * On a game's edit page the box starts with that game's name and a button copies the suggested price.
+ */
+function cat_render_price_search(?array $game): void
+{
+    $typed = trim((string)($_GET['cat_q'] ?? ''));
+    $slug = preg_match('/^rent-[a-z0-9-]+$/', (string)($_GET['cat_slug'] ?? '')) ? (string)$_GET['cat_slug'] : '';
+    $boxValue = $typed !== '' ? $typed : ($game ? (string)($game['display_name'] !== '' ? $game['display_name'] : $game['game_name']) : '');
+    $hidden = array('m' => 'billing', 'p' => 'billing', 's' => 'game_catalog');
+    if ($game) {
+        $hidden['home_cfg_id'] = (int)$game['home_cfg_id'];
+    }
+    ?>
+    <div class="cat-box">
+      <form method="get" action="home.php" style="margin:0;">
+        <?php foreach ($hidden as $name => $value): ?>
+          <input type="hidden" name="<?php echo cat_h($name); ?>" value="<?php echo cat_h($value); ?>">
+        <?php endforeach; ?>
+        <strong>Competitor prices</strong>
+        <input type="search" class="cat-input" name="cat_q" value="<?php echo cat_h($boxValue); ?>" placeholder="Search a game, for example Rust" style="min-width:260px;">
+        <button type="submit" class="cat-button">Search prices</button>
+        <span class="cat-muted">Looks the game up on gameservercheck.com.</span>
+      </form>
+    <?php
+    if ($slug === '' && $typed !== '') {
+        $index = competitor_parse_index(competitor_fetch(COMPETITOR_INDEX_PATH));
+        if (!$index) {
+            echo '<p class="cat-red">The price site could not be reached right now. Try again in a minute.</p>';
+        } else {
+            $hits = competitor_find_games($index, $typed);
+            if (!$hits) {
+                echo '<p class="cat-muted">No game on gameservercheck.com matches &ldquo;' . cat_h($typed) . '&rdquo;.</p>';
+            } elseif (count($hits) === 1) {
+                $slug = $hits[0]['slug'];
+            } else {
+                echo '<p>Several games match. Pick one:</p><p>';
+                foreach (array_slice($hits, 0, 20) as $hit) {
+                    $params = $hidden;
+                    $params['cat_q'] = $typed;
+                    $params['cat_slug'] = $hit['slug'];
+                    echo '<a class="cat-chip" href="home.php?' . cat_h(http_build_query($params)) . '">' . cat_h($hit['name']) . '</a> ';
+                }
+                echo '</p>';
+            }
+        }
+    }
+    if ($slug !== '') {
+        $page = competitor_fetch('/en/gameserver/' . $slug);
+        $summary = competitor_summary(competitor_parse_offers($page));
+        $sourceUrl = COMPETITOR_BASE_URL . '/en/gameserver/' . $slug;
+        if (!$summary['rows']) {
+            echo '<p class="cat-muted">No prices found. <a href="' . cat_h($sourceUrl) . '" target="_blank" rel="noopener">Open the page</a>.</p>';
+        } else {
+            echo '<table class="cat-table"><thead><tr><th>Hoster</th><th>Platform</th><th>Slots</th><th>Price</th><th>Per</th><th>About USD per slot</th></tr></thead><tbody>';
+            foreach ($summary['rows'] as $row) {
+                $perSlot = $row['per'] === 'SLOT';
+                echo '<tr><td>' . cat_h($row['hoster']) . '</td><td>' . cat_h($row['platform']) . '</td><td>'
+                    . ($row['slots_max'] > 0 ? (int)$row['slots_min'] . '-' . (int)$row['slots_max'] : '<span class="cat-muted">n/a</span>') . '</td><td>'
+                    . cat_h($row['currency']) . ' ' . cat_money($row['price']) . '</td><td>' . ($perSlot ? 'slot' : cat_h(strtolower($row['per']))) . '</td><td>'
+                    . ($perSlot && $row['currency'] === 'EUR' ? '$' . number_format($row['price'] * COMPETITOR_EUR_TO_USD, 2) : '<span class="cat-muted">not comparable</span>') . '</td></tr>';
+            }
+            echo '</tbody></table>';
+            if ($summary['lowest']) {
+                echo '<p>Lowest per-slot price: <strong>' . cat_h($summary['lowest']['hoster']) . '</strong>, about $' . number_format($summary['lowest_usd'], 2)
+                    . '. Suggested price for us (10% lower, to the nearest 5 cents): <strong>$' . cat_money($summary['suggested']) . '</strong> per slot per month.';
+                if ($game) {
+                    echo ' <button type="button" class="cat-button" id="cat-use-price" data-price="' . cat_h(cat_money($summary['suggested'])) . '">Use this price</button>';
+                }
+                echo '</p>';
+            } else {
+                echo '<p class="cat-muted">Nobody lists a per-slot price for this game, so there is no suggestion.</p>';
+            }
+            echo '<p class="cat-muted">Euro prices are shown as dollars at a rough rate of ' . COMPETITOR_EUR_TO_USD . '. Source: <a href="'
+                . cat_h($sourceUrl) . '" target="_blank" rel="noopener">gameservercheck.com</a>. Copies are kept for a few hours.</p>';
+        }
+    }
+    echo '</div>';
+    if ($slug !== '' && $game) {
+        echo '<script>(function () { var b = document.getElementById("cat-use-price"); if (!b) { return; } b.addEventListener("click", function () {'
+            . ' var box = document.querySelector("[name=per_slot_price_monthly]"); if (!box) { b.textContent = "Set the pricing mode to Per slot first"; return; }'
+            . ' box.value = b.getAttribute("data-price"); box.dispatchEvent(new Event("input", { bubbles: true })); b.textContent = "Filled in. Press Save game."; }); })();</script>';
+    }
+}
+
 /* ---------------------------------------------------------------------------
    Entry point
 --------------------------------------------------------------------------- */
@@ -966,6 +1053,7 @@ function billing_admin_catalog_render(): void
     cat_render_styles();
     cat_render_flash();
     $game = catalog_admin_game($db, $prefix, (int)($_GET['home_cfg_id'] ?? 0));
+    cat_render_price_search($game);
     if ($game !== null) {
         cat_render_edit($db, $prefix, $csrf, $game);
     } else {

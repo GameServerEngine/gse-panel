@@ -34,7 +34,7 @@ check('cost estimate', abs(assistant_cost_usd(1000000, 1000000, assistant_config
 // ---- groups switch tools off ---------------------------------------------------------------
 $off = assistant_config(array('assistant_allow_files' => '0', 'assistant_allow_edits' => '0', 'assistant_allow_db' => '0', 'assistant_allow_resets' => '0'));
 $server_tools = assistant_allowed_tools('server', $off);
-check('switches remove file, edit, db and reset tools', $server_tools === array('server_status', 'server_log', 'database_info', 'ftp_info', 'propose_action'));
+check('switches remove file, edit, db and reset tools', $server_tools === array('server_status', 'server_log', 'database_info', 'ftp_info', 'propose_action', 'notify_server'));
 $on = assistant_config(array('assistant_allow_files' => '1', 'assistant_allow_edits' => '1', 'assistant_allow_db' => '1', 'assistant_allow_resets' => '1'));
 check('agent tools need agent folders', !in_array('agent_read', assistant_allowed_tools('admin', $on), true));
 $on = assistant_config(array('assistant_agent_paths' => '/home/gameserver/GSP'));

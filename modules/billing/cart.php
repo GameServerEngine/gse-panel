@@ -259,37 +259,14 @@ $stripe_on = !empty($stripe_cfg['configured']) && !empty($stripe_cfg['enabled'])
 
 // PayPal configuration (from config)
 $client_id = function_exists('paypal_get_client_id') ? paypal_get_client_id() : ($paypal_client_id ?? '');
-$sandbox   = function_exists('paypal_is_sandbox')    ? paypal_is_sandbox()    : ($paypal_sandbox ?? true);
 // PayPal switched off in Billing > Settings: no client id, so no PayPal script and no PayPal button.
 if ($db && !billing_payment_method_enabled($db, (string)$table_prefix, 'paypal')) {
     $client_id = '';
 }
 
-// Prepare PayPal items
-$paypal_items = [];
-$paypal_invoice_ids = [];
-foreach ((array)$invoices as $inv) {
-    $game_display = ($inv['invoice_kind'] ?? 'game') === 'service' ? 'Service' : (!empty($inv['game_name']) ? $inv['game_name'] : 'Game Server');
-    $qty = max(1, intval($inv['qty']));
-    $paypal_invoice_ids[] = intval($inv['invoice_id']);
-    $lineAmountCents = billing_cart_money_to_cents((float)($inv['total_due'] ?? $inv['amount'] ?? 0));
-    $lineAmount = billing_cart_cents_to_money($lineAmountCents);
-    $paypal_items[] = [
-        'name' => $inv['home_name'] . ' (' . $game_display . ')',
-        'description' => $inv['description'] ?? '',
-        'quantity' => $qty,
-        'unit_amount' => [
-            'currency_code' => 'USD',
-            'value' => number_format($lineAmount / $qty, 2, '.', '')
-        ]
-    ];
-}
-$paypal_custom_id = 'cart:' . implode(',', $paypal_invoice_ids);
-
-// Get site base URL
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
-$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-$siteBase = $protocol . $host;
+$paypal_csrf = billing_action_csrf_token('billing_paypal_checkout_csrf');
+$paypal_on = !empty($client_id);
+$paypal_invoice_ids = implode(',', array_map('intval', array_column((array)$invoices, 'invoice_id')));
 
 // (Do not close the shared DB connection here; menu and other includes may use it.)
 ?>
@@ -304,9 +281,6 @@ $siteBase = $protocol . $host;
     <link rel="icon" href="<?php echo htmlspecialchars(billing_url('images/brand/favicon-32x32.png'), ENT_QUOTES, 'UTF-8'); ?>" type="image/png">
     <?php if (!$cart_empty && $stripe_on && ($stripe_cfg['checkout_ui'] ?? 'hosted') === 'form'): ?>
     <script src="https://js.stripe.com/dahlia/stripe.js"></script>
-    <?php endif; ?>
-    <?php if (!$cart_empty && !empty($client_id)): ?>
-    <script src="https://www.paypal.com/sdk/js?client-id=<?php echo htmlspecialchars($client_id, ENT_QUOTES, 'UTF-8'); ?>&currency=USD&intent=capture<?php echo $sandbox ? '&debug=false' : ''; ?>"></script>
     <?php endif; ?>
 <?php include(__DIR__ . '/includes/theme_head.php'); ?>
     <style>
@@ -338,7 +312,6 @@ $siteBase = $protocol . $host;
         .checkout-section { padding: 20px 0; }
         .checkout-section h3 { margin-bottom: 10px; }
         .checkout-section p { color: var(--muted); margin-bottom: 20px; }
-        #paypal-button-container { max-width: 400px; margin: 20px 0; }
         .status-message { text-align: center; padding: 20px; color: var(--muted); display: none; }
         .action-buttons { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 10px; }
         .cart-table-wrap { width: 100%; max-width: 100%; overflow-x: auto; }
@@ -496,7 +469,7 @@ $siteBase = $protocol . $host;
             <div class="checkout-section">
                 <h3>Checkout</h3>
                 <?php if (($_GET['payment'] ?? '') === 'cancelled'): ?>
-                <div class="alert alert-error">Card payment was cancelled. Nothing was charged.</div>
+                <div class="alert alert-error">The payment was cancelled. Nothing was charged.</div>
                 <?php endif; ?>
                 <?php if ($stripe_on): ?>
                 <div class="stripe-checkout">
@@ -508,11 +481,35 @@ $siteBase = $protocol . $host;
                     <div id="stripe-status" class="status-message"></div>
                 </div>
                 <?php endif; ?>
-                <?php if (!empty($client_id)): ?>
-                <h4>Pay with PayPal</h4>
-                <p>Click the button below to complete your purchase securely through PayPal.</p>
-                <div id="paypal-button-container"></div>
-                <div id="status-message" class="status-message"></div>
+                <?php if ($paypal_on): ?>
+                <div class="paypal-checkout">
+                    <h4>Pay with PayPal</h4>
+                    <p>Secure payment on PayPal. You return here when it is done and your invoice is marked paid.</p>
+                    <button type="button" class="btn paypal-pay-btn" data-invoices="<?php echo htmlspecialchars($paypal_invoice_ids, ENT_QUOTES, 'UTF-8'); ?>">Pay with PayPal</button>
+                    <div id="paypal-status" class="status-message"></div>
+                </div>
+                <script>
+                (function () {
+                    var btn = document.querySelector('.paypal-pay-btn');
+                    var status = document.getElementById('paypal-status');
+                    btn.addEventListener('click', function () {
+                        btn.disabled = true;
+                        status.style.display = 'block';
+                        status.textContent = 'Opening PayPal...';
+                        var body = new FormData();
+                        body.append('invoice_ids', btn.getAttribute('data-invoices'));
+                        body.append('csrf', <?php echo json_encode($paypal_csrf); ?>);
+                        fetch(<?php echo json_encode(billing_url('api/paypal_checkout.php')); ?>, { method: 'POST', body: body, credentials: 'same-origin' })
+                            .then(function (r) { return r.json().catch(function () { return { error: 'Unexpected reply from the server.' }; }); })
+                            .then(function (d) {
+                                if (d.url) { window.location.href = d.url; return; }
+                                status.textContent = d.error || 'PayPal could not be started.';
+                                btn.disabled = false;
+                            })
+                            .catch(function () { status.textContent = 'Network problem. Please try again.'; btn.disabled = false; });
+                    });
+                })();
+                </script>
                 <?php elseif (!$stripe_on): ?>
                 <div class="alert alert-error">
                     <strong>Checkout Unavailable:</strong> Online payment has not been configured for this site.
@@ -630,120 +627,6 @@ $siteBase = $protocol . $host;
                 }
             </script>
 
-            <?php if ($final_amount_cents > 0 && !empty($client_id)): ?>
-            <script>
-                function showPaymentError(msg) {
-                    var statusDiv = document.getElementById('status-message');
-                    if (statusDiv) {
-                        statusDiv.textContent = msg;
-                        statusDiv.style.display = 'block';
-                        statusDiv.style.color = '#721c24';
-                        statusDiv.style.background = '#f8d7da';
-                        statusDiv.style.border = '1px solid #f5c6cb';
-                        statusDiv.style.padding = '12px 16px';
-                        statusDiv.style.borderRadius = '4px';
-                    }
-                }
-
-                function logErrorToServer(context, errorCode, message, debugId, orderId) {
-                    try {
-                        fetch('/api/log_error.php', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                context: context,
-                                error_code: errorCode,
-                                message: message,
-                                paypal_debug_id: debugId || null,
-                                order_id: orderId || null,
-                                timestamp: new Date().toISOString()
-                            })
-                        }).catch(function() {}); // silently ignore logging failures
-                    } catch (e) {}
-                }
-
-                paypal.Buttons({
-                    createOrder: function(data, actions) {
-                        setStatus('Creating order...');
-                        return actions.order.create({
-                            purchase_units: [{
-                                custom_id: '<?php echo htmlspecialchars($paypal_custom_id, ENT_QUOTES, 'UTF-8'); ?>',
-                                amount: {
-                                    currency_code: 'USD',
-                                    value: '<?php echo number_format($final_amount, 2, '.', ''); ?>',
-                                    breakdown: {
-                                        item_total: {
-                                            currency_code: 'USD',
-                                            value: '<?php echo number_format($total_amount, 2, '.', ''); ?>'
-                                        }
-                                        <?php if ($discount_amount > 0): ?>
-                                        ,
-                                        discount: {
-                                            currency_code: 'USD',
-                                            value: '<?php echo number_format($discount_amount, 2, '.', ''); ?>'
-                                        }
-                                        <?php endif; ?>
-                                    }
-                                },
-                                items: <?php echo json_encode($paypal_items); ?>
-                            }]
-                        });
-                    },
-
-                    onApprove: function(data, actions) {
-                        setStatus('Processing payment...');
-
-                        return fetch('/api/capture_order.php', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ order_id: data.orderID })
-                        })
-                        .then(function(res) {
-                            return res.json().then(function(body) {
-                                return { ok: res.ok, body: body };
-                            }).catch(function() {
-                                return { ok: false, body: { error_code: 'invalid_response', message: 'Server returned non-JSON response (HTTP ' + res.status + ').' } };
-                            });
-                        })
-                        .then(function(result) {
-                            if (!result.ok || result.body.success === false) {
-                                var errCode = result.body.error_code || result.body.error || 'capture_failed';
-                                var errMsg  = result.body.message  || 'Payment capture failed. Please try again or contact support.';
-                                var debugId = result.body.debug_id || null;
-                                logErrorToServer('cart_capture', errCode, errMsg, debugId, data.orderID);
-                                showPaymentError('Payment failed: ' + errMsg);
-                                return;
-                            }
-                            // status=COMPLETED is the success indicator
-                            if (result.body.status === 'COMPLETED') {
-                                setStatus('Payment successful! Redirecting...');
-                                window.location.href = '/payment_success.php?order_id=' + encodeURIComponent(data.orderID);
-                            } else {
-                                var unexpectedMsg = 'Unexpected payment status: ' + (result.body.status || 'unknown');
-                                logErrorToServer('cart_capture', 'unexpected_status', unexpectedMsg, null, data.orderID);
-                                showPaymentError(unexpectedMsg + '. Please contact support.');
-                            }
-                        })
-                        .catch(function(err) {
-                            var errMsg = err && err.message ? err.message : 'Network error during payment capture.';
-                            logErrorToServer('cart_capture', 'fetch_error', errMsg, null, data.orderID);
-                            showPaymentError('Payment error: ' + errMsg);
-                        });
-                    },
-
-                    onError: function(err) {
-                        var errMsg = err && err.message ? err.message : String(err);
-                        logErrorToServer('cart_paypal_sdk', 'sdk_error', errMsg, null, null);
-                        showPaymentError('A PayPal error occurred. Please try again or contact support.');
-                    },
-
-                    onCancel: function(data) {
-                        setStatus('Payment cancelled.');
-                        window.location.href = '/payment_cancel.php';
-                    }
-                }).render('#paypal-button-container');
-            </script>
-            <?php endif; ?>
                 <script>
                     // Remove invoice via AJAX and perform a partial reload of the cart container
                     function removeInvoice(invoiceId) {

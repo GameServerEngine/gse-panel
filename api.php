@@ -53,7 +53,10 @@ api.php?addonsmanager/install			(POST/GET {token}{ip}{port}{mod_key}{addon_id})
 ______________ Server Content
 api.php?server_content/run_scheduled_action 	(POST/GET {token}{home_id}{action}{options})
 *
- ______________ Panel Setting
+ ______________ Assistant
+api.php?assistant/run 				(POST/GET {token}{home_id}{task})
+
+______________ Panel Setting
 api.php?setting/get 			(POST/GET {token}{setting_name})
 
 */
@@ -1639,6 +1642,21 @@ function api_server_content()
 		);
 	}
 
+	return array("status" => "400", "message" => "BAD REQUEST");
+}
+
+function api_assistant()
+{
+	global $request, $db, $user_info;
+	if($request[0] == "run")
+	{
+		// An assistant run waits for the model, which can take a while.
+		set_time_limit(300);
+		require_once(MODULES.'assistant/assistant_scheduled.php');
+		$panel_root = realpath(dirname(__FILE__));
+		list($ok, $text) = assistant_scheduled_run($db, $panel_root, (int)$user_info['user_id'], (int)$_POST['home_id'], (int)$_POST['task']);
+		return array("status" => $ok ? "200" : "500", "message" => $text);
+	}
 	return array("status" => "400", "message" => "BAD REQUEST");
 }
 

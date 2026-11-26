@@ -24,7 +24,7 @@ check('size is capped', strlen(assistant_filter_log($big, 'errors')) <= ASSISTAN
 
 // Tool lists: customers get server-bound tools with no server id to choose; admins get read-only diagnostics
 $names = function ($scope) { return array_map(function ($t) { return $t['name']; }, assistant_tool_definitions($scope)); };
-check('server tools', $names('server') === array('server_status', 'server_log', 'database_info', 'ftp_info', 'propose_action', 'propose_reset', 'list_files', 'read_file', 'db_query', 'propose_file_edit'));
+check('server tools', $names('server') === array('server_status', 'server_log', 'database_info', 'ftp_info', 'propose_action', 'notify_server', 'propose_reset', 'list_files', 'read_file', 'db_query', 'propose_file_edit'));
 check('admin has the panel diagnostics and the patch tool', count(array_diff(array('list_servers', 'panel_health', 'mysql_health', 'game_databases', 'agents_health', 'panel_list', 'panel_read', 'panel_search', 'agent_list', 'agent_read', 'propose_patch'), $names('admin'))) === 0);
 check('admin has the repair proposals', count(array_diff(array('propose_changes', 'db_read'), $names('admin'))) === 0);
 check('customers never get repair proposals', count(array_intersect($names('server'), array('propose_changes', 'db_read'))) === 0);
@@ -88,6 +88,24 @@ $loop_api = function ($key, $body) {
 };
 $result = assistant_ask('k', 'm', '', array(), 'hi', $run, 'server', $loop_api);
 check('tool loop is limited', count($result['tools']) <= ASSISTANT_MAX_TOOL_STEPS + 1);
+
+// ---- notifications (ntfy) ------------------------------------------------------------------
+require_once __DIR__ . '/../assistant_tools.php';
+class NotifyStubDb
+{
+	public $settings;
+	function __construct($settings) { $this->settings = $settings; }
+	function getSettings() { return $this->settings; }
+}
+$panel_root = realpath(__DIR__ . '/../../..');
+$r = assistant_send_ntfy(new NotifyStubDb(array()), $panel_root, 'gse-1', array('title' => 't', 'message' => 'm'), '');
+check('notify says when ntfy is not set up', strpos($r['data']['error'], 'not set up') !== false);
+$r = assistant_send_ntfy(new NotifyStubDb(array('ntfy_base_url' => 'http://127.0.0.1:9')), $panel_root, 'gse-1', array('title' => 't', 'message' => '   '), '');
+check('notify refuses an empty message', strpos($r['data']['error'], 'empty') !== false);
+$r = assistant_send_ntfy(new NotifyStubDb(array('ntfy_base_url' => 'http://127.0.0.1:9')), $panel_root, 'gse-1', array('title' => "a\r\nb", 'message' => 'm'), '');
+check('notify reports a server that does not answer', strpos($r['data']['error'], 'did not accept') !== false);
+check('customers cannot notify the administrators', !in_array('notify_admins', assistant_allowed_tools('server'), true) && in_array('notify_admins', assistant_allowed_tools('admin'), true));
+check('both chats can notify a server', in_array('notify_server', assistant_allowed_tools('server'), true) && in_array('notify_server', assistant_allowed_tools('admin'), true));
 
 echo $failures === 0 ? "All passed\n" : "$failures failed\n";
 exit($failures === 0 ? 0 : 1);

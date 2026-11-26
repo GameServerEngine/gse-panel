@@ -129,7 +129,7 @@ class PayPalGateway implements PaymentGatewayInterface
         curl_close($ch);
 
         if ($code !== 201 || !$res) {
-            return ['success' => false, 'error' => 'paypal_create_order_failed', 'http_code' => $code];
+            return ['success' => false, 'error' => 'paypal_create_order_failed', 'http_code' => $code, 'paypal_response' => substr((string)$res, 0, 600)];
         }
         $data = json_decode($res, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
@@ -138,8 +138,21 @@ class PayPalGateway implements PaymentGatewayInterface
         return [
             'success'           => true,
             'provider_order_id' => $data['id'] ?? '',
+            'approve_url'       => self::approveUrl($data),
             'raw_response'      => $data,
         ];
+    }
+
+    /** The PayPal page where the customer approves an order (the link PayPal marks "approve"). */
+    public static function approveUrl(array $order): string
+    {
+        foreach ((array)($order['links'] ?? []) as $link) {
+            $rel = (string)($link['rel'] ?? '');
+            if (($rel === 'approve' || $rel === 'payer-action') && !empty($link['href'])) {
+                return (string)$link['href'];
+            }
+        }
+        return '';
     }
 
     public function handleCallback(array $params): array

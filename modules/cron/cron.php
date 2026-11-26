@@ -77,7 +77,7 @@ function exec_module()
 			$mod_key = $game_home['mod_key'];
 			$token = $db->getApiToken($_SESSION['user_id']);
 
-			$command = build_cron_scheduler_command($panelURL, $token, $game_home, $_POST['action']);
+			$command = cron_command_for_post($panelURL, $token, $game_home, isset($_POST['editJob']) && isset($jobsArray[$_POST['r_server_id']][$_POST['job_id']]) ? $jobsArray[$_POST['r_server_id']][$_POST['job_id']]['job'] : '');
 			if($command === false)
 			{
 				print_failure(get_lang('bad_inputs'));
@@ -190,7 +190,7 @@ function exec_module()
 			<input style="width: 30px;" type="text" name="dayOfTheWeek" value="*" />
 		</td>
 		<td>
-			<?php echo get_action_selector(false, $server_homes, $homeid_ip_port);?>
+			<?php echo get_action_selector(false, $server_homes, $homeid_ip_port) . get_assistant_command_input();?>
 		</td>
 		<td>
 			<?php echo get_server_selector($server_homes, $homeid_ip_port, true, true);?>
@@ -303,6 +303,7 @@ function exec_module()
 	</tr>
 <?php
 		$user_jobs = "";
+		$assistant_tasks = cron_assistant_tasks($jobsArray);
 		foreach ((array)$jobsArray as $remote_server_id => $jobs )
 		{
 			foreach ((array)$jobs as $jobId => $job)
@@ -314,7 +315,7 @@ function exec_module()
 						$idStr = false;
 					}
 
-					$task = get_action_selector($job['action'], $server_homes, $idStr)."</td><td>".
+					$task = get_action_selector($job['action'], $server_homes, $idStr).get_assistant_command_input($job, $assistant_tasks)."</td><td>".
 							get_server_selector($server_homes, $idStr, FALSE, TRUE);
 				}
 				else
