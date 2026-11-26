@@ -23,9 +23,13 @@ if (!$db) {
     $error = 'Database connection failed.';
 } else {
     $db->set_charset('utf8mb4');
+    // A panel that never ran the Billing database step gets the tables here, on first use.
     if (!order_options_table_ready($db, $prefix)) {
-        $error = 'The order options table is not installed yet. Update the Billing module first (Administration > Modules).';
-        $db = false;
+        $installError = order_options_install($db, $prefix);
+        if ($installError !== '') {
+            $error = 'The order options tables are missing and could not be created: ' . $installError;
+            $db = false;
+        }
     }
 }
 
@@ -97,7 +101,7 @@ $optionForm = function (array $o) use ($csrf) { ?>
 <?php if ($status !== ''): ?><div class="success"><?php echo h($status); ?></div><?php endif; ?>
 
 <h3>Order options</h3>
-<p class="muted">One-time extras a customer can tick on the game server order page, such as Server Setup. Each ticked option is added to that order's first invoice. Renewals do not repeat it.</p>
+<p class="muted">One-time extras a customer can tick while ordering a game server, such as Server Setup. Each ticked option is added to that order's first invoice. Renewals do not repeat it. Things a customer asks for separately, such as a support request or custom work, are on the Services tab.</p>
 
 <?php foreach ($options as $o): ?>
   <h4><?php echo h($o['title']); ?><?php echo ((int)$o['enabled'] === 1) ? '' : ' <span class="muted">(hidden from customers)</span>'; ?></h4>

@@ -255,10 +255,15 @@ require_once __DIR__ . '/includes/stripe_config.php';
 require_once __DIR__ . '/includes/action_security.php';
 $stripe_cfg = $db ? billing_stripe_config($db, (string)$table_prefix) : array('configured' => false);
 $stripe_csrf = billing_action_csrf_token('billing_stripe_checkout_csrf');
+$stripe_on = !empty($stripe_cfg['configured']) && !empty($stripe_cfg['enabled']);
 
 // PayPal configuration (from config)
 $client_id = function_exists('paypal_get_client_id') ? paypal_get_client_id() : ($paypal_client_id ?? '');
 $sandbox   = function_exists('paypal_is_sandbox')    ? paypal_is_sandbox()    : ($paypal_sandbox ?? true);
+// PayPal switched off in Billing > Settings: no client id, so no PayPal script and no PayPal button.
+if ($db && !billing_payment_method_enabled($db, (string)$table_prefix, 'paypal')) {
+    $client_id = '';
+}
 
 // Prepare PayPal items
 $paypal_items = [];
@@ -297,7 +302,7 @@ $siteBase = $protocol . $host;
     <link rel="stylesheet" href="css/header.css">
     <!-- Favicon -->
     <link rel="icon" href="<?php echo htmlspecialchars(billing_url('images/brand/favicon-32x32.png'), ENT_QUOTES, 'UTF-8'); ?>" type="image/png">
-    <?php if (!$cart_empty && !empty($stripe_cfg['configured']) && ($stripe_cfg['checkout_ui'] ?? 'hosted') === 'form'): ?>
+    <?php if (!$cart_empty && $stripe_on && ($stripe_cfg['checkout_ui'] ?? 'hosted') === 'form'): ?>
     <script src="https://js.stripe.com/dahlia/stripe.js"></script>
     <?php endif; ?>
     <?php if (!$cart_empty && !empty($client_id)): ?>
@@ -493,7 +498,7 @@ $siteBase = $protocol . $host;
                 <?php if (($_GET['payment'] ?? '') === 'cancelled'): ?>
                 <div class="alert alert-error">Card payment was cancelled. Nothing was charged.</div>
                 <?php endif; ?>
-                <?php if (!empty($stripe_cfg['configured'])): ?>
+                <?php if ($stripe_on): ?>
                 <div class="stripe-checkout">
                     <h4>Pay by card</h4>
                     <p>Secure payment on Stripe. You return here when it is done and your invoice is marked paid.</p>
@@ -508,7 +513,7 @@ $siteBase = $protocol . $host;
                 <p>Click the button below to complete your purchase securely through PayPal.</p>
                 <div id="paypal-button-container"></div>
                 <div id="status-message" class="status-message"></div>
-                <?php elseif (empty($stripe_cfg['configured'])): ?>
+                <?php elseif (!$stripe_on): ?>
                 <div class="alert alert-error">
                     <strong>Checkout Unavailable:</strong> Online payment has not been configured for this site.
                     Please contact the site administrator or try again later.
@@ -528,7 +533,7 @@ $siteBase = $protocol . $host;
                     <?php endif; ?>
                 </div>
                 <?php endif; ?>
-                <?php if (!empty($stripe_cfg['configured'])): ?>
+                <?php if ($stripe_on): ?>
                 <script>
                 (function () {
                     var csrf = <?php echo json_encode($stripe_csrf); ?>;

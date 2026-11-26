@@ -41,7 +41,8 @@ $cancel_csrf = billing_action_csrf_token('billing_cancel_csrf');
 // Auto-renew (card saved with Stripe; only Stripe's references are kept here)
 require_once(__DIR__ . '/includes/stripe_billing.php');
 $autorenew_csrf = billing_action_csrf_token('billing_stripe_checkout_csrf');
-$stripe_ready = !empty(billing_stripe_config($db, (string)$table_prefix)['configured']);
+$stripe_cfg_ready = billing_stripe_config($db, (string)$table_prefix);
+$stripe_ready = !empty($stripe_cfg_ready['configured']) && !empty($stripe_cfg_ready['enabled']);
 $schedule = billing_schedule_settings($db, (string)$table_prefix);
 $autopay_by_home = array();
 try {

@@ -311,11 +311,11 @@ include(__DIR__ . '/includes/menu.php');
   <h1>Coupon Management</h1>
   
   <?php if ($status): ?>
-    <div class="status success"><?php echo h($status); ?></div>
+    <div class="success"><?php echo h($status); ?></div>
   <?php endif; ?>
   
   <?php if ($error): ?>
-    <div class="status error"><?php echo h($error); ?></div>
+    <div class="failure"><?php echo h($error); ?></div>
   <?php endif; ?>
   
   <!-- Add New Coupon Form -->

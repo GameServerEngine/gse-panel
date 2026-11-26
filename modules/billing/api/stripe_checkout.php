@@ -66,7 +66,7 @@ if ($action === 'autorenew_off') {
     sc_reply(200, array('ok' => $ok, 'message' => 'Auto-renew is off. You can pay each invoice with Pay Now.'));
 }
 
-if (!$cfg['configured']) {
+if (!$cfg['configured'] || !$cfg['enabled']) {
     sc_reply(503, array('error' => 'Card payments are not available right now.'));
 }
 $client = new StripeClient($cfg['secret_key']);
