@@ -262,14 +262,16 @@ foreach ($locationGroups as $group):
     $mode = (string)$offer['pricing_mode'];
     $slotMin = (int)$offer['slot_min_qty'];
     $slotMax = (int)$offer['slot_max_qty'];
+    // The slider starts at half of the maximum (never below the minimum).
+    $slotStart = max($slotMin, (int)round($slotMax / 2));
     $period = (string)$offer['period_default'];
 ?>
   <div class="offer-pricing-fields" data-offer="<?php echo $offerId; ?>">
     <?php if ($mode === 'per_slot' || $mode === 'base_plus_extra'): ?>
       <center><b>Player Slots</b></center>
       <input type="range" class="offer-slots-input" data-offer="<?php echo $offerId; ?>"
-             min="<?php echo $slotMin; ?>" max="<?php echo $slotMax; ?>" value="<?php echo $slotMin; ?>" class="slider">
-      <center><span class="offer-slots-readout" data-offer="<?php echo $offerId; ?>"><?php echo $slotMin; ?></span> slots</center>
+             min="<?php echo $slotMin; ?>" max="<?php echo $slotMax; ?>" value="<?php echo $slotStart; ?>" class="slider">
+      <center><span class="offer-slots-readout" data-offer="<?php echo $offerId; ?>"><?php echo $slotStart; ?></span> slots</center>
       <?php if ($mode === 'per_slot'): ?>
         <span class="muted">$<?php echo number_format((float)$offer['per_slot_price_monthly'], 2); ?> / slot / month</span>
       <?php else: ?>
