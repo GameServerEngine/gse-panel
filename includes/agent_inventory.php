@@ -9,6 +9,17 @@
  * Fingerprints leave out values that change constantly (available memory, free disk space).
  */
 
+if (!function_exists('agent_inventory_prefix_ok')) {
+    /**
+     * A table prefix is empty or letters, digits and underscores. The literal placeholder DB_PREFIX is refused:
+     * it is not a prefix, and this code talks to the raw connection, which would create a table with that name.
+     */
+    function agent_inventory_prefix_ok(string $prefix): bool
+    {
+        return $prefix !== 'DB_PREFIX' && preg_match('/^[A-Za-z0-9_]*$/', $prefix) === 1;
+    }
+}
+
 if (!function_exists('agent_inventory_table')) {
     function agent_inventory_table(string $prefix): string
     {
@@ -19,6 +30,9 @@ if (!function_exists('agent_inventory_table')) {
 if (!function_exists('agent_inventory_ensure_table')) {
     function agent_inventory_ensure_table(mysqli $db, string $prefix): bool
     {
+        if (!agent_inventory_prefix_ok($prefix)) {
+            return false;
+        }
         return (bool)$db->query(
             'CREATE TABLE IF NOT EXISTS ' . agent_inventory_table($prefix) . ' (
                 id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -187,6 +201,9 @@ if (!function_exists('agent_inventory_state_table')) {
 if (!function_exists('agent_inventory_ensure_state_table')) {
     function agent_inventory_ensure_state_table(mysqli $db, string $prefix): bool
     {
+        if (!agent_inventory_prefix_ok($prefix)) {
+            return false;
+        }
         return (bool)$db->query(
             'CREATE TABLE IF NOT EXISTS ' . agent_inventory_state_table($prefix) . ' (
                 remote_server_id INT NOT NULL PRIMARY KEY,
@@ -274,6 +291,9 @@ if (!function_exists('agent_inventory_refresh_if_due')) {
     function agent_inventory_refresh_if_due(mysqli $db, string $prefix, int $remoteId, callable $fetch, int $now): array
     {
         try {
+            if (!agent_inventory_prefix_ok($prefix)) {
+                return array('outcome' => 'error', 'message' => 'Not a usable table prefix.');
+            }
             if (!agent_inventory_ensure_state_table($db, $prefix)) {
                 return array('outcome' => 'error', 'message' => 'Inventory state table unavailable.');
             }

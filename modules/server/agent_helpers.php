@@ -257,12 +257,14 @@ function agent_refresh_snapshot($db, $server_row, $remote = null)
 function agent_collect_inventory_if_due($db, $server_row, $remote)
 {
 	try {
+		// The raw connection does not replace the DB_PREFIX placeholder, so it needs the real table prefix.
 		$mysqli = (is_object($db) && method_exists($db, 'getMysqli')) ? $db->getMysqli() : null;
+		$prefix = (is_object($db) && method_exists($db, 'getTablePrefix')) ? (string)$db->getTablePrefix() : null;
 		$id = agent_row_server_id($server_row);
-		if (!($mysqli instanceof mysqli) || $id <= 0 || !is_object($remote) || !method_exists($remote, 'agent_hardware_inventory')) {
+		if (!($mysqli instanceof mysqli) || $prefix === null || $id <= 0 || !is_object($remote) || !method_exists($remote, 'agent_hardware_inventory')) {
 			return;
 		}
-		agent_inventory_refresh_if_due($mysqli, DB_PREFIX, $id, function () use ($remote) {
+		agent_inventory_refresh_if_due($mysqli, $prefix, $id, function () use ($remote) {
 			return $remote->agent_hardware_inventory();
 		}, time());
 	} catch (\Throwable $e) {

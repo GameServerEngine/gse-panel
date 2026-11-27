@@ -97,5 +97,11 @@ inv_check(agent_inventory_is_due(array('checked_at' => $now + 500, 'state' => 'o
 inv_check(agent_inventory_is_due(array('checked_at' => 0, 'state' => 'ok'), $now), 'an unusable record (time 0): due');
 inv_check(AGENT_INVENTORY_TTL_OK > AGENT_INVENTORY_TTL_UNSUPPORTED && AGENT_INVENTORY_TTL_UNSUPPORTED > AGENT_INVENTORY_TTL_ERROR, 'waits order: healthy > unsupported > error');
 
+// 10. Table prefix guard: the DB_PREFIX constant is a placeholder, never a real prefix.
+inv_check(agent_inventory_prefix_ok(''), 'an empty prefix is allowed (core uses one)');
+inv_check(agent_inventory_prefix_ok('ogp_') && agent_inventory_prefix_ok('gse_x1_'), 'letters, digits and underscores are allowed');
+inv_check(!agent_inventory_prefix_ok('DB_PREFIX'), 'the placeholder DB_PREFIX is refused');
+inv_check(!agent_inventory_prefix_ok('bad prefix') && !agent_inventory_prefix_ok('a-b') && !agent_inventory_prefix_ok("x`; DROP TABLE y; -- "), 'spaces, dashes, quotes and SQL are refused');
+
 echo $failures ? "\n$failures FAILED\n" : "\nall agent inventory tests passed\n";
 exit($failures ? 1 : 0);

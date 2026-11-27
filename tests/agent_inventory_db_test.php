@@ -159,9 +159,27 @@ try {
     db_check(!$threw, 'a database exception while storing does not escape (strict mode)');
     db_check($r['outcome'] === 'error', 'a database failure while storing is reported as an error');
     db_check(agent_inventory_refresh_if_due($db, $prefix, 26, $breaker, $t0 + 60)['outcome'] === 'skipped', 'and the broken check is not repeated on the next page load');
+
+    // 9. A prefix that is not a real table prefix must never create a table.
+    $fetched = 0;
+    $spy = function () use (&$fetched) { $fetched++; return array('success' => true, 'status' => 'ok', 'inventory_json' => json_encode(inv())); };
+    foreach (array('DB_PREFIX', 'bad prefix', 'x`; DROP TABLE y; -- ') as $bad) {
+        db_check(agent_inventory_ensure_table($db, $bad) === false && agent_inventory_ensure_state_table($db, $bad) === false, "ensure refuses the prefix '" . substr($bad, 0, 12) . "'");
+    }
+    $r = agent_inventory_refresh_if_due($db, 'DB_PREFIX', 50, $spy, $t0);
+    db_check($r['outcome'] === 'error' && $fetched === 0, 'refresh with the DB_PREFIX placeholder is an error and never asks the agent');
+    $stray = $db->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name LIKE 'DB\\_PREFIX%'");
+    db_check($stray && (int)$stray->fetch_row()[0] === 0, 'no table named DB_PREFIX... was created');
+
+    // 10. An empty prefix (what core uses) works end to end.
+    db_check(agent_inventory_refresh_if_due($db, '', 51, $spy, $t0)['outcome'] === 'stored', 'an empty prefix stores an inventory');
+    $plain = $db->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ('agent_hardware_inventory', 'agent_inventory_state')");
+    db_check($plain && (int)$plain->fetch_row()[0] === 2, 'with an empty prefix the tables are plain agent_hardware_inventory and agent_inventory_state');
 } finally {
     $db->query("DROP TABLE IF EXISTS {$table}");
     $db->query("DROP TABLE IF EXISTS " . agent_inventory_state_table($prefix));
+    $db->query("DROP TABLE IF EXISTS `agent_hardware_inventory`");
+    $db->query("DROP TABLE IF EXISTS `agent_inventory_state`");
     $gone = $db->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = '" . $db->real_escape_string($prefix . 'agent_hardware_inventory') . "'");
     db_check($gone && (int)$gone->fetch_row()[0] === 0, 'test tables dropped afterwards');
 }

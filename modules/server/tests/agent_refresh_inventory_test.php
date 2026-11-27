@@ -9,7 +9,8 @@ $host = getenv('GSE_TEST_DB_HOST'); $user = getenv('GSE_TEST_DB_USER'); $pass = 
 $mysqli = ($host && $user && $pass !== false && $name) ? new mysqli($host, $user, $pass, $name) : null;
 if ($mysqli && $mysqli->connect_errno) { echo "FAIL - cannot connect: {$mysqli->connect_error}\n"; exit(1); }
 $prefix = 'gse_invtest_' . bin2hex(random_bytes(3)) . '_';
-define('DB_PREFIX', $prefix);
+// As in production (includes/database.php): DB_PREFIX is only a placeholder string. The real prefix comes from the db object.
+define('DB_PREFIX', 'DB_PREFIX');
 ini_set('error_log', '/dev/null');
 
 require_once 'modules/server/agent_helpers.php';
@@ -18,9 +19,20 @@ class FakeSnapshotDb
 {
     public $upserts = array();
     private $mysqli;
-    public function __construct($mysqli) { $this->mysqli = $mysqli; }
+    private $prefix;
+    public function __construct($mysqli, $prefix) { $this->mysqli = $mysqli; $this->prefix = $prefix; }
+    public function getTablePrefix() { return $this->prefix; }
     public function query($sql) { return true; }
     public function upsertAgentResourceSnapshot($id, $snapshot) { $this->upserts[] = array($id, $snapshot); }
+    public function getMysqli() { return $this->mysqli; }
+}
+
+class FakeDbWithoutPrefix
+{
+    private $mysqli;
+    public function __construct($mysqli) { $this->mysqli = $mysqli; }
+    public function query($sql) { return true; }
+    public function upsertAgentResourceSnapshot($id, $snapshot) {}
     public function getMysqli() { return $this->mysqli; }
 }
 
@@ -47,21 +59,21 @@ function good_inventory() { return array('success' => true, 'status' => 'ok', 'i
 function server_row($id) { return array('remote_server_id' => $id, 'agent_ip' => '127.0.0.1', 'agent_port' => 12679); }
 
 // 1. No database handle: the snapshot works exactly as before and the agent is not asked for inventory.
-$db = new FakeSnapshotDb(null);
+$db = new FakeSnapshotDb(null, $prefix);
 $remote = new FakeAgentRemote(); $remote->snapshotReply = good_snapshot(); $remote->inventoryReply = good_inventory();
 $r = agent_refresh_snapshot($db, server_row(31), $remote);
 rc_check(!empty($r['success']) && $r['cpu_percent'] === '12' && count($db->upserts) === 1, 'no database handle: snapshot saved and returned as before');
 rc_check($remote->inventoryCalls === 0, 'no database handle: the agent is not asked for inventory');
 
 // 2. A failed snapshot never asks for inventory.
-$db = new FakeSnapshotDb($mysqli);
+$db = new FakeSnapshotDb($mysqli, $prefix);
 $remote = new FakeAgentRemote(); $remote->snapshotReply = array('success' => false, 'status' => 'agent_unreachable', 'message' => 'No response from agent.'); $remote->inventoryReply = good_inventory();
 $r = agent_refresh_snapshot($db, server_row(32), $remote);
 rc_check(empty($r['success']) && count($db->upserts) === 1 && $remote->inventoryCalls === 0, 'failed snapshot: failure saved, inventory not requested');
 
 // 3. A row without an id never reaches the inventory code.
 $remote = new FakeAgentRemote(); $remote->snapshotReply = good_snapshot();
-$r = agent_refresh_snapshot(new FakeSnapshotDb($mysqli), array('agent_ip' => 'x', 'agent_port' => 1), $remote);
+$r = agent_refresh_snapshot(new FakeSnapshotDb($mysqli, $prefix), array('agent_ip' => 'x', 'agent_port' => 1), $remote);
 rc_check(empty($r['success']) && $remote->snapshotCalls === 0 && $remote->inventoryCalls === 0, 'row without an id: refused before any agent call');
 
 if (!$mysqli) {
@@ -72,7 +84,7 @@ if (!$mysqli) {
 
 try {
     // 4. Good snapshot with a database: inventory requested once and stored; the snapshot result is untouched.
-    $db = new FakeSnapshotDb($mysqli);
+    $db = new FakeSnapshotDb($mysqli, $prefix);
     $remote = new FakeAgentRemote(); $remote->snapshotReply = good_snapshot(); $remote->inventoryReply = good_inventory();
     $r = agent_refresh_snapshot($db, server_row(41), $remote);
     rc_check(!empty($r['success']) && $r['cpu_percent'] === '12' && $r['ram_percent'] === '34' && $r['disk_percent'] === '56', 'good snapshot: result unchanged by the inventory hook');
@@ -105,6 +117,17 @@ try {
     try { $r = agent_refresh_snapshot($db, server_row(44), $remote); } catch (\Throwable $e) { $threw = true; }
     mysqli_report(MYSQLI_REPORT_OFF);
     rc_check(!$threw && !empty($r['success']), 'broken inventory tables (strict mode): snapshot still returned, nothing escapes');
+
+    // 9. A db object that cannot give its table prefix: the snapshot works and the inventory hook does nothing.
+    $remote = new FakeAgentRemote(); $remote->snapshotReply = good_snapshot(); $remote->inventoryReply = good_inventory();
+    $r = agent_refresh_snapshot(new FakeDbWithoutPrefix($mysqli), server_row(45), $remote);
+    rc_check(!empty($r['success']) && $remote->inventoryCalls === 0, 'db object without a table prefix: snapshot fine, inventory hook skipped');
+
+    // 10. Production defines DB_PREFIX as a placeholder; no table named after it may exist, and the real prefix is used.
+    $stray = $mysqli->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name LIKE 'DB\\_PREFIX%'");
+    rc_check($stray && (int)$stray->fetch_row()[0] === 0, 'no table named DB_PREFIX... was created');
+    $real = $mysqli->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = '" . $mysqli->real_escape_string($prefix . 'agent_hardware_inventory') . "'");
+    rc_check($real && (int)$real->fetch_row()[0] === 1, 'the inventory table was created with the real prefix');
 } finally {
     $mysqli->query('DROP TABLE IF EXISTS `' . $prefix . 'agent_hardware_inventory`');
     $mysqli->query('DROP TABLE IF EXISTS `' . $prefix . 'agent_inventory_state`');
