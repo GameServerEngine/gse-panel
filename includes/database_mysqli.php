@@ -79,6 +79,12 @@ class DatabaseMySQL extends Database
 		return TRUE;
 	}
 
+	/// \brief The underlying mysqli connection, or NULL when not connected. For code that needs prepared statements.
+	public function getMysqli()
+	{
+		return ($this->link instanceof mysqli) ? $this->link : NULL;
+	}
+
 	public function realEscapeSingle($string){
 		if ($string === null) return '';
 		return mysqli_real_escape_string($this->link, (string)$string);

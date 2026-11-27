@@ -81,10 +81,89 @@ try {
     db_check(agent_inventory_latest($db, $prefix, 99) === null, 'unknown agent has no inventory');
     db_check(agent_inventory_store($db, $prefix, 6, inv(), 5000) === 'stored', 'a second agent with identical hardware gets its own row');
     db_check(count_rows($db, $table, 6) === 1 && count_rows($db, $table, 5) === 3, 'rows are kept per agent');
+
+    // 8. Refresh scheduling (agent_inventory_refresh_if_due) with a stand-in agent.
+    $stateTable = agent_inventory_state_table($prefix);
+    $calls = 0;
+    $okReply = function () use (&$calls) { $calls++; return array('success' => true, 'status' => 'ok', 'inventory_json' => json_encode(inv())); };
+    $t0 = 10000000;
+
+    $r = agent_inventory_refresh_if_due($db, $prefix, 20, $okReply, $t0);
+    db_check($r['outcome'] === 'stored' && $calls === 1, 'first check asks the agent and stores the inventory');
+    db_check(agent_inventory_state_get($db, $prefix, 20)['state'] === 'ok', 'the check is recorded as ok');
+
+    $r = agent_inventory_refresh_if_due($db, $prefix, 20, $okReply, $t0 + 60);
+    db_check($r['outcome'] === 'skipped' && $calls === 1, 'a check one minute later is skipped without asking the agent');
+
+    $r = agent_inventory_refresh_if_due($db, $prefix, 20, $okReply, $t0 + AGENT_INVENTORY_TTL_OK);
+    db_check($r['outcome'] === 'unchanged' && $calls === 2, 'after the wait the agent is asked; same hardware stores nothing');
+    db_check(agent_inventory_state_get($db, $prefix, 20)['checked_at'] === $t0 + AGENT_INVENTORY_TTL_OK, 'the check time moves forward even when nothing changed');
+    db_check(count_rows($db, $table, 20) === 1, 'still one inventory row for the agent');
+
+    $changed = function () use (&$calls) { $calls++; return array('success' => true, 'status' => 'ok', 'inventory_json' => json_encode(inv(array('memory' => array('total_mib' => 32768))))); };
+    $r = agent_inventory_refresh_if_due($db, $prefix, 20, $changed, $t0 + 2 * AGENT_INVENTORY_TTL_OK);
+    db_check($r['outcome'] === 'stored' && count_rows($db, $table, 20) === 2, 'changed hardware is stored as a new row');
+
+    // An older agent (the wrapper reports an XML-RPC fault): unsupported, nothing stored, rechecked hourly.
+    $faultCalls = 0;
+    $fault = function () use (&$faultCalls) { $faultCalls++; return array('success' => false, 'status' => 'xmlrpc_fault', 'message' => 'Unknown method'); };
+    $r = agent_inventory_refresh_if_due($db, $prefix, 21, $fault, $t0);
+    db_check($r['outcome'] === 'unsupported' && agent_inventory_state_get($db, $prefix, 21)['state'] === 'unsupported', 'older agent is recorded as unsupported');
+    db_check(agent_inventory_refresh_if_due($db, $prefix, 21, $fault, $t0 + 1800)['outcome'] === 'skipped' && $faultCalls === 1, 'an unsupported agent is not asked again within the hour');
+    db_check(agent_inventory_refresh_if_due($db, $prefix, 21, $fault, $t0 + AGENT_INVENTORY_TTL_UNSUPPORTED)['outcome'] === 'unsupported' && $faultCalls === 2, 'an unsupported agent is asked again after an hour');
+    db_check(count_rows($db, $table, 21) === 0, 'nothing is stored for an unsupported agent');
+
+    // Agent that has since been updated: the same agent id now answers with an inventory.
+    $r = agent_inventory_refresh_if_due($db, $prefix, 21, $okReply, $t0 + 2 * AGENT_INVENTORY_TTL_UNSUPPORTED);
+    db_check($r['outcome'] === 'stored' && agent_inventory_state_get($db, $prefix, 21)['state'] === 'ok', 'an agent that is later updated is picked up');
+
+    // Errors are retried after 15 minutes, not on every call.
+    $errCalls = 0;
+    $err = function () use (&$errCalls) { $errCalls++; return array('success' => false, 'status' => 'bad_encryption', 'message' => 'Bad Encryption Key'); };
+    $r = agent_inventory_refresh_if_due($db, $prefix, 22, $err, $t0);
+    db_check($r['outcome'] === 'error' && $r['message'] === 'Bad Encryption Key', 'an agent refusal is an error with its message');
+    db_check(agent_inventory_refresh_if_due($db, $prefix, 22, $err, $t0 + 899)['outcome'] === 'skipped' && $errCalls === 1, 'an error is not retried before 15 minutes');
+    db_check(agent_inventory_refresh_if_due($db, $prefix, 22, $err, $t0 + 900)['outcome'] === 'error' && $errCalls === 2, 'an error is retried at 15 minutes');
+
+    // No reply at all (unreachable) and an unusable reply both count as errors.
+    db_check(agent_inventory_refresh_if_due($db, $prefix, 23, function () { return null; }, $t0)['outcome'] === 'error', 'no reply is an error');
+
+    // A fetch that throws never escapes, and is not retried at once.
+    $boom = 0;
+    $thrower = function () use (&$boom) { $boom++; throw new RuntimeException('network exploded'); };
+    $threw = false;
+    try { $r = agent_inventory_refresh_if_due($db, $prefix, 24, $thrower, $t0); } catch (\Throwable $e) { $threw = true; }
+    db_check(!$threw && $r['outcome'] === 'error', 'an exception from the agent call does not escape');
+    db_check(agent_inventory_refresh_if_due($db, $prefix, 24, $thrower, $t0 + 60)['outcome'] === 'skipped' && $boom === 1, 'a failing agent is not asked again on the next page load');
+
+    // Strict error mode (the PHP 8.1+ default): database failures must not escape either.
+    // A dropped inventory table is simply recreated when the next inventory is stored.
+    $dropper = function () use ($db, $table) {
+        $db->query("DROP TABLE {$table}");
+        return array('success' => true, 'status' => 'ok', 'inventory_json' => json_encode(inv()));
+    };
+    $r = agent_inventory_refresh_if_due($db, $prefix, 25, $dropper, $t0);
+    db_check($r['outcome'] === 'stored' && count_rows($db, $table, 25) === 1, 'a missing inventory table is recreated and the inventory stored');
+
+    // A table with the right name but the wrong columns makes every query fail. In strict mode those are exceptions.
+    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+    $breaker = function () use ($db, $table) {
+        $db->query("DROP TABLE {$table}");
+        $db->query("CREATE TABLE {$table} (junk INT) ENGINE=InnoDB");
+        return array('success' => true, 'status' => 'ok', 'inventory_json' => json_encode(inv()));
+    };
+    $threw = false;
+    $r = array('outcome' => 'none');
+    try { $r = agent_inventory_refresh_if_due($db, $prefix, 26, $breaker, $t0); } catch (\Throwable $e) { $threw = true; }
+    mysqli_report(MYSQLI_REPORT_OFF);
+    db_check(!$threw, 'a database exception while storing does not escape (strict mode)');
+    db_check($r['outcome'] === 'error', 'a database failure while storing is reported as an error');
+    db_check(agent_inventory_refresh_if_due($db, $prefix, 26, $breaker, $t0 + 60)['outcome'] === 'skipped', 'and the broken check is not repeated on the next page load');
 } finally {
     $db->query("DROP TABLE IF EXISTS {$table}");
+    $db->query("DROP TABLE IF EXISTS " . agent_inventory_state_table($prefix));
     $gone = $db->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = '" . $db->real_escape_string($prefix . 'agent_hardware_inventory') . "'");
-    db_check($gone && (int)$gone->fetch_row()[0] === 0, 'test table dropped afterwards');
+    db_check($gone && (int)$gone->fetch_row()[0] === 0, 'test tables dropped afterwards');
 }
 
 echo $failures ? "\n$failures FAILED\n" : "\nall agent inventory database tests passed\n";

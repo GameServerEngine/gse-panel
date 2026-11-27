@@ -6,6 +6,7 @@ if (!defined('AGENT_PROTOCOL_VERSION')) {
 
 
 require_once('includes/lib_remote.php');
+require_once(__DIR__ . '/../../includes/agent_inventory.php');
 
 function agent_html($value)
 {
@@ -219,14 +220,16 @@ function agent_row_server_id($server_row)
 	return (int)$server_row['remote_server_id'];
 }
 
-function agent_refresh_snapshot($db, $server_row)
+function agent_refresh_snapshot($db, $server_row, $remote = null)
 {
 	// The id is required to store the snapshot. Do not guess one.
 	if (agent_row_server_id($server_row) <= 0) {
 		return array('success' => false, 'error' => 'Cannot refresh agent snapshot: server row has no remote_server_id.');
 	}
 	agent_ensure_snapshot_table($db);
-	$remote = agent_build_remote($server_row);
+	if ($remote === null) {
+		$remote = agent_build_remote($server_row);
+	}
 	$snapshot = $remote->agent_resource_snapshot();
 	if (empty($snapshot['success'])) {
 		$snapshot['agent_ip'] = $server_row['agent_ip'];
@@ -244,7 +247,27 @@ function agent_refresh_snapshot($db, $server_row)
 		$snapshot['ram_percent'] = $snapshot['memory_percent'];
 	}
 	$db->upsertAgentResourceSnapshot($server_row['remote_server_id'], $snapshot);
+	agent_collect_inventory_if_due($db, $server_row, $remote);
 	return $snapshot;
+}
+
+// Hardware inventory (GSE Resource Intelligence). Runs only after a successful snapshot, so the agent is
+// known to be up, and only when a check is due (see agent_inventory_refresh_if_due). A problem here is
+// swallowed: it must never change what the snapshot refresh returns.
+function agent_collect_inventory_if_due($db, $server_row, $remote)
+{
+	try {
+		$mysqli = (is_object($db) && method_exists($db, 'getMysqli')) ? $db->getMysqli() : null;
+		$id = agent_row_server_id($server_row);
+		if (!($mysqli instanceof mysqli) || $id <= 0 || !is_object($remote) || !method_exists($remote, 'agent_hardware_inventory')) {
+			return;
+		}
+		agent_inventory_refresh_if_due($mysqli, DB_PREFIX, $id, function () use ($remote) {
+			return $remote->agent_hardware_inventory();
+		}, time());
+	} catch (\Throwable $e) {
+		error_log('agent inventory: ' . $e->getMessage());
+	}
 }
 
 function agent_get_snapshot($db, $remote_server_id)

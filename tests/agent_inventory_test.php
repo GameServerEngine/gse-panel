@@ -82,5 +82,20 @@ inv_check(agent_inventory_from_reply(array('success' => false, 'status' => 'bad_
 inv_check(agent_inventory_from_reply(array('success' => true, 'status' => 'ok', 'inventory_json' => '{"schema_version":9}'))['state'] === 'error', 'unknown inventory format maps to error');
 inv_check(agent_inventory_from_reply(array('success' => false, 'status' => 'agent_unreachable', 'message' => 'No response from agent.'))['state'] === 'error', 'unreachable agent maps to error');
 
+// 9. When is a check due? (no database)
+$now = 1000000;
+inv_check(agent_inventory_is_due(null, $now), 'no record: due');
+inv_check(!agent_inventory_is_due(array('checked_at' => $now - 100, 'state' => 'ok'), $now), 'ok 100 s ago: not due');
+inv_check(!agent_inventory_is_due(array('checked_at' => $now - (AGENT_INVENTORY_TTL_OK - 1), 'state' => 'ok'), $now), 'ok one second before the wait ends: not due');
+inv_check(agent_inventory_is_due(array('checked_at' => $now - AGENT_INVENTORY_TTL_OK, 'state' => 'ok'), $now), 'ok exactly at the wait: due');
+inv_check(!agent_inventory_is_due(array('checked_at' => $now - 3599, 'state' => 'unsupported'), $now), 'unsupported 3599 s ago: not due');
+inv_check(agent_inventory_is_due(array('checked_at' => $now - 3600, 'state' => 'unsupported'), $now), 'unsupported 3600 s ago: due (an updated agent is noticed within an hour)');
+inv_check(!agent_inventory_is_due(array('checked_at' => $now - 899, 'state' => 'error'), $now), 'error 899 s ago: not due');
+inv_check(agent_inventory_is_due(array('checked_at' => $now - 900, 'state' => 'error'), $now), 'error 900 s ago: due');
+inv_check(!agent_inventory_is_due(array('checked_at' => $now - 899, 'state' => 'something-new'), $now), 'an unknown state waits like an error');
+inv_check(agent_inventory_is_due(array('checked_at' => $now + 500, 'state' => 'ok'), $now), 'a check from the future (clock moved back): due');
+inv_check(agent_inventory_is_due(array('checked_at' => 0, 'state' => 'ok'), $now), 'an unusable record (time 0): due');
+inv_check(AGENT_INVENTORY_TTL_OK > AGENT_INVENTORY_TTL_UNSUPPORTED && AGENT_INVENTORY_TTL_UNSUPPORTED > AGENT_INVENTORY_TTL_ERROR, 'waits order: healthy > unsupported > error');
+
 echo $failures ? "\n$failures FAILED\n" : "\nall agent inventory tests passed\n";
 exit($failures ? 1 : 0);
