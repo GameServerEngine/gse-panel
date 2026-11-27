@@ -6,8 +6,11 @@
  * stopped, by the support page itself through billing_status_refresh_if_stale(). Either way
  * the page never needs more than one cached row to render.
  *
- *   agents      from the panel's cached agent snapshots (agent_resource_snapshots). An agent is online
- *               when it reported within BILLING_STATUS_STALE_AFTER seconds with no error.
+ *   agents      every registered agent. An agent is online when the status poller's newest sample for it
+ *               (status_sample, written by modules/status_history/poller.php) is ok and recent. If the
+ *               status history module has no samples, the cached agent snapshot is used instead
+ *               (agent_resource_snapshots: online when it reported within BILLING_STATUS_STALE_AFTER
+ *               seconds with no error).
  *   servers     every game server, with Running or Stopped asked of its agent. A server on an agent
  *               that is down is Offline. If a probe fails it is Unknown.
  *   backup_at   newest file or folder in the directory named by site config 'status' => ['backup_path'].
@@ -16,6 +19,81 @@
  */
 
 require_once __DIR__ . '/status_snapshot.php';
+
+// Pure helpers (no database access) for the status poller's settings. The billing module can run
+// without the status history module, so the file is only loaded when it is there.
+$billingStatusHistoryLib = dirname(__DIR__, 2) . '/status_history/includes/status_history_lib.php';
+if (is_file($billingStatusHistoryLib)) {
+    require_once $billingStatusHistoryLib;
+}
+
+if (!function_exists('billing_status_latest_samples')) {
+    /**
+     * The status poller's newest sample for each agent, keyed by remote_server_id.
+     * The poller writes these all the time; agent_resource_snapshots only change when an admin
+     * opens a server page, so the samples are the better sign that an agent is up.
+     * Empty when the status history module is not installed.
+     */
+    function billing_status_latest_samples(mysqli $db, string $p): array
+    {
+        $samples = array();
+        try {
+            $result = $db->query(
+                "SELECT s.remote_server_id, s.sampled_at, s.status_code
+                   FROM `{$p}status_sample` s
+                   JOIN (SELECT remote_server_id, MAX(sampled_at) AS newest
+                           FROM `{$p}status_sample`
+                          GROUP BY remote_server_id) n
+                     ON n.remote_server_id = s.remote_server_id AND n.newest = s.sampled_at"
+            );
+            while ($result && ($row = $result->fetch_assoc())) {
+                $samples[(int)$row['remote_server_id']] = $row;
+            }
+        } catch (Throwable $e) {
+            // The status_sample table does not exist on this panel.
+        }
+        return $samples;
+    }
+}
+
+if (!function_exists('billing_status_sample_stale_after')) {
+    /**
+     * Seconds after which an agent's newest sample no longer counts.
+     * The poller asks one agent per interval, so each agent gets a sample once every
+     * (agents x interval) seconds. This is the same limit the status history page uses
+     * (sv_effective_status in modules/status_history): two full cycles plus a minute.
+     */
+    function billing_status_sample_stale_after(mysqli $db, string $p, int $agentCount): int
+    {
+        $interval = 30;
+        if (function_exists('sh_settings_from_rows')) {
+            $settings = array();
+            $result = $db->query("SELECT setting, value FROM `{$p}settings` WHERE setting LIKE 'status_history_%'");
+            while ($result && ($row = $result->fetch_assoc())) {
+                $settings[$row['setting']] = $row['value'];
+            }
+            $interval = sh_settings_from_rows($settings)['interval_seconds'];
+        }
+        return 2 * max(1, $agentCount) * $interval + 60;
+    }
+}
+
+if (!function_exists('billing_status_agent_online')) {
+    /**
+     * Online when the poller's newest sample is ok and not stale. With no poller sample for the
+     * agent, fall back to its cached resource snapshot.
+     */
+    function billing_status_agent_online(array $agentRow, ?array $sample, int $now, int $sampleStaleAfter): bool
+    {
+        if ($sample !== null) {
+            return $sample['status_code'] === 'ok'
+                && ($now - (int)$sample['sampled_at']) <= $sampleStaleAfter;
+        }
+        return (int)$agentRow['collected_at'] > 0
+            && ($now - (int)$agentRow['collected_at']) <= BILLING_STATUS_STALE_AFTER
+            && trim((string)$agentRow['last_error']) === '';
+    }
+}
 
 if (!function_exists('billing_status_collect')) {
     /**
@@ -33,22 +111,29 @@ if (!function_exists('billing_status_collect')) {
             $previousState[(int)$server['id']] = (string)$server['status'];
         }
 
-        $agents = array();
-        $agentRows = array();
+        // remote_servers has no enable flag on upgraded panels (see add_remote_server_enabled_column.sql),
+        // so every registered agent is listed, as on the status history page.
+        $rows = array();
         $result = $db->query(
             "SELECT rs.remote_server_id, rs.remote_server_name, rs.agent_ip, rs.agent_port, rs.encryption_key, rs.timeout,
                     s.collected_at, s.last_error
                FROM `{$p}remote_servers` rs
                LEFT JOIN `{$p}agent_resource_snapshots` s ON s.remote_server_id = rs.remote_server_id
-              WHERE rs.enabled = 1
               ORDER BY rs.remote_server_id"
         );
         while ($result && ($row = $result->fetch_assoc())) {
-            $online = (int)$row['collected_at'] > 0
-                && ($now - (int)$row['collected_at']) <= BILLING_STATUS_STALE_AFTER
-                && trim((string)$row['last_error']) === '';
-            $agents[] = array('id' => (int)$row['remote_server_id'], 'name' => (string)$row['remote_server_name'], 'online' => $online);
-            $agentRows[(int)$row['remote_server_id']] = $row + array('online' => $online);
+            $rows[] = $row;
+        }
+
+        $samples = billing_status_latest_samples($db, $p);
+        $sampleStaleAfter = billing_status_sample_stale_after($db, $p, count($rows));
+        $agents = array();
+        $agentRows = array();
+        foreach ($rows as $row) {
+            $id = (int)$row['remote_server_id'];
+            $online = billing_status_agent_online($row, $samples[$id] ?? null, $now, $sampleStaleAfter);
+            $agents[] = array('id' => $id, 'name' => (string)$row['remote_server_name'], 'online' => $online);
+            $agentRows[$id] = $row + array('online' => $online);
         }
 
         $remotes = array();
