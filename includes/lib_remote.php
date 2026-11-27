@@ -1547,6 +1547,14 @@ class RemoteLibrary
 		return $this->decode_component_response($this->sendRequest($request));
 	}
 
+	public function agent_hardware_inventory()
+	{
+		$args = NULL;
+		$this->add_enc_chk($args);
+		$request = xmlrpc_encode_request("agent_hardware_inventory", $args);
+		return $this->decode_component_response($this->sendRequest($request));
+	}
+
 	/// Capability probe for the diagnostics contract (docs/agent-diagnostics-protocol.md).
 	/// Returns array('state' => 'offline'|'unsupported'|'ok', 'caps' => array|null).
 	/// An agent that is online but has no diag_capabilities method answers with an XML-RPC fault.
