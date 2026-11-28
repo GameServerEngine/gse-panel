@@ -29,7 +29,7 @@
     <linux>
       <exe>hlds_run</exe>
       <reserve_ports>
-        <port type="subtract" id="CLIENTPORT" cli_string="+clientport" options="s">10</port>
+        <port type="add" id="CLIENTPORT" cli_string="+clientport" options="s">10</port>
       </reserve_ports>
       <cli_template>%GAME_TYPE% %HOSTNAME% %PID_FILE% %MAP% %IP% %PORT% %PLAYERS% -strictportbind -norestart %CLIENTPORT%</cli_template>
       <server_params>

@@ -15,7 +15,7 @@
     <cli_param id="HOSTNAME" cli_string="-servername" options="sq"/>
   </cli_params>
   <reserve_ports>
-    <port type="subtract" id="QUERY_PORT" cli_string="-updateport=">485</port>
+    <port type="add" id="QUERY_PORT" cli_string="-updateport=">15</port>
   </reserve_ports>
   <console_log>output.txt</console_log>
   <max_user_amount>10</max_user_amount>

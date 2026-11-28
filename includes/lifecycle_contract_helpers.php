@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/game_ip.php';
+require_once __DIR__ . '/game_query_port.php';
 
 /**
  * Returns the protocol/port context the agent needs to validate runtime state.
@@ -8,17 +9,9 @@ function lifecycle_port_context($server_xml, $server_ip, $server_port)
 {
 	$query_port = '';
 	$rcon_port = '';
-	if (isset($server_xml->protocol) && (string)$server_xml->protocol === 'gameq') {
-		if ($server_xml->query_port) {
-			if ($server_xml->query_port['type'] == 'add') {
-				$query_port = $server_port + $server_xml->query_port;
-			} elseif ($server_xml->query_port['type'] == 'subtract') {
-				$query_port = $server_port - $server_xml->query_port;
-			}
-		}
-		if ($query_port === '') {
-			$query_port = $server_port;
-		}
+	// The query port set in the game XML (the one on the start command) wins over protocol defaults.
+	if (xml_query_port_offset($server_xml) !== null || (isset($server_xml->protocol) && (string)$server_xml->protocol === 'gameq')) {
+		$query_port = get_query_port($server_xml, $server_port);
 	} elseif (isset($server_xml->protocol) && (string)$server_xml->protocol === 'lgsl' && isset($server_xml->lgsl_query_name)) {
 		require_once('protocol/lgsl/lgsl_protocol.php');
 		$ports = lgsl_port_conversion((string)$server_xml->lgsl_query_name, $server_port, '', '');

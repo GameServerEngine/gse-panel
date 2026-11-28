@@ -70,17 +70,7 @@ function get_function_args($main_request)
 	return isset($functions["$main_request"])?$functions["$main_request"]:false;
 }
 
-function get_query_port($server_xml, $server_port)
-{
-	if ($server_xml->query_port)
-	{
-		if ($server_xml->query_port['type'] == 'add')
-			return $server_port + $server_xml->query_port;
-		if ($server_xml->query_port['type'] == 'subtract')
-			return $server_port - $server_xml->query_port;
-	}
-	return $server_port;
-}
+require_once __DIR__ . '/game_query_port.php';
 
 function get_start_cmd($user_info,$remote,$server_xml,$home_info,$mod_id,$ip,$port,$db)
 {

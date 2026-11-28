@@ -31,8 +31,9 @@ if($num_of_servers < $numberservers_to_skip_query)
 		$get_q_and_s = lgsl_port_conversion((string)$server_xml->lgsl_query_name, $port, "", "");
 		//Connection port
 		$c_port = $get_q_and_s['0'];
-		//query port
-		$q_port = $get_q_and_s['1'];
+		//query port: the one in the game XML when it sets one, else the protocol default
+		require_once(__DIR__ . '/../../includes/game_query_port.php');
+		$q_port = xml_query_port_offset($server_xml) !== null ? get_query_port($server_xml, $port) : $get_q_and_s['1'];
 		
 		// Get any query port overrides (if any)
 		require_once("includes/functions.php");

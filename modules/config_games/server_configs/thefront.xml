@@ -17,7 +17,7 @@
         <cli_param id="HOSTNAME" cli_string=""/>
       </cli_params>
       <reserve_ports>
-        <port type="add" id="QUERYPORT" cli_string="">22014</port>
+        <port type="add" id="QUERYPORT" cli_string="">15</port>
         <port type="add" id="BEACONPORT" cli_string="">1</port>
         <port type="add" id="SHUTDOWNPORT" cli_string="">2</port>
       </reserve_ports>

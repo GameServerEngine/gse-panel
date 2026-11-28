@@ -24,20 +24,7 @@
 
 require_once(dirname(__DIR__, 2) . '/includes/lifecycle_contract_helpers.php');
 require_once(dirname(__DIR__) . '/server/crash_tickets.php');
-
-function get_query_port($server_xml, $server_port) {
-	if ($server_xml->query_port) {
-		if ($server_xml->query_port['type'] == 'add') {
-			return $server_port + $server_xml->query_port;
-		}
-
-		if ($server_xml->query_port['type'] == 'subtract') {
-			return $server_port - $server_xml->query_port;
-		}
-	}
-
-	return $server_port;
-}
+require_once(dirname(__DIR__, 2) . '/includes/game_query_port.php');
 
 function get_agent_server_status($remote, $server_xml, $home_id, $server_ip, $server_port, $state_hint = "", $startup_timeout = 180)
 {

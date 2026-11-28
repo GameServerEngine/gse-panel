@@ -274,8 +274,8 @@ if (!function_exists('port_blocks_handle_post')) {
 		$message = 'Saved.';
 
 		if ($action === 'save_block_size') {
-			$block_size = port_blocks_post_int('port_block_size', 10);
-			if ($block_size < 1 || $block_size > 1000) {
+			$block_size = port_blocks_post_int('port_block_size', 100);
+			if ($block_size < 10 || $block_size > 1000) {
 				$error = 'Ports per game server must be from 1 to 1000.';
 			} else {
 				$ok = $db->query("INSERT INTO `DB_PREFIXsettings` (`setting`,`value`) VALUES ('port_block_size','" . $db->realEscapeSingle($block_size) . "') ON DUPLICATE KEY UPDATE `value`=VALUES(`value`)");
@@ -361,7 +361,7 @@ if (!function_exists('port_blocks_current_block_size')) {
 	{
 		$rows = port_blocks_rows($db, "SELECT `value` FROM `DB_PREFIXsettings` WHERE `setting`='port_block_size' LIMIT 1");
 		if (empty($rows)) {
-			$db->query("INSERT INTO `DB_PREFIXsettings` (`setting`,`value`) VALUES ('port_block_size','10') ON DUPLICATE KEY UPDATE `value`=`value`");
+			$db->query("INSERT INTO `DB_PREFIXsettings` (`setting`,`value`) VALUES ('port_block_size','100') ON DUPLICATE KEY UPDATE `value`=`value`");
 		}
 		$value = !empty($rows) ? intval($rows[0]['value']) : 10;
 		if ($value < 1 || $value > 1000) {
@@ -432,7 +432,7 @@ if (!function_exists('port_blocks_render')) {
 
 		echo "<style>.port-blocks-wrap{overflow-x:auto;max-width:100%;}.port-blocks-agents{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;}.port-blocks-agents a{box-sizing:border-box;min-width:8.5em;min-height:2.4em;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;border:1px solid currentColor;border-radius:4px;text-decoration:none;}.port-blocks-agents a.on{font-weight:bold;text-decoration:underline;}.port-blocks-bad{color:#c0392b;}</style>";
 		echo "<h2>Port Blocks</h2>";
-		echo "<p class='info'>This page decides which ports game servers are given. Each new game server gets <b>" . intval($size) . "</b> consecutive ports, starting at its game's default port and moving up until a free set is found. <b>Game port ranges</b> limit where those ports may come from, and <b>Disabled ports</b> are never handed out (the agent's own port, remote desktop and so on). Rules can be global, or apply to a single agent. Servers that already exist keep the ports they have; the list at the bottom shows whether each one fits the rules.</p>";
+		echo "<p class='info'>This page decides which ports game servers are given. Each new game server gets a whole block of <b>" . intval($size) . "</b> ports on its agent IP: 2000-" . (2000 + intval($size) - 1) . ", then " . (2000 + intval($size)) . "-" . (2000 + 2 * intval($size) - 1) . " and so on up to 24000. Its game port is the first port of the block and every other port the game uses (query, RCON, client port) is a small step above it, inside the same block. Every agent IP has its own blocks. <b>Game port ranges</b> replace 2000-24000 where set, and a block that holds a <b>Disabled port</b> is never handed out (the agent's own port, remote desktop, MySQL, Proxmox and so on). Rules can be global, or apply to a single agent. Servers that already exist keep the ports they have; the list at the bottom shows whether each one fits the rules.</p>";
 
 		echo "<div class='port-blocks-agents'><a class='" . ($scope === 'all' ? 'on' : '') . "' href='{$self}&amp;agent=all'>All rules</a><a class='" . ($scope === 'global' ? 'on' : '') . "' href='{$self}&amp;agent=global'>Global</a>";
 		foreach ($agents as $a) {
@@ -442,10 +442,10 @@ if (!function_exists('port_blocks_render')) {
 		$form_action = $self . "&amp;agent=" . port_blocks_h($scope);
 		$default_agent = ctype_digit($scope) ? $scope : '';
 
-		echo "<h3>Ports per game server</h3><form method='post' action='{$form_action}'>" . port_blocks_token_input() . "<input type='hidden' name='port_blocks_action' value='save_block_size' />Each game server gets <input type='text' name='port_block_size' value='" . intval($size) . "' size='4' inputmode='numeric' /> consecutive ports (1-1000). <input type='submit' value='Save' /></form>";
+		echo "<h3>Ports per game server</h3><form method='post' action='{$form_action}'>" . port_blocks_token_input() . "<input type='hidden' name='port_blocks_action' value='save_block_size' />Each game server gets <input type='text' name='port_block_size' value='" . intval($size) . "' size='4' inputmode='numeric' /> ports per block (10-1000). <input type='submit' value='Save' /></form>";
 
 		$ranges = $have_ranges ? port_blocks_rows($db, "SELECT * FROM `DB_PREFIXport_ranges` ORDER BY range_start ASC") : array();
-		echo "<h3>Game port ranges</h3><p class='info'>Where game servers may be given ports. With no range set for an agent, ports are taken upward from each game's default port.</p>";
+		echo "<h3>Game port ranges</h3><p class='info'>Where game servers may be given ports. With no range set for an agent, 2000-24000 is used.</p>";
 		echo "<div class='port-blocks-wrap'><table class='center'><tr><th>Applies to</th><th>First port</th><th>Last port</th><th>Ports</th><th>Note</th><th></th></tr>";
 		foreach ($ranges as &$r) {
 			$r['count'] = intval($r['range_end']) - intval($r['range_start']) + 1;

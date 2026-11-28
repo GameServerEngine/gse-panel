@@ -13,7 +13,7 @@
         <cli_param id="PORT" cli_string=""/>
       </cli_params>
       <reserve_ports>
-        <port type="add" id="RELIABLEPORT" cli_string="">1111</port>
+        <port type="add" id="RELIABLEPORT" cli_string="">15</port>
       </reserve_ports>
     </windows>
     <linux arch="x64">
@@ -24,7 +24,7 @@
         <cli_param id="PORT" cli_string=""/>
       </cli_params>
       <reserve_ports>
-        <port type="add" id="RELIABLEPORT" cli_string="">1111</port>
+        <port type="add" id="RELIABLEPORT" cli_string="">15</port>
       </reserve_ports>
       <post_install><![CDATA[
 # steamclient.so for the Steam API (LinuxGSM fix_steamcmd.sh does the same).

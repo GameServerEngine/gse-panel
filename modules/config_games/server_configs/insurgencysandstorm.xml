@@ -17,7 +17,7 @@
     <cli_param id="CONTROL_PASSWORD" cli_string="-RconPassword="/>
   </cli_params>
   <reserve_ports>
-    <port type="add" id="QUERY_PORT" cli_string="-QueryPort=">19238</port>
+    <port type="add" id="QUERY_PORT" cli_string="-QueryPort=">15</port>
     <port type="add" id="RCON_PORT" cli_string="-RconListenPort=">10</port>
   </reserve_ports>
   <cli_allow_chars>[]</cli_allow_chars>

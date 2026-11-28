@@ -17,8 +17,8 @@
         <cli_param id="PLAYERS" cli_string=""/>
       </cli_params>
       <reserve_ports>
-        <port type="add" id="TELNETPORT" cli_string="">10111</port>
-        <port type="add" id="QUERYPORT" cli_string="">18238</port>
+        <port type="add" id="TELNETPORT" cli_string="">16</port>
+        <port type="add" id="QUERYPORT" cli_string="">15</port>
       </reserve_ports>
       <server_params>
         <param id="BACKUPINTERVAL" key="-backupinterval=" type="text">

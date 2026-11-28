@@ -14,7 +14,7 @@
         <cli_param id="PLAYERS" cli_string=""/>
       </cli_params>
       <reserve_ports>
-        <port type="subtract" id="CLIENTPORT" cli_string="">10</port>
+        <port type="add" id="CLIENTPORT" cli_string="">10</port>
       </reserve_ports>
       <maps_location>valve/maps/</maps_location>
       <post_install><![CDATA[

@@ -18,7 +18,7 @@
         <cli_param id="HOME_PATH" cli_string=""/>
       </cli_params>
       <reserve_ports>
-        <port type="subtract" id="HTTPPORT" cli_string="">18935</port>
+        <port type="add" id="HTTPPORT" cli_string="">15</port>
       </reserve_ports>
       <server_params>
         <param id="HTTPUSER" key="-webuser" type="text">
@@ -41,7 +41,7 @@
         <cli_param id="HOME_PATH" cli_string=""/>
       </cli_params>
       <reserve_ports>
-        <port type="subtract" id="HTTPPORT" cli_string="">18935</port>
+        <port type="add" id="HTTPPORT" cli_string="">15</port>
       </reserve_ports>
       <server_params>
         <param id="HTTPUSER" key="-webuser" type="text">

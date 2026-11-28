@@ -17,7 +17,7 @@
     <cli_param id="HOSTNAME" cli_string="-servername=" options="q"/>
   </cli_params>
   <reserve_ports>
-    <port type="subtract" id="QUERY_PORT" cli_string="-queryport=">359</port>
+    <port type="add" id="QUERY_PORT" cli_string="-queryport=">15</port>
   </reserve_ports>
   <console_log>Outlaws/Saved/Logs/Outlaws.log</console_log>
   <max_user_amount>150</max_user_amount>

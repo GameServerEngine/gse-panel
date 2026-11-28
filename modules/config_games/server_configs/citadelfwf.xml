@@ -124,7 +124,7 @@
   </os>
   <cli_template>-nosteamclient -server</cli_template>
   <reserve_ports>
-    <port type="add" id="QUERY_PORT" cli_string="?QueryPort=">19238</port>
+    <port type="add" id="QUERY_PORT" cli_string="?QueryPort=">15</port>
   </reserve_ports>
   <console_log>Citadel/Saved/Logs/Citadel.log</console_log>
   <max_user_amount>70</max_user_amount>

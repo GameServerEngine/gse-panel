@@ -7,7 +7,7 @@
     <windows arch="x64">
       <exe>SquadGameServer.exe</exe>
       <reserve_ports>
-        <port type="add" id="QUERY_PORT" cli_string="QueryPort=">19378</port>
+        <port type="add" id="QUERY_PORT" cli_string="QueryPort=">15</port>
       </reserve_ports>
       <console_log>SquadGame/Saved/Logs/SquadGame.log</console_log>
       <replace_texts>
@@ -47,7 +47,7 @@
     <linux arch="x64">
       <exe>SquadGameServer.sh</exe>
       <reserve_ports>
-        <port type="add" id="QUERY_PORT" cli_string="QueryPort=">1</port>
+        <port type="add" id="QUERY_PORT" cli_string="QueryPort=">15</port>
         <port type="add" id="RCON_PORT" cli_string="RconPort=">2</port>
       </reserve_ports>
       <console_log>SquadGame/Saved/Logs/Squad.log</console_log>

@@ -534,8 +534,8 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 						$get_q_and_s = lgsl_port_conversion($query_name, $server_home['port'], "", "");
 						//Connection port
 						$c_port = $get_q_and_s['0'];
-						//query port
-						$q_port = $get_q_and_s['1'];
+						//query port: the one in the game XML when it sets one, else the protocol default
+						$q_port = xml_query_port_offset($server_xml) !== null ? get_query_port($server_xml, $server_home['port']) : $get_q_and_s['1'];
 						//software port
 						$s_port = $get_q_and_s['2'];
 							if($status === "online")

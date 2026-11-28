@@ -93,9 +93,9 @@
         <cli_param id="IP" cli_string="" />
       </cli_params>
       <reserve_ports>
-        <port type="add" id="QUERYPORT" cli_string="">23292</port>
-        <port type="add" id="RMIPORT" cli_string="">3497</port>
-        <port type="add" id="RMIREGPORT" cli_string="">3496</port>
+        <port type="add" id="QUERYPORT" cli_string="">3</port>
+        <port type="add" id="RMIPORT" cli_string="">1</port>
+        <port type="add" id="RMIREGPORT" cli_string="">2</port>
       </reserve_ports>
       <post_install>
 # steamclient.so for the Steam API (LinuxGSM fix_steamcmd.sh does the same).

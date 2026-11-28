@@ -14,7 +14,7 @@
         <cli_param id="HOSTNAME" cli_string=""/>
       </cli_params>
       <reserve_ports>
-        <port type="add" id="QUERYPORT" cli_string="">19238</port>
+        <port type="add" id="QUERYPORT" cli_string="">15</port>
       </reserve_ports>
       <post_install><![CDATA[
 # steamclient.so for the Steam API (LinuxGSM fix_steamcmd.sh does the same).

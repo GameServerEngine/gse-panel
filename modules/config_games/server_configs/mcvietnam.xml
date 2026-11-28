@@ -18,7 +18,7 @@
         <cli_param id="PLAYERS" cli_string=""/>
       </cli_params>
       <reserve_ports>
-        <port type="subtract" id="CLIENTPORT" cli_string="">10</port>
+        <port type="add" id="CLIENTPORT" cli_string="">10</port>
         <port type="add" id="SOURCETVPORT" cli_string="">5</port>
       </reserve_ports>
       <maps_location>vietnam/maps/</maps_location>
@@ -50,7 +50,7 @@
         <cli_param id="PLAYERS" cli_string=""/>
       </cli_params>
       <reserve_ports>
-        <port type="subtract" id="CLIENTPORT" cli_string="">10</port>
+        <port type="add" id="CLIENTPORT" cli_string="">10</port>
         <port type="add" id="SOURCETVPORT" cli_string="">5</port>
       </reserve_ports>
       <maps_location>vietnam/maps/</maps_location>

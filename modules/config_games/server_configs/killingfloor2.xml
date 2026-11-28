@@ -91,8 +91,8 @@
   </cli_params>
   <reserve_ports>
     <port type="add" id="WEB_ADMIN_PORT" cli_string="-WebAdminPort=">10</port>
-    <port type="add" id="QUERY_PORT" cli_string="-QueryPort=">19238</port>
-    <port type="add" id="STEAM_PORT">12783</port>
+    <port type="add" id="QUERY_PORT" cli_string="-QueryPort=">15</port>
+    <port type="add" id="STEAM_PORT">16</port>
   </reserve_ports>
   <map_list>maplist.txt</map_list>
   <exe_location>Binaries/Win64</exe_location>
