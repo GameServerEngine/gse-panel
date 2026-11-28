@@ -8,6 +8,8 @@
  * for admins only; the status pages show percentages.
  */
 
+require_once __DIR__ . '/game_usage_lib.php';
+
 /** Settings with their defaults. Keys in the panel settings table are status_history_<key>. */
 function sh_default_settings()
 {
@@ -90,6 +92,8 @@ function sh_rate_bytes_s($prev_total, $cur_total, $seconds)
  * Reads the agent's status_sample reply.
  * Returns the fields as an array, or null when the reply is not a good sample.
  * Top processes come back as top_cpu and top_ram lists of array(pid, name, value).
+ * Game servers (home.<id>) and other containers (container.<n>) come back as homes and containers
+ * lists, read by game_usage_lib.php.
  */
 function sh_parse_agent_reply($reply)
 {
@@ -100,7 +104,7 @@ function sh_parse_agent_reply($reply)
 	if ($semi === false || substr($reply, 0, $semi) !== '1') {
 		return null;
 	}
-	$fields = array('top_cpu' => array(), 'top_ram' => array());
+	$fields = array('top_cpu' => array(), 'top_ram' => array(), 'homes' => array(), 'containers' => array());
 	$lines = preg_split('/\r?\n/', substr($reply, $semi + 1));
 	foreach ($lines as $line) {
 		$eq = strpos($line, '=');
@@ -118,6 +122,20 @@ function sh_parse_agent_reply($reply)
 					'name' => substr($name, 0, 60),
 					'value' => (float)$parts[2],
 				);
+			}
+			continue;
+		}
+		if (preg_match('/^home\.(\d+)$/', $key, $m)) {
+			$home = gu_parse_home($m[1], $value);
+			if ($home !== null) {
+				$fields['homes'][] = $home;
+			}
+			continue;
+		}
+		if (preg_match('/^container\.\d+$/', $key)) {
+			$container = gu_parse_container($value);
+			if ($container !== null) {
+				$fields['containers'][] = $container;
 			}
 			continue;
 		}

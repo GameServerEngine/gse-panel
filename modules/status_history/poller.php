@@ -120,6 +120,7 @@ function sh_last_sample(mysqli $db, $prefix, $sid)
 function sh_poll_server(mysqli $db, $prefix, array $server, $now)
 {
 	$sid = (int)$server['remote_server_id'];
+	$parsed = null;
 	try {
 		$remote = new RemoteLibrary($server['agent_ip'], $server['agent_port'], $server['encryption_key'], 5);
 		$reply = $remote->status_sample();
@@ -142,6 +143,94 @@ function sh_poll_server(mysqli $db, $prefix, array $server, $now)
 	}
 	$row['remote_server_id'] = $sid;
 	sh_insert_row($db, $prefix . 'status_sample', $row);
+	if ($parsed !== null) {
+		gu_store_samples($db, $prefix, $sid, $parsed, $now);
+	}
+}
+
+/** game_key of every game server on one agent, by home id. */
+function gu_game_keys(mysqli $db, $prefix, $sid)
+{
+	$out = array();
+	$stmt = $db->prepare('SELECT h.`home_id`, c.`game_key` FROM `' . $prefix . 'server_homes` h JOIN `' . $prefix . 'config_homes` c ON c.`home_cfg_id` = h.`home_cfg_id` WHERE h.`remote_server_id` = ?');
+	if (!$stmt) {
+		return $out;
+	}
+	$stmt->bind_param('i', $sid);
+	$stmt->execute();
+	$res = $stmt->get_result();
+	while ($res && ($row = $res->fetch_assoc())) {
+		$out[(int)$row['home_id']] = $row['game_key'];
+	}
+	$stmt->close();
+	return $out;
+}
+
+/** Stores one game_sample row per game server and container in the agent's reply. */
+function gu_store_samples(mysqli $db, $prefix, $sid, array $parsed, $now)
+{
+	foreach (gu_build_rows($parsed, $sid, $now, gu_game_keys($db, $prefix, $sid)) as $row) {
+		sh_insert_row($db, $prefix . 'game_sample', $row);
+	}
+}
+
+/** Rows in [from, to) grouped by series (one game server or container on one agent). */
+function gu_series_between(mysqli $db, $table, $timeColumn, $from, $to)
+{
+	$out = array();
+	$stmt = $db->prepare('SELECT * FROM `' . $table . '` WHERE `' . $timeColumn . '` >= ? AND `' . $timeColumn . '` < ?');
+	$stmt->bind_param('ii', $from, $to);
+	$stmt->execute();
+	$res = $stmt->get_result();
+	while ($res && ($row = $res->fetch_assoc())) {
+		$out[gu_series_key($row)][] = $row;
+	}
+	$stmt->close();
+	return $out;
+}
+
+/** Rolls every finished clock hour of game samples since the last game hour row (at most 24 per loop). */
+function gu_rollup_hours_pending(mysqli $db, $prefix, $now)
+{
+	$last = sh_scalar($db, 'SELECT MAX(`bucket_start`) FROM `' . $prefix . 'game_hour`');
+	if ($last !== null) {
+		$from = (int)$last + 3600;
+	} else {
+		$first = sh_scalar($db, 'SELECT MIN(`sampled_at`) FROM `' . $prefix . 'game_sample`');
+		if ($first === null) {
+			return;
+		}
+		$from = sh_hour_start($first);
+	}
+	$lastComplete = sh_hour_start($now) - 3600;
+	$count = 0;
+	for ($h = $from; $h <= $lastComplete && $count < 24; $h += 3600, $count++) {
+		foreach (gu_series_between($db, $prefix . 'game_sample', 'sampled_at', $h, $h + 3600) as $samples) {
+			sh_insert_row($db, $prefix . 'game_hour', gu_rollup_samples($samples, $h), true);
+		}
+	}
+}
+
+/** Rolls every finished local day of game hours since the last game day row (at most 3 per loop). */
+function gu_rollup_days_pending(mysqli $db, $prefix, $timezone, $now)
+{
+	$last = sh_scalar($db, 'SELECT MAX(`bucket_start`) FROM `' . $prefix . 'game_day`');
+	if ($last !== null) {
+		$from = sh_next_day_start((int)$last, $timezone);
+	} else {
+		$first = sh_scalar($db, 'SELECT MIN(`bucket_start`) FROM `' . $prefix . 'game_hour`');
+		if ($first === null) {
+			return;
+		}
+		$from = sh_day_start($first, $timezone);
+	}
+	$today = sh_day_start($now, $timezone);
+	$count = 0;
+	for ($d = $from; $d < $today && $count < 3; $d = sh_next_day_start($d, $timezone), $count++) {
+		foreach (gu_series_between($db, $prefix . 'game_hour', 'bucket_start', $d, sh_next_day_start($d, $timezone)) as $hours) {
+			sh_insert_row($db, $prefix . 'game_day', gu_rollup_hours($hours, $d), true);
+		}
+	}
 }
 
 /** Samples in [from, to) grouped by server id. */
@@ -225,6 +314,9 @@ function sh_prune(mysqli $db, $prefix, array $settings, $now)
 	$db->query('DELETE FROM `' . $prefix . 'status_sample` WHERE `sampled_at` < ' . ((int)$now - $settings['raw_hours'] * 3600));
 	$db->query('DELETE FROM `' . $prefix . 'status_hour` WHERE `bucket_start` < ' . ((int)$now - $settings['hourly_days'] * 86400));
 	$db->query('DELETE FROM `' . $prefix . 'status_day` WHERE `bucket_start` < ' . ((int)$now - $settings['daily_days'] * 86400));
+	$db->query('DELETE FROM `' . $prefix . 'game_sample` WHERE `sampled_at` < ' . ((int)$now - $settings['raw_hours'] * 3600));
+	$db->query('DELETE FROM `' . $prefix . 'game_hour` WHERE `bucket_start` < ' . ((int)$now - $settings['hourly_days'] * 86400));
+	$db->query('DELETE FROM `' . $prefix . 'game_day` WHERE `bucket_start` < ' . ((int)$now - $settings['daily_days'] * 86400));
 }
 
 sh_log('status poller started');
@@ -249,6 +341,8 @@ while (true) {
 	$timezone = sh_panel_timezone(isset($raw['time_zone']) ? $raw['time_zone'] : '');
 	sh_rollup_hours_pending($db, $prefix, $now);
 	sh_rollup_days_pending($db, $prefix, $timezone, $now);
+	gu_rollup_hours_pending($db, $prefix, $now);
+	gu_rollup_days_pending($db, $prefix, $timezone, $now);
 	if ($now - $lastPrune >= 600) {
 		sh_prune($db, $prefix, $settings, $now);
 		$lastPrune = $now;

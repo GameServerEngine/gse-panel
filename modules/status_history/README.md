@@ -13,6 +13,17 @@ Default module. Admins can turn reporting off, and change the poll interval and 
   - `status_sample`: one row per poll, kept for the raw window (default 6 hours).
   - `status_hour`: one row per server per clock hour, kept for the hourly window (default 7 days).
   - `status_day`: one row per server per local day, kept for the daily window (default 365 days).
+- `includes/game_usage_lib.php`: the same for game usage (parsing the `home.` and `container.`
+  lines, building rows, hourly and daily rollups). Tests: `tests/game_usage_test.php`.
+- Game usage tables (migration `sql/migrations/0013_game_usage.sql`), same keep times as above:
+  - `game_sample`: one row per game server or container per poll.
+  - `game_hour`, `game_day`: one row per game server or container per hour or local day. CPU is in
+    cores in use, and averages and peaks count only the samples where the server was RUNNING, so
+    they show what a game uses while it runs. Disk is the largest folder size seen.
+  - A series is one game server (`home_id`, with the `game_key` of its game) or one container the
+    panel does not manage (`home_id` 0, `label` = container name, `process` = its main process).
+  - Administration > Resource Planner shows the last 7 days per game type and per container, next
+    to the billing minimum set for the game.
 
 ## Settings (panel settings table)
 
@@ -35,6 +46,12 @@ Encrypted like `mon_stats`. The reply starts with `1;` and then one `key=value` 
 - `disk_total`, `disk_used`: bytes for the root filesystem
 - `proc_cpu.1` to `proc_cpu.5` and `proc_ram.1` to `proc_ram.5`: `pid|name|value`
   (value is CPU percent for `proc_cpu` and bytes of RAM for `proc_ram`)
+- `home.<id>`: `state|cpu|ram|disk|disk_at`, one per game server with a status file. CPU is percent
+  of the machine, RAM in bytes, both for the game and bot process trees (and the server's own
+  container). `disk` is the folder size in bytes, measured by the agent in the background at most
+  once an hour, and `disk_at` when; both are empty until the first measurement.
+- `container.<n>` (Linux): `name|image|cpu|ram|process`, one per Docker container that is not a game
+  server's own container.
 
 Until an agent implements `status_sample`, its server shows UNKNOWN (`unknown_agent`), not DOWN.
 
