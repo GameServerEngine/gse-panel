@@ -27,5 +27,12 @@ All 236 XMLs validate against the schema. Server page rendered from the staged t
 - Fixed in the original code (attribute, parameter order, mb_convert_encoding, variables initialised instead of unset). Both pages then rendered with zero notices.
 - Cause of them being visible: display_errors = On in core's Apache php.ini (logged in TODO; not changed).
 
+## Follow-up (2026-11-28 10:22-10:26 CST): game picture instead of black
+- Requested: default to the game's ordering-page picture instead of black; map uploads should be possible.
+- New game_picture_path($server_home): catalog_game.img_url, else catalog_guess_image() on the XML file name, else images/map_none.png. get_map_path() takes $server_home as a 4th argument; LGSLMonitor, GameQMonitor, ref_servermonitor, mini_start and dsi/image pass it.
+- Tested on the live database: all 9 servers get their ordering-page picture (Arma 2 OA, DayZ, Urban Terror, CS:S, Garry's Mod, TeamSpeak 3); a game with no catalog row gets its matching images/games picture; an unknown game gets black.
+- Found while testing: gametracker answers HTTP/2, which get_first_existing_file() never accepted, so no online map picture had loaded. Fixed; CS:S de_dust2 now returns the gametracker picture.
+- Upload (upload_map_image.php, admin only) already existed; its path came from unchecked form fields. Hardened.
+
 ## Git Commits
 See the commit that adds this file.

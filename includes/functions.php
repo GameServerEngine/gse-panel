@@ -97,11 +97,44 @@ function genRandomString($length) {
 	return $string;
 }
 
-function get_map_path($query_name,$mod,$map) {
+/**
+ * The game's picture on the ordering page: catalog_game.img_url, else the images/games picture named
+ * like the game's XML (7daystodie.xml and 7daystodie.jpg), else plain black.
+ * $server_home needs home_cfg_id and home_cfg_file (any server_homes row joined with config_homes).
+ */
+function game_picture_path($server_home) {
+	global $db;
+	static $cache = array();
+	$cfg_id = isset($server_home['home_cfg_id']) ? (int)$server_home['home_cfg_id'] : 0;
+	$cfg_file = isset($server_home['home_cfg_file']) ? (string)$server_home['home_cfg_file'] : '';
+	$key = $cfg_id . '|' . $cfg_file;
+	if (isset($cache[$key]))
+		return $cache[$key];
 
-	// No real map (Arma and others report "-"): no picture, rather than one for another game.
+	$dir = __DIR__ . '/../images/games';
+	$picture = '';
+	if ($cfg_id > 0 && is_object($db) && method_exists($db, 'resultQuery')) {
+		$rows = @$db->resultQuery("SELECT img_url FROM DB_PREFIXcatalog_game WHERE home_cfg_id = $cfg_id LIMIT 1");
+		if (is_array($rows) && !empty($rows[0]['img_url']))
+			$picture = basename((string)$rows[0]['img_url']);
+	}
+	if (($picture === '' || !is_file("$dir/$picture")) && $cfg_file !== '') {
+		require_once __DIR__ . '/../modules/billing/includes/catalog_games.php';
+		$picture = catalog_guess_image($cfg_file, catalog_list_images($dir));
+	}
+	return $cache[$key] = ($picture !== '' && is_file("$dir/$picture")) ? "images/games/$picture" : "images/map_none.png";
+}
+
+/**
+ * A picture of the map: an uploaded one, gametracker's, or LGSL's. When there is none, or the game
+ * reports no map ("-" for Arma and others), the game's ordering-page picture ($server_home given)
+ * or plain black. Never another game's logo.
+ */
+function get_map_path($query_name,$mod,$map,$server_home = null) {
+
+	$fallback = $server_home ? game_picture_path($server_home) : "images/map_none.png";
 	if (trim((string)$map) === '' || preg_match('/^[-_]+$/', (string)$map))
-		return "images/map_none.png";
+		return $fallback;
 
 	$mod_gt = $mod;
 
@@ -142,9 +175,7 @@ function get_map_path($query_name,$mod,$map) {
 		"protocol/lgsl/maps/$query_name/$map.jpg",
 		"protocol/lgsl/maps/$query_name/$map.gif",
 		"protocol/lgsl/maps/$query_name/$map.png",
-		// Only pictures of this map; the query protocol's logo (for example "source" for every Steam
-		// game) is not shown for other games. Without one the picture is plain black.
-		"images/map_none.png"
+		$fallback
 	);
 
 	return get_first_existing_file($map_paths, 'http://gametracker.com', 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:51.0) Gecko/20100101 Firefox/51.0');

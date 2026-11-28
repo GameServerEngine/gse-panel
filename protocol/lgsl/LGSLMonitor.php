@@ -78,7 +78,7 @@ if($num_of_servers < $numberservers_to_skip_query)
 			$player_list = print_player_list($data['p'],$players,$playersmax);
 			
 		$playersList = $data['p'];
-		$maplocation = get_map_path($query_name,$mod,$map);
+		$maplocation = get_map_path($query_name,$mod,$map,$server_home);
 	}
 	else
 		$status = "half";

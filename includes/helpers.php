@@ -178,7 +178,8 @@ function get_first_existing_file($paths, $referrer = "", $agent = "")
 				// Reset timeout to old value
 				ini_set('default_socket_timeout', $origSocketTimeout);
 			}
-			if(trim($file_headers[0]) == 'HTTP/1.0 200 OK' || trim($file_headers[0]) == 'HTTP/1.1 200 OK') return $path;
+			// Any HTTP version: gametracker answers "HTTP/2 200" with no reason phrase.
+			if(isset($file_headers[0]) && preg_match('#^HTTP/[0-9.]+\s+200\b#', trim($file_headers[0]))) return $path;
 		}
 
         if (file_exists($path)) return $path;

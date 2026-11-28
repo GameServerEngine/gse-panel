@@ -746,7 +746,7 @@ elseif($server_home['home_id'] == $_POST['home_id'])
 	{
 		$map_lc = preg_replace("/[^a-z0-9_]/", "_", strtolower($cli_param_data['MAP']));
 	//----------+ getting the maps image location.
-		$maplocation = get_map_path($query_name,$server_xml->mods->mod['key'],$map_lc);
+		$maplocation = get_map_path($query_name,$server_xml->mods->mod['key'],$map_lc,$server_home);
 		echo "<tr><td rowspan='6' style='width:160px;'><img src='".$maplocation."' /></td><td class='right'>". get_lang("map") .
 			":</td><td class='left'>".$cli_param_data['MAP']."</td></tr>";
 	}

@@ -192,7 +192,7 @@ function exec_module(){
 
 			case "sky":
 				if($status != "offline"){
-					$mapFile = get_map_path($query_name, $mod, $map);
+					$mapFile = get_map_path($query_name, $mod, $map, $server_home);
 					if(cURLEnabled()){
 						$img_map = curlCacheImage(DSI_BASEPATH, $mapFile);
 					}else{

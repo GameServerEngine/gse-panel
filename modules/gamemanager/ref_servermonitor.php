@@ -91,7 +91,7 @@ function exec_module()
 		// No query: the server is online (the agent checked it) but its name, map and players are unknown.
 		$status = "online";
 		$no_query = true;
-		$maplocation = get_map_path($query_name,$mod,'');
+		$maplocation = get_map_path($query_name,$mod,'',$server_home);
 		@$notifications .= get_lang("query_protocol_not_supported");
 	}
 	$map_image_upload = '<br><button class="upload-image" id="'.$home_id.'" data-map="'.$map.'" data-mod_id="'.$mod_id.'" onClick="uploadMapImg(this);" >'. get_lang("upload_map_image") .'</button>';

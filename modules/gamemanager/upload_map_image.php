@@ -143,12 +143,18 @@ function exec_module() {
 
 	if( isset($_POST['home_id']) and isset($_POST['mod_id']) and isset($_POST['map']) and isset($_POST['extension']) )
 	{
-		$home_id = $_POST['home_id'];
-		$mod_id = $_POST['mod_id'];
-		$map = $_POST['map'];
-		$extension = $_POST['extension'];
+		$home_id = (int)$_POST['home_id'];
+		$mod_id = (int)$_POST['mod_id'];
+		// The same file name get_map_path() looks for; nothing else may reach the path.
+		$map = preg_replace("/[^a-z0-9_]/", "_", strtolower((string)$_POST['map']));
+		$extension = strtolower((string)$_POST['extension']);
 
 		$home_info = $db->getGameHome($home_id);
+		if (!$home_info || !isset($home_info['mods'][$mod_id]) || $map === '' || preg_match('/^_+$/', $map) || !in_array($extension, array('jpg', 'png', 'gif'), true))
+		{
+			print_lang('unknown_errors');
+			return;
+		}
 
 		$mods = $home_info['mods'];
 		$current_mod_info = $mods[$mod_id];
@@ -169,11 +175,20 @@ function exec_module() {
 		else
 			$query_name = $mod; // If query name does not exist use mod key instead.
 
+		$query_name = preg_replace("/[^a-z0-9_]/i", "", (string)$query_name);
+		$mod = preg_replace("/[^a-z0-9_]/i", "", (string)$mod);
 		$dest_path = "protocol". DIRECTORY_SEPARATOR ."lgsl". DIRECTORY_SEPARATOR ."maps". DIRECTORY_SEPARATOR ."$query_name". DIRECTORY_SEPARATOR ."$mod";
 		$dest_file = $dest_path . DIRECTORY_SEPARATOR . "$map.$extension";
 
+		$image_type = array('jpg' => IMAGETYPE_JPEG, 'png' => IMAGETYPE_PNG, 'gif' => IMAGETYPE_GIF);
 		if( $_FILES['map-image']['error'] == 0 )
 		{
+			$info = @getimagesize($_FILES['map-image']['tmp_name']);
+			if (!$info || $info[2] !== $image_type[$extension])
+			{
+				print_lang('unknown_errors');
+				return;
+			}
 			if( !file_exists($dest_path))
 			{
 				if(!@mkdir($dest_path, 0700, true))

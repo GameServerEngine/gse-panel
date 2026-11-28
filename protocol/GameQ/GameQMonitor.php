@@ -72,7 +72,7 @@ if($num_of_servers < $numberservers_to_skip_query)
 		else
 			$address = "$ip:$port";
 		$playersList = $results['server']['players'];
-		$maplocation = get_map_path($query_name,$mod,$map);
+		$maplocation = get_map_path($query_name,$mod,$map,$server_home);
 	}
 	else 
 		$status = "half";
