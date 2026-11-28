@@ -311,15 +311,16 @@ function cat_render_headroom(mysqli $db, string $prefix, string $csrf): void
     $headroom = catalog_admin_headroom($db, $prefix);
     ?>
     <details class="cat-box">
-      <summary><strong>Placement headroom</strong></summary>
-      <p>When a customer orders, an agent is only picked if its use stays under these percentages.</p>
+      <summary><strong>Resource allowance — placement headroom</strong></summary>
+      <p>Set the maximum projected resource usage for new orders across all locations. Raising CPU or RAM allows tighter packing; it does not change measured game demand. Disk installation, staging and growth requirements must fit within physical space, even at 100%. Missing or stale measurements still block orders.</p>
       <form method="post" action="<?php echo cat_url(); ?>">
         <input type="hidden" name="csrf" value="<?php echo cat_h($csrf); ?>">
         <input type="hidden" name="action" value="save_headroom">
         <?php foreach (array('cpu' => 'CPU %', 'ram' => 'RAM %', 'disk' => 'Disk %') as $key => $label) : ?>
-          <label><?php echo cat_h($label); ?>
-            <input type="number" min="1" max="100" class="cat-input" name="headroom_<?php echo $key; ?>_pct"
-                   value="<?php echo (int)$headroom[$key]; ?>"></label>
+          <p><label for="headroom_<?php echo $key; ?>"><?php echo cat_h($label); ?> maximum projected use:
+            <output id="headroom_<?php echo $key; ?>_value"><?php echo (int)$headroom[$key]; ?>%</output></label><br>
+            <input type="range" min="1" max="100" step="1" id="headroom_<?php echo $key; ?>" name="headroom_<?php echo $key; ?>_pct"
+                   value="<?php echo (int)$headroom[$key]; ?>" oninput="document.getElementById(this.id + '_value').textContent = this.value + '%'" style="width: min(100%, 340px)"></p>
         <?php endforeach; ?>
         <p><button type="submit" class="cat-button">Save headroom</button></p>
       </form>

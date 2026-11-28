@@ -115,12 +115,12 @@ function placement_bootstrap(mysqli $db, string $prefix, array $o, int $slots, i
     // Conservative planning envelopes, not measured workload guarantees.
     $ram = 1073741824; $disk = 10737418240;
     if ($sample['cores'] < 2 || $sample['cpu_pct'] > 100 ||
-        $sample['cpu_pct'] + 100 / $sample['cores'] > min(70, $limits['cpu']))
+        $sample['cpu_pct'] + 100 / $sample['cores'] > $limits['cpu'])
         return 'insufficient pilot CPU';
-    if ($sample['mem_total_b'] <= 0 || $sample['mem_used_b'] + $ram > $sample['mem_total_b'] * min(70,$limits['ram']) / 100)
+    if ($sample['mem_total_b'] <= 0 || $sample['mem_used_b'] + $ram > $sample['mem_total_b'] * $limits['ram'] / 100)
         return 'insufficient pilot RAM';
     if ($sample['disk_total_b'] <= 0 ||
-        $sample['disk_used_b'] + $policy['disk_reserved_b'] + $disk > $sample['disk_total_b'] * min(85,$limits['disk']) / 100)
+        $sample['disk_used_b'] + $policy['disk_reserved_b'] + $disk > $sample['disk_total_b'] * min(100,$limits['disk']) / 100)
         return 'insufficient pilot disk';
     $lock = $expires ? ' FOR UPDATE' : '';
     $res = $db->query("SELECT invoice_id,offer_id,slots FROM `{$prefix}placement_hold`

@@ -14,8 +14,14 @@ expect_resource(placement_evaluate($db,$p,109,16)!=='','CS2 stays closed in pilo
 $db->query("UPDATE {$p}config_homes SET game_key='cstrike' WHERE home_cfg_id=10");
 expect_resource(placement_evaluate($db,$p,109,16)==='','light game open');
 expect_resource(placement_evaluate($db,$p,109,32)!=='','slot ceiling');
+$db->query("UPDATE {$p}billing_config SET headroom_cpu_pct=10");
+expect_resource(placement_evaluate($db,$p,109,16)==='insufficient pilot CPU','CPU slider tightens acceptance');
+$db->query("UPDATE {$p}billing_config SET headroom_cpu_pct=90,headroom_ram_pct=10");
+expect_resource(placement_evaluate($db,$p,109,16)==='insufficient pilot RAM','RAM slider tightens acceptance');
+$db->query("UPDATE {$p}billing_config SET headroom_ram_pct=90,headroom_disk_pct=100");
+expect_resource(placement_evaluate($db,$p,109,16)==='','CPU and RAM allowances configurable');
 $db->query("UPDATE {$p}status_sample SET disk_used_b=140000000000 WHERE remote_server_id=9");
-expect_resource(placement_evaluate($db,$p,109,16)==='insufficient pilot disk','projected storage checked');
+expect_resource(placement_evaluate($db,$p,109,16)==='insufficient pilot disk','physical storage checked even at 100 percent');
 $db->query("UPDATE {$p}status_sample SET disk_used_b=8200000000,sampled_at=1 WHERE remote_server_id=9");
 expect_resource(placement_evaluate($db,$p,109,16)!=='','stale blocked');
 $db->query("UPDATE {$p}status_sample SET sampled_at=$now WHERE remote_server_id=9");
