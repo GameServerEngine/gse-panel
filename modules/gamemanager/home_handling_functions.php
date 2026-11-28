@@ -31,13 +31,13 @@ function get_agent_server_status($remote, $server_xml, $home_id, $server_ip, $se
 	$query_port = "";
 	$rcon_port = "";
 
-	if (isset($server_xml->protocol) && (string)$server_xml->protocol === "gameq") {
+	// The query port the game XML sets (the one on the start command) wins over protocol defaults.
+	if (xml_query_port_offset($server_xml) !== null || (isset($server_xml->protocol) && (string)$server_xml->protocol === "gameq")) {
 		$query_port = get_query_port($server_xml, $server_port);
 	} elseif (isset($server_xml->protocol) && (string)$server_xml->protocol === "lgsl" && isset($server_xml->lgsl_query_name)) {
 		require_once('protocol/lgsl/lgsl_protocol.php');
 		$get_ports = lgsl_port_conversion((string)$server_xml->lgsl_query_name, $server_port, "", "");
-		// The query port the game XML sets (the one on the start command) wins over the LGSL default.
-		$query_port = xml_query_port_offset($server_xml) !== null ? get_query_port($server_xml, $server_port) : $get_ports['1'];
+		$query_port = isset($get_ports['1']) ? $get_ports['1'] : "";  // only reached when the XML sets no query port
 	} elseif (isset($server_xml->protocol) && (string)$server_xml->protocol === "teamspeak3") {
 		$query_port = "10011";
 	}

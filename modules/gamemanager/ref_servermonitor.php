@@ -113,7 +113,9 @@ function exec_module()
 			if (empty($no_query))
 			{
 				@$onlineT .= get_lang("hostname") .": <marquee class='hostname'>" . htmlentities($name) . "</marquee><br />";
-				@$onlineT .= get_lang("current_map") . ": " . ((isset($mapRaw) && !empty($mapRaw)) ? htmlentities($mapRaw) : htmlentities((string)$currentmap));
+				$shown_map = (isset($mapRaw) && !empty($mapRaw)) ? (string)$mapRaw : (string)$currentmap;
+				if ($shown_map !== '')
+					$onlineT .= get_lang("current_map") . ": " . htmlentities($shown_map);
 			}
 			$onlineT .= "</div>";
 		}

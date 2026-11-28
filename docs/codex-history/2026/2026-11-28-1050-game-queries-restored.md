@@ -17,5 +17,9 @@ Prefer LGSL / GameQ (or GameDig); the image module should work on games that sup
 ## Validation Performed
 All 236 XMLs validate against the schema. Server page rendered from the staged tree against the live database for 953 (CS:S), 954 (Gmod), 952 (Urban Terror), 49, 50, 51, 951 (Arma 2 OA) and 52 (DayZ): all show hostname and map; 951 shows its player list (1/20). Tests pass (game_query_port incl. new guards, port_allocator, start_status_answer, game_param_options, game_usage, agent_inventory, status_sync); lifecycle_contract_helpers_test fails as before (logged in TODO).
 
+## Follow-up (2026-11-28 10:02-10:15 CST): map picture and TeamSpeak 3
+- Map picture: get_map_path fell back to the query protocol's logo (Source logo for an Arma 2 OA server using the Steam query); it now uses only pictures of the map, else plain black (images/map_none.png), and none when the game reports no map ("-").
+- TeamSpeak 3: test server 955 "TeamSpeak 3 Test" on game6 (75.127.4.194:2100, block 2100-2199, ServerQuery 2124), installed from the official 3.13.7 Linux archive; its serveradmin password is the server's control password in the panel. Fixed: teamspeak3.xml Linux exe_location; TS3Monitor, protocol/TeamSpeak3/functions.php and get_agent_server_status read the XML query port; no map line for TS3. Verified: the server page shows the hostname and channel tree, the game monitor shows the Full Teamspeak3 Management button with query 2124, and the teamspeak3 module library logs in as serveradmin and reads the server.
+
 ## Git Commits
 See the commit that adds this file.

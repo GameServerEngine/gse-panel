@@ -208,3 +208,5 @@
 | issue | Query monitors skip queries when the user owns query_num_servers_stop (default 15) servers or more; with more servers the server page shows no hostname/map. Revisit now that each server is queried only when shown. | open | Claude | |
 | issue | config_homes has 4 rows for some merged XMLs (teamspeak3, minecraft, openttd, warsow, unturned ...): the current game_key plus old per-OS keys (teamspeak3_linux64, _win32, _win64) from before the one-file-per-game merge. Check which rows homes use and remove the stale ones. | open | Claude | |
 | issue | The rsync installer (teamspeak3 and 2 other XMLs) is not implemented; non-SteamCMD games are installed with update from URL. | open | Claude | |
+| issue | The agents ignore the query and RCON ports the panel passes to server_status (gm_status_reply reads only the status file), so query_port_listening is never checked; decide whether the agent should check them. | open | Claude | |
+| todo | TS3Admin (virtual servers on a shared TS3 instance, table ts3_homes) was not tested; the teamspeak3 web interface and the game monitor TS3 view were. | open | Claude | |

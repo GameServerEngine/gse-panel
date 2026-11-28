@@ -67,7 +67,7 @@ if(isset($server_home['control_password']) && $server_home['control_password'] !
 				$ts3['maplocation'] = "protocol/lgsl/maps/ts3/teamspeak3.png";
 				$ts3['address'] = "<a href='ts3server://" . $cfg["host"] . ":" . $cfg["voice"]  . "'>" . $cfg["host"] . ":" . $cfg["voice"]  . "</a>";
 				$ts3['name'] = $ts3_ServerInstance["virtualserver_name"];
-				$ts3['map'] = "teamspeak3";
+				$ts3['map'] = "";  // a voice server has no map
 				$ts3['playersmax'] = $ts3_ServerInstance["virtualserver_maxclients"];
 				$ts3['ip'] = $cfg["host"];
 				$ts3['port'] = $cfg["voice"];
