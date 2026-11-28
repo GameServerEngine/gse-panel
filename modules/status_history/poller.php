@@ -206,10 +206,25 @@ function gu_game_keys(mysqli $db, $prefix, $sid)
 	return $out;
 }
 
+/** The agent's single-core score (agent_cpu_score.cpu_s), or null when it has not been measured. */
+function gu_cpu_score(mysqli $db, $prefix, $sid)
+{
+	$stmt = $db->prepare('SELECT `cpu_s` FROM `' . $prefix . 'agent_cpu_score` WHERE `remote_server_id` = ?');
+	if (!$stmt) {
+		return null;
+	}
+	$stmt->bind_param('i', $sid);
+	$stmt->execute();
+	$stmt->bind_result($cpu_s);
+	$found = $stmt->fetch();
+	$stmt->close();
+	return $found && $cpu_s !== null ? (float)$cpu_s : null;
+}
+
 /** Stores one game_sample row per game server and container in the agent's reply. */
 function gu_store_samples(mysqli $db, $prefix, $sid, array $parsed, $now)
 {
-	foreach (gu_build_rows($parsed, $sid, $now, gu_game_keys($db, $prefix, $sid)) as $row) {
+	foreach (gu_build_rows($parsed, $sid, $now, gu_game_keys($db, $prefix, $sid), gu_cpu_score($db, $prefix, $sid)) as $row) {
 		sh_insert_row($db, $prefix . 'game_sample', $row);
 	}
 }

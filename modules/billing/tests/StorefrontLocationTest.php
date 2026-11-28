@@ -80,8 +80,8 @@ storefrontExpect(storefront_agent_unavailable_reason(array('ram_percent' => '71.
 storefrontExpect(storefront_agent_unavailable_reason(array('ram_percent' => '70.00') + $fresh, $headroom, $now) === '', 'exactly at headroom is allowed');
 storefrontExpect(storefront_agent_unavailable_reason(array('disk_percent' => '90.00') + $fresh, $headroom, $now) !== '', 'disk over headroom blocks');
 storefrontExpect(storefront_agent_unavailable_reason(array('snapshot_status' => 'agent_unreachable', 'last_error' => 'No response from agent.') + $fresh, $headroom, $now) !== '', 'a fresh unreachable snapshot blocks');
-storefrontExpect(storefront_agent_unavailable_reason(array('collected_at' => $now - 999999, 'snapshot_status' => 'agent_unreachable', 'last_error' => 'x', 'ram_percent' => '99') + $fresh, $headroom, $now) === '', 'an old snapshot never blocks');
-storefrontExpect(storefront_agent_unavailable_reason(array('collected_at' => 0, 'ram_percent' => '99') + $fresh, $headroom, $now) === '', 'no snapshot never blocks');
-storefrontExpect(storefront_agent_unavailable_reason(array('ram_percent' => null, 'cpu_percent' => '') + $fresh, $headroom, $now) === '', 'missing percentages do not block');
+storefrontExpect(storefront_agent_unavailable_reason(array('collected_at' => $now - 999999, 'snapshot_status' => 'agent_unreachable', 'last_error' => 'x', 'ram_percent' => '99') + $fresh, $headroom, $now) !== '', 'old snapshot blocks');
+storefrontExpect(storefront_agent_unavailable_reason(array('collected_at' => 0, 'ram_percent' => '99') + $fresh, $headroom, $now) !== '', 'no snapshot blocks');
+storefrontExpect(storefront_agent_unavailable_reason(array('ram_percent' => null, 'cpu_percent' => '') + $fresh, $headroom, $now) !== '', 'missing percentages block');
 
 echo 'StorefrontLocationTest passed' . PHP_EOL;

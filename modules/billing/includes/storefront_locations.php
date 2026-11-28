@@ -10,7 +10,7 @@
  *   not_sold     the game has no enabled offer in the city (not shown at all)
  *
  * Capacity uses the agents' latest resource snapshot (percent used) against the placement
- * headroom on the Game Catalog page. A missing or old snapshot never blocks an order.
+ * headroom on the Game Catalog page. This machine summary is diagnostic. Public offers also require a current game-specific placement decision.
  */
 if (!defined('STOREFRONT_SNAPSHOT_FRESH_SECONDS')) {
     define('STOREFRONT_SNAPSHOT_FRESH_SECONDS', 21600);
@@ -35,8 +35,8 @@ if (!function_exists('storefront_agent_unavailable_reason')) {
             return 'Installs are turned off on this machine';
         }
         $collected = (int)($agent['collected_at'] ?? 0);
-        if ($collected <= 0 || ($now - $collected) > STOREFRONT_SNAPSHOT_FRESH_SECONDS) {
-            return '';
+        if ($collected <= 0 || ($now - $collected) > STOREFRONT_SNAPSHOT_FRESH_SECONDS || $collected > $now) {
+            return 'Missing or stale snapshot';
         }
         $status = (string)($agent['snapshot_status'] ?? '');
         $error = trim((string)($agent['last_error'] ?? ''));
@@ -46,7 +46,7 @@ if (!function_exists('storefront_agent_unavailable_reason')) {
         foreach (array('cpu_percent' => 'cpu', 'ram_percent' => 'ram', 'disk_percent' => 'disk') as $field => $key) {
             $used = $agent[$field] ?? null;
             if ($used === null || $used === '' || !is_numeric($used)) {
-                continue;
+                return 'Incomplete machine snapshot';
             }
             $limit = (float)($headroom[$key] ?? 100);
             if ((float)$used > $limit) {
@@ -94,7 +94,7 @@ if (!function_exists('storefront_agent_unavailable_reasons')) {
         }
         $now = $now === null ? time() : $now;
         $headroom = storefront_load_headroom($db, $prefix);
-        $reasons = array();
+        $reasons = array_fill_keys($ids, 'Missing machine snapshot');
         try {
             $res = $db->query(
                 "SELECT rs.remote_server_id, rs.install_enabled, s.status AS snapshot_status, s.last_error, s.collected_at,
@@ -104,13 +104,14 @@ if (!function_exists('storefront_agent_unavailable_reasons')) {
                  WHERE rs.remote_server_id IN (" . implode(',', $ids) . ')'
             );
             while ($res && ($row = $res->fetch_assoc())) {
+                unset($reasons[(int)$row['remote_server_id']]);
                 $reason = storefront_agent_unavailable_reason($row, $headroom, $now);
                 if ($reason !== '') {
                     $reasons[(int)$row['remote_server_id']] = $reason;
                 }
             }
         } catch (Throwable $e) {
-            return array();
+            return array_fill_keys($ids, 'Snapshot lookup unavailable');
         }
         return $reasons;
     }
@@ -254,23 +255,10 @@ if (!function_exists('storefront_load_cities')) {
     }
 }
 
-if (!function_exists('storefront_offer_is_orderable')) {
-    function storefront_offer_is_orderable(mysqli $db, string $prefix, int $offerId)
-    {
-        $sql = "SELECT co.offer_id, co.remote_server_id
-                FROM `{$prefix}catalog_offer` co
-                INNER JOIN `{$prefix}remote_servers` rs ON rs.remote_server_id = co.remote_server_id
-                LEFT JOIN `{$prefix}billing_locations` c ON c.location_id = rs.location_id AND c.kind = 'city'
-                WHERE co.offer_id = {$offerId} AND co.enabled = 1 AND NOT (co.slot_min_qty = 0 AND co.slot_max_qty = 0) AND rs.install_enabled = 1
-                  AND (rs.location_id IS NULL OR (c.location_id IS NOT NULL AND c.enabled = 1))
-                LIMIT 1";
-        $res = $db->query($sql);
-        $row = $res ? $res->fetch_assoc() : null;
-        if (!$row) {
-            return false;
-        }
-        $agentId = (int)$row['remote_server_id'];
-        $reasons = storefront_agent_unavailable_reasons($db, $prefix, array($agentId));
-        return !isset($reasons[$agentId]);
-    }
+/** Compatibility entry point, including callers which ask about the smallest configuration. */
+function storefront_offer_is_orderable(mysqli $db, string $prefix, int $offerId, ?int $slots = null): bool
+{
+    require_once __DIR__ . '/configuration_quote.php';
+    $o = catalog_load_offer_by_id($db, $prefix, $offerId);
+    return $o && placement_evaluate($db, $prefix, $offerId, $slots ?? storefront_min_slots($db, $prefix, $o)) === '';
 }

@@ -139,6 +139,102 @@ function sql_split_statements($sql)
 }
 
 /**
+ * Splits text on commas that are not inside parentheses, so DECIMAL(6,3) stays whole.
+ */
+function sql_split_top_level_commas($text)
+{
+	$parts = [];
+	$current = '';
+	$depth = 0;
+	foreach (str_split((string)$text) as $ch) {
+		if ($ch === '(') {
+			$depth++;
+		} elseif ($ch === ')') {
+			$depth--;
+		}
+		if ($ch === ',' && $depth === 0) {
+			$parts[] = trim($current);
+			$current = '';
+			continue;
+		}
+		$current .= $ch;
+	}
+	$parts[] = trim($current);
+	return $parts;
+}
+
+/**
+ * Reads "ALTER TABLE t ADD COLUMN a TYPE [NOT] NULL, ADD COLUMN b ..." into
+ * ['table' => 't', 'columns' => [['name', 'type', 'nullable'], ...]].
+ * Returns null for any other statement, or for any column clause that has
+ * more than a name, a type and NULL / NOT NULL (a default, a comment, AFTER, ...).
+ * Crash recovery only trusts what it can compare exactly, so anything else
+ * is left to run normally.
+ */
+function migrations_parse_add_columns($statement)
+{
+	if (!preg_match('/^ALTER\s+TABLE\s+`?([A-Za-z0-9_]+)`?\s+(ADD\s+COLUMN\s.+)$/is', trim($statement), $m)) {
+		return null;
+	}
+	$columns = [];
+	foreach (sql_split_top_level_commas($m[2]) as $clause) {
+		$ok = preg_match('/^ADD\s+COLUMN\s+`?([A-Za-z0-9_]+)`?\s+([A-Za-z]+(?:\(\s*\d+(?:\s*,\s*\d+)?\s*\))?)(?:\s+(NOT\s+NULL|NULL))?$/is', $clause, $c);
+		if (!$ok) {
+			return null;
+		}
+		$columns[] = [
+			'name' => $c[1],
+			'type' => strtolower(preg_replace('/\s+/', '', $c[2])),
+			'nullable' => !(isset($c[3]) && stripos($c[3], 'NOT') === 0),
+		];
+	}
+	return ['table' => $m[1], 'columns' => $columns];
+}
+
+/**
+ * Compares the ADD COLUMN columns with the live table and answers:
+ *   'missing'  none of the columns exist, so the statement must run
+ *   'present'  every column exists with exactly the declared type and nullability
+ *              and no default, which is what a crash after the ALTER leaves behind
+ *   'conflict' anything else (some columns exist, or a definition differs)
+ * Returns 'missing' if the live table cannot be read, so the ALTER itself reports the problem.
+ */
+function migrations_add_columns_state($db, array $parsed)
+{
+	$table = $db->real_escape_string($parsed['table']);
+	$rows = $db->resultQuery(
+		"SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, EXTRA FROM information_schema.COLUMNS "
+		. "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$table}'"
+	);
+	if (!is_array($rows)) {
+		return 'missing';
+	}
+	$live = [];
+	foreach ($rows as $row) {
+		$live[strtolower($row['COLUMN_NAME'])] = $row;
+	}
+	$found = 0;
+	$identical = 0;
+	foreach ($parsed['columns'] as $column) {
+		$row = $live[strtolower($column['name'])] ?? null;
+		if ($row === null) {
+			continue;
+		}
+		$found++;
+		if (strtolower($row['COLUMN_TYPE']) === $column['type']
+			&& ($row['IS_NULLABLE'] === 'YES') === $column['nullable']
+			&& $row['COLUMN_DEFAULT'] === null
+			&& (string)$row['EXTRA'] === '') {
+			$identical++;
+		}
+	}
+	if ($found === 0) {
+		return 'missing';
+	}
+	return ($identical === count($parsed['columns'])) ? 'present' : 'conflict';
+}
+
+/**
  * Applies every migration in $dir that is not yet recorded in the migrations
  * table, in ascending numeric/name order. Stops at the first failure so later
  * migrations never run against a half-applied schema.
@@ -186,7 +282,23 @@ function migrations_run_pending($db, $dir, callable $logger)
 		$logger("Applying migration {$id}.");
 		$statements = sql_split_statements($sql);
 		$ok = true;
+		$conflict = null;
 		foreach ($statements as $statement) {
+			// Crash recovery: a migration that was interrupted after its ALTER but
+			// before it was recorded is finished only if every column is identical.
+			$parsed = migrations_parse_add_columns($statement);
+			if ($parsed !== null) {
+				$state = migrations_add_columns_state($db, $parsed);
+				if ($state === 'present') {
+					$logger("Migration {$id}: columns of {$parsed['table']} already exist with the same definition; skipping that statement.");
+					continue;
+				}
+				if ($state === 'conflict') {
+					$ok = false;
+					$conflict = "columns of {$parsed['table']} already exist with a different definition or only in part";
+					break;
+				}
+			}
 			$db->query($statement);
 			if ((string)$db->getError() !== '') {
 				$ok = false;
@@ -195,7 +307,7 @@ function migrations_run_pending($db, $dir, callable $logger)
 		}
 
 		if (!$ok) {
-			$detail = (method_exists($db, 'getError') ? $db->getError() : 'statement failed');
+			$detail = $conflict ?? (method_exists($db, 'getError') ? $db->getError() : 'statement failed');
 			$msg = "Migration {$id} failed: {$detail}";
 			$result['success'] = false;
 			$result['failed_migration'] = $id;

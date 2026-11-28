@@ -155,6 +155,11 @@ class BillingLifecycleService
             $home = $homeId > 0 ? $this->repo->getServerHomeBilling($homeId) : null;
             $paidThrough = self::resolvePaidThroughDate(array_merge($invoice, $context), $order, $home, $paidAt);
 
+                if ($orderId <= 0 && $homeId === 0 && ($invoice['invoice_kind'] ?? 'game') === 'game' && $this->repo instanceof BillingRepository) {
+                    require_once dirname(__DIR__) . '/includes/placement_store.php';
+                    $why = placement_invoice($this->repo->getDb(), $this->repo->getPrefix(), $invoice, PHP_INT_MAX);
+                    if ($why !== '') throw new RuntimeException('placement: ' . $why);
+                }
             $invoiceUpdate = [
                 'payment_status' => 'paid',
                 'status' => 'paid',

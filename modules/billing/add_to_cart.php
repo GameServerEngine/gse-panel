@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/placement_store.php';
 // _website/add_to_cart.php
 // Handle Add to Cart posts from order.php
 require_once(__DIR__ . '/bootstrap.php');
@@ -177,10 +178,6 @@ if ($sd_name !== '') {
     }
 }
 
-if (!storefront_offer_is_orderable($db, $table_prefix, $offer_id)) {
-    billing_fail_add_to_cart('That location is no longer available. Please choose another.', ['offer_id' => $offer_id], '/order.php?home_cfg_id=' . intval($home_cfg_id));
-}
-
 $tiers = ((string)$offer['pricing_mode'] === 'tiers') ? catalog_load_tiers_for_offer($db, $table_prefix, $offer_id) : [];
 
 $priceResult = catalog_calculate_price($offer, $period, $qty, [
@@ -234,6 +231,15 @@ $lockedPriceDaily = $lockedPriceDaily ?? round($lockedPriceMonthly / 30, 4);
 $lockedPriceYear = $lockedPriceYear ?? round($lockedPriceMonthly * 12, 4);
 $lockedDescription = "Locked catalog order: {$service_name} ({$offer['pricing_mode']}, {$resolved_slots} slots) created " . date('c');
 
+$why = placement_evaluate($db, $table_prefix, $offer_id, $resolved_slots, 0, 0, $remote_server_id, $home_cfg_id);
+if ($why !== '') billing_fail_add_to_cart('Location unavailable', ['placement' => $why]);
+$db->begin_transaction();
+// Serialize before creating legacy MyISAM billing rows, whose writes cannot roll back.
+$lock = $db->query("SELECT remote_server_id FROM `{$table_prefix}placement_host` WHERE remote_server_id=$remote_server_id FOR UPDATE");
+if (!$lock || !$lock->num_rows || placement_evaluate($db, $table_prefix, $offer_id, $resolved_slots) !== '') {
+    $db->rollback();
+    billing_fail_add_to_cart('Location no longer available');
+}
 $service_id = 0;
 $svcStmt = $db->prepare(
     "INSERT INTO {$table_prefix}billing_services
@@ -437,6 +443,13 @@ if (!$res || $err_no > 0) {
 } else {
     $insert_id = mysqli_insert_id($db);
     $affected = mysqli_affected_rows($db);
+    $why = placement_evaluate($db, $table_prefix, $offer_id, $resolved_slots, $insert_id, time() + 900, $remote_server_id, $home_cfg_id);
+    if ($why !== '') {
+        $db->query("DELETE FROM `{$table_prefix}billing_invoices` WHERE invoice_id=" . (int)$insert_id);
+        $db->query("DELETE FROM `{$table_prefix}billing_services` WHERE service_id=" . (int)$service_id);
+        $db->rollback();
+        billing_fail_add_to_cart('Location no longer available', ['placement' => $why]);
+    }
     site_log_info('add_to_cart_insert', ['invoice_id'=>$insert_id, 'affected_rows'=>$affected]);
     file_put_contents($logfile, date('c') . " - Invoice created: invoice_id={$insert_id}\n", FILE_APPEND);
     if ($sd_ctx && $sd_name !== '' && $insert_id > 0) {
@@ -455,6 +468,8 @@ if (!empty($option_rows) && isset($insert_id) && $insert_id > 0 && $res && $err_
 if ($stmt instanceof mysqli_stmt) {
     $stmt->close();
 }
+
+$db->commit();
 
 // Redirect to cart page
 header('Location: cart.php');

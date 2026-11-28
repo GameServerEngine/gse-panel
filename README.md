@@ -161,3 +161,7 @@ The running changelog is `CHANGELOG.md` at the repo root.
 ## Requirements
 
 `requirements.json` lists the minimum operating system and the prerequisites for this component. The GameServer Engine website reads it, so change that file (not the website) when a requirement changes. `tests/validate_requirements.sh` checks it.
+
+### Resource Intelligence development and release status
+
+See [Resource Intelligence rollout](docs/GSE-RESOURCE-PLACEMENT-ROLLOUT.md) and the [feature implementation and test record](docs/features/resource-intelligence.md) for the hardware-neutral capacity model, telemetry, checkout reservations, migration validation, known limitations and deployment gates. Unapproved or stale measurements must not enable public sales.

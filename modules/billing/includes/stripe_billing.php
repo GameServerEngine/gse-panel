@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/placement_store.php';
 /**
  * Stripe for the ordering site. The panel owns every invoice and receipt; Stripe only takes payments.
  *
@@ -87,6 +88,14 @@ function stripe_cart_checkout_params(array $invoices, string $customerId, array 
         'billing_address_collection' => 'auto',
         'automatic_tax' => array('enabled' => !empty($options['automatic_tax'])),
     );
+    foreach ($invoices as $inv) {
+        if (($inv['invoice_kind'] ?? 'game') === 'game' && empty($inv['home_id'])) {
+            $params['payment_method_types'] = ['card'];
+            $params['payment_intent_data']['capture_method'] = 'manual';
+            $params['metadata']['placement_capture'] = '1';
+            break;
+        }
+    }
     if (!empty($options['automatic_tax'])) {
         $params['billing_address_collection'] = 'required';
     }
@@ -363,6 +372,24 @@ function stripe_on_checkout_completed(mysqli $db, string $prefix, array $session
         return stripe_on_autorenew_saved($db, $prefix, $session);
     }
     $paymentStatus = (string)($session['payment_status'] ?? '');
+    if (($session['metadata']['placement_capture'] ?? '') === '1' && $paymentStatus !== 'paid') {
+        $meta = $session['metadata'];
+        $ids = array_keys(stripe_metadata_amounts($meta));
+        $repo = new BillingRepository($db, $prefix);
+        $path = 'payment_intents/' . rawurlencode((string)$session['payment_intent']);
+        $client = billing_stripe_client($db, $prefix);
+        $intent = $client ? $client->request('GET', $path) : [];
+        $state = $intent['data']['status'] ?? '';
+        if ($state === 'requires_capture') {
+            $invoices = $repo->getInvoicesForUserByIds((int)$meta['user_id'], $ids, true);
+            if (count($invoices) !== count($ids) || !placement_reserve_invoices($db, $prefix, $invoices, time() + 3600))
+                return ['status'=>'failed', 'note'=>'placement unavailable before card capture'];
+            $result = $client->request('POST', $path . '/capture', [], 'placement-' . $session['payment_intent']);
+            $state = $result['data']['status'] ?? '';
+        }
+        if ($state !== 'succeeded') return ['status'=>'failed', 'note'=>'card capture pending'];
+        $paymentStatus = 'paid';
+    }
     if (!in_array($paymentStatus, array('paid', 'no_payment_required'), true)) {
         return array('status' => 'ignored', 'note' => 'checkout not paid yet (' . $paymentStatus . ')');
     }

@@ -1,9 +1,15 @@
 <?php
+require_once __DIR__ . '/../includes/placement_store.php';
 /**
  * PayPal Create Order API Endpoint
  * Uses PayPalGateway class. Credentials come from config — NOT hardcoded here.
  */
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_name('gameserverpanel_web');
+    session_start();
+}
+require_once dirname(__DIR__) . '/classes/BillingRepository.php';
 ini_set('display_errors', '0');
 error_reporting(E_ALL);
 
@@ -45,35 +51,23 @@ if (json_last_error() !== JSON_ERROR_NONE || !$in) {
 
 co_log('REQUEST', ['amount' => $in['amount'] ?? null, 'invoice_id' => $in['invoice_id'] ?? null]);
 
-// Resolve portable return/cancel URLs
-$returnUrl = $in['return_url'] ?? '/payment_success.php';
-$cancelUrl = $in['cancel_url'] ?? '/payment_cancel.php';
-
-// Ensure absolute URLs
-if (strpos($returnUrl, 'http') !== 0) {
-    $returnUrl = billing_abs_url($returnUrl);
+$userId = (int)($_SESSION['website_user_id'] ?? 0);
+$ref = (string)($in['custom_id'] ?? $in['invoice_id'] ?? '');
+if (!$userId || !preg_match('/^(?:cart:)?([1-9][0-9]*(?:,[1-9][0-9]*){0,24})$/D', $ref, $match)) {
+    http_response_code(400);
+    exit(json_encode(['success'=>false, 'message'=>'Choose your unpaid invoices.']));
 }
-if (strpos($cancelUrl, 'http') !== 0) {
-    $cancelUrl = billing_abs_url($cancelUrl);
+$ids = array_values(array_unique(array_map('intval', explode(',', $match[1]))));
+$db = new mysqli($db_host, $db_user, $db_pass, $db_name, (int)($db_port ?? 3306));
+$invoices = (new BillingRepository($db, $table_prefix))->getInvoicesForUserByIds($userId, $ids, true);
+if (count($invoices) !== count($ids) || !placement_reserve_invoices($db, $table_prefix, $invoices, time() + 3600)) {
+    http_response_code(409);
+    exit(json_encode(['success'=>false, 'message'=>'Selected invoices or locations unavailable.']));
 }
-
-// Build gateway params
-$params = [
-    'amount'      => $in['amount'] ?? '0.00',
-    'currency'    => $in['currency'] ?? 'USD',
-    'invoice_id'  => $in['invoice_id'] ?? null,
-    'custom_id'   => $in['custom_id'] ?? $in['invoice_id'] ?? null,
-    'description' => $in['description'] ?? 'Game Server Order',
-    'return_url'  => $returnUrl,
-    'cancel_url'  => $cancelUrl,
-    'items'       => $in['items'] ?? null,
-    'idempotency_key' => 'cart-' . hash('sha256', json_encode([
-        'amount' => $in['amount'] ?? '0.00',
-        'currency' => $in['currency'] ?? 'USD',
-        'custom_id' => $in['custom_id'] ?? $in['invoice_id'] ?? null,
-        'items' => $in['items'] ?? null,
-    ])),
-];
+$amount = array_sum(array_map(static fn($inv) => (int)round(100 * ($inv['total_due'] ?? $inv['amount'])), $invoices));
+$params = ['amount'=>number_format($amount / 100, 2, '.', ''), 'currency'=>'USD',
+    'custom_id'=>'cart:' . implode(',', $ids), 'return_url'=>billing_abs_url('/paypal/return.php'),
+    'cancel_url'=>billing_abs_url('/cart.php')];
 
 try {
     $gateway = GatewayFactory::make('paypal');
@@ -106,5 +100,6 @@ if (!$result['success']) {
     exit;
 }
 
+$_SESSION['placement_paypal'][(string)$result['provider_order_id']] = $ids;
 co_log('CREATE_SUCCESS', ['provider_order_id' => $result['provider_order_id']]);
 echo json_encode($result['raw_response']);

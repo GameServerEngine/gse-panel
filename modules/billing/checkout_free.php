@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/placement_store.php';
 /**
  * Free Checkout Handler
  *
@@ -127,6 +128,11 @@ $txid  = 'free-' . time() . '-' . $userId;
 require_once __DIR__ . '/classes/BillingRepository.php';
 require_once __DIR__ . '/classes/BillingService.php';
 require_once __DIR__ . '/classes/BillingLifecycleService.php';
+
+if (!placement_reserve_invoices($mysqli, $table_prefix, $invoices, time() + 900)) {
+    http_response_code(409);
+    exit('The selected location is unavailable.');
+}
 
 $repo = new BillingRepository($mysqli, $table_prefix);
 $lifecycle = new BillingLifecycleService($repo);

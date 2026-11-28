@@ -150,4 +150,79 @@ $statements = sql_split_statements("INSERT INTO t (a) VALUES ('x;y');\n-- commen
 migtest_assert(count($statements) === 2, 'quoted semicolon does not create an extra statement, comment line is dropped');
 migtest_assert(strpos($statements[0], "'x;y'") !== false, 'quoted semicolon preserved inside the statement');
 
+// --- crash recovery for ALTER TABLE ... ADD COLUMN ---
+$p = migrations_parse_add_columns("ALTER TABLE `DB_PREFIXgame_hour`\n  ADD COLUMN `a` DECIMAL(6,3) NULL,\n  ADD COLUMN `b` DECIMAL(10,2) NOT NULL");
+migtest_assert($p['table'] === 'DB_PREFIXgame_hour' && count($p['columns']) === 2, 'parser reads table and both columns, commas inside DECIMAL(6,3) do not split');
+migtest_assert($p['columns'][0]['type'] === 'decimal(6,3)' && $p['columns'][0]['nullable'] === true, 'parser reads type and NULL');
+migtest_assert($p['columns'][1]['nullable'] === false, 'parser reads NOT NULL');
+migtest_assert(migrations_parse_add_columns("ALTER TABLE t ADD COLUMN a INT NOT NULL DEFAULT 0") === null, 'a column with a DEFAULT is not trusted for recovery');
+migtest_assert(migrations_parse_add_columns("ALTER TABLE t ADD COLUMN a INT COMMENT 'x'") === null, 'a column with a comment is not trusted for recovery');
+migtest_assert(migrations_parse_add_columns("ALTER TABLE t DROP COLUMN a") === null, 'other ALTER statements are not recovered');
+migtest_assert(migrations_parse_add_columns("CREATE TABLE t (id INT)") === null, 'non-ALTER statements are not recovered');
+
+/** Answers the information_schema lookup from a fixed list of live columns and counts ALTER runs. */
+class ColumnStateDb extends MigrationTestDb
+{
+    public $live = [];
+    public function resultQuery($sql)
+    {
+        if (strpos($sql, 'information_schema.COLUMNS') !== false) {
+            return $this->live;
+        }
+        return parent::resultQuery($sql);
+    }
+}
+function migtest_live($name, $type, $nullable = 'YES', $default = null, $extra = '')
+{
+    return ['COLUMN_NAME' => $name, 'COLUMN_TYPE' => $type, 'IS_NULLABLE' => $nullable, 'COLUMN_DEFAULT' => $default, 'EXTRA' => $extra];
+}
+function migtest_alter_count($db)
+{
+    return count(array_filter($db->executed, function ($s) { return strpos($s, 'ALTER TABLE') === 0; }));
+}
+$alter = "ALTER TABLE `DB_PREFIXt` ADD COLUMN `a` DECIMAL(6,3) NULL, ADD COLUMN `b` LONGTEXT NULL;";
+$dir = migtest_make_dir(['0001_alter.sql' => $alter]);
+
+$cdb = new ColumnStateDb();
+$run = migrations_run_pending($cdb, $dir, $logger);
+migtest_assert($run['success'] && migtest_alter_count($cdb) === 1, 'missing columns: the ALTER runs');
+migtest_rmdir($dir);
+
+$dir = migtest_make_dir(['0001_alter.sql' => $alter]);
+$cdb = new ColumnStateDb();
+$cdb->live = [migtest_live('a', 'decimal(6,3)'), migtest_live('b', 'longtext')];
+$run = migrations_run_pending($cdb, $dir, $logger);
+migtest_assert($run['success'] && migtest_alter_count($cdb) === 0 && $run['applied'] === ['0001_alter'],
+    'identical columns already exist: the ALTER is skipped and the migration is recorded');
+migtest_rmdir($dir);
+
+$dir = migtest_make_dir(['0001_alter.sql' => $alter]);
+$cdb = new ColumnStateDb();
+$cdb->live = [migtest_live('a', 'decimal(6,3)'), migtest_live('b', 'text')];
+$run = migrations_run_pending($cdb, $dir, $logger);
+migtest_assert(!$run['success'] && migtest_alter_count($cdb) === 0 && !isset($cdb->tables['schema_migrations_rows']['0001_alter']),
+    'a column with a different type fails the migration and records nothing');
+migtest_assert(strpos($run['error'], 'different definition') !== false, 'the failure explains the conflict');
+migtest_rmdir($dir);
+
+$dir = migtest_make_dir(['0001_alter.sql' => $alter]);
+$cdb = new ColumnStateDb();
+$cdb->live = [migtest_live('a', 'decimal(6,3)')];
+$run = migrations_run_pending($cdb, $dir, $logger);
+migtest_assert(!$run['success'] && migtest_alter_count($cdb) === 0, 'only some of the columns exist: fail closed, do not guess');
+migtest_rmdir($dir);
+
+foreach ([
+    'wrong nullability' => migtest_live('a', 'decimal(6,3)', 'NO'),
+    'has a default' => migtest_live('a', 'decimal(6,3)', 'YES', '0.000'),
+    'generated or auto column' => migtest_live('a', 'decimal(6,3)', 'YES', null, 'VIRTUAL GENERATED'),
+] as $label => $aRow) {
+    $dir = migtest_make_dir(['0001_alter.sql' => $alter]);
+    $cdb = new ColumnStateDb();
+    $cdb->live = [$aRow, migtest_live('b', 'longtext')];
+    $run = migrations_run_pending($cdb, $dir, $logger);
+    migtest_assert(!$run['success'], "existing column differs ($label): the migration fails");
+    migtest_rmdir($dir);
+}
+
 echo "All migration runner tests passed.\n";

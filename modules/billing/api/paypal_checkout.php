@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../includes/placement_store.php';
 /**
  * Pay with PayPal (POST, csrf = billing_paypal_checkout_csrf):
  *   invoice_ids=12,13   Creates one PayPal order for those unpaid invoices and answers {url},
@@ -103,6 +104,10 @@ if ($payCents <= 0) {
     pc_reply(409, array('error' => 'There is nothing to pay with PayPal.'));
 }
 
+if (!placement_reserve_invoices($db, $prefix, $invoices, time() + 3600)) {
+    pc_reply(409, ['error'=>'The selected location is unavailable.']);
+}
+
 $base = billing_stripe_site_base();
 $invoiceList = implode(',', $ids);
 try {
@@ -124,5 +129,6 @@ if (empty($result['success']) || empty($result['approve_url'])) {
     pc_log('order for invoices ' . $invoiceList . ' failed: ' . json_encode(array_diff_key($result, array('raw_response' => 1))));
     pc_reply(502, array('error' => 'PayPal could not be started. Please try again or contact support.'));
 }
+$_SESSION['placement_paypal'][(string)$result['provider_order_id']] = array_values($ids);
 pc_log('order ' . $result['provider_order_id'] . ' started for invoices ' . $invoiceList . ' (' . $payCents . ' cents)');
 pc_reply(200, array('url' => (string)$result['approve_url']));

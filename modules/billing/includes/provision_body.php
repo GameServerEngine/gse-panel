@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/placement_store.php';
 // Provisioning body shared by the billing admin page and the add-game flow.
 // Lives in its own file so both can load it without redeclaring exec_module().
 
@@ -262,6 +263,14 @@ function billing_run_provision_body()
 				billing_provision_trace('Eligibility skip: billing service row is missing.', array('service_id' => intval($service_id)));
 			}
 
+            if (!$order_failed && !$extended && !$already_provisioned) {
+                $request = ['invoice_id'=>$provision_invoice_id, 'service_id'=>$service_id,
+                    'ip'=>$remote_server_id, 'max_players'=>$max_players];
+                if (!placement_reserve_invoices($db->getMysqli(), $db_prefix, [$request], PHP_INT_MAX)) {
+                    $order_failed = true;
+                    $order_failure_reason = 'Placement capacity unavailable for this configuration.';
+                }
+            }
 			if(!$order_failed && $already_provisioned)
 			{
 				$home_id = intval($order['home_id']);
@@ -591,6 +600,14 @@ function billing_run_provision_body()
 
 			}
 
+            if (!$order_failed && !$extended && $needs_existing_home_retry) {
+                $request = ['invoice_id'=>$provision_invoice_id, 'service_id'=>$service_id,
+                    'ip'=>$remote_server_id, 'max_players'=>$max_players];
+                if (!placement_reserve_invoices($db->getMysqli(), $db_prefix, [$request], PHP_INT_MAX)) {
+                    $order_failed = true;
+                    $order_failure_reason = 'Placement capacity unavailable for installation retry.';
+                }
+            }
 			// Retry install for orders that already have home_id but never triggered installation.
 			if (!$order_failed && !$extended && !$install_attempted && intval($home_id) > 0 && (!$already_provisioned || $needs_existing_home_retry)) {
 				billing_provision_trace('Continuing provisioning for existing home because install is incomplete.', array(

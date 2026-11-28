@@ -1,7 +1,7 @@
 <?php require_once __DIR__ . '/includes/brand.php'; ?>
 <?php
 require_once(__DIR__ . '/bootstrap.php');
-require_once(__DIR__ . '/includes/catalog_storefront.php');
+require_once(__DIR__ . '/includes/configuration_quote.php');
 
 function billing_service_price_is_free($value): bool
 {
@@ -98,6 +98,7 @@ if ($db instanceof mysqli) {
     <section class="gsw-catalog-grid" aria-label="Available game servers">
       <?php foreach ($gameRows as $row): ?>
         <?php
+          $availableCfg = storefront_available_variant($db, $table_prefix, $row['variant_ids']);
           $serviceDisplayName = (string)($row['display_name'] ?? $row['game_name'] ?? 'Game Server');
           $startingPrice = $row['starting_price_monthly'] ?? null;
           $priceLabel = ($startingPrice === null)
@@ -118,8 +119,9 @@ if ($db instanceof mysqli) {
             <?php if ($slots !== ''): ?><span><?php echo billing_serverlist_e($slots); ?></span><?php endif; ?>
             <span><?php echo billing_serverlist_e($priceLabel); ?></span>
           </div>
+          <?php if ($availableCfg === null): ?><span class="muted">Unavailable</span><?php endif; ?>
           <div class="gsw-card-actions">
-            <a href="<?php echo billing_serverlist_e(billing_url('order.php?home_cfg_id=' . urlencode((string)$row['home_cfg_id']))); ?>" class="gsw-catalog-action">Configure Server</a>
+            <a href="<?php echo billing_serverlist_e(billing_url('order.php?home_cfg_id=' . urlencode((string)($availableCfg ?? $row['home_cfg_id'])))); ?>" class="gsw-catalog-action">Configure Server</a>
           </div>
         </article>
       <?php endforeach; ?>

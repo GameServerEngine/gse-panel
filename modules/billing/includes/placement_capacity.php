@@ -31,3 +31,5 @@ if (!function_exists('agent_fits_requirements')) {
         return true;
     }
 }
+
+require_once dirname(__DIR__, 3) . '/includes/resource_model.php';

@@ -1,0 +1,20 @@
+GSE game resource reference — 2026-11-26 UTC
+All ranges below are UNVALIDATED dedicated-server planning estimates unless explicitly sourced. Not client requirements. Not approved for automatic production placement. CPU-S/CPU-T and I/O numeric values unknown until calibrated. RAM MiB, disk GiB include preliminary operational reservation ranges, not hard limits. Separate player count, game build, platform, map, mods, startup and save/update peaks.
+application | RAM MiB reservation seed | disk GiB reservation seed | IO sensitivity | source/status
+Mumble | 128-256 | 0.5-2 | low | estimate
+HLTV | 128-256 | 2-10 | low except recordings | estimate; bundle CS1.6
+CS1.6 (cstrike) | 256-512 | 2-5 | low | estimate
+Urban Terror | 256-512 | 2-5 | low | estimate
+Arma2 | 2048-3072 | 15-30 | low/moderate | user reports 1.2-1.5 GB typical and 2GB engine limit; validate total process tree/edition
+Minecraft Java | 4096-8192 | 10-40 | high | estimate; JVM native overhead additional to heap, mods/world/players matter
+Minecraft Bedrock | 4096 | 10-30 | moderate/high | official help lists 4GB RAM; disk estimate; conflicting official download page says 1GB for small servers, validate variant
+DayZ | 8192-16384 | 30-80 | high | estimate; mods and persistence
+Rust | 12288-16384+ | 25-60 | high | Facepunch lists 12 GB free RAM, 15 GB disk, larger maps need more; disk reservation estimate
+ARK Survival Evolved | 10240-16384+ | 60-150+ | high | estimate; map and mods
+ARK Survival Ascended | 16384-32768+ | 100-200+ | high | estimate; separate from ASE
+Garry's Mod | 2048-4096 | 10-30 | moderate | estimate
+Valheim | 4096-8192 | 5-20 | moderate | estimate
+Sources: https://wiki.facepunch.com/rust/Creating-a-server ; https://help.minecraft.net/hc/en-us/articles/49914677714957 ; https://www.minecraft.net/en-us/download/server/bedrock
+All remaining catalog entries: unknown until researched or tested. Capture process tree, active player counts (unknown != zero), CPU seconds, peak memory, storage bytes and rate, save/startup phases, tick health. Separate empty, populated, full, startup/update samples. Require profile approval before storefront.
+
+MEASURED 2026-11-26 game3 Windows process snapshot; player occupancy unknown to query, operator subsequently confirms no players. Working set bytes / private bytes: arma2oaserver 116711424/301182976; 140169216/324976640; 147492864/332890112; 616239104/829190144; DayZServer_x64 6995439616/7464587264. Operator reports Arma2 approximately 1.2 GB RAM with players. These are not full-load reservations; process tree overhead and occupancy must be validated.

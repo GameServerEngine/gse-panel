@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../includes/placement_store.php';
 /**
  * Card payments for the signed-in customer (POST, csrf = billing_stripe_checkout_csrf):
  *   action=pay           invoice_ids=12,13   Pay Now: one Stripe payment for those unpaid invoices.
@@ -143,6 +144,10 @@ if ($code !== '') {
             $panelCouponId = (int)($coupon['coupon_id'] ?? 0);
         }
     }
+}
+
+if (!placement_reserve_invoices($db, $prefix, $invoices, time() + 3600)) {
+    sc_reply(409, ['error'=>'The selected location is unavailable.']);
 }
 
 $ui = $cfg['checkout_ui'] === 'form' && (($_POST['ui'] ?? '') !== 'hosted') ? 'form' : 'hosted';

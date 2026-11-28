@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../includes/placement_store.php';
 /**
  * PayPal Order Capture Endpoint
  * Uses PayPalGateway, BillingService, and BillingRepository.
@@ -171,6 +172,12 @@ try {
     exit;
 }
 
+$boundIds = $_SESSION['placement_paypal'][(string)$paypalOrderId] ?? [];
+$boundInvoices = $boundIds ? $repo->getInvoicesForUserByIds($userId, $boundIds, true) : [];
+if (!$boundInvoices || count($boundInvoices) !== count($boundIds) ||
+    !placement_reserve_invoices($mysqli, $prefix, $boundInvoices, time() + 3600)) {
+    cap_payment_error('placement_unavailable', 'Reload the cart and check location availability.', $mysqli, $requestId);
+}
 $capture = $gateway->handleCallback([
     'order_id' => $paypalOrderId,
     'idempotency_key' => 'capture-' . preg_replace('/[^A-Za-z0-9_.-]/', '-', (string)$paypalOrderId),
@@ -210,9 +217,10 @@ $txid                      = $capture['transaction_id'] ?? '';
 $paidAmount                = round((float)($capture['amount'] ?? 0), 2);
 $capture['payment_method'] = 'paypal';
 $invoiceIds                = cap_invoice_ids_from_custom_id($capture['custom_id'] ?? null);
-$invoices                  = !empty($invoiceIds)
-    ? $repo->getInvoicesForUserByIds($userId, $invoiceIds, false)
-    : $repo->getUnpaidInvoicesForUser($userId);
+if (array_diff($invoiceIds, $boundIds) || array_diff($boundIds, $invoiceIds)) {
+    cap_payment_error('invoice_mismatch', 'Payment reference differs from the reserved cart. Contact support.', $mysqli, $requestId);
+}
+$invoices = $boundInvoices;
 $invoicesPaid              = 0;
 $ordersCreated             = 0;
 $invoicesProcessed         = 0;

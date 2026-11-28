@@ -144,10 +144,10 @@ Use these as the first files to read in each repository:
 If a change affects protocol shape, lifecycle behavior, configuration format, update flow, or runtime assumptions, update the relevant documentation in all affected repositories before considering the work complete.
 
 ===============================================================================
-CODEX ENGINEERING HISTORY POLICY
+ENGINEERING HISTORY POLICY
 ===============================================================================
 
-Every Codex task MUST create a permanent engineering history record.
+Every development task (any engine or human) MUST create a permanent engineering history record.
 
 Create:
 
@@ -307,3 +307,6 @@ Every repo keeps its open work in `docs/TODO.md`.
 - Owner is who did or will do the work: `Claude`, `Codex`, `Leroy`, or the user's name.
 - Commit the `docs/TODO.md` change together with the code change.
 - The user and Leroy review this file. Then Leroy creates or updates the matching GitLab issue or work item and writes its link in the GitLab column.
+
+## Active feature and handoff tracking (mandatory)
+Follow /home/dev/projects/AGENTS.md. Read docs/WORK_STATUS.md and the selected docs/features/ record before work; update both during work and at handoff. All engines follow the same history policy.
