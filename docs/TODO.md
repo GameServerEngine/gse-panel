@@ -211,4 +211,5 @@
 | issue | The agents ignore the query and RCON ports the panel passes to server_status (gm_status_reply reads only the status file), so query_port_listening is never checked; decide whether the agent should check them. | open | Claude | |
 | todo | TS3Admin (virtual servers on a shared TS3 instance, table ts3_homes) was not tested; the teamspeak3 web interface and the game monitor TS3 view were. | open | Claude | |
 | issue | core's Apache php.ini has display_errors = On, so any PHP notice is printed into panel pages for every user. Production should use display_errors = Off with log_errors = On (live config, needs the owner's OK). | open | Claude | |
-| todo | Map picture upload is admin only and the picture is shared by every server of that game and mod. Decide whether server owners may upload, and if so whether their pictures stay per server. | open | Claude | |
+| todo | Map picture upload for server owners: per server, reviewed by admins on Administration > Map images (2026-11-28). | done | Claude | 2026-11-28 |
+| todo | Map images page texts exist in English only; other languages show the English key names until translated. | open | Claude | |

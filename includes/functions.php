@@ -166,7 +166,14 @@ function get_map_path($query_name,$mod,$map,$server_home = null) {
 	$mod_gt = $query_name == "callofdutymw3" ? "mw3" : $mod_gt;
 	$mod_gt = $query_name == "conanexiles" ? "conan" : $mod_gt;
 
-	$map_paths= array(
+	$map_paths = array();
+	if (!empty($server_home['home_id'])) {
+		// A picture the server's owner uploaded for this server (modules/gamemanager/map_images_lib.php).
+		$own = preg_replace("/[^a-z0-9_]/", "_", strtolower((string)$map));
+		foreach (array('jpg', 'png', 'gif') as $ext)
+			$map_paths[] = "uploads/map_images/" . (int)$server_home['home_id'] . "/$own.$ext";
+	}
+	$map_paths = array_merge($map_paths, array(
 		"https://image.gametracker.com/images/maps/160x120/$mod_gt/$map.jpg",
 		"https://image.gametracker.com/images/maps/160x120/$query_name/$map.jpg",
 		"protocol/lgsl/maps/$query_name/$mod/$map.jpg",
@@ -176,7 +183,7 @@ function get_map_path($query_name,$mod,$map,$server_home = null) {
 		"protocol/lgsl/maps/$query_name/$map.gif",
 		"protocol/lgsl/maps/$query_name/$map.png",
 		$fallback
-	);
+	));
 
 	return get_first_existing_file($map_paths, 'http://gametracker.com', 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:51.0) Gecko/20100101 Firefox/51.0');
 }

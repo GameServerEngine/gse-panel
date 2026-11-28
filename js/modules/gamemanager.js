@@ -7,6 +7,7 @@ function uploadMapImg(button) {
 	var upload_button = $('#translation').attr('data-upload_button');
 	var bad_file = $('#translation').attr('data-bad_file');
 	var upload_failure = $('#translation').attr('data-upload_failure');
+	var csrf = $('#translation').attr('data-csrf');
 
 	$('div.main-content').append('<div class="dialog-form'+home_id+'" title="'+title+'" >\
 								  <form class="upload-mapImage-form'+home_id+'" enctype="multipart/form-data" >\
@@ -14,6 +15,7 @@ function uploadMapImg(button) {
 								  <input type="file" name="map-image" class="'+home_id+'" value="" />\
 								  <input type="hidden" name="home_id" value="'+home_id+'" />\
 								  <input type="hidden" name="mod_id" value="'+mod_id+'" />\
+								  <input type="hidden" name="csrf" value="'+csrf+'" />\
 								  </form>\
 								  </div>');
 

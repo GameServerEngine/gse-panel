@@ -46,3 +46,6 @@ scripts/__pycache__/
 .devplus/leroy-runs/
 .devplus/operations/
 .devplus/inspections/
+
+# Pictures users upload (map pictures per server); never deployed over
+uploads/

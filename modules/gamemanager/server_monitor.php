@@ -702,13 +702,12 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 
 	if(!isset($_GET['home_id-mod_id-ip-port']) && !isset($_GET['home_id']))
 	{echo paginationPages($homes_count[0]['total'], $home_page, $home_limit, $uri, 3, 'serverMonitor');}
-/*
-	echo "<div id=translation data-title='". get_lang("upload_map_image") .
-		 "' data-upload_button='". get_lang("upload_image") .
-		 "' data-bad_file='". get_lang("jpg_gif_png_less_than_1mb") .
-		 "' data-upload_failure='". get_lang("check_dev_console") .
-		 "' >put the log file here</div>\n";
-*/
+	require_once 'includes/diagnostics/csrf.php';
+	echo "<div id='translation' style='display:none;' data-title='". htmlspecialchars(get_lang("upload_map_image"), ENT_QUOTES) .
+		 "' data-upload_button='". htmlspecialchars(get_lang("upload_image"), ENT_QUOTES) .
+		 "' data-bad_file='". htmlspecialchars(get_lang("jpg_gif_png_less_than_1mb"), ENT_QUOTES) .
+		 "' data-upload_failure='". htmlspecialchars(get_lang("check_dev_console"), ENT_QUOTES) .
+		 "' data-csrf='". diag_csrf_token() . "'></div>\n";
 //include("log.php");
 ?>
 

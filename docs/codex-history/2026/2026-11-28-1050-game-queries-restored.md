@@ -34,5 +34,10 @@ All 236 XMLs validate against the schema. Server page rendered from the staged t
 - Found while testing: gametracker answers HTTP/2, which get_first_existing_file() never accepted, so no online map picture had loaded. Fixed; CS:S de_dust2 now returns the gametracker picture.
 - Upload (upload_map_image.php, admin only) already existed; its path came from unchecked form fields. Hardened.
 
+## Follow-up (2026-11-28 10:36-10:42 CST): customer map uploads with admin review
+- Requested: "Upload only for own server and we can review and apply for all servers."
+- modules/gamemanager/map_images_lib.php (shared rules), upload_map_image.php (admin: every server; owner: own server + pending row), map_images.php (review page: apply / keep / remove), migration 0016 (table map_image_upload, admin menu "Map images"). get_map_path() checks uploads/map_images/<home_id>/ first.
+- Tested on core with the staged panel against panel_test, served on 127.0.0.1 only, with a customer (Phantom) and an admin session: own-server upload works and shows only on that server; someone else's server, missing CSRF, .php extension, a PHP file named .png are refused; a path in the map name stays in the server's folder; the customer cannot open or use the review page; Apply to all servers copies the picture to the shared folder and server 51 then shows it. Test rows removed from panel_test; the table and menu row stay there (same as the migration will add).
+
 ## Git Commits
 See the commit that adds this file.

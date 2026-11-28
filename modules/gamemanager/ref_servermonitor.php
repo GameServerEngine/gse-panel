@@ -94,7 +94,7 @@ function exec_module()
 		$maplocation = get_map_path($query_name,$mod,'',$server_home);
 		@$notifications .= get_lang("query_protocol_not_supported");
 	}
-	$map_image_upload = '<br><button class="upload-image" id="'.$home_id.'" data-map="'.$map.'" data-mod_id="'.$mod_id.'" onClick="uploadMapImg(this);" >'. get_lang("upload_map_image") .'</button>';
+	$map_image_upload = '<br><button class="upload-image" id="'.$home_id.'" data-map="'.htmlspecialchars($map, ENT_QUOTES).'" data-mod_id="'.$mod_id.'" onClick="uploadMapImg(this);" >'. get_lang("upload_map_image") .'</button>';
 
 	@$map_icon = "<img class='mapicon' src='$maplocation'/>";
 	@$currentmap = $map;
@@ -106,7 +106,7 @@ function exec_module()
 		{
 			$onlineT = "<div class='map-icon' >";
 				$onlineT .= "$map_icon";
-				if($isAdmin)
+				if ($map !== '' && !preg_match('/^[-_]+$/', $map))
 					$onlineT .= "$map_image_upload";
 			$onlineT .= "</div>";
 			$onlineT .= "<div class='server-info' >";

@@ -138,88 +138,78 @@ function smart_resize_image($file,
 }
 
 function exec_module() {
-
 	global $db;
-
-	if( isset($_POST['home_id']) and isset($_POST['mod_id']) and isset($_POST['map']) and isset($_POST['extension']) )
+	require_once 'modules/gamemanager/map_images_lib.php';
+	require_once 'includes/diagnostics/csrf.php';
+	if( !isset($_POST['home_id']) or !isset($_POST['mod_id']) or !isset($_POST['map']) or !isset($_POST['extension']) or !isset($_FILES['map-image']) )
+		return;
+	if (!diag_csrf_valid(diag_csrf_from_request()))
 	{
-		$home_id = (int)$_POST['home_id'];
-		$mod_id = (int)$_POST['mod_id'];
-		// The same file name get_map_path() looks for; nothing else may reach the path.
-		$map = preg_replace("/[^a-z0-9_]/", "_", strtolower((string)$_POST['map']));
-		$extension = strtolower((string)$_POST['extension']);
-
-		$home_info = $db->getGameHome($home_id);
-		if (!$home_info || !isset($home_info['mods'][$mod_id]) || $map === '' || preg_match('/^_+$/', $map) || !in_array($extension, array('jpg', 'png', 'gif'), true))
-		{
-			print_lang('unknown_errors');
-			return;
-		}
-
-		$mods = $home_info['mods'];
-		$current_mod_info = $mods[$mod_id];
-		$mod_name = $current_mod_info['mod_name'];
-		$mod_key = $current_mod_info['mod_key'];
-
-		if ( strtolower($mod_name) == "none")
-			$mod = $mod_key;
-		else
-			$mod = $mod_name;
-
-		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file'], os_for_install_row($home_info));
-
-		if ($server_xml->protocol == "gameq")
-			$query_name = $server_xml->gameq_query_name;
-		elseif ($server_xml->protocol == "lgsl")
-			$query_name = $server_xml->lgsl_query_name;
-		else
-			$query_name = $mod; // If query name does not exist use mod key instead.
-
-		$query_name = preg_replace("/[^a-z0-9_]/i", "", (string)$query_name);
-		$mod = preg_replace("/[^a-z0-9_]/i", "", (string)$mod);
-		$dest_path = "protocol". DIRECTORY_SEPARATOR ."lgsl". DIRECTORY_SEPARATOR ."maps". DIRECTORY_SEPARATOR ."$query_name". DIRECTORY_SEPARATOR ."$mod";
-		$dest_file = $dest_path . DIRECTORY_SEPARATOR . "$map.$extension";
-
-		$image_type = array('jpg' => IMAGETYPE_JPEG, 'png' => IMAGETYPE_PNG, 'gif' => IMAGETYPE_GIF);
-		if( $_FILES['map-image']['error'] == 0 )
-		{
-			$info = @getimagesize($_FILES['map-image']['tmp_name']);
-			if (!$info || $info[2] !== $image_type[$extension])
-			{
-				print_lang('unknown_errors');
-				return;
-			}
-			if( !file_exists($dest_path))
-			{
-				if(!@mkdir($dest_path, 0700, true))
-				{
-					echo get_lang_f('cant_create_folder',$dest_path);
-					return;
-				}
-			}
-
-			if(@move_uploaded_file( $_FILES["map-image"]["tmp_name"], $dest_file ))
-			{
-				print_lang('uploaded_successfully');
-				smart_resize_image($dest_file, null, 160, 120, true);
-			}
-			else
-			{
-				echo get_lang_f('cant_write_file',$dest_file);
-			}
-		}
-		else
-		{
-			switch ($_FILES['map-image']['error'])
-			{
-				case UPLOAD_ERR_INI_SIZE:
-					echo get_lang_f('exceeded_php_directive','upload_max_filesize='.ini_get('upload_max_filesize'));
-				case UPLOAD_ERR_FORM_SIZE:
-					echo get_lang_f('exceeded_php_directive','post_max_size='.ini_get('post_max_size'));
-				default:
-					print_lang('unknown_errors');
-			}
-		}
+		print_lang('unknown_errors');
+		return;
 	}
+
+	$home_id = (int)$_POST['home_id'];
+	$mod_id = (int)$_POST['mod_id'];
+	// The same file name get_map_path() looks for; nothing else may reach the path.
+	$map = map_image_name($_POST['map']);
+	$extension = strtolower((string)$_POST['extension']);
+	$types = map_image_types();
+
+	// Admins upload for every server of the game; anyone else only for a server they have.
+	$isAdmin = $db->isAdmin($_SESSION['user_id']);
+	$home_info = $isAdmin ? $db->getGameHome($home_id) : $db->getUserGameHome($_SESSION['user_id'], $home_id);
+	if (!$home_info || !isset($home_info['mods'][$mod_id]) || !map_image_name_ok($map) || !isset($types[$extension]))
+	{
+		print_lang('unknown_errors');
+		return;
+	}
+
+	if ($_FILES['map-image']['error'] != 0)
+	{
+		switch ($_FILES['map-image']['error'])
+		{
+			case UPLOAD_ERR_INI_SIZE:
+				echo get_lang_f('exceeded_php_directive','upload_max_filesize='.ini_get('upload_max_filesize'));
+				break;
+			case UPLOAD_ERR_FORM_SIZE:
+				echo get_lang_f('exceeded_php_directive','post_max_size='.ini_get('post_max_size'));
+				break;
+			default:
+				print_lang('unknown_errors');
+		}
+		return;
+	}
+	$info = @getimagesize($_FILES['map-image']['tmp_name']);
+	if (!$info || $info[2] !== $types[$extension] || $_FILES['map-image']['size'] > 1048576)
+	{
+		print_lang('jpg_gif_png_less_than_1mb');
+		return;
+	}
+
+	$dest_path = $isAdmin ? map_image_global_dir($home_info, $mod_id) : map_image_home_dir($home_id);
+	if (!map_image_make_dir($dest_path))
+	{
+		echo get_lang_f('cant_create_folder', $dest_path);
+		return;
+	}
+	$dest_file = "$dest_path/$map.$extension";
+	map_image_remove($dest_path, $map);
+	if (!@move_uploaded_file($_FILES["map-image"]["tmp_name"], $dest_file))
+	{
+		echo get_lang_f('cant_write_file', $dest_file);
+		return;
+	}
+	smart_resize_image($dest_file, null, 160, 120, true);
+
+	if ($isAdmin)
+	{
+		print_lang('uploaded_successfully');
+		return;
+	}
+	$db->query("REPLACE INTO DB_PREFIXmap_image_upload (home_id, user_id, map, file_name, uploaded_at, status) VALUES ("
+		. $home_id . ", " . (int)$_SESSION['user_id'] . ", '" . $db->realEscapeSingle($map) . "', '"
+		. $db->realEscapeSingle("$map.$extension") . "', " . time() . ", 'pending')");
+	print_lang('map_image_uploaded_for_server');
 }
 ?>

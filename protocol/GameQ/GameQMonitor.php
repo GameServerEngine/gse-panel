@@ -57,7 +57,6 @@ if($num_of_servers < $numberservers_to_skip_query)
 		$map  = preg_replace("/[^a-z0-9_]/", "_", strtolower($results['server']['gq_mapname']));
 		
 		//----------+ patches for voice servers (ts2, ts3, ventrilo)
-		if(!$map)$map = $results['server']['gq_type'];
 		if(!$players)$players = 0;
 
 		@$stats_players += $players;       // COUNT VISIBLE NUMBER OF PLAYERS
