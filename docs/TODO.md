@@ -225,3 +225,5 @@
 | need | Run modules/update/tests/migration_replay_mysql_test.php again on an empty gse_resource_validation_replay* database with GSE_REPLAY_MIGRATIONS=0009,0013,0017,0018: it now also tests crash recovery (unrecorded 0017/0018 finish; a changed column fails closed). Leroy access was not granted in the 2026-11-28 Claude session. | open | Leroy | |
 | issue | Legacy migration 0005 fails on the canonical install/gse_panel.sql (duplicate enabled column), so a full replay on a fresh canonical schema fails before 0017. Not caused by Resource Intelligence; the scoped replay works. Needs a look at 0005 versus the install SQL (is the column already in the install file?). | open | Claude | |
 | need | Windows resource_host runs one extra PowerShell inventory call per status sample (Get-PhysicalDisk, CIM). Measure the cost on a dev Windows VM; cache the static part if it is more than a few seconds. | open | Claude | |
+
+- Resource Intelligence rollout: complete real host calibration, live agent update and per-game workload profiling; remove temporary bootstrap policy after validated rollout. Reconcile pilot holds before enabling additional allocations.

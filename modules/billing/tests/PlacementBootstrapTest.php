@@ -1,0 +1,26 @@
+<?php
+require_once __DIR__ . '/placement_mysql.inc';
+require_once __DIR__ . '/../includes/configuration_quote.php';
+if (!placement_test_wanted()) { echo "SKIP: requires disposable real MySQL\n"; exit; }
+$db=placement_test_connect(); $p=placement_test_prefix(true);
+register_shutdown_function(fn()=>placement_test_drop($db,$p));
+placement_test_create($db,$p,true);
+$now=time(); placement_test_seed($db,$p,$now);
+$db->query("ALTER TABLE {$p}status_sample ADD is_up INT, ADD cores INT, ADD cpu_pct DOUBLE, ADD mem_total_b BIGINT, ADD mem_used_b BIGINT, ADD disk_total_b BIGINT, ADD disk_used_b BIGINT");
+$policy=placement_test_json($db,['mode'=>'legacy-small-pilot-v1','verified_at'=>$now,'disk_total_b'=>154205491200,'disk_reserved_b'=>7854817280,'game_root'=>'/home/gameserver']);
+$db->query("UPDATE {$p}placement_host SET purpose='bootstrap',calibration_json='$policy' WHERE remote_server_id=9");
+$db->query("UPDATE {$p}status_sample SET is_up=1,cores=6,cpu_pct=3,mem_total_b=8326742016,mem_used_b=800000000,disk_total_b=154205491200,disk_used_b=8200000000 WHERE remote_server_id=9");
+expect_resource(placement_evaluate($db,$p,109,16)!=='','CS2 stays closed in pilot');
+$db->query("UPDATE {$p}config_homes SET game_key='cstrike' WHERE home_cfg_id=10");
+expect_resource(placement_evaluate($db,$p,109,16)==='','light game open');
+expect_resource(placement_evaluate($db,$p,109,32)!=='','slot ceiling');
+$db->query("UPDATE {$p}status_sample SET disk_used_b=140000000000 WHERE remote_server_id=9");
+expect_resource(placement_evaluate($db,$p,109,16)==='insufficient pilot disk','projected storage checked');
+$db->query("UPDATE {$p}status_sample SET disk_used_b=8200000000,sampled_at=1 WHERE remote_server_id=9");
+expect_resource(placement_evaluate($db,$p,109,16)!=='','stale blocked');
+$db->query("UPDATE {$p}status_sample SET sampled_at=$now WHERE remote_server_id=9");
+$inv=placement_test_invoice(12);
+expect_resource(placement_reserve_invoices($db,$p,[$inv],$now+900),'first pilot hold');
+expect_resource(!placement_reserve_invoices($db,$p,[['invoice_id'=>13]+$inv],$now+900),'second pilot hold rejected');
+expect_resource(placement_reserve_invoices($db,$p,[$inv],PHP_INT_MAX),'own hold reused');
+echo "Pilot placement passed on real MySQL\n";

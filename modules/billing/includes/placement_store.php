@@ -33,6 +33,9 @@ function placement_evaluate(mysqli $db, string $prefix, int $id, int $slots, int
         $cal = $db->query("SELECT purpose, calibration_json FROM `{$prefix}placement_host`
             WHERE remote_server_id=$sid" . $lock)->fetch_assoc();
         if (!$cal) return 'host has no calibration';
+        if ($cal['purpose'] === 'bootstrap') {
+            return placement_bootstrap($db, $prefix, $o, $slots, $invoiceId, $expires, $cal);
+        }
         $sample = $db->query("SELECT sampled_at, resource_json FROM `{$prefix}status_sample`
             WHERE remote_server_id=$sid ORDER BY sampled_at DESC LIMIT 1")->fetch_assoc();
         $h = json_decode($sample['resource_json'] ?? '', true) ?: [];
@@ -80,6 +83,66 @@ function placement_evaluate(mysqli $db, string $prefix, int $id, int $slots, int
         error_log('Placement lookup for offer ' . $id . ' failed: ' . $e->getMessage());
         return 'resource data unavailable';
     }
+}
+
+// Explicit, expiring pilot policy: not a GRU calibration or an approved workload profile.
+// Only small legacy native Linux games, one outstanding pilot allocation per host.
+function placement_bootstrap(mysqli $db, string $prefix, array $o, int $slots, int $invoiceId,
+    int $expires, array $cal): string
+{
+    $policy = json_decode($cal['calibration_json'], true) ?: [];
+    $now = time();
+    $sid = (int)$o['remote_server_id'];
+    $id = (int)$o['offer_id'];
+    if (($policy['mode'] ?? '') !== 'legacy-small-pilot-v1' ||
+        !resource_fresh($policy['verified_at'] ?? null, $now, 86400) ||
+        ($o['server_os'] ?? '') !== 'linux' ||
+        !in_array($o['game_key'], ['cstrike', 'urban_terror_4'], true) || $slots > 16)
+        return 'configuration outside temporary pilot policy';
+    $sample = $db->query("SELECT * FROM `{$prefix}status_sample`
+        WHERE remote_server_id=$sid ORDER BY sampled_at DESC LIMIT 1")->fetch_assoc();
+    if (!$sample || (int)$sample['is_up'] !== 1 ||
+        !resource_fresh($sample['sampled_at'], $now, 180))
+        return 'missing or stale pilot host sample';
+    foreach (['cores','cpu_pct','mem_total_b','mem_used_b','disk_total_b','disk_used_b'] as $k)
+        if (!resource_number($sample[$k] ?? null)) return 'unknown pilot ' . $k;
+    if (!resource_number($policy['disk_total_b'] ?? null) ||
+        !resource_number($policy['disk_reserved_b'] ?? null) ||
+        (int)$policy['disk_total_b'] !== (int)$sample['disk_total_b'] ||
+        ($policy['game_root'] ?? '') !== rtrim($GLOBALS['billing_runtime_site_config']['game_server_root'] ?? '/home/gameserver', '/'))
+        return 'pilot filesystem changed';
+    $limits = storefront_load_headroom($db, $prefix);
+    // Conservative planning envelopes, not measured workload guarantees.
+    $ram = 1073741824; $disk = 10737418240;
+    if ($sample['cores'] < 2 || $sample['cpu_pct'] > 100 ||
+        $sample['cpu_pct'] + 100 / $sample['cores'] > min(70, $limits['cpu']))
+        return 'insufficient pilot CPU';
+    if ($sample['mem_total_b'] <= 0 || $sample['mem_used_b'] + $ram > $sample['mem_total_b'] * min(70,$limits['ram']) / 100)
+        return 'insufficient pilot RAM';
+    if ($sample['disk_total_b'] <= 0 ||
+        $sample['disk_used_b'] + $policy['disk_reserved_b'] + $disk > $sample['disk_total_b'] * min(85,$limits['disk']) / 100)
+        return 'insufficient pilot disk';
+    $lock = $expires ? ' FOR UPDATE' : '';
+    $res = $db->query("SELECT invoice_id,offer_id,slots FROM `{$prefix}placement_hold`
+        WHERE remote_server_id=$sid AND expires_at >= UNIX_TIMESTAMP()" . $lock);
+    while ($row = $res->fetch_assoc()) {
+        if (!$invoiceId || (int)$row['invoice_id'] !== $invoiceId) return 'pilot allocation already reserved';
+        if ((int)$row['offer_id'] !== $id || (int)$row['slots'] !== $slots) return 'reservation mismatch';
+    }
+    if (!$expires) return '';
+    if ($invoiceId <= 0) return 'missing invoice';
+    $prior = $db->query("SELECT remote_server_id,offer_id,slots FROM `{$prefix}placement_hold`
+        WHERE invoice_id=$invoiceId FOR UPDATE")->fetch_assoc();
+    if ($prior && ((int)$prior['remote_server_id'] !== $sid ||
+        (int)$prior['offer_id'] !== $id || (int)$prior['slots'] !== $slots))
+        return 'invoice already bound to a different allocation';
+    // Do not pretend provisional CPU/IO quantities are normalized GRU metrics.
+    $demand = json_encode(['mode'=>'legacy-small-pilot-v1','ram_bytes'=>$ram,'disk_bytes'=>$disk,'cpu_cores'=>1], JSON_THROW_ON_ERROR);
+    $stmt = $db->prepare("INSERT INTO `{$prefix}placement_hold`
+        (invoice_id,remote_server_id,offer_id,slots,expires_at,demand_json) VALUES (?,?,?,?,?,?)
+        ON DUPLICATE KEY UPDATE expires_at=GREATEST(expires_at,VALUES(expires_at)),demand_json=VALUES(demand_json)");
+    $stmt->bind_param('iiiiis', $invoiceId, $sid, $id, $slots, $expires, $demand);
+    return $stmt->execute() ? '' : 'reservation failed';
 }
 
 function placement_invoice(mysqli $db, string $prefix, array $inv, int $expires): string
