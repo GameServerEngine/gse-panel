@@ -33,14 +33,9 @@ if(isset($server_home['control_password']) && $server_home['control_password'] !
 			$cfg["user"] = "serveradmin";
 			$cfg["pass"] = $server_home['control_password'];
 			$cfg["voice"] = $server_home['port'];
-			$cfg["query"] = 10011;
-			require_once('includes/lib_remote.php');
-			$remote = new RemoteLibrary($server_home['agent_ip'], $server_home['agent_port'], $server_home['encryption_key'], $server_home['timeout']);
-			foreach($db->getHomeIpPorts($server_home['home_id']) as $ts3Port)
-			{
-				if($remote->rfile_exists( "startups/".$ts3Port['ip']."-".$ts3Port['port'] ) === 1)
-					$cfg["query"] = $ts3Port['port'] + 24;
-			}
+			// The ServerQuery port the start command gives TeamSpeak (teamspeak3.xml QUERY_PORT, voice port + 24).
+			require_once(__DIR__ . '/../../includes/game_query_port.php');
+			$cfg["query"] = get_query_port($server_xml, $server_home['port']);
 			if ( $server_home['use_nat'] == 1 )
 				$cfg["host"] = $server_home['agent_ip'];
 			else

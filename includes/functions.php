@@ -99,6 +99,10 @@ function genRandomString($length) {
 
 function get_map_path($query_name,$mod,$map) {
 
+	// No real map (Arma and others report "-"): no picture, rather than one for another game.
+	if (trim((string)$map) === '' || preg_match('/^[-_]+$/', (string)$map))
+		return "images/map_none.png";
+
 	$mod_gt = $mod;
 
 	if($mod == "cstrike")
@@ -138,9 +142,9 @@ function get_map_path($query_name,$mod,$map) {
 		"protocol/lgsl/maps/$query_name/$map.jpg",
 		"protocol/lgsl/maps/$query_name/$map.gif",
 		"protocol/lgsl/maps/$query_name/$map.png",
-		"images/games/$query_name.png",
-		"images/games/$query_name.jpg",
-		"images/online_big.png"
+		// Only pictures of this map; the query protocol's logo (for example "source" for every Steam
+		// game) is not shown for other games. Without one the picture is plain black.
+		"images/map_none.png"
 	);
 
 	return get_first_existing_file($map_paths, 'http://gametracker.com', 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:51.0) Gecko/20100101 Firefox/51.0');
