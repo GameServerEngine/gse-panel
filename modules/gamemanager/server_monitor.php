@@ -524,7 +524,7 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 					$db->saveServerStatusCache($server_home['ip_id'], $server_home['port'], $agent_status);
 				}
 				$update_in_progress = $remote->is_screen_running(SCREEN_TYPE_UPDATE,$server_home['home_id']) === 1;
-				if($agent_state === "RUNNING" && ((int)($agent_status['process_running'] ?? 0) === 1) && ((int)($agent_status['port_listening'] ?? ($agent_status['game_port_listening'] ?? 0)) === 1))
+				if(agent_status_ready($agent_status))
 				{
 					$status = "online";
 					$order = 1 + $j;
@@ -573,11 +573,12 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 					}
 					$stats_servers_online++;
 				}
-				elseif(in_array($agent_state, array("STARTING", "STOPPING"), true))
+				elseif(in_array($agent_state, array("STARTING", "STOPPING"), true) || (in_array($agent_state, array("RUNNING", "ONLINE"), true) && $screen_running))
 				{
+					// Also a server whose process runs but whose game port is not listening yet: it is still starting.
 					$status = "starting";
 					$order = 2 + $j;
-					$address = "<span class='note'>".htmlentities($agent_state)."</span>";
+					$address = "<span class='note'>".htmlentities($agent_state === "STOPPING" ? "STOPPING" : "STARTING")."</span>";
 				}
 				else
 				{

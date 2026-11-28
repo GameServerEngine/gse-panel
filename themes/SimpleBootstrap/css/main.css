@@ -844,28 +844,19 @@ input[name="map-image"] {
 	white-space: nowrap;
 }
 
-.menu ul[id^=submenu] ul[id^=submenu] a {
-        padding: 0px 20px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-}
-
 .menu ul[id^=submenu] a,
 .menu ul#administration a,
 .menu ul > li > ul a
 {
         font-size: 12px;
         padding-left: 16px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
 }
 
 .menu a:hover {
         text-decoration: none;
-}
-
-.menu a[href^="#mgamemanagerpgamemonitorhomecfgid"] span:before {
-	content: "" !important;
-	width: 0px !important;
 }
 
 .menu img {
@@ -885,11 +876,6 @@ input[name="map-image"] {
 }
 .menu .tree ul.opened .tree:before {
         visibility: visible;
-}
-[id^="mgamemanagerpgamemonitorhomecfgid"] a.user_menu_link:before {
-	content: "\25CF";
-	position: relative;
-	left: -5px;
 }
 
 

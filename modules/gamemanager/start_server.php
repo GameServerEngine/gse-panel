@@ -238,7 +238,7 @@ function start_status_answer($agent_status, $retry)
 	$status_name = isset($agent_status['status']) ? strtoupper($agent_status['status']) : "UNKNOWN";
 	$last_error = isset($agent_status['last_error']) ? $agent_status['last_error'] : "";
 
-	if (is_agent_status_online($agent_status))
+	if (agent_status_ready($agent_status))
 		return array('state' => 'online', 'message' => get_lang('server_started'), 'delay' => 1);
 	if ($status_name === "UNKNOWN")
 		return array('state' => 'stop', 'message' => get_lang("agent_offline"), 'delay' => 3);

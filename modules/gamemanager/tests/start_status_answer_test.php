@@ -2,7 +2,7 @@
 // Checks which state the start page picks for each agent status.
 chdir(dirname(__DIR__, 3));
 function get_lang($key) { return $key; }
-function is_agent_status_online($status) { return isset($status['status']) && $status['status'] === 'ONLINE'; }
+function agent_status_ready($status) { return isset($status['status']) && $status['status'] === 'ONLINE' && !empty($status['process_running']) && !empty($status['port_listening']); }
 function read_server_config() { return false; }
 function with_game_root() { return false; }
 function print_success() {}
@@ -20,7 +20,8 @@ function check($name, $actual, $expected)
 	if ($actual !== $expected) { echo "  FAIL: $name (got $actual, want $expected)\n"; $failures++; }
 }
 
-check('online', start_status_answer(array('status' => 'ONLINE'), 0)['state'], 'online');
+check('online', start_status_answer(array('status' => 'ONLINE', 'process_running' => 1, 'port_listening' => 1), 0)['state'], 'online');
+check('process up but port not listening still waits', start_status_answer(array('status' => 'ONLINE', 'process_running' => 1, 'port_listening' => 0), 0)['state'], 'waiting');
 check('unknown stops', start_status_answer(array(), 0)['state'], 'stop');
 check('crashed stops', start_status_answer(array('status' => 'crashed', 'last_error' => 'boom'), 0)['message'], 'boom');
 check('starting waits', start_status_answer(array('status' => 'STARTING'), 3)['state'], 'waiting');

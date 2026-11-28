@@ -171,7 +171,8 @@ function home()
 
 		if(!empty($server_homes))
 		{
-			$servers_by_game_name = array();
+			// Game Monitor menu: every game server directly, with its game's icon, sorted by game and name.
+			$menu_homes = array();
 			foreach ((array)$server_homes as $server_home)
 			{
 				if(isset($settings['check_expiry_by']) and $settings['check_expiry_by'] == "once_logged_in")
@@ -179,52 +180,53 @@ function home()
 					if($db->check_expire_date($_SESSION['user_id'], $server_home['home_id']))
 						continue;
 				}
-				$servers_by_game_name["$server_home[game_name]"][] = $server_home;
+				$menu_homes[] = $server_home;
 			}
-			ksort($servers_by_game_name);
+			usort($menu_homes, function ($x, $y) {
+				$c = strcasecmp((string)$x['game_name'], (string)$y['game_name']);
+				return $c !== 0 ? $c : strcasecmp((string)$x['home_name'], (string)$y['home_name']);
+			});
 			$game_homes_list = "<ul id='submenu_0' >\n";
 			$game_homes_list .= "<li><a class='user_menu_link' href='?m=gamemanager&p=game_monitor'>".get_lang('game_monitor_all')."</a></li>\n";
 			require_once("modules/config_games/server_config_parser.php");
-			foreach ((array)$servers_by_game_name as $game_name => $server_homes )
+			$icon_by_cfg = array();
+			foreach ($menu_homes as $server_home)
 			{
-				$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_homes[0]['home_cfg_file'], os_for_install_row($server_homes[0]));
-				if ($server_xml === FALSE)
+				$cfg_key = $server_home['home_cfg_file'] . '|' . $server_home['mod_key'];
+				if (!array_key_exists($cfg_key, $icon_by_cfg))
 				{
-					// Bad XML – skip this game from the navigation list; error is
-					// already collected and will be shown to admins below.
+					$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$server_home['home_cfg_file'], os_for_install_row($server_home));
+					if ($server_xml === FALSE)
+					{
+						// Bad XML: leave the server out of the menu; the error is shown to admins below.
+						$icon_by_cfg[$cfg_key] = FALSE;
+					}
+					else
+					{
+						$mod = $server_home['mod_key'];
+						// If query name does not exist use mod key instead.
+						if ($server_xml->protocol == "gameq")
+							$query_name = $server_xml->gameq_query_name;
+						elseif ($server_xml->protocol == "lgsl")
+							$query_name = $server_xml->lgsl_query_name;
+						elseif ($server_xml->protocol == "teamspeak3")
+							$query_name = 'ts3';
+						else
+							$query_name = $mod;
+						$icon_by_cfg[$cfg_key] = get_first_existing_file(array("images/icons/$mod.png",
+							"images/icons/$query_name.png",
+							"protocol/lgsl/other/icon_unknown.gif"));
+					}
+				}
+				if ($icon_by_cfg[$cfg_key] === FALSE)
 					continue;
-				}
-				$mod = $server_homes[0]['mod_key'];
-				// If query name does not exist use mod key instead.
-				if ($server_xml->protocol == "gameq")
-					$query_name = $server_xml->gameq_query_name;
-				elseif ($server_xml->protocol == "lgsl")
-					$query_name = $server_xml->lgsl_query_name;
-				elseif ($server_xml->protocol == "teamspeak3")
-					$query_name = 'ts3';
-				else
-					$query_name = $mod;
-
-				//----------+ getting the lgsl image icon
-				$icon_paths = array("images/icons/$mod.png",
-									"images/icons/$query_name.png",
-									"protocol/lgsl/other/icon_unknown.gif");
-
-				$icon_path = get_first_existing_file($icon_paths);
-
-				$game_homes_list .= "<li>\n<a href='?m=gamemanager&p=game_monitor&home_cfg_id=".$server_homes[0]['home_cfg_id'].
-									"'><span data-icon_path='$icon_path'>$game_name</span></a>\n<ul id='submenu_1' >\n";
-				foreach ((array)$server_homes as $server_home)
-				{
-					$button_name = htmlentities($server_home['home_name'] ?? '', ENT_QUOTES, 'UTF-8');
-					if( ! preg_match("/none/i", (string)$server_home['mod_name']) )
-						$button_name .= " - ".$server_home['mod_name'];
-					$game_homes_list .= "<li><a title='".$server_home['ip'].':'.$server_home['port'].
-										"' class='user_menu_link' href='?m=gamemanager&p=game_monitor&home_id-mod_id-ip-port=".
-										$server_home['home_id'].'-'.$server_home['mod_id'].'-'.$server_home['ip'].'-'.
-										$server_home['port']."'>".$button_name."</a></li>\n";
-				}
-				$game_homes_list .= "</ul>\n</li>\n";
+				$button_name = htmlentities($server_home['home_name'] ?? '', ENT_QUOTES, 'UTF-8');
+				if( ! preg_match("/none/i", (string)$server_home['mod_name']) )
+					$button_name .= " - ".htmlentities((string)$server_home['mod_name'], ENT_QUOTES, 'UTF-8');
+				$game_homes_list .= "<li><a title='".htmlentities($server_home['game_name'].' - '.$server_home['ip'].':'.$server_home['port'], ENT_QUOTES, 'UTF-8').
+									"' class='user_menu_link' href='?m=gamemanager&p=game_monitor&home_id-mod_id-ip-port=".
+									$server_home['home_id'].'-'.$server_home['mod_id'].'-'.$server_home['ip'].'-'.
+									$server_home['port']."'><span data-icon_path='".$icon_by_cfg[$cfg_key]."'>".$button_name."</span></a></li>\n";
 			}
 			$game_homes_list .= "</ul>\n";
 		}

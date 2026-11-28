@@ -149,6 +149,19 @@ function agent_port_listening($remote, $server_port)
 	return null;
 }
 
+/**
+ * True when players can use the server: the agent reports it RUNNING or ONLINE, its process is
+ * up and its game port is listening. The start page and the game monitor both use this, so the
+ * start page never says "started" while the monitor still shows the server as stopped.
+ */
+function agent_status_ready($agent_status)
+{
+	return is_array($agent_status)
+		&& in_array(strtoupper((string)($agent_status['status'] ?? '')), array('ONLINE', 'RUNNING'), true)
+		&& (int)($agent_status['process_running'] ?? 0) === 1
+		&& (int)($agent_status['port_listening'] ?? ($agent_status['game_port_listening'] ?? 0)) === 1;
+}
+
 function is_agent_status_online($agent_status)
 {
 	return is_array($agent_status) && isset($agent_status['status']) && in_array(strtoupper($agent_status['status']), array('ONLINE', 'RUNNING'), true) && agent_status_has_runtime_evidence($agent_status);

@@ -195,3 +195,5 @@
 | done | Start parameters of type combo: preset dropdown you can type into; values a RUNNING server used are learned per game (game_param_options). Garry's Mod map and gamemode use it. | done | Claude | |
 | todo | Convert more games' map and mode parameters to combo with presets (Source games, Rust, Arma), checking each XML's real values against LinuxGSM. | open | Claude | |
 | done | Agent edit page: label each game IP Public or Private, and ask (turn on Use NAT?) before a private address is saved on a non-NAT agent. | done | Claude | |
+| done | Game Monitor menu: list game servers directly with their game icon (no game-type level); remove the button underline on the server page; start page and monitor use one "ready" test so a just-started server is never shown stopped. | done | Claude | |
+| todo | Other themes (Revolution, Silver, Metro, Obsidian, MasterControlProgram, Evolution) still carry CSS for the old nested game-type menu (submenu_1, homecfgid); remove it if those themes are kept. | open | Claude | |
