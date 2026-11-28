@@ -4,5 +4,5 @@ Updated: 2026-11-28 UTC. See project TODO and permanent engineering history for 
 
 | Feature | Status | Checkout | Next action |
 |---|---|---|---|
-| [Resource Intelligence and placement](features/resource-intelligence.md) | Selected; real MySQL flow, concurrency and scoped replay passed (Leroy); migration crash recovery and Windows resource_host implemented and fixture-tested, NOT yet run on MySQL/Windows | working (panel), working (gse-agent-windows) | Leroy: run extended MySQL replay test. Owner: name a dev Windows VM for status_sample; then calibration, browser and provisioning checks |
-| [Automatic agent deployment](features/automatic-agent-install.md) | Paused by owner; unit tests passed, integration outstanding | feature/panel-ssh-agent-install | Resume only after Resource Intelligence; fix real installer interface, migration collision, private network reachability |
+| [Resource Intelligence and placement](features/resource-intelligence.md) | Panel 2.34.0 deployed to production; migrations verified; uncalibrated offers unavailable | working/testing | Agent updates, calibration, profile approval and live order validation |
+| [Automatic agent deployment](features/automatic-agent-install.md) | Selected; implementation and integration testing active | feature/panel-ssh-agent-install | Correct installer contract, migrate to 0019, validate SSH and enroll Washington DC Linux VM |
