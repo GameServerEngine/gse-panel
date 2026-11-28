@@ -1,4 +1,7 @@
 <?php
+// Extra ports further than this from the game port are not part of its block (see port_allocator_xml_port_offsets).
+require_once __DIR__ . '/game_ip.php';
+defined('PORT_ALLOCATOR_NEAR_OFFSET') || define('PORT_ALLOCATOR_NEAR_OFFSET', 100);
 
 if (!function_exists('port_allocator_int')) {
 	function port_allocator_int($value)
@@ -110,6 +113,56 @@ if (!function_exists('port_allocator_xml_query_names')) {
 			'lgsl_query_name' => isset($xml->lgsl_query_name) ? trim((string)$xml->lgsl_query_name) : '',
 			'gameq_query_name' => isset($xml->gameq_query_name) ? trim((string)$xml->gameq_query_name) : '',
 		);
+	}
+}
+
+if (!function_exists('port_allocator_xml_port_offsets')) {
+	/**
+	 * The extra ports a game reserves next to its game port, from <reserve_ports> in its XML
+	 * (both the Windows and the Linux section). Source games, for example, use the client port
+	 * 10 below the game port and SourceTV 5 above it.
+	 * Returns array('below' => ports below, 'above' => ports above). Offsets larger than
+	 * PORT_ALLOCATOR_NEAR_OFFSET point at a port far away (such as a fixed query port) and are not
+	 * part of the block; they are left out here.
+	 */
+	function port_allocator_xml_port_offsets($home_cfg_file)
+	{
+		$offsets = array('below' => 0, 'above' => 0);
+		$file = basename((string)$home_cfg_file);
+		if ($file === '' || !function_exists('simplexml_load_file')) {
+			return $offsets;
+		}
+		$path = dirname(__DIR__) . '/modules/config_games/server_configs/' . $file;
+		$xml = is_readable($path) ? @simplexml_load_file($path) : false;
+		if (!$xml) {
+			return $offsets;
+		}
+		foreach ($xml->xpath('//reserve_ports/port') ?: array() as $port) {
+			$type = (string)$port['type'];
+			$value = port_allocator_int(trim((string)$port));
+			if ($value <= 0 || $value > PORT_ALLOCATOR_NEAR_OFFSET) {
+				continue;
+			}
+			if ($type === 'subtract') {
+				$offsets['below'] = max($offsets['below'], $value);
+			} elseif ($type === 'add') {
+				$offsets['above'] = max($offsets['above'], $value);
+			}
+		}
+		return $offsets;
+	}
+}
+
+if (!function_exists('port_allocator_block_span')) {
+	/**
+	 * The ports a block must hold for a game port: the standard block from the game port up, widened
+	 * to cover the game's extra ports below and above it. Returns array(first port, last port).
+	 */
+	function port_allocator_block_span($primary_port, $block_size, array $offsets)
+	{
+		$first = min($primary_port, $primary_port - (int)$offsets['below']);
+		$last = max($primary_port + $block_size - 1, $primary_port + (int)$offsets['above']);
+		return array($first, $last);
 	}
 }
 
@@ -253,16 +306,36 @@ if (!function_exists('port_allocator_remote_ip_ids')) {
 
 		$rows = port_allocator_rows(
 			$db,
-			"SELECT ip_id FROM `{$db_prefix}remote_server_ips` WHERE remote_server_id={$remote_server_id} ORDER BY ip_id ASC"
+			"SELECT ip_id, ip FROM `{$db_prefix}remote_server_ips` WHERE remote_server_id={$remote_server_id} ORDER BY ip_id ASC"
 		);
-		$ids = array();
+		$nat = port_allocator_rows($db, "SELECT use_nat FROM `{$db_prefix}remote_servers` WHERE remote_server_id={$remote_server_id} LIMIT 1");
+		return port_allocator_order_ip_rows($rows, !empty($nat) ? $nat[0]['use_nat'] : 0);
+	}
+}
+
+if (!function_exists('port_allocator_order_ip_rows')) {
+	/**
+	 * The ip_ids of one agent a new game server may use, in the order to try them: public addresses
+	 * first, each in ip_id order. Private (LAN or VPN) addresses are only used on an agent behind NAT,
+	 * after its public ones (see includes/game_ip.php); on any other agent they are left out.
+	 */
+	function port_allocator_order_ip_rows(array $rows, $use_nat = 0)
+	{
+		$public = array();
+		$private = array();
 		foreach ($rows as $row) {
 			$ip_id = port_allocator_int($row['ip_id'] ?? 0);
-			if ($ip_id > 0) {
-				$ids[] = $ip_id;
+			$ip = (string)($row['ip'] ?? '');
+			if ($ip_id <= 0) {
+				continue;
+			}
+			if (game_ip_is_public($ip)) {
+				$public[] = $ip_id;
+			} elseif (game_ip_allowed($ip, $use_nat)) {
+				$private[] = $ip_id;
 			}
 		}
-		return $ids;
+		return array_merge($public, $private);
 	}
 }
 
@@ -442,45 +515,6 @@ if (!function_exists('port_allocator_block_has_conflict')) {
 	}
 }
 
-if (!function_exists('port_allocator_offsets_fit')) {
-	function port_allocator_offsets_fit($db, $db_prefix, $home_cfg_id, $primary_port, $block_start, $block_end, &$reason = '')
-	{
-		if (!port_allocator_table_exists($db, $db_prefix, 'game_port_offsets')) {
-			return true;
-		}
-		$home_cfg_id = port_allocator_int($home_cfg_id);
-		$primary_port = port_allocator_int($primary_port);
-		$block_start = port_allocator_int($block_start);
-		$block_end = port_allocator_int($block_end);
-		$rows = port_allocator_rows(
-			$db,
-			"SELECT port_role, token_name, offset_type, offset_value, fits_standard_block
-			   FROM `{$db_prefix}game_port_offsets`
-			  WHERE home_cfg_id={$home_cfg_id} AND required=1"
-		);
-		foreach ($rows as $row) {
-			if (port_allocator_int($row['fits_standard_block'] ?? 1) !== 1) {
-				$reason = 'required offset marked outside standard block';
-				return false;
-			}
-			$type = (string)($row['offset_type'] ?? 'add');
-			$value = port_allocator_int($row['offset_value'] ?? 0);
-			if ($type === 'subtract') {
-				$port = $primary_port - $value;
-			} elseif ($type === 'absolute') {
-				$port = $value;
-			} else {
-				$port = $primary_port + $value;
-			}
-			if ($port < $block_start || $port > $block_end) {
-				$reason = 'required offset resolves outside allocated block';
-				return false;
-			}
-		}
-		return true;
-	}
-}
-
 if (!function_exists('port_allocator_allowed_ranges')) {
 	/**
 	 * Port ranges an admin allows game servers on for this agent: global ranges plus
@@ -532,11 +566,13 @@ if (!function_exists('port_allocator_find_candidate')) {
 		$default_source = 'fallback';
 		$default_port = port_allocator_game_default_port($db, $db_prefix, $home_cfg_id, $default_source);
 		$default_port = max(1, min(65535, port_allocator_int($default_port)));
+		$context = port_allocator_game_context_by_cfg($db, $db_prefix, $home_cfg_id);
+		$offsets = port_allocator_xml_port_offsets($context['home_cfg_file'] ?? '');
 		$range_end = 65535;
 		foreach ($ip_ids as $ip_id) {
 			if ($manual_port !== null && $allow_admin_override) {
-				$manual_start = port_allocator_int($manual_port);
-				$manual_end = $manual_start + $block_size - 1;
+				$manual_port_int = port_allocator_int($manual_port);
+				list($manual_start, $manual_end) = port_allocator_block_span($manual_port_int, $block_size, $offsets);
 				if ($manual_start >= 1 && $manual_end <= 65535 && !port_allocator_block_has_conflict($db, $db_prefix, $ip_id, $remote_server_id, $manual_start, $manual_end)) {
 					return array(
 						'ok' => true,
@@ -545,8 +581,8 @@ if (!function_exists('port_allocator_find_candidate')) {
 						'pool_key' => 'automatic',
 						'block_start' => $manual_start,
 						'block_end' => $manual_end,
-						'primary_port' => $manual_start,
-						'block_size' => $block_size,
+						'primary_port' => $manual_port_int,
+						'block_size' => $manual_end - $manual_start + 1,
 						'allocation_source' => 'admin_override',
 						'legacy_range_id' => 0,
 						'default_port' => $default_port,
@@ -565,8 +601,11 @@ if (!function_exists('port_allocator_find_candidate')) {
 					$starts = array_merge($starts, port_allocator_candidate_starts($range[0], $range[1], $block_size));
 				}
 			}
-			foreach ($starts as $block_start) {
-				$block_end = $block_start + $block_size - 1;
+			foreach ($starts as $primary_port) {
+				list($block_start, $block_end) = port_allocator_block_span($primary_port, $block_size, $offsets);
+				if ($block_start < 1 || $block_end > 65535) {
+					continue;
+				}
 				if (port_allocator_block_has_conflict($db, $db_prefix, $ip_id, $remote_server_id, $block_start, $block_end)) {
 					continue;
 				}
@@ -577,8 +616,8 @@ if (!function_exists('port_allocator_find_candidate')) {
 					'pool_key' => 'automatic',
 					'block_start' => $block_start,
 					'block_end' => $block_end,
-					'primary_port' => $block_start,
-					'block_size' => $block_size,
+					'primary_port' => $primary_port,
+					'block_size' => $block_end - $block_start + 1,
 					'allocation_source' => $default_source === 'fallback' ? 'fallback' : 'preferred',
 					'legacy_range_id' => 0,
 					'default_port' => $default_port,

@@ -20,6 +20,7 @@ require_once $panelRoot . '/includes/functions.php';
 require_once $panelRoot . '/includes/helpers.php';
 require_once $panelRoot . '/includes/lib_remote.php';
 require_once __DIR__ . '/includes/status_history_lib.php';
+require_once $panelRoot . '/includes/game_param_options.php';
 
 $prefix = isset($table_prefix) ? (string)$table_prefix : '';
 $db = new mysqli($db_host, $db_user, $db_pass, $db_name, isset($db_port) ? (int)$db_port : 3306);
@@ -145,6 +146,45 @@ function sh_poll_server(mysqli $db, $prefix, array $server, $now)
 	sh_insert_row($db, $prefix . 'status_sample', $row);
 	if ($parsed !== null) {
 		gu_store_samples($db, $prefix, $sid, $parsed, $now);
+		gpo_learn_running($db, $prefix, $parsed, $now);
+	}
+}
+
+/**
+ * Remembers the combo values (map, gamemode, ...) that RUNNING servers on this agent were started
+ * with when their game XML does not list them, so the dropdown offers them from now on.
+ * A server that is RUNNING started with its saved values, which is the proof that a value works.
+ */
+function gpo_learn_running(mysqli $db, $prefix, array $parsed, $now)
+{
+	$running = array();
+	foreach ($parsed['homes'] as $home) {
+		if ($home['state'] === 'RUNNING') {
+			$running[] = (int)$home['home_id'];
+		}
+	}
+	if (count($running) === 0) {
+		return;
+	}
+	$res = $db->query('SELECT h.`home_id`, h.`home_cfg_id`, h.`last_param`, c.`home_cfg_file` FROM `' . $prefix . 'server_homes` h '
+		. 'JOIN `' . $prefix . 'config_homes` c ON c.`home_cfg_id` = h.`home_cfg_id` WHERE h.`home_id` IN (' . implode(',', $running) . ')');
+	while ($res && ($row = $res->fetch_assoc())) {
+		$combo = gpo_combo_params($row['home_cfg_file']);
+		$lastParam = json_decode((string)$row['last_param'], true);
+		if (count($combo) === 0 || !is_array($lastParam)) {
+			continue;
+		}
+		foreach (gpo_new_values($combo, $lastParam) as $pair) {
+			$stmt = $db->prepare('INSERT IGNORE INTO `' . $prefix . 'game_param_options` (`home_cfg_id`, `param_key`, `value`, `learned_at`, `home_id`) VALUES (?, ?, ?, ?, ?)');
+			if (!$stmt) {
+				continue;
+			}
+			$cfg = (int)$row['home_cfg_id'];
+			$homeId = (int)$row['home_id'];
+			$stmt->bind_param('issii', $cfg, $pair[0], $pair[1], $now, $homeId);
+			$stmt->execute();
+			$stmt->close();
+		}
 	}
 }
 

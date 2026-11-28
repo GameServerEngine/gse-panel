@@ -44,7 +44,7 @@ class PortAllocatorFakeDb
 				$ipId = (int)$m[1];
 				return in_array($ipId, array(10, 11), true) ? array(array('ip_id' => $ipId, 'remote_server_id' => 1)) : array();
 			}
-			return array(array('ip_id' => 10), array('ip_id' => 11));
+			return array(array('ip_id' => 10, 'ip' => '155.94.173.138'), array('ip_id' => 11, 'ip' => '75.127.4.194'));
 		}
 		if (strpos($query, 'FROM `DB_PREFIXserver_homes`') !== false) {
 			if (preg_match('/home_id=(\d+)/', $query, $m)) {
@@ -235,11 +235,24 @@ $db->portBlockSize = 4;
 $custom = port_allocate_home_block($db, 'DB_PREFIX', 103, 1, 5);
 port_allocator_test_assert(!empty($custom['ok']) && $custom['block_size'] === 4 && $custom['block_end'] === 25568, 'custom global block size is honored');
 
+// Only public addresses are used on an agent that is not behind NAT; a VPN or LAN address never is.
+$mixedIps = array(
+	array('ip_id' => 7, 'ip' => '10.255.0.130'),
+	array('ip_id' => 8, 'ip' => '155.94.173.138'),
+	array('ip_id' => 9, 'ip' => '192.168.1.20'),
+	array('ip_id' => 12, 'ip' => '75.127.4.194'),
+);
+port_allocator_test_assert(port_allocator_order_ip_rows($mixedIps, 0) === array(8, 12), 'an agent not behind NAT only gets its public IPs, in ip_id order');
+port_allocator_test_assert(port_allocator_order_ip_rows($mixedIps, 1) === array(8, 12, 7, 9), 'an agent behind NAT tries public IPs first, then private ones');
+port_allocator_test_assert(port_allocator_order_ip_rows(array(array('ip_id' => 3, 'ip' => '172.16.0.5')), 1) === array(3), 'an agent behind NAT with only a private IP keeps it');
+port_allocator_test_assert(port_allocator_order_ip_rows(array(array('ip_id' => 3, 'ip' => '172.16.0.5')), 0) === array(), 'an agent not behind NAT with only a private IP gets no IP');
+port_allocator_test_assert(game_ip_allowed('10.255.0.140', 0) === false && game_ip_allowed('75.127.4.194', 0) === true && game_ip_allowed('10.255.0.140', 1) === true, 'the start check refuses a VPN address unless the agent is behind NAT');
+
+
 $db = new PortAllocatorFakeDb();
 $fallback = port_allocator_find_candidate($db, 'DB_PREFIX', 1, 99, 10, null);
 port_allocator_test_assert(!empty($fallback['ok']) && $fallback['primary_port'] === 27015 && $fallback['default_port_source'] === 'fallback', 'unknown games use the safe fallback base port');
 
-echo "All port allocator tests passed.\n";
 
 $rangeDb = new PortAllocatorFakeDb();
 $rangeDb->configHomes[5] = array('home_cfg_id' => 5, 'game_key' => 'minecraft_linux64', 'game_name' => 'Minecraft', 'home_cfg_file' => 'minecraft_linux64.xml');
@@ -247,3 +260,17 @@ $rangeDb->ranges[] = array('range_start' => 30000, 'range_end' => 30099);
 $ranged = port_allocate_home_block($rangeDb, 'DB_PREFIX', 200, 1, 5);
 port_allocator_test_assert(!empty($ranged['ok']) && $ranged['port'] === 30000, 'a game port range moves allocation into the range');
 
+// Source games reserve the client port 10 below the game port and SourceTV 5 above it (garrysmod.xml).
+port_allocator_test_assert(port_allocator_xml_port_offsets('garrysmod.xml') === array('below' => 10, 'above' => 5), 'the XML reserve_ports give 10 below and 5 above for a Source game');
+port_allocator_test_assert(port_allocator_xml_port_offsets('no_such_game.xml') === array('below' => 0, 'above' => 0), 'a missing XML gives no extra ports');
+port_allocator_test_assert(port_allocator_block_span(27015, 10, array('below' => 10, 'above' => 5)) === array(27005, 27024), 'the block widens down to the client port and keeps the standard size above');
+port_allocator_test_assert(port_allocator_block_span(25565, 10, array('below' => 0, 'above' => 0)) === array(25565, 25574), 'a game without extra ports keeps the standard block');
+
+$sourceDb = new PortAllocatorFakeDb();
+$sourceDb->configHomes[91] = array('home_cfg_id' => 91, 'game_key' => 'garrysmod', 'game_name' => 'Garrys Mod', 'home_cfg_file' => 'garrysmod.xml');
+$gmodFirst = port_allocate_home_block($sourceDb, 'DB_PREFIX', 300, 1, 91);
+port_allocator_test_assert(!empty($gmodFirst['ok']) && $gmodFirst['port'] === 27015 && $gmodFirst['block_start'] === 27005 && $gmodFirst['block_end'] === 27024, 'a Source game gets 27015 with a block that holds its client port 27005');
+$gmodSecond = port_allocate_home_block($sourceDb, 'DB_PREFIX', 301, 1, 91);
+port_allocator_test_assert(!empty($gmodSecond['ok']) && $gmodSecond['port'] === 27035 && $gmodSecond['block_start'] === 27025, 'the next Source game on the same IP starts where its client port is free (27035, client port 27025)');
+
+echo "All port allocator tests passed.\n";

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/game_ip.php';
 
 /**
  * Returns the protocol/port context the agent needs to validate runtime state.
@@ -163,6 +164,10 @@ function lifecycle_sync_bot_definition($remote, array $home_info, $bot_definitio
  */
 function lifecycle_start_payload($db, $remote, array $home_info, $server_xml, $mod_id, $server_ip, $server_port, $startup_cmd, $preStart, $envVars, $replace_text_results = array(), $restart_reason = '')
 {
+	// Every start and restart comes through here, so this is where a game is kept off a VPN or LAN address.
+	if (!game_ip_allowed($server_ip, isset($home_info['use_nat']) ? $home_info['use_nat'] : 0)) {
+		return array('error' => game_ip_refusal($server_ip));
+	}
 	$run_dir = clean_path(isset($server_xml->exe_location) ? (string)$server_xml->exe_location : "");
 	$absolute_run_dir = clean_path(rtrim($home_info['game_root'], '/') . '/' . (isset($server_xml->exe_location) ? (string)$server_xml->exe_location : ''));
 	$last_param = json_decode(isset($home_info['last_param']) ? (string)$home_info['last_param'] : '', true);

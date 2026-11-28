@@ -17,12 +17,16 @@
       </cli_params>
       <console_log>garrysmod/console.log</console_log>
       <server_params>
-        <param id="MAP" key="+map" type="text">
+        <param id="MAP" key="+map" type="combo">
           <default>gm_flatgrass</default>
+          <option value="gm_construct">gm_construct</option>
+          <option value="gm_flatgrass">gm_flatgrass</option>
           <caption>Map</caption>
           <desc>Set the map the server will start.</desc>
         </param>
-        <param key="+gamemode" type="text">
+        <param key="+gamemode" type="combo">
+          <option value="sandbox">sandbox</option>
+          <option value="terrortown">terrortown</option>
           <caption>Gamemode</caption>
           <desc>Set the gamemode the server will use.</desc>
         </param>
@@ -124,12 +128,16 @@
         <cli_param id="GAME_TYPE" cli_string="-game" options="s"/>
       </cli_params>
       <server_params>
-        <param id="MAP" key="+map" type="text">
+        <param id="MAP" key="+map" type="combo">
           <default>gm_construct</default>
+          <option value="gm_construct">gm_construct</option>
+          <option value="gm_flatgrass">gm_flatgrass</option>
           <caption>Map</caption>
           <desc>Set the map the server will start.</desc>
         </param>
-        <param key="+gamemode" type="text">
+        <param key="+gamemode" type="combo">
+          <option value="sandbox">sandbox</option>
+          <option value="terrortown">terrortown</option>
           <default>terrortown</default>
           <caption>Gamemode</caption>
           <desc>Set the gamemode the server will use.</desc>

@@ -1,4 +1,5 @@
 <?php
+require_once(dirname(__DIR__, 2) . '/includes/game_ip.php');
 /*
  *
  * GSP - GameServer Panel
@@ -120,6 +121,11 @@ function exec_module() {
 				$remote_ip = trim($remote_ip);
 				if ( empty($remote_ip) )
 					continue;
+				if ( !game_ip_allowed($remote_ip, $use_nat) )
+				{
+					print_failure( htmlentities(game_ip_refusal($remote_ip)) );
+					continue;
+				}
 
 				if ( !$db->addRemoteServerIp($rhost_id,$remote_ip) )
 					print_failure( get_lang("failed_add_ip") ." (".$remote_ip.") ". get_lang("for_remote_server") );

@@ -1,4 +1,5 @@
 <?php
+require_once(dirname(__DIR__, 2) . '/includes/game_ip.php');
 /*
  *
  * GSP - GameServer Panel
@@ -43,7 +44,11 @@ function exec_module() {
     {
         $remote_ip = $_POST['remote_ip'];
 		$remote_ip = preg_replace("/[^0-9\.]/", "", $remote_ip);
-        if ( $db->addRemoteServerIp($rhost_id, $remote_ip) === FALSE )
+		if ( !game_ip_allowed($remote_ip, $remote_server['use_nat']) )
+		{
+			print_failure( htmlentities(game_ip_refusal($remote_ip)) );
+		}
+        else if ( $db->addRemoteServerIp($rhost_id, $remote_ip) === FALSE )
 		{
 			print_failure( get_lang("could_not_add_ip") );
 		}
@@ -75,7 +80,11 @@ function exec_module() {
 		$ip = $_POST['ip'];
 		$ip = preg_replace("/[^0-9\.]/", "", $ip);
 
-        if ( $db->editRemoteServerIps($ip_id,$ip) === FALSE )
+		if ( !game_ip_allowed($ip, $remote_server['use_nat']) )
+		{
+			print_failure( htmlentities(game_ip_refusal($ip)) );
+		}
+        else if ( $db->editRemoteServerIps($ip_id,$ip) === FALSE )
 		{
             print_failure( get_lang("could_not_edit_ip") );
 		}

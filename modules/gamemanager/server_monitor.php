@@ -1,5 +1,6 @@
 <script type="text/javascript" src="js/modules/gamemanager.js"></script>
 <?php
+require_once(dirname(__DIR__, 2) . '/includes/game_param_options.php');
 /*
  *
  * GSP - GameServer Panel
@@ -34,6 +35,26 @@ if (!defined('WEBSITE_DOCS_BASE_URL')) {
 	define('WEBSITE_DOCS_BASE_URL', 'https://gameservers.world/docs/');
 }
 
+// Dropdown values for a combo parameter of one game server: the XML presets plus the values learned
+// for that game (game_param_options).
+function combo_options_for_home($home_id, $param)
+{
+	global $db;
+	$presets = array();
+	foreach ($param->option as $option)
+	{
+		$presets[] = isset($option['value']) ? (string)$option['value'] : (string)$option;
+	}
+	$learned = array();
+	$rows = $db->resultQuery("SELECT o.value FROM `DB_PREFIXgame_param_options` o JOIN `DB_PREFIXserver_homes` h ON h.home_cfg_id = o.home_cfg_id " .
+		"WHERE h.home_id = " . (int)$home_id . " AND o.param_key = '" . $db->realEscapeSingle((string)$param['key']) . "' ORDER BY o.learned_at");
+	foreach ((array)$rows as $row)
+	{
+		$learned[] = $row['value'];
+	}
+	return gpo_merge_options($presets, $learned);
+}
+
 function renderParam($param, $last_param, $param_access_enabled, $home_id)
 {
 	global $db;
@@ -55,7 +76,20 @@ function renderParam($param, $last_param, $param_access_enabled, $home_id)
 	$idString = "id='".clean_id_string($param['key'])."'";
 	$nameString = "name='params[".$param['key']."]'";
 	$paramType = $param['type'];
-	if ($paramType == "select")
+	if ($paramType == "combo")
+	{
+		// A text box with a dropdown of known values (see includes/game_param_options.php).
+		$listId = "options_" . clean_id_string($param['key']);
+		$inputElementString = "<input $idString $nameString type='text' list='$listId' autocomplete='off' " .
+			"value=\"" . str_replace('"', "&quot;", strip_real_escape_string($paramValue)) . "\" $disabledString $attributesString/>";
+		$inputElementString .= "<datalist id='$listId'>";
+		foreach (combo_options_for_home($home_id, $param) as $optionValue)
+		{
+			$inputElementString .= "<option value=\"" . htmlspecialchars($optionValue, ENT_QUOTES) . "\"></option>";
+		}
+		$inputElementString .= "</datalist>";
+	}
+	else if ($paramType == "select")
 	{
 		$inputElementString = "<select $idString $nameString $disabledString>";
 		foreach ($param->option as $option)
