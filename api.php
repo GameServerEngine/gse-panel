@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . '/includes/game_query_port.php');
 /*
 ______________ Token Management
 api.php?token/create/{panel_user}/{panel_password}
@@ -1076,7 +1077,8 @@ function api_gamemanager()
 				elseif ($server_xml->protocol == "lgsl")
 				{
 					$get_ports = lgsl_port_conversion((string)$server_xml->lgsl_query_name, $port, "", "");
-					$query_port = $get_ports['1'];
+					// The query port the game XML sets (the one on the start command) wins over the LGSL default.
+					$query_port = xml_query_port_offset($server_xml) !== null ? get_query_port($server_xml, $port) : $get_ports['1'];
 				}
 				elseif ($server_xml->protocol == "teamspeak3")
 				{
@@ -1134,7 +1136,8 @@ function api_gamemanager()
 				{
 					require('protocol/lgsl/lgsl_protocol.php');
 					$get_ports = lgsl_port_conversion((string)$server_xml->lgsl_query_name, $port, "", "");
-					$query_port = $get_ports['1'];
+					// The query port the game XML sets (the one on the start command) wins over the LGSL default.
+					$query_port = xml_query_port_offset($server_xml) !== null ? get_query_port($server_xml, $port) : $get_ports['1'];
 				}
 				elseif ($server_xml->protocol == "teamspeak3")
 				{
@@ -1541,7 +1544,8 @@ function api_addonsmanager()
 			{
 				require_once('protocol/lgsl/lgsl_protocol.php');
 				$get_q_and_s = lgsl_port_conversion((string)$server_xml->lgsl_query_name, $home_info['port'], "", "");
-				$home_info['query_port'] = $get_q_and_s['1'];
+				// The query port the game XML sets (the one on the start command) wins over the LGSL default.
+				$home_info['query_port'] = xml_query_port_offset($server_xml) !== null ? get_query_port($server_xml, $home_info['port']) : $get_q_and_s['1'];
 			}
 			elseif ($server_xml->protocol == "teamspeak3")
 			{

@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . '/../../includes/game_query_port.php');
 if (!function_exists('agent_start_failure_text')) {
 function agent_start_failure_text($code)
 {
@@ -394,7 +395,8 @@ elseif($server_home['home_id'] == $_POST['home_id'])
 	{
 		require('protocol/lgsl/lgsl_protocol.php');
 		$get_ports = lgsl_port_conversion((string)$server_xml->lgsl_query_name, $port, "", "");
-		$query_port = $get_ports['1'];
+		// The query port the game XML sets (the one on the start command) wins over the LGSL default.
+		$query_port = xml_query_port_offset($server_xml) !== null ? get_query_port($server_xml, $port) : $get_ports['1'];
 	}
 	elseif ($server_xml->protocol == "teamspeak3")
 	{
@@ -718,7 +720,8 @@ elseif($server_home['home_id'] == $_POST['home_id'])
 			{
 				require('protocol/lgsl/lgsl_protocol.php');
 				$get_ports = lgsl_port_conversion((string)$server_xml->lgsl_query_name, $ip_port['port'], "", "");
-				$query_port = $get_ports['1'];
+				// The query port the game XML sets (the one on the start command) wins over the LGSL default.
+				$query_port = xml_query_port_offset($server_xml) !== null ? get_query_port($server_xml, $ip_port['port']) : $get_ports['1'];
 			}
 			elseif ($server_xml->protocol == "teamspeak3")
 			{

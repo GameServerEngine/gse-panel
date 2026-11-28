@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . '/../../includes/game_query_port.php');
 /*
  *
  * GSP - GameServer Panel
@@ -52,7 +53,8 @@ if(	isset($server_xml->gameq_query_name) )
 elseif(	isset($server_xml->lgsl_query_name) )
 {
 	$get_q_and_s = lgsl_port_conversion((string)$server_xml->lgsl_query_name, $server_home['port'], "", "");
-	$server_home["query_port"] = $get_q_and_s['1'];
+	// The query port the game XML sets (the one on the start command) wins over the LGSL default.
+	$server_home["query_port"] = xml_query_port_offset($server_xml) !== null ? get_query_port($server_xml, $server_home['port']) : $get_q_and_s['1'];
 }
 
 $replace_texts = $server_xml->replace_texts->text;

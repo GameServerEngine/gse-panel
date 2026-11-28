@@ -15,7 +15,7 @@ function lifecycle_port_context($server_xml, $server_ip, $server_port)
 	} elseif (isset($server_xml->protocol) && (string)$server_xml->protocol === 'lgsl' && isset($server_xml->lgsl_query_name)) {
 		require_once('protocol/lgsl/lgsl_protocol.php');
 		$ports = lgsl_port_conversion((string)$server_xml->lgsl_query_name, $server_port, '', '');
-		$query_port = isset($ports['1']) ? $ports['1'] : '';
+		$query_port = isset($ports['1']) ? $ports['1'] : '';  // only reached when the XML sets no query port
 	} elseif (isset($server_xml->protocol) && (string)$server_xml->protocol === 'teamspeak3') {
 		$query_port = '10011';
 	}

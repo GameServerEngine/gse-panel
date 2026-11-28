@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . '/../../includes/game_query_port.php');
 /*
  * Dynamic Server Image module for GameServer Panel
  * Copyright (C) 2012 SpiffyTek
@@ -79,6 +80,8 @@ function exec_module(){
 			$url = false;
 			if ($server_xml->protocol == "lgsl"){
 				list($c_port, $q_port, $s_port) = lgsl_port_conversion($server_xml->lgsl_query_name, $server_home['port'], "", "");
+				if (xml_query_port_offset($server_xml) !== null)
+					$q_port = get_query_port($server_xml, $server_home['port']); // the game XML's query port wins over the LGSL default
 				$url = lgsl_software_link($server_xml->lgsl_query_name, $public_ip, $c_port, $q_port, $s_port);
 			}
 			else if ($server_xml->protocol == "gameq"){

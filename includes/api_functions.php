@@ -138,7 +138,8 @@ function get_start_cmd($user_info,$remote,$server_xml,$home_info,$mod_id,$ip,$po
 	{
 		require('protocol/lgsl/lgsl_protocol.php');
 		$get_ports = lgsl_port_conversion((string)$server_xml->lgsl_query_name, $port, "", "");
-		$cli_param_data['QUERY_PORT'] = $get_ports['1'];
+		// The query port the game XML sets (the one on the start command) wins over the LGSL default.
+		$cli_param_data['QUERY_PORT'] = xml_query_port_offset($server_xml) !== null ? get_query_port($server_xml, $port) : $get_ports['1'];
 	}
 	elseif ($server_xml->protocol == "teamspeak3")
 	{
