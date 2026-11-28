@@ -124,10 +124,10 @@ class GameQ
      */
     public function __construct()
     {
-        // Check for missing utf8_encode function
-        if (!function_exists('utf8_encode')) {
-            throw new \Exception("PHP's utf8_encode() function is required - "
-                . "http://php.net/manual/en/function.utf8-encode.php.  Check your php installation.");
+        // The protocols convert Latin-1 strings with mb_convert_encoding()
+        if (!function_exists('mb_convert_encoding')) {
+            throw new \Exception("PHP's mbstring extension is required - "
+                . "https://www.php.net/manual/en/book.mbstring.php.  Check your php installation.");
         }
     }
 

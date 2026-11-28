@@ -474,6 +474,7 @@ abstract class TeamSpeak3_Node_Abstract implements RecursiveIterator, ArrayAcces
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function count()
   {
     $this->verifyNodeList();
@@ -484,6 +485,7 @@ abstract class TeamSpeak3_Node_Abstract implements RecursiveIterator, ArrayAcces
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function current()
   {
     $this->verifyNodeList();
@@ -494,6 +496,7 @@ abstract class TeamSpeak3_Node_Abstract implements RecursiveIterator, ArrayAcces
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function getChildren()
   {
     $this->verifyNodeList();
@@ -504,6 +507,7 @@ abstract class TeamSpeak3_Node_Abstract implements RecursiveIterator, ArrayAcces
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function hasChildren()
   {
     $this->verifyNodeList();
@@ -524,6 +528,7 @@ abstract class TeamSpeak3_Node_Abstract implements RecursiveIterator, ArrayAcces
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function key()
   {
     $this->verifyNodeList();
@@ -534,6 +539,7 @@ abstract class TeamSpeak3_Node_Abstract implements RecursiveIterator, ArrayAcces
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function valid()
   {
     $this->verifyNodeList();
@@ -544,6 +550,7 @@ abstract class TeamSpeak3_Node_Abstract implements RecursiveIterator, ArrayAcces
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function next()
   {
     $this->verifyNodeList();
@@ -554,6 +561,7 @@ abstract class TeamSpeak3_Node_Abstract implements RecursiveIterator, ArrayAcces
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function rewind()
   {
     $this->verifyNodeList();
@@ -564,6 +572,7 @@ abstract class TeamSpeak3_Node_Abstract implements RecursiveIterator, ArrayAcces
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function offsetExists($offset)
   {
     return array_key_exists((string) $offset, $this->nodeInfo) ? TRUE : FALSE;
@@ -572,6 +581,7 @@ abstract class TeamSpeak3_Node_Abstract implements RecursiveIterator, ArrayAcces
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function offsetGet($offset)
   {
     if(!$this->offsetExists($offset))
@@ -590,6 +600,7 @@ abstract class TeamSpeak3_Node_Abstract implements RecursiveIterator, ArrayAcces
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function offsetSet($offset, $value)
   {
     if(method_exists($this, "modify"))
@@ -603,6 +614,7 @@ abstract class TeamSpeak3_Node_Abstract implements RecursiveIterator, ArrayAcces
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function offsetUnset($offset)
   {
     unset($this->nodeInfo[(string) $offset]);

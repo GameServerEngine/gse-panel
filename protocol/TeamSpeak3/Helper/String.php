@@ -469,7 +469,7 @@ class TeamSpeak3_Helper_String implements ArrayAccess, Iterator, Countable, Json
   {
     if(!$this->isUtf8())
     {
-      $this->string = utf8_encode($this->string);
+      $this->string = mb_convert_encoding($this->string, 'UTF-8', 'ISO-8859-1');
     }
 
     return $this;
@@ -855,6 +855,7 @@ class TeamSpeak3_Helper_String implements ArrayAccess, Iterator, Countable, Json
    * 
    * @return string
    */
+  #[\ReturnTypeWillChange]
   public function jsonSerialize()
   {
     return $this->toUtf8()->string;
@@ -863,6 +864,7 @@ class TeamSpeak3_Helper_String implements ArrayAccess, Iterator, Countable, Json
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function count()
   {
     return strlen($this->string);
@@ -871,6 +873,7 @@ class TeamSpeak3_Helper_String implements ArrayAccess, Iterator, Countable, Json
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function rewind()
   {
     $this->position = 0;
@@ -879,6 +882,7 @@ class TeamSpeak3_Helper_String implements ArrayAccess, Iterator, Countable, Json
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function valid()
   {
     return $this->position < $this->count();
@@ -887,6 +891,7 @@ class TeamSpeak3_Helper_String implements ArrayAccess, Iterator, Countable, Json
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function key()
   {
     return $this->position;
@@ -895,6 +900,7 @@ class TeamSpeak3_Helper_String implements ArrayAccess, Iterator, Countable, Json
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function current()
   {
 	    return new TeamSpeak3_Helper_Char($this->string[$this->position]);
@@ -903,6 +909,7 @@ class TeamSpeak3_Helper_String implements ArrayAccess, Iterator, Countable, Json
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function next()
   {
     $this->position++;
@@ -911,6 +918,7 @@ class TeamSpeak3_Helper_String implements ArrayAccess, Iterator, Countable, Json
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function offsetExists($offset)
   {
     return ($offset < strlen($this->string)) ? TRUE : FALSE;
@@ -919,6 +927,7 @@ class TeamSpeak3_Helper_String implements ArrayAccess, Iterator, Countable, Json
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function offsetGet($offset)
   {
 	    return ($this->offsetExists($offset)) ? new TeamSpeak3_Helper_Char($this->string[$offset]) : null;
@@ -927,6 +936,7 @@ class TeamSpeak3_Helper_String implements ArrayAccess, Iterator, Countable, Json
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function offsetSet($offset, $value)
   {
     if(!$this->offsetExists($offset)) return;
@@ -937,6 +947,7 @@ class TeamSpeak3_Helper_String implements ArrayAccess, Iterator, Countable, Json
   /**
    * @ignore
    */
+  #[\ReturnTypeWillChange]
   public function offsetUnset($offset)
   {
     if(!$this->offsetExists($offset)) return;

@@ -21,5 +21,11 @@ All 236 XMLs validate against the schema. Server page rendered from the staged t
 - Map picture: get_map_path fell back to the query protocol's logo (Source logo for an Arma 2 OA server using the Steam query); it now uses only pictures of the map, else plain black (images/map_none.png), and none when the game reports no map ("-").
 - TeamSpeak 3: test server 955 "TeamSpeak 3 Test" on game6 (75.127.4.194:2100, block 2100-2199, ServerQuery 2124), installed from the official 3.13.7 Linux archive; its serveradmin password is the server's control password in the panel. Fixed: teamspeak3.xml Linux exe_location; TS3Monitor, protocol/TeamSpeak3/functions.php and get_agent_server_status read the XML query port; no map line for TS3. Verified: the server page shows the hostname and channel tree, the game monitor shows the Full Teamspeak3 Management button with query 2124, and the teamspeak3 module library logs in as serveradmin and reads the server.
 
+## Follow-up (2026-11-28 10:17-10:25 CST): PHP warnings on the TS3 page
+- Reported: the game monitor printed a block of "Deprecated: Return type of TeamSpeak3_..." notices.
+- Found by loading every TS3 library class with E_ALL (27 interface methods, 2 optional-before-required parameters) and by rendering the game monitor list and the server 955 page in a staged copy with an error handler (utf8_encode, $ts3opt, $trclass).
+- Fixed in the original code (attribute, parameter order, mb_convert_encoding, variables initialised instead of unset). Both pages then rendered with zero notices.
+- Cause of them being visible: display_errors = On in core's Apache php.ini (logged in TODO; not changed).
+
 ## Git Commits
 See the commit that adds this file.

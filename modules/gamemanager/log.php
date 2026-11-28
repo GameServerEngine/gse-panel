@@ -13,7 +13,7 @@ if (!function_exists('log_view_state')) {
 		{
 			// Force log file contents to be UTF-8 (fixes forum/viewthread.php?thread_id=5379)
 			if (hasValue($home_log)) {
-				$home_log = utf8_encode($home_log);
+				$home_log = mb_convert_encoding($home_log, 'UTF-8', 'ISO-8859-1');
 			}
 			return array('state' => $retval === '1' ? 'running' : 'stopped', 'text' => (string)$home_log);
 		}

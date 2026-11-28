@@ -375,11 +375,9 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 		{
 			//Unset variables.
 			unset($map,
-				  $trclass,
 				  $first,
 				  $second,
 				  $onlineT,
-				  $ts3opt,
 				  $offlineT,
 				  $halfT,
 				  $ministart,
@@ -392,6 +390,8 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 				  $pos,
 				  $ctrlChkBoxes,
 				  $expiration_dates);
+			$trclass = "";  // " expandme" when the row has details to expand
+			$ts3opt = "";  // only TeamSpeak 3 servers set the management buttons (protocol/TeamSpeak3/functions.php)
 			$address = "";
 			$offlineT = "";
 			$pos = "";
@@ -623,7 +623,7 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 				$user = $db->getUserById($server_home['user_id_main']);
 
 				// Template
-                              @$first = "<tr class='maintr$trclass'>";
+				$first = "<tr class='maintr$trclass'>";
 				$status_color = ($status === 'starting' || $update_in_progress) ? '#d29922' : ($status === 'online' ? '#2da44e' : ($status === 'unknown' ? '#8b949e' : '#d1242f'));
 				$status_title = $update_in_progress ? 'Updating' : ($status === 'starting' ? 'Starting' : ($status === 'unknown' ? 'Unknown' : ($status === 'offline' ? 'Stopped' : ucfirst($status))));
 				$status_icon = "<span title='" . htmlentities($status_title) . "' style='display:inline-block;width:14px;height:14px;border-radius:50%;background:" . $status_color . ";border:1px solid rgba(255,255,255,.35);vertical-align:middle;'></span>";

@@ -210,3 +210,4 @@
 | issue | The rsync installer (teamspeak3 and 2 other XMLs) is not implemented; non-SteamCMD games are installed with update from URL. | open | Claude | |
 | issue | The agents ignore the query and RCON ports the panel passes to server_status (gm_status_reply reads only the status file), so query_port_listening is never checked; decide whether the agent should check them. | open | Claude | |
 | todo | TS3Admin (virtual servers on a shared TS3 instance, table ts3_homes) was not tested; the teamspeak3 web interface and the game monitor TS3 view were. | open | Claude | |
+| issue | core's Apache php.ini has display_errors = On, so any PHP notice is printed into panel pages for every user. Production should use display_errors = Off with log_errors = On (live config, needs the owner's OK). | open | Claude | |
