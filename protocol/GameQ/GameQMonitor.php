@@ -29,13 +29,16 @@ if($num_of_servers < $numberservers_to_skip_query)
 	{
 		require_once 'protocol/GameQ/Autoloader.php';
 		$port = $server_home['port'];
-		$query_port = get_query_port($server_xml, $port);
 		$gq = new \GameQ\GameQ();
+		// GameQ is given the game port. When the game XML sets the query port (the one on the start
+		// command) it is passed as query_port; otherwise GameQ adds its protocol's port_diff.
 		$server = array(
 							'id' => 'server',
 							'type' => $server_xml->gameq_query_name,
-							'host' => $internal_query_ip . ":" . $query_port,
+							'host' => $internal_query_ip . ":" . $port,
 						);
+		if (xml_query_port_offset($server_xml) !== null)
+			$server['options'] = array('query_port' => get_query_port($server_xml, $port));
 		$gq->addServer($server);
 		$gq->setOption('timeout', 4);
 		$gq->setOption('debug', FALSE);
