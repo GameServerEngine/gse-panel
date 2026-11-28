@@ -3,6 +3,8 @@
 <!-- Note: The Windows block uses Steam's Windows executable with the same start options; not yet tested on a GSE agent. -->
 <game_config>
   <game_key>satisfactory</game_key>
+  <protocol>gameq</protocol>
+  <gameq_query_name>source</gameq_query_name>
   <installer>steamcmd</installer>
   <game_name>Satisfactory</game_name>
   <os>

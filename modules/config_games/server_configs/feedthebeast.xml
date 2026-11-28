@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <game_config>
   <game_key>feedthebeast</game_key>
+  <protocol>gameq</protocol>
   <gameq_query_name>minecraft</gameq_query_name>
   <game_name>Feed The Beast Server</game_name>
   <os>

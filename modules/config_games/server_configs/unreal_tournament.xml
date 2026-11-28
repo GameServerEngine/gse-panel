@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <game_config>
   <game_key>unreal_tournament</game_key>
+  <protocol>lgsl</protocol>
+  <lgsl_query_name>ut</lgsl_query_name>
   <installer>rsync</installer>
   <game_name>Unreal Tournament</game_name>
   <os>

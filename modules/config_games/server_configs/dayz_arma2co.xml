@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <game_config>
   <game_key>dayz_arma2co</game_key>
+  <protocol>lgsl</protocol>
+  <lgsl_query_name>source</lgsl_query_name>
   <game_name>DayZ Mod</game_name>
   <os>
     <windows arch="x86">

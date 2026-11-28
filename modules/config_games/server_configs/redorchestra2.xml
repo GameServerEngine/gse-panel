@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <game_config>
   <game_key>redorchestra2</game_key>
+  <protocol>lgsl</protocol>
+  <lgsl_query_name>redorchestra2</lgsl_query_name>
   <installer>steamcmd</installer>
   <game_name>Red Orchestra 2</game_name>
   <os>

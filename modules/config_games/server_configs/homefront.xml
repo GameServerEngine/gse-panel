@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <game_config>
   <game_key>homefront</game_key>
+  <protocol>gameq</protocol>
   <gameq_query_name>homefront</gameq_query_name>
   <installer>steamcmd</installer>
   <game_name>Homefront</game_name>

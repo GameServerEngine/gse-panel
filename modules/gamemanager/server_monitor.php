@@ -520,9 +520,6 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 				$desired_state_note = "";  // simple row: no Desired note
 				$reason = trim((string)($agent_status['reason'] ?? ($agent_status['last_error'] ?? '')));
 				$screen_running = ((int)($agent_status['process_running'] ?? 0) === 1);
-				if (method_exists($db, 'saveServerStatusCache') && !empty($server_home['ip_id'])) {
-					$db->saveServerStatusCache($server_home['ip_id'], $server_home['port'], $agent_status);
-				}
 				$update_in_progress = $remote->is_screen_running(SCREEN_TYPE_UPDATE,$server_home['home_id']) === 1;
 				if(agent_status_ready($agent_status))
 				{
@@ -621,12 +618,6 @@ echo "<table id='servermonitor' class='tablesorter' data-sortlist='[[0,0],[3,1]]
 				$order = 3;
 				$address = "<span style='color:darkred;font-weight:bold;'>Agent Offline</span>";
 				$offlineT = "<span class='note'>Agent is offline. Server state is unknown.</span>";
-				if (method_exists($db, 'saveServerStatusCache') && !empty($server_home['ip_id'])) {
-					$db->saveServerStatusCache($server_home['ip_id'], $server_home['port'], array(
-						'status' => 'UNKNOWN', 'desired' => '', 'process_running' => 0,
-						'port_listening' => 0, 'reason' => 'agent unreachable', 'updated_at' => time()
-					));
-				}
 				$db->logger('Game monitor skipped live status for home '.$server_home['home_id'].': agent host check failed');
 			}
 				$user = $db->getUserById($server_home['user_id_main']);

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <game_config>
   <game_key>callofdutyuo</game_key>
+  <protocol>lgsl</protocol>
+  <lgsl_query_name>callofdutyuo</lgsl_query_name>
   <game_name>Call of Duty: United Offensive</game_name>
   <os>
     <windows arch="x86">

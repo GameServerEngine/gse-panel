@@ -3,6 +3,8 @@
 <!-- Note: The Windows block uses Steam's Windows executable with the same start options; not yet tested on a GSE agent. -->
 <game_config>
   <game_key>cs2</game_key>
+  <protocol>lgsl</protocol>
+  <lgsl_query_name>source</lgsl_query_name>
   <installer>steamcmd</installer>
   <game_name>Counter-Strike 2</game_name>
   <os>

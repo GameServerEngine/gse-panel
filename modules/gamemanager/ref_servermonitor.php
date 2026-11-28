@@ -88,9 +88,10 @@ function exec_module()
 		// because we do not have proper support for them yet.
 		// With properly supported games this should not needed.
 		// (In a perfect world no one would need an insurance.)
+		// No query: the server is online (the agent checked it) but its name, map and players are unknown.
 		$status = "online";
-		$map = $status;
-		$maplocation = get_map_path($query_name,$mod,$map);
+		$no_query = true;
+		$maplocation = get_map_path($query_name,$mod,'');
 		@$notifications .= get_lang("query_protocol_not_supported");
 	}
 	$map_image_upload = '<br><button class="upload-image" id="'.$home_id.'" data-map="'.$map.'" data-mod_id="'.$mod_id.'" onClick="uploadMapImg(this);" >'. get_lang("upload_map_image") .'</button>';
@@ -109,8 +110,11 @@ function exec_module()
 					$onlineT .= "$map_image_upload";
 			$onlineT .= "</div>";
 			$onlineT .= "<div class='server-info' >";
+			if (empty($no_query))
+			{
 				@$onlineT .= get_lang("hostname") .": <marquee class='hostname'>" . htmlentities($name) . "</marquee><br />";
-				@$onlineT .= get_lang("current_map") . ": " . ((isset($mapRaw) && !empty($mapRaw)) ? htmlentities($mapRaw) : $currentmap);
+				@$onlineT .= get_lang("current_map") . ": " . ((isset($mapRaw) && !empty($mapRaw)) ? htmlentities($mapRaw) : htmlentities((string)$currentmap));
+			}
 			$onlineT .= "</div>";
 		}
 		else if($status == "half")

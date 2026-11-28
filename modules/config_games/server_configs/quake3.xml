@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <game_config>
   <game_key>quake3</game_key>
+  <protocol>lgsl</protocol>
+  <lgsl_query_name>quake3</lgsl_query_name>
   <game_name>Quake 3</game_name>
   <os>
     <linux>

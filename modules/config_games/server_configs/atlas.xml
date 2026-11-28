@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <game_config>
   <game_key>atlas</game_key>
+  <protocol>lgsl</protocol>
+  <lgsl_query_name>atlas</lgsl_query_name>
   <installer>steamcmd</installer>
   <game_name>Atlas</game_name>
   <os>

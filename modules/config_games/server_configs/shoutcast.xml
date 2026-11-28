@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <game_config>
   <game_key>shoutcast</game_key>
+  <protocol>lgsl</protocol>
+  <lgsl_query_name>shoutcast</lgsl_query_name>
   <game_name>Shoutcast server</game_name>
   <os>
     <linux>

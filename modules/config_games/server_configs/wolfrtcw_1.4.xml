@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <game_config>
   <game_key>wolfrtcw_1.4</game_key>
+  <protocol>lgsl</protocol>
+  <lgsl_query_name>wolfrtcw</lgsl_query_name>
   <game_name>Wolfenstein: Return To Castle Wolfenstein 1.4</game_name>
   <os>
     <linux>

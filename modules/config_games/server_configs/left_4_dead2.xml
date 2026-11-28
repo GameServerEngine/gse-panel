@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <game_config>
   <game_key>left_4_dead2</game_key>
+  <protocol>lgsl</protocol>
+  <lgsl_query_name>source</lgsl_query_name>
   <installer>steamcmd</installer>
   <game_name>Left 4 Dead 2</game_name>
   <os>

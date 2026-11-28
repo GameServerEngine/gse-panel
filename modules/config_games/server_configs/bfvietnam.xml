@@ -4,6 +4,8 @@
 <!-- Note: LinuxGSM starts this server without a port option; the port is read from mods/bfvietnam/settings/serversettings.con. Set it there to the port the panel assigned. -->
 <game_config>
   <game_key>bfvietnam</game_key>
+  <protocol>lgsl</protocol>
+  <lgsl_query_name>bfvietnam</lgsl_query_name>
   <game_name>Battlefield: Vietnam</game_name>
   <os>
     <linux arch="x64">

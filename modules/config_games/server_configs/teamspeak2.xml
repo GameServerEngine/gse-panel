@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <game_config>
   <game_key>teamspeak2</game_key>
+  <protocol>gameq</protocol>
+  <gameq_query_name>teamspeak2</gameq_query_name>
   <game_name>TeamSpeak 2</game_name>
   <os>
     <windows>

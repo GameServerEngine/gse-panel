@@ -3,6 +3,8 @@
 <!-- Note: LinuxGSM starts this server without a port option; the port is read from system/default.ini. Set it there to the port the panel assigned. -->
 <game_config>
   <game_key>redorchestra</game_key>
+  <protocol>gameq</protocol>
+  <gameq_query_name>redorchestraostfront</gameq_query_name>
   <installer>steamcmd</installer>
   <game_name>Red Orchestra: Ostfront 41-45</game_name>
   <os>

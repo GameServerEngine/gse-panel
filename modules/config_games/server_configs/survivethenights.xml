@@ -4,6 +4,8 @@
 <!-- Note: LinuxGSM starts this server without a port option; the port is read from Config/ServerConfig.txt. Set it there to the port the panel assigned. -->
 <game_config>
   <game_key>survivethenights</game_key>
+  <protocol>gameq</protocol>
+  <gameq_query_name>source</gameq_query_name>
   <installer>steamcmd</installer>
   <game_name>Survive the Nights</game_name>
   <os>

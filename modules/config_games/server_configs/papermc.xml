@@ -3,6 +3,8 @@
 <!-- Note: The server owner must accept the Minecraft EULA (eula=true in eula.txt) before the first start. -->
 <game_config>
   <game_key>papermc</game_key>
+  <protocol>gameq</protocol>
+  <gameq_query_name>minecraft</gameq_query_name>
   <game_name>PaperMC (Minecraft)</game_name>
   <os>
     <linux arch="x64">

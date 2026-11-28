@@ -28,5 +28,18 @@ foreach ($it as $file) {
 	}
 }
 gqp_check($offenders === array(), 'every LGSL query port lookup checks the game XML first' . ($offenders ? ': ' . implode(', ', $offenders) : ''));
+// Every game XML's query protocol names a query type that the shipped GameQ or LGSL has.
+require_once __DIR__ . '/../protocol/lgsl/lgsl_protocol.php';
+$lgslTypes = lgsl_type_list();
+$unknown = array();
+foreach (glob(__DIR__ . '/../modules/config_games/server_configs/*.xml') as $xmlFile) {
+	$x = simplexml_load_file($xmlFile);
+	foreach ($x->xpath('//protocol/..') as $section) {
+		$p = (string)$section->protocol;
+		if ($p === 'lgsl' && !isset($lgslTypes[(string)$section->lgsl_query_name])) $unknown[] = basename($xmlFile) . ' lgsl:' . $section->lgsl_query_name;
+		if ($p === 'gameq' && !is_file(__DIR__ . '/../protocol/GameQ/Protocols/' . ucfirst(strtolower((string)$section->gameq_query_name)) . '.php')) $unknown[] = basename($xmlFile) . ' gameq:' . $section->gameq_query_name;
+	}
+}
+gqp_check($unknown === array(), 'every XML query name exists in the shipped GameQ or LGSL' . ($unknown ? ': ' . implode(', ', $unknown) : ''));
 echo $failures ? "\n$failures FAILED\n" : "\nall game query port tests passed\n";
 exit($failures ? 1 : 0);

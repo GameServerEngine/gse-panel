@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <game_config>
   <game_key>callofduty</game_key>
+  <protocol>lgsl</protocol>
+  <lgsl_query_name>callofduty</lgsl_query_name>
   <game_name>Call of Duty</game_name>
   <os>
     <windows arch="x86">

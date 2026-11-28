@@ -3,6 +3,8 @@
 <!-- Note: Needs xvfb-run on the host (Ubuntu package xvfb). -->
 <game_config>
   <game_key>corekeeper</game_key>
+  <protocol>gameq</protocol>
+  <gameq_query_name>source</gameq_query_name>
   <installer>steamcmd</installer>
   <game_name>Core Keeper</game_name>
   <os>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <game_config>
   <game_key>bf2</game_key>
+  <protocol>gameq</protocol>
   <gameq_query_name>bf2</gameq_query_name>
   <game_name>Battlefield 2</game_name>
   <os>

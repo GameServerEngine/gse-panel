@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <game_config>
   <game_key>mohsp</game_key>
+  <protocol>lgsl</protocol>
+  <lgsl_query_name>mohaa</lgsl_query_name>
   <game_name>Medal Of Honor: Spearhead (Windows)</game_name>
   <os>
     <windows>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <game_config>
   <game_key>teamspeak3</game_key>
+  <protocol>teamspeak3</protocol>
   <game_name>TeamSpeak 3</game_name>
   <os>
     <windows arch="x64">

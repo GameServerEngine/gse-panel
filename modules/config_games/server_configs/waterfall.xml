@@ -3,6 +3,8 @@
 <!-- Note: LinuxGSM starts this server without a port option; the port is read from config.yml. Set it there to the port the panel assigned. -->
 <game_config>
   <game_key>waterfall</game_key>
+  <protocol>gameq</protocol>
+  <gameq_query_name>minecraft</gameq_query_name>
   <game_name>Waterfall Proxy (Minecraft)</game_name>
   <os>
     <linux arch="x64">

@@ -4,6 +4,8 @@
 <!-- Note: LinuxGSM starts this server without a port option; the port is read from mods/bf1942/settings/serversettings.con. Set it there to the port the panel assigned. -->
 <game_config>
   <game_key>bf1942</game_key>
+  <protocol>lgsl</protocol>
+  <lgsl_query_name>bf1942</lgsl_query_name>
   <game_name>Battlefield 1942</game_name>
   <os>
     <linux arch="x64">

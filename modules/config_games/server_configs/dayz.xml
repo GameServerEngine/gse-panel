@@ -9,7 +9,7 @@
   <os>
     <windows arch="x64">
       <exe>DZSALModServer.exe</exe>
-      <query_port type="add">6</query_port>
+      <query_port type="add">1</query_port>
       <cli_template>%MODLIST% %IGNOREMOD% %IP% %PORT% %ADMINLOG% %DOLOGS% %CONFIG% -profiles=profile %FC% %NFP% %SERVERMODLIST%</cli_template>
       <cli_params>
         <cli_param id="IP" cli_string="-ip=" />

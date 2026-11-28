@@ -3,6 +3,8 @@
 <!-- Note: Needs a Steam account that owns Star Wars Battlefront (Classic, 2004); set it in the panel's Steam settings. -->
 <game_config>
   <game_key>battlefronteternal</game_key>
+  <protocol>gameq</protocol>
+  <gameq_query_name>source</gameq_query_name>
   <installer>steamcmd</installer>
   <game_name>Battlefront Eternal</game_name>
   <os>
