@@ -23,6 +23,51 @@ require_once(dirname(__DIR__, 2) . '/includes/game_ip.php');
  *
  */
 
+/**
+ * Checks an address before it is saved as a game IP of an agent. A public address is saved.
+ * A private (LAN or VPN) address on an agent that is not marked "Use NAT" is not refused
+ * outright: the page asks whether the agent is behind NAT, and only when the admin answers
+ * yes is Use NAT turned on and the address saved. Returns TRUE when the address may be saved;
+ * sets $GLOBALS['server_ip_asking'] when the question is on the page instead.
+ */
+function server_ip_checked($rhost_id, &$remote_server, $ip, $action, $ip_id)
+{
+	global $db;
+	if ( filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false )
+	{
+		print_failure( htmlentities($ip) . " is not a valid IPv4 address." );
+		return FALSE;
+	}
+	if ( game_ip_allowed($ip, $remote_server['use_nat']) )
+		return TRUE;
+	if ( !empty($_POST['confirm_nat']) )
+	{
+		if ( $db->query("UPDATE `DB_PREFIXremote_servers` SET use_nat='1' WHERE remote_server_id=" . (int)$rhost_id) === FALSE )
+		{
+			print_failure( "Could not turn on Use NAT for this agent." );
+			return FALSE;
+		}
+		$remote_server['use_nat'] = 1;
+		print_success( "Use NAT is now on for " . htmlentities($remote_server['remote_server_name']) . "." );
+		return TRUE;
+	}
+	$GLOBALS['server_ip_asking'] = TRUE;
+	$h = htmlentities($ip);
+	echo "<div class='failure'><p><b>" . $h . " is a private address.</b> It is a LAN or VPN address (such as the WireGuard 10.255.0.x network), "
+		. "and this agent is not marked as being behind NAT, so players could not reach a game server bound to it.</p>"
+		. "<p>Is this agent behind NAT, with a router that forwards the game ports from a public address to " . $h . "?</p>"
+		. "<form method='post' action='?m=server&amp;p=edit&amp;rhost_id=" . (int)$rhost_id . "&amp;edit'>"
+		. "<input type='hidden' name='rhost_id' value='" . (int)$rhost_id . "'/>"
+		. ($action === 'add_ip'
+			? "<input type='hidden' name='remote_ip' value='" . $h . "'/>"
+			: "<input type='hidden' name='ip' value='" . $h . "'/><input type='hidden' name='ip_id' value='" . (int)$ip_id . "'/>")
+		. "<input type='hidden' name='confirm_nat' value='1'/>"
+		. "<input type='submit' name='" . $action . "' value='Yes, it is behind NAT: turn on Use NAT and save " . $h . "'/> "
+		. "<a href='?m=server&amp;p=edit&amp;rhost_id=" . (int)$rhost_id . "&amp;edit'>No, do not use this address</a>"
+		. "</form></div>";
+	return FALSE;
+}
+
 function exec_module() {
 
     global $view;
@@ -42,20 +87,16 @@ function exec_module() {
     #this allows you to define upto 4 IPs for each remote host.  The IPs are for binding games to
 	if ( isset($_REQUEST['add_ip']) )
     {
-        $remote_ip = $_POST['remote_ip'];
-		$remote_ip = preg_replace("/[^0-9\.]/", "", $remote_ip);
-		if ( !game_ip_allowed($remote_ip, $remote_server['use_nat']) )
+        $remote_ip = preg_replace("/[^0-9\.]/", "", $_POST['remote_ip']);
+		if ( server_ip_checked($rhost_id, $remote_server, $remote_ip, 'add_ip', 0) )
 		{
-			print_failure( htmlentities(game_ip_refusal($remote_ip)) );
+			if ( $db->addRemoteServerIp($rhost_id, $remote_ip) === FALSE )
+				print_failure( get_lang("could_not_add_ip") );
+			else
+				print_success(get_lang_f('ips_set_for_server',$remote_server['remote_server_name']));
 		}
-        else if ( $db->addRemoteServerIp($rhost_id, $remote_ip) === FALSE )
-		{
-			print_failure( get_lang("could_not_add_ip") );
-		}
-		else
-		{
-			print_success(get_lang_f('ips_set_for_server',$remote_server['remote_server_name']));
-		}
+		else if ( isset($GLOBALS['server_ip_asking']) )
+			return;
 		$view->refresh("?m=server&amp;p=edit&amp;rhost_id=".$rhost_id."&amp;edit");
     }
 
@@ -76,22 +117,17 @@ function exec_module() {
 
 	else if ( isset($_REQUEST['edit_ip']) )
     {
-		$ip_id = $_POST['ip_id'];
-		$ip = $_POST['ip'];
-		$ip = preg_replace("/[^0-9\.]/", "", $ip);
-
-		if ( !game_ip_allowed($ip, $remote_server['use_nat']) )
+		$ip_id = (int)$_POST['ip_id'];
+		$ip = preg_replace("/[^0-9\.]/", "", $_POST['ip']);
+		if ( server_ip_checked($rhost_id, $remote_server, $ip, 'edit_ip', $ip_id) )
 		{
-			print_failure( htmlentities(game_ip_refusal($ip)) );
+			if ( $db->editRemoteServerIps($ip_id,$ip) === FALSE )
+				print_failure( get_lang("could_not_edit_ip") );
+			else
+				print_success(get_lang_f('ips_set_for_server',$remote_server['remote_server_name']));
 		}
-        else if ( $db->editRemoteServerIps($ip_id,$ip) === FALSE )
-		{
-            print_failure( get_lang("could_not_edit_ip") );
-		}
-		else
-		{
-			print_success(get_lang_f('ips_set_for_server',$remote_server['remote_server_name']));
-		}
+		else if ( isset($GLOBALS['server_ip_asking']) )
+			return;
 		$view->refresh("?m=server&amp;p=edit&amp;rhost_id=".$rhost_id."&amp;edit");
     }
 
@@ -232,6 +268,12 @@ function exec_module() {
 					}
 				}
 
+				if ( game_ip_is_public($ip_row['ip']) )
+					$ip_kind = "<b class='success'>Public</b>";
+				else if ( (int)$remote_server['use_nat'] === 1 )
+					$ip_kind = "<b>Private (behind NAT)</b>";
+				else
+					$ip_kind = "<b class='failure'>Private: games will not start on it, because Use NAT is off. Remove it, or turn on Use NAT if the agent is behind a router.</b>";
 				$disabled = $servers_running ? "disabled" : "";
 				$warning = $servers_running ? "<b class='failure' >". get_lang("there_are_servers_running_on_this_ip") ."<b>" : "";
 				echo "<table style='width:auto;'>
@@ -241,7 +283,7 @@ function exec_module() {
 					 <input name='ip_id' type='hidden' value='".$ip_row['ip_id']."'/>
 					 <input name='ip' type='text' value='".$ip_row['ip']."'/>
 					 <input type='submit' name='edit_ip' value='". get_lang("edit_ip") ."' $disabled/>
-					 <input type='submit' name='remove_ip' value='". get_lang("remove_ip") ."' $disabled/> $warning
+					 <input type='submit' name='remove_ip' value='". get_lang("remove_ip") ."' $disabled/> $ip_kind $warning
 					 </form>
 					 </td>
 					 <td style='text-align:left;'>

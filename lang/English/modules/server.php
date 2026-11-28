@@ -136,5 +136,5 @@ define('LANG_save_firewall_settings', "Save firewall settings");
 define('LANG_reset_firewall', "Reset Firewall");
 define('LANG_firewall_settings', "Firewall Settings");
 define('LANG_display_public_ip', "Display Public IP");
-define('LANG_ips_can_be_internal_external', "Enter usable IP addresses.&nbsp; Public IP addresses and internal LAN IP addresses (for NAT setups) can be used.");
+define('LANG_ips_can_be_internal_external', "Enter the public IP addresses players connect to.&nbsp; A private LAN address only works when the agent is behind NAT (Use NAT on); you are asked before one is saved.&nbsp; VPN addresses are never used for games.");
 ?>

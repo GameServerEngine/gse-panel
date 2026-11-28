@@ -194,3 +194,4 @@
 | issue | Extra ports more than 100 from the game port (for example a fixed query port written as port + 19238 in about 20 XMLs) are not reserved by the allocator, so another server's block can include them. Decide how to reserve them (an extra single-port block per server, or static reservations). | open | Claude | |
 | done | Start parameters of type combo: preset dropdown you can type into; values a RUNNING server used are learned per game (game_param_options). Garry's Mod map and gamemode use it. | done | Claude | |
 | todo | Convert more games' map and mode parameters to combo with presets (Source games, Rust, Arma), checking each XML's real values against LinuxGSM. | open | Claude | |
+| done | Agent edit page: label each game IP Public or Private, and ask (turn on Use NAT?) before a private address is saved on a non-NAT agent. | done | Claude | |

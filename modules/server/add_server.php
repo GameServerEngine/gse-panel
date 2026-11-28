@@ -123,7 +123,7 @@ function exec_module() {
 					continue;
 				if ( !game_ip_allowed($remote_ip, $use_nat) )
 				{
-					print_failure( htmlentities(game_ip_refusal($remote_ip)) );
+					print_failure( htmlentities($remote_ip) . " is a private (LAN or VPN) address and was not added, because this agent is not marked as behind NAT. If the agent is behind a router, add it on the agent's edit page, where you are asked to turn on Use NAT." );
 					continue;
 				}
 

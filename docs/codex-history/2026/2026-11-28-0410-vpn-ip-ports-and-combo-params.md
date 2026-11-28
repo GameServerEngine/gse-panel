@@ -35,5 +35,8 @@ game6: lib32stdc++6 and libsdl2-2.0-0:i386 installed.
 port_allocator_test (23), game_param_options_test (10), game_usage_test (21), agent_inventory_test, status_sync_test pass; php -l on all changed files; garrysmod.xml validated against schema_server_config.xml.
 CS:Source started by hand on 75.127.4.194:27015 after the library install and bound the port. Garry's Mod started by hand on 155.94.173.138:27015 with gm_construct and terrortown and loaded TTT.
 
+## Follow-up request (04:09)
+The agent settings list the IPs; check for a public IP and ask if a private IP is being used. modules/server/edit_server.php: server_ip_checked() asks whether the agent is behind NAT before saving a private address, and turns Use NAT on only on yes; each listed IP is labelled. add_server.php leaves private addresses out with a pointer to that question. lang LANG_ips_can_be_internal_external reworded.
+
 ## Git Commits
 See the commit that adds this file.
